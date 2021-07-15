@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="Z字形变换 问题描述 将一个给定字符串根据给定的行数，以从上往下、从左到右进行 Z 字形排列。
+比如输入字符串为 &ldquo;LEETCODEISHIRING&rdquo; 行数为 3 时，排列如下：(这里用#表示空格加以区分)
+ L # C # I # R # E T O E S I I G E # D # H # N #
+ 之后，你的输出需要从左往右逐行读取，产生出一个新的字符串，比如：&ldquo;LCIRETOESIIGEDHN&rdquo;。
+请你实现这个将字符串进行指定行数变换的函数：
+ string convert(string s, int numRows);
+ 示例 1:  输入: s = &ldquo;LEETCODEISHIRING&rdquo;, numRows = 3 输出: &ldquo;LCIRETOESIIGEDHN&rdquo;
+ 示例 2:  输入: &ldquo;bbbbb&rdquo; 输出: 1 解释: 因为无重复字符的最长子串是 &ldquo;b&rdquo;，所以其长度为 1。
+ 示例 3：  输入: s = &ldquo;LEETCODEISHIRING&rdquo;, numRows = 4 输出: &ldquo;LDREOEIIECIHNTSG&rdquo; 解释: L # # D # # R E # O E # I I E C # I H # N T # # S # # G">
+
+
+<meta property="og:description" content="Z字形变换 问题描述 将一个给定字符串根据给定的行数，以从上往下、从左到右进行 Z 字形排列。
+比如输入字符串为 &ldquo;LEETCODEISHIRING&rdquo; 行数为 3 时，排列如下：(这里用#表示空格加以区分)
+ L # C # I # R # E T O E S I I G E # D # H # N #
+ 之后，你的输出需要从左往右逐行读取，产生出一个新的字符串，比如：&ldquo;LCIRETOESIIGEDHN&rdquo;。
+请你实现这个将字符串进行指定行数变换的函数：
+ string convert(string s, int numRows);
+ 示例 1:  输入: s = &ldquo;LEETCODEISHIRING&rdquo;, numRows = 3 输出: &ldquo;LCIRETOESIIGEDHN&rdquo;
+ 示例 2:  输入: &ldquo;bbbbb&rdquo; 输出: 1 解释: 因为无重复字符的最长子串是 &ldquo;b&rdquo;，所以其长度为 1。
+ 示例 3：  输入: s = &ldquo;LEETCODEISHIRING&rdquo;, numRows = 4 输出: &ldquo;LDREOEIIECIHNTSG&rdquo; 解释: L # # D # # R E # O E # I I E C # I H # N T # # S # # G">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Leetcode1">
+<meta name="twitter:title" content="Leetcode1">
+<meta property="og:url" content="https://yangyang48.github.io/2021/07/leetcode1/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2021/07/leetcode1/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="Z字形变换 问题描述 将一个给定字符串根据给定的行数，以从上往下、从左到右进行 Z 字形排列。
+比如输入字符串为 &ldquo;LEETCODEISHIRING&rdquo; 行数为 3 时，排列如下：(这里用#表示空格加以区分)
+ L # C # I # R # E T O E S I I G E # D # H # N #
+ 之后，你的输出需要从左往右逐行读取，产生出一个新的字符串，比如：&ldquo;LCIRETOESIIGEDHN&rdquo;。
+请你实现这个将字符串进行指定行数变换的函数：
+ string convert(string s, int numRows);
+ 示例 1:  输入: s = &ldquo;LEETCODEISHIRING&rdquo;, numRows = 3 输出: &ldquo;LCIRETOESIIGEDHN&rdquo;
+ 示例 2:  输入: &ldquo;bbbbb&rdquo; 输出: 1 解释: 因为无重复字符的最长子串是 &ldquo;b&rdquo;，所以其长度为 1。
+ 示例 3：  输入: s = &ldquo;LEETCODEISHIRING&rdquo;, numRows = 4 输出: &ldquo;LDREOEIIECIHNTSG&rdquo; 解释: L # # D # # R E # O E # I I E C # I H # N T # # S # # G">
+<meta name="twitter:description" content="Z字形变换 问题描述 将一个给定字符串根据给定的行数，以从上往下、从左到右进行 Z 字形排列。
+比如输入字符串为 &ldquo;LEETCODEISHIRING&rdquo; 行数为 3 时，排列如下：(这里用#表示空格加以区分)
+ L # C # I # R # E T O E S I I G E # D # H # N #
+ 之后，你的输出需要从左往右逐行读取，产生出一个新的字符串，比如：&ldquo;LCIRETOESIIGEDHN&rdquo;。
+请你实现这个将字符串进行指定行数变换的函数：
+ string convert(string s, int numRows);
+ 示例 1:  输入: s = &ldquo;LEETCODEISHIRING&rdquo;, numRows = 3 输出: &ldquo;LCIRETOESIIGEDHN&rdquo;
+ 示例 2:  输入: &ldquo;bbbbb&rdquo; 输出: 1 解释: 因为无重复字符的最长子串是 &ldquo;b&rdquo;，所以其长度为 1。
+ 示例 3：  输入: s = &ldquo;LEETCODEISHIRING&rdquo;, numRows = 4 输出: &ldquo;LDREOEIIECIHNTSG&rdquo; 解释: L # # D # # R E # O E # I I E C # I H # N T # # S # # G">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2021-07-11T17:12:24">
+  
+  
+    <meta property="article:modified_time" content="2021-07-11T17:12:24">
+  
+  
+  
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>Leetcode1</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2021/07/leetcode1/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+
+    
+      
+    
+    
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+
+      <div id="main" data-behavior="4"
+        class="
+               hasCoverMetaIn
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-left">
+  
+    <h1 class="post-title" itemprop="headline">
+      Leetcode1
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2021-07-11T17:12:24&#43;08:00">
+        
+  七月 11, 2021
+
+      </time>
+    
+    
+  </div>
+
+</div>
+          
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <h1 id="z字形变换">Z字形变换</h1>
+<h2 id="问题描述">问题描述</h2>
+<p>将一个给定字符串根据给定的行数，以从上往下、从左到右进行 Z 字形排列。</p>
+<p>比如输入字符串为 &ldquo;LEETCODEISHIRING&rdquo; 行数为 3 时，排列如下：<strong>(这里用#表示空格加以区分)</strong></p>
+<blockquote>
+<p>L # C #  I # R #
+E T O E S I I G
+E # D # H # N #</p>
+</blockquote>
+<p>之后，你的输出需要从左往右逐行读取，产生出一个新的字符串，比如：&ldquo;LCIRETOESIIGEDHN&rdquo;。</p>
+<p>请你实现这个将字符串进行指定行数变换的函数：</p>
+<blockquote>
+<p>string convert(string s, int numRows);</p>
+</blockquote>
+<h2 id="示例-1">示例 1:</h2>
+<blockquote>
+<p>输入: s = &ldquo;LEETCODEISHIRING&rdquo;, numRows = 3
+输出: &ldquo;LCIRETOESIIGEDHN&rdquo;</p>
+</blockquote>
+<h2 id="示例-2">示例 2:</h2>
+<blockquote>
+<p>输入: &ldquo;bbbbb&rdquo;
+输出: 1
+解释: 因为无重复字符的最长子串是 &ldquo;b&rdquo;，所以其长度为 1。</p>
+</blockquote>
+<h2 id="示例-3">示例 3：</h2>
+<blockquote>
+<p>输入: s = &ldquo;LEETCODEISHIRING&rdquo;, numRows = 4
+输出: &ldquo;LDREOEIIECIHNTSG&rdquo;
+解释:
+L #  # D # # R
+E # O E # I I
+E C # I  H # N
+T # #  S # # G</p>
+</blockquote>
+<h1 id="思路1遍历法">思路1：遍历法</h1>
+<p><strong>这里以c/c++语言来具体化</strong></p>
+<p><strong>具体思路开始</strong>（可以参考下面几幅图）</p>
+<ol>
+<li>
+<p>创建一个字符串的动态数组vector &lt; string  &gt;  str(min(int(s.length()),numRows))，用来存放numRows个元素</p>
+</li>
+<li>
+<p>循环时，动态数组的行数增加或减小，设置一个flag值用于转换方向，设置一个i值用于累加行数，判断如果i为0或者i为numRows-1，flag反值，继续叠加（叠加不一定是正叠加，可能是负叠加）</p>
+</li>
+<li>
+<p>遍历字符串的动态数组</p>
+</li>
+</ol>
+<p><img src="https://img-blog.csdnimg.cn/20190830102118596.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lhbmdqdTE0NzUzMjg5Ng==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述">
+<img src="https://img-blog.csdnimg.cn/20190830102127513.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lhbmdqdTE0NzUzMjg5Ng==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述">
+<img src="https://img-blog.csdnimg.cn/20190830102136370.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lhbmdqdTE0NzUzMjg5Ng==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述">
+<img src="https://img-blog.csdnimg.cn/20190830102144446.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lhbmdqdTE0NzUzMjg5Ng==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述">
+<img src="https://img-blog.csdnimg.cn/20190830102153385.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lhbmdqdTE0NzUzMjg5Ng==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述">
+<img src="https://img-blog.csdnimg.cn/2019083010220362.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lhbmdqdTE0NzUzMjg5Ng==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述">
+<img src="https://img-blog.csdnimg.cn/20190830102210178.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lhbmdqdTE0NzUzMjg5Ng==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述">
+<img src="https://img-blog.csdnimg.cn/20190830102217590.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lhbmdqdTE0NzUzMjg5Ng==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述">
+<img src="https://img-blog.csdnimg.cn/20190830102224615.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lhbmdqdTE0NzUzMjg5Ng==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述">
+<img src="https://img-blog.csdnimg.cn/20190830102232207.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lhbmdqdTE0NzUzMjg5Ng==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述">
+<img src="https://img-blog.csdnimg.cn/20190830102239759.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lhbmdqdTE0NzUzMjg5Ng==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述">
+<img src="https://img-blog.csdnimg.cn/20190830102249900.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lhbmdqdTE0NzUzMjg5Ng==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述">
+<img src="https://img-blog.csdnimg.cn/20190830102301165.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lhbmdqdTE0NzUzMjg5Ng==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述">
+<img src="https://img-blog.csdnimg.cn/20190830102311546.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lhbmdqdTE0NzUzMjg5Ng==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述">
+<img src="https://img-blog.csdnimg.cn/20190830102319725.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lhbmdqdTE0NzUzMjg5Ng==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述">
+<img src="https://img-blog.csdnimg.cn/20190830102327137.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lhbmdqdTE0NzUzMjg5Ng==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<h2 id="代码">代码</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">/*
+</span><span style="color:#75715e">直接遍历,遍历的过程中输出添加到vector&lt;string&gt; str
+</span><span style="color:#75715e">*/</span>
+class Solution {
+public:
+    string convert(string s, <span style="color:#66d9ef">int</span> numRows) {
+      <span style="color:#75715e">//边界条件
+</span><span style="color:#75715e"></span>      <span style="color:#66d9ef">if</span>(numRows<span style="color:#f92672">==</span><span style="color:#ae81ff">1</span>) <span style="color:#66d9ef">return</span> s;
+      <span style="color:#66d9ef">int</span> i<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>;
+      <span style="color:#66d9ef">bool</span> flag<span style="color:#f92672">=</span>false;
+      string tmp;
+      vector<span style="color:#f92672">&lt;</span>string<span style="color:#f92672">&gt;</span> str(min(<span style="color:#66d9ef">int</span>(s.length()),numRows));<span style="color:#75715e">//强制转换s.length()为int  
+</span><span style="color:#75715e"></span>      <span style="color:#66d9ef">for</span>(<span style="color:#66d9ef">char</span> c:s)<span style="color:#75715e">//c为当前元素，遍历整个s
+</span><span style="color:#75715e"></span>      {
+          str[i]<span style="color:#f92672">+=</span>c;
+          <span style="color:#66d9ef">if</span>(i<span style="color:#f92672">==</span><span style="color:#ae81ff">0</span><span style="color:#f92672">||</span>i<span style="color:#f92672">==</span>numRows<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>) flag<span style="color:#f92672">=!</span>flag;
+          i<span style="color:#f92672">+=</span>flag<span style="color:#f92672">?</span><span style="color:#ae81ff">1</span><span style="color:#f92672">:-</span><span style="color:#ae81ff">1</span>;   
+      }
+      <span style="color:#66d9ef">for</span>(string ss:str)
+          tmp<span style="color:#f92672">+=</span>ss; 
+      <span style="color:#66d9ef">return</span> tmp;                   
+    }
+};
+</code></pre></div><h1 id="思路2找规律">思路2：找规律</h1>
+<ol>
+<li>很明显可以查找到规律，第一行和最后一行的间距都是2*numRows-2</li>
+<li>其他的行，都会出现两次辗转累加的过程，而两次累加和为2<em>numRows-2，例如第i行，第二个数比第一个数多2</em>numRows-2-2<em>i，第三个数则比第二个数多2</em>i</li>
+<li>设置一个flag用来判断辗转</li>
+</ol>
+<h2 id="代码-1">代码</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">/*
+</span><span style="color:#75715e">找规律
+</span><span style="color:#75715e">*/</span>
+class Solution {
+public:
+    string convert(string s, <span style="color:#66d9ef">int</span> numRows) {
+      <span style="color:#75715e">//临时变量,用于存放新数组
+</span><span style="color:#75715e"></span>        string tmp;
+        <span style="color:#66d9ef">int</span> i,j;
+        <span style="color:#66d9ef">bool</span> flag<span style="color:#f92672">=</span>true;<span style="color:#75715e">//除第一行最后一行都会辗转相加
+</span><span style="color:#75715e"></span>      <span style="color:#75715e">//判断边界条件
+</span><span style="color:#75715e"></span>       <span style="color:#66d9ef">if</span>(s.length() <span style="color:#f92672">&lt;</span> numRows) <span style="color:#66d9ef">return</span> s;
+       <span style="color:#66d9ef">else</span> <span style="color:#a6e22e">if</span>(numRows <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span>) <span style="color:#66d9ef">return</span> s;
+       <span style="color:#66d9ef">else</span> <span style="color:#a6e22e">if</span>(numRows <span style="color:#f92672">==</span> <span style="color:#ae81ff">2</span>)<span style="color:#75715e">//奇偶输出
+</span><span style="color:#75715e"></span>       {
+           <span style="color:#66d9ef">for</span>(i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;i <span style="color:#f92672">&lt;</span> s.length();i <span style="color:#f92672">+=</span> <span style="color:#ae81ff">2</span>)
+           {
+               tmp.push_back(s[i]);
+           }
+           <span style="color:#66d9ef">for</span>(i <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;i <span style="color:#f92672">&lt;</span>s.length();i <span style="color:#f92672">+=</span> <span style="color:#ae81ff">2</span>)
+           {
+               tmp.push_back(s[i]);
+           }
+           <span style="color:#66d9ef">return</span> tmp;
+       }
+       <span style="color:#66d9ef">else</span> <span style="color:#75715e">//一般情况
+</span><span style="color:#75715e"></span>       {
+           <span style="color:#66d9ef">for</span>( i<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>;i<span style="color:#f92672">&lt;</span>numRows;i<span style="color:#f92672">++</span>)
+           {
+               
+               <span style="color:#66d9ef">if</span>(i <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+               {
+                   <span style="color:#66d9ef">for</span>(j<span style="color:#f92672">=</span>i;j<span style="color:#f92672">&lt;</span>s.length();j<span style="color:#f92672">+=</span> numRows<span style="color:#f92672">*</span><span style="color:#ae81ff">2</span><span style="color:#f92672">-</span><span style="color:#ae81ff">2</span>)
+                       tmp.push_back(s[j]);
+               }
+               <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span>(i <span style="color:#f92672">==</span> numRows<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>)
+               {
+                   <span style="color:#66d9ef">for</span>(j<span style="color:#f92672">=</span>i;j<span style="color:#f92672">&lt;</span>s.length();j<span style="color:#f92672">+=</span> numRows<span style="color:#f92672">*</span><span style="color:#ae81ff">2</span><span style="color:#f92672">-</span><span style="color:#ae81ff">2</span>)
+                       tmp.push_back(s[j]);
+               }
+               <span style="color:#66d9ef">else</span><span style="color:#75715e">//其他的位置
+</span><span style="color:#75715e"></span>               {
+                   flag<span style="color:#f92672">=</span>true;<span style="color:#75715e">//下一行自动为true
+</span><span style="color:#75715e"></span>                   tmp.push_back(s[i]);<span style="color:#75715e">//第一列第一个数
+</span><span style="color:#75715e"></span>                   j<span style="color:#f92672">=</span>i;
+                   <span style="color:#66d9ef">while</span>(j<span style="color:#f92672">&lt;</span>s.length())
+                   {
+                       <span style="color:#66d9ef">if</span>(flag)
+                       {
+                       flag<span style="color:#f92672">=</span>false;
+                      
+                           j<span style="color:#f92672">+=</span> numRows<span style="color:#f92672">*</span><span style="color:#ae81ff">2</span><span style="color:#f92672">-</span><span style="color:#ae81ff">2</span><span style="color:#f92672">-</span><span style="color:#ae81ff">2</span><span style="color:#f92672">*</span>i;
+                           <span style="color:#66d9ef">if</span>(j<span style="color:#f92672">&gt;=</span>s.length()) <span style="color:#66d9ef">break</span>;
+                            tmp.push_back(s[j]);
+                              
+                       }
+                       <span style="color:#66d9ef">if</span>(<span style="color:#f92672">!</span>flag)
+                       {
+                       flag<span style="color:#f92672">=</span>true;
+                      
+                           j<span style="color:#f92672">+=</span> <span style="color:#ae81ff">2</span><span style="color:#f92672">*</span>i;
+                           <span style="color:#66d9ef">if</span>(j<span style="color:#f92672">&gt;=</span>s.length()) <span style="color:#66d9ef">break</span>;
+                            tmp.push_back(s[j]);
+                         
+                       }
+                   }
+               }    
+           }
+           
+       }
+        <span style="color:#66d9ef">return</span> tmp;
+    }
+};
+</code></pre></div><p><strong>如果本文对宝宝打开思路有帮助，可以点个赞哦~</strong></p>
+<h1 id="参考">参考</h1>
+<p><a href="https://leetcode-cn.com/problems/zigzag-conversion/solution/tong-guo-zhao-chu-shu-ju-zhi-jian-de-nei-zai-gui-l/">[1]最忆是南山</a>
+<a href="https://leetcode-cn.com/problems/zigzag-conversion/solution/6-z-zi-xing-bian-huan-c-c-by-bian-bian-xiong/">[2]扁扁熊</a>
+<a href="https://leetcode-cn.com/problems/zigzag-conversion/solution/z-zi-xing-bian-huan-by-leetcode/">[3]力扣官方</a></p>
+
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/20210714/" data-tooltip="20210714">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/first-commit/" data-tooltip="first commit">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+        <li class="post-action hide-lg hide-md hide-sm">
+          <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions">
+            <i class="fa fa-share-alt"></i>
+          </a>
+        </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://yangyang48.github.io/2021/07/leetcode1/">
+              <i class="fa fa-facebook-official"></i>
+            </a>
+          </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://yangyang48.github.io/2021/07/leetcode1/">
+              <i class="fa fa-twitter"></i>
+            </a>
+          </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://yangyang48.github.io/2021/07/leetcode1/">
+              <i class="fa fa-google-plus"></i>
+            </a>
+          </li>
+        
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+        <footer id="footer" class="main-content-wrap">
+  <span class="copyrights">
+    &copy; 2021 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/20210714/" data-tooltip="20210714">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/first-commit/" data-tooltip="first commit">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+        <li class="post-action hide-lg hide-md hide-sm">
+          <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions">
+            <i class="fa fa-share-alt"></i>
+          </a>
+        </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://yangyang48.github.io/2021/07/leetcode1/">
+              <i class="fa fa-facebook-official"></i>
+            </a>
+          </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://yangyang48.github.io/2021/07/leetcode1/">
+              <i class="fa fa-twitter"></i>
+            </a>
+          </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://yangyang48.github.io/2021/07/leetcode1/">
+              <i class="fa fa-google-plus"></i>
+            </a>
+          </li>
+        
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2021%2F07%2Fleetcode1%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2021%2F07%2Fleetcode1%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2021%2F07%2Fleetcode1%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2021\/07\/leetcode1\/';
+          
+            this.page.identifier = '\/2021\/07\/leetcode1\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
