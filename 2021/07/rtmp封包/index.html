@@ -91,11 +91,17 @@
     <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
     
     
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
 
     
       
     
     
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
   </head>
 
   <body>
@@ -234,6 +240,7 @@
                ">
         <article class="post" itemscope itemType="http://schema.org/BlogPosting">
           
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">400 Words|Read in about 2 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
           
             <div class="post-header main-content-wrap text-center">
   
@@ -321,96 +328,32 @@
 </div>
 
 <p>目录结构中有自带的CmakeLists.txt，CMakeLists.txt里面的内容不多，这样可以不进行预编译直接放在as里调试</p>
-
-  
-    
-  
-  
-    
-  
-  
-    
-  
-  
-    
-  
-
-
-<figure class="highlight mak language-mak">
-  <figcaption>
-    
-  </figcaption>
-  <table>
-    <tbody>
-      <tr>
-        <td class="gutter">
-          <pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre>
-        </td>
-        <td class="code">
-          <pre class="code-highlight language-mak"><code class="mak">
-//关闭ssl 不支持rtmps
-set(CMAKE_C_FLAGS &#34;${CMAKE_C_FLAGS} -DNO_CRYPTO&#34;  )
-
-
-//所有源文件放入 rtmp_source 变量
-file(GLOB rtmp_source *.c)
-
-//编译静态库
-add_library(
-             rtmp
-             STATIC
-            ${rtmp_source} )</code></pre>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</figure>
-<p>在AS中复制librtmp置于: src/main/cpp/librtmp ，并为其编写CMakeLists.txt</p>
-
-  
-    
-  
-  
-    
-  
-  
-    
-  
-  
-    
-  
-
-
-<figure class="highlight mak language-mak">
-  <figcaption>
-    
-  </figcaption>
-  <table>
-    <tbody>
-      <tr>
-        <td class="gutter">
-          <pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre>
-        </td>
-        <td class="code">
-          <pre class="code-highlight language-mak"><code class="mak">
-cmake_minimum_required(VERSION 3.4.1)
-
-add_subdirectory(librtmp)
-add_library(
-             Auvirtmp
-             SHARED
-        	 Auvirtmp_hard.cpp)
-
-target_link_libraries(
-               		   Auvirtmp
-                       rtmp
-                       log)</code></pre>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</figure>
-<p>编写完CMakeLists.txt ，在同级目录新建Auvirtmp_hard.cpp，目录结构大致是这样</p>
+<div class="highlight"><pre class="chroma"><code class="language-cmake" data-lang="cmake"><span class="ln"> 1</span><span class="err">//关闭ssl</span> <span class="err">不支持rtmps
+</span><span class="ln"> 2</span><span class="err"></span><span class="nb">set</span><span class="p">(</span><span class="s">CMAKE_C_FLAGS</span> <span class="s2">&#34;${CMAKE_C_FLAGS} -DNO_CRYPTO&#34;</span>  <span class="p">)</span><span class="err">
+</span><span class="ln"> 3</span><span class="err">
+</span><span class="ln"> 4</span><span class="err">
+</span><span class="ln"> 5</span><span class="err">//所有源文件放入</span> <span class="err">rtmp_source</span> <span class="err">变量
+</span><span class="ln"> 6</span><span class="err"></span><span class="nb">file</span><span class="p">(</span><span class="s">GLOB</span> <span class="s">rtmp_source</span> <span class="s">*.c</span><span class="p">)</span><span class="err">
+</span><span class="ln"> 7</span><span class="err">
+</span><span class="ln"> 8</span><span class="err">//编译静态库
+</span><span class="ln"> 9</span><span class="err"></span><span class="nb">add_library</span><span class="p">(</span>
+<span class="ln">10</span>             <span class="s">rtmp</span>
+<span class="ln">11</span>             <span class="s">STATIC</span>
+<span class="ln">12</span>            <span class="o">${</span><span class="nv">rtmp_source</span><span class="o">}</span> <span class="p">)</span><span class="err">
+</span></code></pre></div><p>在AS中复制librtmp置于: src/main/cpp/librtmp ，并为其编写CMakeLists.txt</p>
+<div class="highlight"><pre class="chroma"><code class="language-cmake" data-lang="cmake"><span class="ln"> 1</span><span class="nb">cmake_minimum_required</span><span class="p">(</span><span class="s">VERSION</span> <span class="s">3.4.1</span><span class="p">)</span><span class="err">
+</span><span class="ln"> 2</span><span class="err">
+</span><span class="ln"> 3</span><span class="err"></span><span class="nb">add_subdirectory</span><span class="p">(</span><span class="s">librtmp</span><span class="p">)</span><span class="err">
+</span><span class="ln"> 4</span><span class="err"></span><span class="nb">add_library</span><span class="p">(</span>
+<span class="ln"> 5</span>             <span class="s">Auvirtmp</span>
+<span class="ln"> 6</span>             <span class="s">SHARED</span>
+<span class="ln"> 7</span>        	 <span class="s">Auvirtmp_hard.cpp</span><span class="p">)</span><span class="err">
+</span><span class="ln"> 8</span><span class="err">
+</span><span class="ln"> 9</span><span class="err"></span><span class="nb">target_link_libraries</span><span class="p">(</span>
+<span class="ln">10</span>               		   <span class="s">Auvirtmp</span>
+<span class="ln">11</span>                       <span class="s">rtmp</span>
+<span class="ln">12</span>                       <span class="s">log</span><span class="p">)</span><span class="err">
+</span></code></pre></div><p>编写完CMakeLists.txt ，在同级目录新建Auvirtmp_hard.cpp，目录结构大致是这样</p>
 
 
  
@@ -1248,6 +1191,10 @@ RTMP中的音视频数据就是由多个Video Tag和多个Audio Tag构成。</p>
 
 <script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
 
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
 
 <script lang="javascript">
 window.onload = updateMinWidth;
