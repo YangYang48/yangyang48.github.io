@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="学习Handler之后，通常会出现同步屏障的字样。MessageQueue管理优先级队列的过程中，如果消息存在一种“紧急”消息，
+需要更高的优先级处理，这个时候就需要同步屏障。">
+
+
+<meta property="og:description" content="学习Handler之后，通常会出现同步屏障的字样。MessageQueue管理优先级队列的过程中，如果消息存在一种“紧急”消息，
+需要更高的优先级处理，这个时候就需要同步屏障。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Handler3 同步屏障">
+<meta name="twitter:title" content="Handler3 同步屏障">
+<meta property="og:url" content="https://yangyang48.github.io/2021/08/handler3-%E5%90%8C%E6%AD%A5%E5%B1%8F%E9%9A%9C/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2021/08/handler3-%E5%90%8C%E6%AD%A5%E5%B1%8F%E9%9A%9C/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="学习Handler之后，通常会出现同步屏障的字样。MessageQueue管理优先级队列的过程中，如果消息存在一种“紧急”消息，
+需要更高的优先级处理，这个时候就需要同步屏障。">
+<meta name="twitter:description" content="学习Handler之后，通常会出现同步屏障的字样。MessageQueue管理优先级队列的过程中，如果消息存在一种“紧急”消息，
+需要更高的优先级处理，这个时候就需要同步屏障。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2021-08-15T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2021-08-15T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="Handler">
+    
+      <meta property="article:section" content="2021">
+    
+      <meta property="article:section" content="August">
+    
+  
+  
+    
+      <meta property="article:tag" content="Android">
+    
+      <meta property="article:tag" content="源码">
+    
+      <meta property="article:tag" content="framework">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/handler/handler3_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/handler/handler3_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/handler/handler3_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/handler/handler3_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>Handler3 同步屏障</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2021/08/handler3-%E5%90%8C%E6%AD%A5%E5%B1%8F%E9%9A%9C/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/handler/handler3_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      Handler3 同步屏障
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2021-08-15T00:00:00Z">
+        
+  八月 15, 2021
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/handler">Handler</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2021">2021</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/august">August</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">700 Words|Read in about 3 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>学习Handler之后，通常会出现同步屏障的字样。MessageQueue管理优先级队列的过程中，如果消息存在一种“紧急”消息，
+需要更高的优先级处理，这个时候就需要同步屏障。</p>
+<h1 id="handler3-同步屏障">Handler3 同步屏障</h1>
+<h2 id="开篇问题">开篇问题</h2>
+<p>1.为什么会存在同步屏障</p>
+<p>2.如何去除同步屏障</p>
+<p>3.同步屏障有啥用</p>
+<h1 id="什么是同步屏障">什么是同步屏障</h1>
+<blockquote>
+<p>同步屏障就是阻碍同步消息，只让异步消息通过</p>
+</blockquote>
+<p>Message分为3中：普通消息（同步消息）、屏障消息（同步屏障）和异步消息。我们通常使用的都是普通消息，而屏障消息就是在消息队列中插入一个屏障，在屏障之后的所有普通消息都会被挡着，不能被处理。不过异步消息却例外，屏障不会挡住异步消息，因此可以这样认为：屏障消息就是为了确保异步消息的优先级，设置了屏障后，只能处理其后的异步消息，同步消息会被挡住，除非撤销屏障。</p>
+<p>注：<strong>没有同步屏障，不区分同步消息和异步消息</strong>，都属于一般消息按时间优先级来发送</p>
+<h2 id="如何发送异步消息">如何发送异步消息</h2>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="n">Message</span> <span class="n">message</span> <span class="o">=</span> <span class="n">Message</span><span class="o">.</span><span class="na">obtain</span><span class="o">();</span>
+<span class="ln">2</span><span class="n">message</span><span class="o">.</span><span class="na">setAsynchronous</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+<span class="ln">3</span><span class="n">handler</span><span class="o">.</span><span class="na">sendMessage</span><span class="o">(</span><span class="n">message</span><span class="o">);</span>
+</code></pre></div><h1 id="同步屏障原理">同步屏障原理</h1>
+<h2 id="开启同步屏障">开启同步屏障</h2>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="n">MessageQueue</span><span class="o">.</span><span class="na">java</span><span class="err">#</span><span class="n">postSyncBarrier</span><span class="o">()</span>
+<span class="ln"> 2</span><span class="cm">/*
+</span><span class="ln"> 3</span><span class="cm"> * @hide
+</span><span class="ln"> 4</span><span class="cm"> */</span>
+<span class="ln"> 5</span><span class="kd">public</span> <span class="kt">int</span> <span class="nf">postSyncBarrier</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 6</span>    <span class="k">return</span> <span class="n">postSyncBarrier</span><span class="o">(</span><span class="n">SystemClock</span><span class="o">.</span><span class="na">uptimeMillis</span><span class="o">());</span>
+<span class="ln"> 7</span><span class="o">}</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span><span class="kd">private</span> <span class="kt">int</span> <span class="nf">postSyncBarrier</span><span class="o">(</span><span class="kt">long</span> <span class="n">when</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">10</span>    <span class="c1">// Enqueue a new sync barrier token.
+</span><span class="ln">11</span><span class="c1"></span>    <span class="c1">// We don&#39;t need to wake the queue because the purpose of a barrier is to stall it.
+</span><span class="ln">12</span><span class="c1"></span>    <span class="kd">synchronized</span> <span class="o">(</span><span class="k">this</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">13</span>        <span class="kd">final</span> <span class="kt">int</span> <span class="n">token</span> <span class="o">=</span> <span class="n">mNextBarrierToken</span><span class="o">++;</span><span class="c1">//类似句柄，用于管理当前的屏障的唯一标识
+</span><span class="ln">14</span><span class="c1"></span>        <span class="c1">//此处跟Handler.enqueueMessage区别是这里没有msg.target
+</span><span class="ln">15</span><span class="c1"></span>        <span class="kd">final</span> <span class="n">Message</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">Message</span><span class="o">.</span><span class="na">obtain</span><span class="o">();</span>
+<span class="ln">16</span>        <span class="n">msg</span><span class="o">.</span><span class="na">markInUse</span><span class="o">();</span>
+<span class="ln">17</span>        <span class="n">msg</span><span class="o">.</span><span class="na">when</span> <span class="o">=</span> <span class="n">when</span><span class="o">;</span>
+<span class="ln">18</span>        <span class="n">msg</span><span class="o">.</span><span class="na">arg1</span> <span class="o">=</span> <span class="n">token</span><span class="o">;</span>
+<span class="ln">19</span>
+<span class="ln">20</span>        <span class="n">Message</span> <span class="n">prev</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">21</span>        <span class="n">Message</span> <span class="n">p</span> <span class="o">=</span> <span class="n">mMessages</span><span class="o">;</span>
+<span class="ln">22</span>        <span class="c1">//将屏障根据时间插入链表动作
+</span><span class="ln">23</span><span class="c1"></span>        <span class="c1">//开启同步屏障时间T不为0，且当前的同步消息里有时间小于T，则prev也不为null
+</span><span class="ln">24</span><span class="c1"></span>        <span class="k">if</span> <span class="o">(</span><span class="n">when</span> <span class="o">!=</span> <span class="n">0</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">25</span>            <span class="k">while</span> <span class="o">(</span><span class="n">p</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">p</span><span class="o">.</span><span class="na">when</span> <span class="o">&lt;=</span> <span class="n">when</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">26</span>                <span class="n">prev</span> <span class="o">=</span> <span class="n">p</span><span class="o">;</span>
+<span class="ln">27</span>                <span class="n">p</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="na">next</span><span class="o">;</span>
+<span class="ln">28</span>            <span class="o">}</span>
+<span class="ln">29</span>        <span class="o">}</span>
+<span class="ln">30</span>        <span class="k">if</span> <span class="o">(</span><span class="n">prev</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span> <span class="c1">// invariant: p == prev.next
+</span><span class="ln">31</span><span class="c1"></span>            <span class="n">msg</span><span class="o">.</span><span class="na">next</span> <span class="o">=</span> <span class="n">p</span><span class="o">;</span>
+<span class="ln">32</span>            <span class="n">prev</span><span class="o">.</span><span class="na">next</span> <span class="o">=</span> <span class="n">msg</span><span class="o">;</span>
+<span class="ln">33</span>        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln">34</span>            <span class="n">msg</span><span class="o">.</span><span class="na">next</span> <span class="o">=</span> <span class="n">p</span><span class="o">;</span>
+<span class="ln">35</span>            <span class="n">mMessages</span> <span class="o">=</span> <span class="n">msg</span><span class="o">;</span>
+<span class="ln">36</span>        <span class="o">}</span>
+<span class="ln">37</span>        <span class="k">return</span> <span class="n">token</span><span class="o">;</span>
+<span class="ln">38</span>    <span class="o">}</span>
+<span class="ln">39</span><span class="o">}</span>
+</code></pre></div><h2 id="开始对消息同步屏障">开始对消息同步屏障</h2>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="n">MessageQueue</span><span class="o">.</span><span class="na">java</span><span class="err">#</span><span class="n">next</span><span class="o">()</span>
+<span class="ln"> 2</span><span class="n">Message</span> <span class="nf">next</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 3</span>    <span class="o">...</span>
+<span class="ln"> 4</span>    <span class="k">for</span> <span class="o">(;;)</span> <span class="o">{</span>
+<span class="ln"> 5</span>        <span class="o">...</span>
+<span class="ln"> 6</span>		<span class="c1">//nextPollTimeoutMillis
+</span><span class="ln"> 7</span><span class="c1"></span>        <span class="c1">//1.取值为-1，一直阻塞不会超时，mMessages为空，知道下一次唤醒
+</span><span class="ln"> 8</span><span class="c1"></span>        <span class="c1">//2.取值为0，不会阻塞，当前时间和下一个消息时间相同，立即处理
+</span><span class="ln"> 9</span><span class="c1"></span>        <span class="c1">//3.取值为大于0，最长阻塞为nextPollTimeoutMillis（超时机制），一般是当前时间早于下一个消息
+</span><span class="ln">10</span><span class="c1"></span>        <span class="n">nativePollOnce</span><span class="o">(</span><span class="n">ptr</span><span class="o">,</span> <span class="n">nextPollTimeoutMillis</span><span class="o">);</span>
+<span class="ln">11</span>
+<span class="ln">12</span>        <span class="kd">synchronized</span> <span class="o">(</span><span class="k">this</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">13</span>            <span class="c1">// Try to retrieve the next message.  Return if found.
+</span><span class="ln">14</span><span class="c1"></span>            <span class="kd">final</span> <span class="kt">long</span> <span class="n">now</span> <span class="o">=</span> <span class="n">SystemClock</span><span class="o">.</span><span class="na">uptimeMillis</span><span class="o">();</span>
+<span class="ln">15</span>            <span class="n">Message</span> <span class="n">prevMsg</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">16</span>            <span class="n">Message</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">mMessages</span><span class="o">;</span>
+<span class="ln">17</span>            <span class="c1">//同步屏障起作用
+</span><span class="ln">18</span><span class="c1"></span>            <span class="c1">//判断除了第一个同步屏障之后的第一个非同步消息出现，退出循环
+</span><span class="ln">19</span><span class="c1"></span>            <span class="k">if</span> <span class="o">(</span><span class="n">msg</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">msg</span><span class="o">.</span><span class="na">target</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">20</span>                <span class="c1">// Stalled by a barrier.  Find the next asynchronous message in the queue.
+</span><span class="ln">21</span><span class="c1"></span>                <span class="k">do</span> <span class="o">{</span>
+<span class="ln">22</span>                    <span class="n">prevMsg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">;</span>
+<span class="ln">23</span>                    <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="na">next</span><span class="o">;</span>
+<span class="ln">24</span>                <span class="o">}</span> <span class="k">while</span> <span class="o">(</span><span class="n">msg</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">msg</span><span class="o">.</span><span class="na">isAsynchronous</span><span class="o">());</span>
+<span class="ln">25</span>            <span class="o">}</span>
+<span class="ln">26</span>            <span class="k">if</span> <span class="o">(</span><span class="n">msg</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">27</span>                <span class="c1">//同步消息和异步消息都需要判断是否需要设置阻塞时间
+</span><span class="ln">28</span><span class="c1"></span>                <span class="k">if</span> <span class="o">(</span><span class="n">now</span> <span class="o">&lt;</span> <span class="n">msg</span><span class="o">.</span><span class="na">when</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">29</span>                    <span class="c1">// Next message is not ready.  Set a timeout to wake up when it is ready.
+</span><span class="ln">30</span><span class="c1"></span>                    <span class="c1">//用于计算上面的下一循环nativePollOnce阻塞时间
+</span><span class="ln">31</span><span class="c1"></span>                    <span class="n">nextPollTimeoutMillis</span> <span class="o">=</span> <span class="o">(</span><span class="kt">int</span><span class="o">)</span> <span class="n">Math</span><span class="o">.</span><span class="na">min</span><span class="o">(</span><span class="n">msg</span><span class="o">.</span><span class="na">when</span> <span class="o">-</span> <span class="n">now</span><span class="o">,</span> <span class="n">Integer</span><span class="o">.</span><span class="na">MAX_VALUE</span><span class="o">);</span>
+<span class="ln">32</span>                <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln">33</span>                    <span class="c1">// Got a message.
+</span><span class="ln">34</span><span class="c1"></span>                    <span class="n">mBlocked</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+<span class="ln">35</span>                    <span class="c1">//删除节点操作
+</span><span class="ln">36</span><span class="c1"></span>                    <span class="k">if</span> <span class="o">(</span><span class="n">prevMsg</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">37</span>                        <span class="n">prevMsg</span><span class="o">.</span><span class="na">next</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="na">next</span><span class="o">;</span>
+<span class="ln">38</span>                    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln">39</span>                        <span class="n">mMessages</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="na">next</span><span class="o">;</span>
+<span class="ln">40</span>                    <span class="o">}</span>
+<span class="ln">41</span>                    <span class="n">msg</span><span class="o">.</span><span class="na">next</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">42</span>                    <span class="k">if</span> <span class="o">(</span><span class="n">DEBUG</span><span class="o">)</span> <span class="n">Log</span><span class="o">.</span><span class="na">v</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;Returning message: &#34;</span> <span class="o">+</span> <span class="n">msg</span><span class="o">);</span>
+<span class="ln">43</span>                    <span class="n">msg</span><span class="o">.</span><span class="na">markInUse</span><span class="o">();</span>
+<span class="ln">44</span>                    <span class="k">return</span> <span class="n">msg</span><span class="o">;</span>
+<span class="ln">45</span>                <span class="o">}</span>
+<span class="ln">46</span>            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln">47</span>                <span class="c1">// No more messages.
+</span><span class="ln">48</span><span class="c1"></span>                <span class="c1">//用于复位，没有消息，等待下一次唤醒
+</span><span class="ln">49</span><span class="c1"></span>                <span class="n">nextPollTimeoutMillis</span> <span class="o">=</span> <span class="o">-</span><span class="n">1</span><span class="o">;</span>
+<span class="ln">50</span>            <span class="o">}</span>
+<span class="ln">51</span>            <span class="o">...</span>
+<span class="ln">52</span>    <span class="o">}</span>
+<span class="ln">53</span><span class="o">}</span>
+</code></pre></div><h2 id="关闭移除同步屏障">关闭/移除同步屏障</h2>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="n">MessageQueue</span><span class="o">.</span><span class="na">java</span><span class="err">#</span><span class="n">removeSyncBarrier</span><span class="o">()</span>
+<span class="ln"> 2</span><span class="cm">/*
+</span><span class="ln"> 3</span><span class="cm"> * @hide
+</span><span class="ln"> 4</span><span class="cm"> */</span>
+<span class="ln"> 5</span><span class="c1">//token为上述说明用于管理当前的屏障的唯一标识
+</span><span class="ln"> 6</span><span class="c1"></span><span class="kd">public</span> <span class="kt">void</span> <span class="nf">removeSyncBarrier</span><span class="o">(</span><span class="kt">int</span> <span class="n">token</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 7</span>    <span class="c1">// Remove a sync barrier token from the queue.
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="c1">// If the queue is no longer stalled by a barrier then wake it.
+</span><span class="ln"> 9</span><span class="c1"></span>    <span class="kd">synchronized</span> <span class="o">(</span><span class="k">this</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">10</span>        <span class="n">Message</span> <span class="n">prev</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">11</span>        <span class="n">Message</span> <span class="n">p</span> <span class="o">=</span> <span class="n">mMessages</span><span class="o">;</span>
+<span class="ln">12</span>        <span class="c1">//找到当前屏障
+</span><span class="ln">13</span><span class="c1"></span>        <span class="k">while</span> <span class="o">(</span><span class="n">p</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="o">(</span><span class="n">p</span><span class="o">.</span><span class="na">target</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">||</span> <span class="n">p</span><span class="o">.</span><span class="na">arg1</span> <span class="o">!=</span> <span class="n">token</span><span class="o">))</span> <span class="o">{</span>
+<span class="ln">14</span>            <span class="n">prev</span> <span class="o">=</span> <span class="n">p</span><span class="o">;</span>
+<span class="ln">15</span>            <span class="n">p</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="na">next</span><span class="o">;</span>
+<span class="ln">16</span>        <span class="o">}</span>
+<span class="ln">17</span>        <span class="k">if</span> <span class="o">(</span><span class="n">p</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">18</span>            <span class="k">throw</span> <span class="k">new</span> <span class="n">IllegalStateException</span><span class="o">(</span><span class="s">&#34;The specified message queue synchronization &#34;</span>
+<span class="ln">19</span>                                            <span class="o">+</span> <span class="s">&#34; barrier token has not been posted or has already been removed.&#34;</span><span class="o">);</span>
+<span class="ln">20</span>        <span class="o">}</span>
+<span class="ln">21</span>        <span class="kd">final</span> <span class="kt">boolean</span> <span class="n">needWake</span><span class="o">;</span>
+<span class="ln">22</span>        <span class="c1">//从链表中移除
+</span><span class="ln">23</span><span class="c1"></span>        <span class="k">if</span> <span class="o">(</span><span class="n">prev</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">24</span>            <span class="n">prev</span><span class="o">.</span><span class="na">next</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="na">next</span><span class="o">;</span>
+<span class="ln">25</span>            <span class="n">needWake</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+<span class="ln">26</span>        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln">27</span>            <span class="n">mMessages</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="na">next</span><span class="o">;</span>
+<span class="ln">28</span>            <span class="n">needWake</span> <span class="o">=</span> <span class="n">mMessages</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="n">mMessages</span><span class="o">.</span><span class="na">target</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">29</span>        <span class="o">}</span>
+<span class="ln">30</span>        <span class="c1">//Message的sPool对象池回收消息
+</span><span class="ln">31</span><span class="c1"></span>        <span class="n">p</span><span class="o">.</span><span class="na">recycleUnchecked</span><span class="o">();</span>
+<span class="ln">32</span>
+<span class="ln">33</span>        <span class="c1">// If the loop is quitting then it is already awake.
+</span><span class="ln">34</span><span class="c1"></span>        <span class="c1">// We can assume mPtr != 0 when mQuitting is false.
+</span><span class="ln">35</span><span class="c1"></span>        <span class="c1">//移除屏障，开始唤醒
+</span><span class="ln">36</span><span class="c1"></span>        <span class="k">if</span> <span class="o">(</span><span class="n">needWake</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">mQuitting</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">37</span>            <span class="n">nativeWake</span><span class="o">(</span><span class="n">mPtr</span><span class="o">);</span>
+<span class="ln">38</span>        <span class="o">}</span>
+<span class="ln">39</span>    <span class="o">}</span>
+<span class="ln">40</span><span class="o">}</span>
+</code></pre></div><h1 id="用途">用途</h1>
+<p>Android-Choreographer工作原理</p>
+<h1 id="问题回答">问题回答</h1>
+<p>1.为什么会存在同步屏障</p>
+<p>2.如何去除同步屏障</p>
+<p>3.同步屏障有啥用</p>
+<h1 id="参考文献">参考文献</h1>
+<p><a href="https://blog.csdn.net/start_mao/article/details/98963744">[1] maove, Handler机制——同步屏障, 2019.</a></p>
+<p><a href="https://blog.csdn.net/willway_wang/article/details/108328820?utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromMachineLearnPai2%7Edefault-14.control&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromMachineLearnPai2%7Edefault-14.control">[2] willwaywang6, Android筑基——可视化方式理解 Handler 的同步屏障机制, 2020</a>.</p>
+<p><a href="https://juejin.cn/post/6894206842277199880">[3] 苍耳叔叔, Android-Choreographer工作原理, 2020.</a></p>
+<h1 id="猜你想看">猜你想看</h1>
+<p><a href="https://yangyang48.github.io/2021/08/handler1-looper/">Handler1 Looper</a></p>
+<p><a href="https://yangyang48.github.io/2021/08/handler2-thread/">Handler2 Thread</a></p>
+<p><a href="https://yangyang48.github.io/2021/08/handler4-handlerthread/">Handler4 HandlerThread</a></p>
+<p><a href="https://yangyang48.github.io/2021/08/handler5-intentservice/">Handler5 IntentService</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/android/">Android</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%BA%90%E7%A0%81/">源码</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/framework/">framework</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/08/handler2-thread/" data-tooltip="Handler2 Thread">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/08/handler4-handlerthread/" data-tooltip="Handler4 HandlerThread">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2021 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/08/handler2-thread/" data-tooltip="Handler2 Thread">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/08/handler4-handlerthread/" data-tooltip="Handler4 HandlerThread">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2021%2F08%2Fhandler3-%25E5%2590%258C%25E6%25AD%25A5%25E5%25B1%258F%25E9%259A%259C%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2021%2F08%2Fhandler3-%25E5%2590%258C%25E6%25AD%25A5%25E5%25B1%258F%25E9%259A%259C%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2021%2F08%2Fhandler3-%25E5%2590%258C%25E6%25AD%25A5%25E5%25B1%258F%25E9%259A%259C%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2021\/08\/handler3-%E5%90%8C%E6%AD%A5%E5%B1%8F%E9%9A%9C\/';
+          
+            this.page.identifier = '\/2021\/08\/handler3-%E5%90%8C%E6%AD%A5%E5%B1%8F%E9%9A%9C\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
