@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="RecyclerView，一个强大的控件，既支持纵向滚动，又支持横向滚动。
+应用场景非常广泛，简单说ListView可以做的它可以做，ListView不支持的横向它也可以做。">
+
+
+<meta property="og:description" content="RecyclerView，一个强大的控件，既支持纵向滚动，又支持横向滚动。
+应用场景非常广泛，简单说ListView可以做的它可以做，ListView不支持的横向它也可以做。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Recyclerview使用">
+<meta name="twitter:title" content="Recyclerview使用">
+<meta property="og:url" content="https://yangyang48.github.io/2021/08/recyclerview%E4%BD%BF%E7%94%A8/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2021/08/recyclerview%E4%BD%BF%E7%94%A8/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="RecyclerView，一个强大的控件，既支持纵向滚动，又支持横向滚动。
+应用场景非常广泛，简单说ListView可以做的它可以做，ListView不支持的横向它也可以做。">
+<meta name="twitter:description" content="RecyclerView，一个强大的控件，既支持纵向滚动，又支持横向滚动。
+应用场景非常广泛，简单说ListView可以做的它可以做，ListView不支持的横向它也可以做。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2021-08-23T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2021-08-23T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="RecyclerView">
+    
+      <meta property="article:section" content="2021">
+    
+      <meta property="article:section" content="August">
+    
+  
+  
+    
+      <meta property="article:tag" content="Android">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/recyclerView/recyclerview1_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/recyclerView/recyclerview1_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/recyclerView/recyclerview1_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/recyclerView/recyclerview1_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>Recyclerview使用</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2021/08/recyclerview%E4%BD%BF%E7%94%A8/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/recyclerView/recyclerview1_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      Recyclerview使用
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2021-08-23T00:00:00Z">
+        
+  八月 23, 2021
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/recyclerview">RecyclerView</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2021">2021</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/august">August</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">700 Words|Read in about 4 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>RecyclerView，一个强大的控件，既支持纵向滚动，又支持横向滚动。
+应用场景非常广泛，简单说ListView可以做的它可以做，ListView不支持的横向它也可以做。</p>
+<h1 id="recyclerview使用">Recyclerview使用</h1>
+<p>对于其不仅可以实现和ListView同样的效果</p>
+<p>本文主要是一个RecyclerView的开篇，主要针对RecyclerView空间的使用。至于RecyclerView的观察者模式和缓冲机制，后续会在源码分析持续更新。</p>
+<h1 id="recyclerview的使用说明">RecyclerView的使用说明</h1>
+<p>笔者对于RecyclerView的记忆主要是一个口诀，一类继承，四个方法。</p>
+<p>对于口诀使用的类就是Adapter</p>
+<h2 id="1一类继承">1）一类继承</h2>
+<p>里面MyViewHolder继承 RecyclerView.ViewHolder，并实现RecyclerView.ViewHolder的构造，一般用于findviewbyid绑定控件</p>
+<p>而MyAdapter继承RecyclerView.Adpter&lt;MyAdapter.MyViewHolder&gt;</p>
+<h2 id="2四个方法">2）四个方法</h2>
+<h3 id="一个构造">一个构造</h3>
+<p><strong>一般为有参构造，用于传递参数进来，初始化控件信息</strong></p>
+<p>举例MyAdapter(List&lt; SettingItem &gt; list)</p>
+<h3 id="三个继承">三个继承</h3>
+<p>1)<strong>通过viewType来实现加载不同的布局</strong></p>
+<p>public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType)</p>
+<p>2)<strong>将数据和控件绑定，<em>会在每个子项被滚动到屏幕内时执行</em>，position从0开始</strong></p>
+<p>public void onBindViewHolder(ViewHolder holder, int position)</p>
+<p>3)<strong>多少个item数</strong></p>
+<p>public int getItemCount()</p>
+<h2 id="3外部使用">3）外部使用</h2>
+<p>设置完成之后，在Activity的使用也很简单，如下所示外部设置</p>
+<p><strong>1)RecyclerView获取他的对象</strong>
+RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recycler_view);</p>
+<p><strong>2)LayoutManager用于指定RecyclerView的布局方式，设置layoutManager 的展示方式设置为竖直方向</strong>
+LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+layoutManager .setOrientation(LinearLayoutManager.VERTICAL);
+recyclerView.setLayoutManager(layoutManager);</p>
+<p><strong>3)设置适配器</strong>
+MyAdapter adapter = new MyAdapter(fruitList);
+recyclerView.setAdapter(adapter);</p>
+<h1 id="recyclerview的demo">RecyclerView的demo</h1>
+<h2 id="1settings">1）settings</h2>
+<p>效果图如下</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/recyclerView/recyclerview1.jpg" title="settings效果图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/recyclerView/recyclerview1.jpg"  alt="settings效果图">
+  
+    </a>
+  
+   
+    <span class="caption">settings效果图</span>
+  
+</div>
+
+<h3 id="拆解demo">拆解demo</h3>
+<p>首先是Adapter</p>
+<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="ln"> 1</span><span class="c1">//构造内部类，并使用kotlin的构造函数，继承内部Holder类
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">private</span> <span class="k">inner</span> <span class="k">class</span> <span class="nc">SimpleAdapter</span> <span class="k">constructor</span><span class="p">(</span><span class="n">list</span> <span class="p">:</span><span class="n">List</span><span class="p">&lt;</span><span class="n">SettingItem</span><span class="p">&gt;)</span> <span class="p">:</span> <span class="n">RecyclerView</span><span class="p">.</span><span class="n">Adapter</span><span class="p">&lt;</span><span class="n">SimpleAdapter</span><span class="p">.</span><span class="n">Holder</span><span class="p">&gt;()</span> <span class="p">{</span>
+<span class="ln"> 3</span>        <span class="k">private</span> <span class="k">var</span> <span class="py">mSettingItem</span><span class="p">:</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">SettingItem</span><span class="p">&gt;?</span> <span class="p">=</span> <span class="k">null</span>
+<span class="ln"> 4</span>        <span class="c1">//*一个继承* Holder继承RecyclerView.ViewHolder，并且初始化构造
+</span><span class="ln"> 5</span><span class="c1"></span>        <span class="k">inner</span> <span class="k">class</span> <span class="nc">Holder</span><span class="p">(</span><span class="n">itemView</span><span class="p">:</span> <span class="n">View</span><span class="p">)</span> <span class="p">:</span> <span class="n">RecyclerView</span><span class="p">.</span><span class="n">ViewHolder</span><span class="p">(</span><span class="n">itemView</span><span class="p">){</span>
+<span class="ln"> 6</span>            <span class="k">var</span> <span class="py">textView</span> <span class="p">:</span> <span class="n">TextView</span><span class="p">?</span> <span class="p">=</span> <span class="k">null</span>
+<span class="ln"> 7</span>            <span class="k">var</span> <span class="py">imageView</span> <span class="p">:</span> <span class="n">ImageView</span><span class="p">?</span> <span class="p">=</span> <span class="k">null</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span>            <span class="c1">//Hoder构造器初始化
+</span><span class="ln">10</span><span class="c1"></span>            <span class="k">init</span> <span class="p">{</span>
+<span class="ln">11</span>                <span class="n">textView</span> <span class="p">=</span> <span class="n">itemView</span><span class="p">.</span><span class="n">findViewById</span><span class="p">(</span><span class="n">R</span><span class="p">.</span><span class="n">id</span><span class="p">.</span><span class="n">settingname</span><span class="p">)</span>
+<span class="ln">12</span>                <span class="n">imageView</span> <span class="p">=</span> <span class="n">itemView</span><span class="p">.</span><span class="n">findViewById</span><span class="p">(</span><span class="n">R</span><span class="p">.</span><span class="n">id</span><span class="p">.</span><span class="n">settinginfo</span><span class="p">)</span>
+<span class="ln">13</span>                <span class="n">imageView</span><span class="o">?.</span><span class="n">setOnClickListener</span><span class="p">(</span><span class="n">View</span><span class="p">.</span><span class="n">OnClickListener</span> <span class="p">{</span>
+<span class="ln">14</span>                    <span class="n">Log</span><span class="p">.</span><span class="n">d</span><span class="p">(</span><span class="n">TAG</span><span class="p">,</span> <span class="s2">&#34;-&gt;onclicked imageview&#34;</span><span class="p">)</span>
+<span class="ln">15</span>                    <span class="c1">//可以直接通过getposition获取到postion的值
+</span><span class="ln">16</span><span class="c1"></span>                    <span class="n">Toast</span><span class="p">.</span><span class="n">makeText</span><span class="p">(</span><span class="n">context</span><span class="o">!!</span><span class="p">,</span> <span class="s2">&#34;onclicked imageview pos = </span><span class="si">$position</span><span class="s2">&#34;</span><span class="p">,</span> <span class="n">Toast</span><span class="p">.</span><span class="n">LENGTH_LONG</span><span class="p">).</span><span class="n">show</span><span class="p">()</span>
+<span class="ln">17</span>                <span class="p">})</span>
+<span class="ln">18</span>                <span class="n">itemView</span><span class="o">?.</span><span class="n">setOnClickListener</span><span class="p">(</span><span class="n">View</span><span class="p">.</span><span class="n">OnClickListener</span> <span class="p">{</span>
+<span class="ln">19</span>                    <span class="n">Log</span><span class="p">.</span><span class="n">d</span><span class="p">(</span><span class="n">TAG</span><span class="p">,</span> <span class="s2">&#34;-&gt;onclicked item&#34;</span><span class="p">)</span>
+<span class="ln">20</span>                    <span class="n">Toast</span><span class="p">.</span><span class="n">makeText</span><span class="p">(</span><span class="n">context</span><span class="o">!!</span><span class="p">,</span> <span class="s2">&#34;onclicked item pos = </span><span class="si">$position</span><span class="s2">&#34;</span><span class="p">,</span> <span class="n">Toast</span><span class="p">.</span><span class="n">LENGTH_LONG</span><span class="p">).</span><span class="n">show</span><span class="p">()</span>
+<span class="ln">21</span>                <span class="p">})</span>
+<span class="ln">22</span>            <span class="p">}</span>
+<span class="ln">23</span>
+<span class="ln">24</span>        <span class="p">}</span>
+<span class="ln">25</span>        <span class="c1">//*一个构造*SimpleAdapter构造器初始化，将list传递进来
+</span><span class="ln">26</span><span class="c1"></span>        <span class="k">init</span> <span class="p">{</span>
+<span class="ln">27</span>            <span class="n">mSettingItem</span> <span class="p">=</span> <span class="n">list</span>
+<span class="ln">28</span>        <span class="p">}</span>
+<span class="ln">29</span>        <span class="c1">//*三个方法*加载唯一布局
+</span><span class="ln">30</span><span class="c1"></span>        <span class="k">override</span> <span class="k">fun</span> <span class="nf">onCreateViewHolder</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="n">ViewGroup</span><span class="p">,</span> <span class="n">viewType</span><span class="p">:</span> <span class="n">Int</span><span class="p">):</span> <span class="n">Holder</span> <span class="p">{</span>
+<span class="ln">31</span>            <span class="k">var</span> <span class="py">view</span><span class="p">:</span> <span class="n">View</span> <span class="p">=</span> <span class="n">LayoutInflater</span><span class="p">.</span><span class="n">from</span><span class="p">(</span><span class="n">parent</span><span class="p">.</span><span class="n">context</span><span class="p">).</span><span class="n">inflate</span><span class="p">(</span><span class="n">R</span><span class="p">.</span><span class="n">layout</span><span class="p">.</span><span class="n">item_settings</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="k">false</span><span class="p">)</span>
+<span class="ln">32</span>            <span class="k">var</span> <span class="py">viewHolder</span><span class="p">:</span> <span class="n">Holder</span> <span class="p">=</span> <span class="n">Holder</span><span class="p">(</span><span class="n">view</span><span class="p">)</span>
+<span class="ln">33</span>            <span class="k">return</span> <span class="n">viewHolder</span>
+<span class="ln">34</span>        <span class="p">}</span>
+<span class="ln">35</span>        <span class="c1">//*三个方法*将数据和控件绑定，数据来源于SimpleAdapter构造器
+</span><span class="ln">36</span><span class="c1"></span>        <span class="k">override</span> <span class="k">fun</span> <span class="nf">onBindViewHolder</span><span class="p">(</span><span class="n">holder</span><span class="p">:</span> <span class="n">Holder</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">Int</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">37</span>            <span class="k">var</span> <span class="py">settingItem</span> <span class="p">=</span> <span class="n">mSettingItem</span><span class="o">?.</span><span class="k">get</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+<span class="ln">38</span>            <span class="n">holder</span><span class="p">.</span><span class="n">textView</span><span class="o">?.</span><span class="n">text</span> <span class="p">=</span> <span class="n">settingItem</span><span class="o">?.</span><span class="n">getName</span><span class="p">()</span>
+<span class="ln">39</span>            <span class="n">settingItem</span><span class="o">?.</span><span class="n">getInfo</span><span class="p">()</span><span class="o">?.</span><span class="n">let</span> <span class="p">{</span> <span class="n">holder</span><span class="p">.</span><span class="n">imageView</span><span class="o">?.</span><span class="n">setImageResource</span><span class="p">(</span><span class="k">it</span><span class="p">)</span> <span class="p">}</span>
+<span class="ln">40</span>
+<span class="ln">41</span>        <span class="p">}</span>
+<span class="ln">42</span>        <span class="c1">//*三个方法*设置多少个item数为list长度
+</span><span class="ln">43</span><span class="c1"></span>        <span class="k">override</span> <span class="k">fun</span> <span class="nf">getItemCount</span><span class="p">():</span> <span class="n">Int</span> <span class="p">{</span>
+<span class="ln">44</span>            <span class="k">return</span> <span class="n">mSettingItem</span><span class="o">?.</span><span class="n">let</span> <span class="p">{</span> <span class="k">it</span><span class="p">.</span><span class="n">size</span> <span class="p">}</span> <span class="o">?:</span> <span class="n">run</span> <span class="p">{</span> <span class="m">0</span> <span class="p">}</span>
+<span class="ln">45</span>        <span class="p">}</span>
+<span class="ln">46</span>    <span class="p">}</span>
+</code></pre></div><p>接着拆解外部使用</p>
+<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="ln">1</span><span class="c1">//1)RecyclerView获取他的对象
+</span><span class="ln">2</span><span class="c1"></span><span class="n">recyclerView</span> <span class="p">=</span> <span class="n">findViewById</span><span class="p">(</span><span class="n">R</span><span class="p">.</span><span class="n">id</span><span class="p">.</span><span class="n">moresettings</span><span class="p">)</span>
+<span class="ln">3</span><span class="c1">//2)LayoutManager用于指定RecyclerView的布局方式，展示方式设置为竖直方向
+</span><span class="ln">4</span><span class="c1"></span><span class="k">var</span> <span class="py">ll</span><span class="p">:</span> <span class="n">LinearLayoutManager</span> <span class="p">=</span> <span class="n">LinearLayoutManager</span><span class="p">(</span><span class="k">this</span><span class="p">)</span>
+<span class="ln">5</span><span class="n">ll</span><span class="p">.</span><span class="n">orientation</span> <span class="p">=</span> <span class="n">LinearLayoutManager</span><span class="p">.</span><span class="n">VERTICAL</span>
+<span class="ln">6</span><span class="n">recyclerView</span><span class="o">?.</span><span class="n">layoutManager</span> <span class="p">=</span> <span class="n">ll</span>
+<span class="ln">7</span><span class="c1">//3)设置适配器
+</span><span class="ln">8</span><span class="c1"></span><span class="n">recyclerView</span><span class="o">?.</span><span class="n">adapter</span> <span class="p">=</span> <span class="n">SimpleAdapter</span><span class="p">(</span><span class="n">mList</span><span class="p">)</span>
+</code></pre></div><p>拆解之后就感觉使用会很简单</p>
+<h2 id="2wifisettings">2）wifiSettings</h2>
+<p>效果图如下</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/recyclerView/recyclerview2.jpg" title="wifiSettings效果图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/recyclerView/recyclerview2.jpg"  alt="wifiSettings效果图">
+  
+    </a>
+  
+   
+    <span class="caption">wifiSettings效果图</span>
+  
+</div>
+
+<h3 id="拆解demo-1">拆解demo</h3>
+<p>首先是Adapter</p>
+<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="ln"> 1</span><span class="c1">//构造内部类，并使用kotlin的构造函数，具体的逻辑代码省略部分，因为此demo有多个viewholder，所以不继承使用父类即可
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">private</span> <span class="k">inner</span> <span class="k">class</span> <span class="nc">WifiAdapter</span> <span class="k">internal</span> <span class="k">constructor</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="p">:</span>
+<span class="ln"> 3</span>        <span class="n">RecyclerView</span><span class="p">.</span><span class="n">Adapter</span><span class="p">&lt;</span><span class="n">RecyclerView</span><span class="p">.</span><span class="n">ViewHolder</span><span class="p">&gt;()</span> <span class="p">{</span>
+<span class="ln"> 4</span>        <span class="k">private</span> <span class="k">val</span> <span class="py">inflater</span><span class="p">:</span> <span class="n">LayoutInflater</span> <span class="p">=</span> <span class="n">LayoutInflater</span><span class="p">.</span><span class="n">from</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+<span class="ln"> 5</span>        <span class="c1">//*三个方法*增加一个方法来判断viewholder类型，总共有itemCount个item
+</span><span class="ln"> 6</span><span class="c1"></span>        <span class="c1">//范围从0---itemCount-1，其中下标为0，表示为viewType为2
+</span><span class="ln"> 7</span><span class="c1"></span>        <span class="c1">//下标为1---itemCount-2表示viewType为1
+</span><span class="ln"> 8</span><span class="c1"></span>        <span class="c1">//下标为其他itemCount-1表示viewType为0
+</span><span class="ln"> 9</span><span class="c1"></span>        <span class="k">override</span> <span class="k">fun</span> <span class="nf">getItemViewType</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">Int</span><span class="p">):</span> <span class="n">Int</span> <span class="p">{</span>
+<span class="ln">10</span>            <span class="k">return</span> <span class="k">when</span> <span class="p">(</span><span class="n">position</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">11</span>                <span class="m">0</span> <span class="o">-&gt;</span> <span class="m">2</span>
+<span class="ln">12</span>                <span class="n">itemCount</span> <span class="p">-</span> <span class="m">1</span> <span class="o">-&gt;</span> <span class="m">1</span>
+<span class="ln">13</span>                <span class="k">else</span> <span class="o">-&gt;</span> <span class="m">0</span>
+<span class="ln">14</span>            <span class="p">}</span>
+<span class="ln">15</span>        <span class="p">}</span>
+<span class="ln">16</span>        <span class="c1">//*三个方法*加载布局,这里默认有三个布局，根据上面的getItemViewType的返回值viewtype来判断
+</span><span class="ln">17</span><span class="c1"></span>        <span class="c1">//viewType为0 ,布局就是数据布局，这里代表wifi
+</span><span class="ln">18</span><span class="c1"></span>        <span class="c1">//viewType为1 ,布局就是数据布局的下面布局，这里代表手动添加wifi
+</span><span class="ln">19</span><span class="c1"></span>        <span class="c1">//viewType为2 ,布局就是数据布局的上面布局，这里代表关闭/打开wifi
+</span><span class="ln">20</span><span class="c1"></span>        <span class="k">override</span> <span class="k">fun</span> <span class="nf">onCreateViewHolder</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="n">ViewGroup</span><span class="p">,</span> <span class="n">viewType</span><span class="p">:</span> <span class="n">Int</span><span class="p">):</span> <span class="n">RecyclerView</span><span class="p">.</span><span class="n">ViewHolder</span> <span class="p">{</span>
+<span class="ln">21</span>            <span class="k">return</span> <span class="k">when</span> <span class="p">(</span><span class="n">viewType</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">22</span>                <span class="m">0</span> <span class="o">-&gt;</span>
+<span class="ln">23</span>                    <span class="n">ItemViewHolder</span><span class="p">(</span><span class="n">inflater</span><span class="p">.</span><span class="n">inflate</span><span class="p">(</span><span class="n">R</span><span class="p">.</span><span class="n">layout</span><span class="p">.</span><span class="n">item_access_point_2</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="k">false</span><span class="p">))</span>
+<span class="ln">24</span>                <span class="m">1</span> <span class="o">-&gt;</span>
+<span class="ln">25</span>                    <span class="n">ManualViewHolder</span><span class="p">(</span>
+<span class="ln">26</span>                        <span class="n">inflater</span><span class="p">.</span><span class="n">inflate</span><span class="p">(</span>
+<span class="ln">27</span>                            <span class="n">R</span><span class="p">.</span><span class="n">layout</span><span class="p">.</span><span class="n">item_access_point_manual</span><span class="p">,</span>
+<span class="ln">28</span>                            <span class="n">parent</span><span class="p">,</span>
+<span class="ln">29</span>                            <span class="k">false</span>
+<span class="ln">30</span>                        <span class="p">)</span>
+<span class="ln">31</span>                    <span class="p">)</span>
+<span class="ln">32</span>                <span class="m">2</span> <span class="o">-&gt;</span> <span class="p">{</span>
+<span class="ln">33</span>                    <span class="k">val</span> <span class="py">holder</span> <span class="p">=</span> <span class="n">WifiSwitchViewHolder</span><span class="p">(</span>
+<span class="ln">34</span>                        <span class="n">inflater</span><span class="p">.</span><span class="n">inflate</span><span class="p">(</span>
+<span class="ln">35</span>                            <span class="n">R</span><span class="p">.</span><span class="n">layout</span><span class="p">.</span><span class="n">item_wifi_switch</span><span class="p">,</span>
+<span class="ln">36</span>                            <span class="n">parent</span><span class="p">,</span>
+<span class="ln">37</span>                            <span class="k">false</span>
+<span class="ln">38</span>                        <span class="p">)</span>
+<span class="ln">39</span>                    <span class="p">)</span>
+<span class="ln">40</span>                    <span class="o">..</span><span class="p">.</span>
+<span class="ln">41</span>                <span class="p">}</span>
+<span class="ln">42</span>                <span class="k">else</span> <span class="o">-&gt;</span>
+<span class="ln">43</span>                    <span class="n">ItemViewHolder</span><span class="p">(</span><span class="n">inflater</span><span class="p">.</span><span class="n">inflate</span><span class="p">(</span><span class="n">R</span><span class="p">.</span><span class="n">layout</span><span class="p">.</span><span class="n">item_access_point_2</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="k">false</span><span class="p">))</span>
+<span class="ln">44</span>            <span class="p">}</span>
+<span class="ln">45</span>        <span class="p">}</span>
+<span class="ln">46</span>        <span class="c1">//*三个方法*将数据和控件绑定，数据来源于scans
+</span><span class="ln">47</span><span class="c1"></span>        <span class="k">override</span> <span class="k">fun</span> <span class="nf">onBindViewHolder</span><span class="p">(</span><span class="n">holder</span><span class="p">:</span> <span class="n">RecyclerView</span><span class="p">.</span><span class="n">ViewHolder</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">Int</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">48</span>            <span class="k">if</span> <span class="p">(</span><span class="n">holder</span> <span class="k">is</span> <span class="n">ItemViewHolder</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">49</span>                <span class="n">scans</span><span class="o">?.</span><span class="k">get</span><span class="p">(</span><span class="n">position</span> <span class="p">-</span> <span class="m">1</span><span class="p">)</span><span class="o">?.</span><span class="n">let</span> <span class="p">{</span> <span class="n">scan</span> <span class="o">-&gt;</span>
+<span class="ln">50</span>                    <span class="n">holder</span><span class="p">.</span><span class="n">bind</span><span class="p">(</span><span class="n">scan</span><span class="p">)</span>
+<span class="ln">51</span>                <span class="p">}</span>
+<span class="ln">52</span>            <span class="p">}</span>
+<span class="ln">53</span>        <span class="p">}</span>
+<span class="ln">54</span>        <span class="c1">//*三个方法*设置多少个item数，wifi打开为scans.size + 2，wifi关闭为1
+</span><span class="ln">55</span><span class="c1"></span>        <span class="k">override</span> <span class="k">fun</span> <span class="nf">getItemCount</span><span class="p">():</span> <span class="n">Int</span> <span class="p">{</span>
+<span class="ln">56</span>            <span class="k">val</span> <span class="py">isWifiEnabled</span> <span class="p">=</span> <span class="n">wifiSwitch</span><span class="o">?.</span><span class="n">isChecked</span> <span class="o">==</span> <span class="k">true</span>
+<span class="ln">57</span>            <span class="k">return</span> <span class="k">if</span> <span class="p">(</span><span class="n">isWifiEnabled</span><span class="p">)</span> <span class="p">(</span><span class="n">scans</span><span class="o">?.</span><span class="n">size</span> <span class="o">?:</span> <span class="m">0</span><span class="p">)</span> <span class="p">+</span> <span class="m">2</span> <span class="k">else</span> <span class="m">1</span>
+<span class="ln">58</span>        <span class="p">}</span>
+<span class="ln">59</span>        <span class="c1">//*一个继承* ManualViewHolder继承RecyclerView.ViewHolder,并且初始化构造
+</span><span class="ln">60</span><span class="c1"></span>        <span class="k">internal</span> <span class="k">inner</span> <span class="k">class</span> <span class="nc">ManualViewHolder</span><span class="p">(</span><span class="n">itemView</span><span class="p">:</span> <span class="n">View</span><span class="p">)</span> <span class="p">:</span> <span class="n">RecyclerView</span><span class="p">.</span><span class="n">ViewHolder</span><span class="p">(</span><span class="n">itemView</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">61</span>            <span class="k">init</span> <span class="p">{</span>
+<span class="ln">62</span>                <span class="n">itemView</span><span class="p">.</span><span class="n">setOnClickListener</span> <span class="p">{</span>
+<span class="ln">63</span>                    <span class="n">handleAddManual</span><span class="p">()</span>
+<span class="ln">64</span>                <span class="p">}</span>
+<span class="ln">65</span>            <span class="p">}</span>
+<span class="ln">66</span>        <span class="p">}</span>
+<span class="ln">67</span>        <span class="c1">//*一个继承* WifiSwitchViewHolder继承RecyclerView.ViewHolder
+</span><span class="ln">68</span><span class="c1"></span>        <span class="k">internal</span> <span class="k">inner</span> <span class="k">class</span> <span class="nc">WifiSwitchViewHolder</span><span class="p">(</span><span class="n">itemView</span><span class="p">:</span> <span class="n">View</span><span class="p">)</span> <span class="p">:</span>
+<span class="ln">69</span>            <span class="n">RecyclerView</span><span class="p">.</span><span class="n">ViewHolder</span><span class="p">(</span><span class="n">itemView</span><span class="p">)</span>
+<span class="ln">70</span>        <span class="c1">//*一个继承* ItemViewHolder继承RecyclerView.ViewHolder,并且初始化构造
+</span><span class="ln">71</span><span class="c1"></span>        <span class="k">internal</span> <span class="k">inner</span> <span class="k">class</span> <span class="nc">ItemViewHolder</span><span class="p">(</span><span class="n">itemView</span><span class="p">:</span> <span class="n">View</span><span class="p">)</span> <span class="p">:</span> <span class="n">RecyclerView</span><span class="p">.</span><span class="n">ViewHolder</span><span class="p">(</span><span class="n">itemView</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">72</span>            <span class="k">private</span> <span class="k">val</span> <span class="py">icon</span><span class="p">:</span> <span class="n">ImageView</span> <span class="p">=</span> <span class="n">itemView</span><span class="p">.</span><span class="n">findViewById</span><span class="p">(</span><span class="n">R</span><span class="p">.</span><span class="n">id</span><span class="p">.</span><span class="n">icon</span><span class="p">)</span>
+<span class="ln">73</span>            <span class="k">private</span> <span class="k">val</span> <span class="py">ssid</span><span class="p">:</span> <span class="n">TextView</span> <span class="p">=</span> <span class="n">itemView</span><span class="p">.</span><span class="n">findViewById</span><span class="p">(</span><span class="n">R</span><span class="p">.</span><span class="n">id</span><span class="p">.</span><span class="n">ssid</span><span class="p">)</span>
+<span class="ln">74</span>            <span class="k">private</span> <span class="k">val</span> <span class="py">status</span><span class="p">:</span> <span class="n">TextView</span> <span class="p">=</span> <span class="n">itemView</span><span class="p">.</span><span class="n">findViewById</span><span class="p">(</span><span class="n">R</span><span class="p">.</span><span class="n">id</span><span class="p">.</span><span class="n">status</span><span class="p">)</span>
+<span class="ln">75</span>            <span class="k">private</span> <span class="k">val</span> <span class="py">info</span><span class="p">:</span> <span class="n">ImageView</span> <span class="p">=</span> <span class="n">itemView</span><span class="p">.</span><span class="n">findViewById</span><span class="p">(</span><span class="n">R</span><span class="p">.</span><span class="n">id</span><span class="p">.</span><span class="n">info</span><span class="p">)</span>
+<span class="ln">76</span>
+<span class="ln">77</span>            <span class="k">init</span> <span class="p">{</span>
+<span class="ln">78</span>                <span class="n">itemView</span><span class="p">.</span><span class="n">setOnClickListener</span> <span class="p">{</span> <span class="n">handleOnItemClick</span><span class="p">(</span><span class="n">scans</span><span class="o">!!</span><span class="p">[</span><span class="k">this</span><span class="nd">@ItemViewHolder</span><span class="p">.</span><span class="n">layoutPosition</span> <span class="p">-</span> <span class="m">1</span><span class="p">])</span> <span class="p">}</span>
+<span class="ln">79</span>                <span class="n">info</span><span class="p">.</span><span class="n">setOnClickListener</span> <span class="p">{</span> <span class="n">handleOpenWifiInfo</span><span class="p">(</span><span class="n">scans</span><span class="o">!!</span><span class="p">[</span><span class="k">this</span><span class="nd">@ItemViewHolder</span><span class="p">.</span><span class="n">layoutPosition</span> <span class="p">-</span> <span class="m">1</span><span class="p">])</span> <span class="p">}</span>
+<span class="ln">80</span>            <span class="p">}</span>
+<span class="ln">81</span>        <span class="p">}</span>
+<span class="ln">82</span>    <span class="p">}</span>
+</code></pre></div><p>接着拆解外部使用</p>
+<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="ln"> 1</span><span class="k">private</span> <span class="k">var</span> <span class="py">adapter</span><span class="p">:</span> <span class="n">WifiAdapter</span><span class="p">?</span> <span class="p">=</span> <span class="n">nul</span> 
+<span class="ln"> 2</span><span class="n">adapter</span> <span class="p">=</span> <span class="n">context</span><span class="o">?.</span><span class="n">let</span> <span class="p">{</span> <span class="n">WifiAdapter</span><span class="p">(</span><span class="k">it</span><span class="p">)</span> <span class="p">}</span>
+<span class="ln"> 3</span><span class="c1">//1)RecyclerView获取他的对象
+</span><span class="ln"> 4</span><span class="c1"></span><span class="k">val</span> <span class="py">list</span> <span class="p">=</span><span class="n">findViewById</span><span class="p">&lt;</span><span class="n">RecyclerView</span><span class="p">&gt;(</span><span class="n">R</span><span class="p">.</span><span class="n">id</span><span class="p">.</span><span class="n">wifi_list</span><span class="p">)</span>
+<span class="ln"> 5</span><span class="c1">//2)设置展示方式，这里将item之间添加横线，默认方向为竖向
+</span><span class="ln"> 6</span><span class="c1"></span><span class="n">list</span><span class="p">.</span><span class="n">addItemDecoration</span><span class="p">(</span>
+<span class="ln"> 7</span>    <span class="n">DividerItemDecoration</span><span class="p">.</span><span class="n">Builder</span><span class="p">(</span><span class="n">list</span><span class="p">.</span><span class="n">context</span><span class="p">)</span>
+<span class="ln"> 8</span>    <span class="p">.</span><span class="n">setPadding</span><span class="p">(</span><span class="n">resources</span><span class="p">.</span><span class="n">getDimensionPixelSize</span><span class="p">(</span><span class="n">R</span><span class="p">.</span><span class="n">dimen</span><span class="p">.</span><span class="n">dp_40</span><span class="p">))</span>
+<span class="ln"> 9</span>    <span class="p">.</span><span class="n">setDividerColor</span><span class="p">(</span><span class="n">ContextCompat</span><span class="p">.</span><span class="n">getColor</span><span class="p">(</span><span class="n">list</span><span class="p">.</span><span class="n">context</span><span class="p">,</span> <span class="n">R</span><span class="p">.</span><span class="n">color</span><span class="p">.</span><span class="n">dividerLight</span><span class="p">))</span>
+<span class="ln">10</span>    <span class="p">.</span><span class="n">setDividerWidth</span><span class="p">(</span><span class="n">resources</span><span class="p">.</span><span class="n">getDimensionPixelSize</span><span class="p">(</span><span class="n">R</span><span class="p">.</span><span class="n">dimen</span><span class="p">.</span><span class="n">dp_1</span><span class="p">))</span>
+<span class="ln">11</span>    <span class="p">.</span><span class="n">build</span><span class="p">()</span>
+<span class="ln">12</span><span class="p">)</span>
+<span class="ln">13</span><span class="c1">//4)设置适配器
+</span><span class="ln">14</span><span class="c1"></span><span class="n">list</span><span class="p">.</span><span class="n">adapter</span> <span class="p">=</span> <span class="n">adapter</span>
+</code></pre></div><h2 id="整理wifisettingskt">整理wifisettings.kt</h2>
+<p>主要流程如下</p>
+<p>1.布局加载</p>
+<p>2.数据加载</p>
+<p>3.notify更新</p>
+<h1 id="总结">总结</h1>
+<p>RecyclerView的使用已经完结，主要针对具体demo分析如何去快速的上手使用，由于RecyclerView的功能非常强大，其他功能各位宝宝可以自行探索。</p>
+<p><a href="https://github.com/YangYang48/project/tree/master/MyRecyclerView">本文所有实例代码下载</a></p>
+<h1 id="猜你喜欢">猜你喜欢</h1>
+<p><a href="">recyclerview观察者模式</a></p>
+<p><a href="">recyclerview缓存机制</a></p>
+<h1 id="参考">参考</h1>
+<p><a href="http://frank-zhu.github.io/android/2015/01/16/android-recyclerview-part-1/">[1] Frank-Zhu, RecyclerView使用详解(二), 2015.</a></p>
+<p><a href="https://blog.csdn.net/nishuoniaiwoma/article/details/108350761">[2] Mr.杨__一个刚入行的码农, RecyclerView的基本使用, 2020.</a></p>
+<p><a href="https://www.imooc.com/article/68704">[3]sean_depp, Android RecyclerView从入门到玩坏, 2018.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/android/">Android</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/08/handler1-looper/" data-tooltip="Handler1 Looper">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2021 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/08/handler1-looper/" data-tooltip="Handler1 Looper">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2021%2F08%2Frecyclerview%25E4%25BD%25BF%25E7%2594%25A8%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2021%2F08%2Frecyclerview%25E4%25BD%25BF%25E7%2594%25A8%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2021%2F08%2Frecyclerview%25E4%25BD%25BF%25E7%2594%25A8%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2021\/08\/recyclerview%E4%BD%BF%E7%94%A8\/';
+          
+            this.page.identifier = '\/2021\/08\/recyclerview%E4%BD%BF%E7%94%A8\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
