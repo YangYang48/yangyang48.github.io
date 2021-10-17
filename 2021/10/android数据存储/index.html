@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="如果我需要在音视频app中的登录界面记住账号密码，并且在音视频的传输过程中，将编码后的mp4文件和aac文件保存，这个就需要用到Android数据存储。">
+
+
+<meta property="og:description" content="如果我需要在音视频app中的登录界面记住账号密码，并且在音视频的传输过程中，将编码后的mp4文件和aac文件保存，这个就需要用到Android数据存储。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android数据存储">
+<meta name="twitter:title" content="Android数据存储">
+<meta property="og:url" content="https://yangyang48.github.io/2021/10/android%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2021/10/android%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="如果我需要在音视频app中的登录界面记住账号密码，并且在音视频的传输过程中，将编码后的mp4文件和aac文件保存，这个就需要用到Android数据存储。">
+<meta name="twitter:description" content="如果我需要在音视频app中的登录界面记住账号密码，并且在音视频的传输过程中，将编码后的mp4文件和aac文件保存，这个就需要用到Android数据存储。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2021-10-17T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2021-10-17T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="ShraePreference">
+    
+      <meta property="article:section" content="SQLite">
+    
+      <meta property="article:section" content="2021">
+    
+      <meta property="article:section" content="August">
+    
+  
+  
+    
+      <meta property="article:tag" content="Android">
+    
+      <meta property="article:tag" content="datastorage">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/datastorage/datastorage_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/datastorage/datastorage_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/datastorage/datastorage_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/datastorage/datastorage_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>Android数据存储</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2021/10/android%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/datastorage/datastorage_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      Android数据存储
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2021-10-17T00:00:00Z">
+        
+  十月 17, 2021
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/shraepreference">ShraePreference</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/sqlite">SQLite</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2021">2021</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/august">August</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">300 Words|Read in about 2 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>如果我需要在音视频app中的登录界面记住账号密码，并且在音视频的传输过程中，将编码后的mp4文件和aac文件保存，这个就需要用到Android数据存储。</p>
+<h1 id="android数据存储">Android数据存储</h1>
+<p>目前主流的关于android的数据存储有五种：ShraePreference、文件SQLite数据库、文件存储数据、ContentProvider、网络存储数据。</p>
+<table>
+<thead>
+<tr>
+<th>类型名称</th>
+<th>位置</th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SharedPreferences</td>
+<td>/data/data/appid/shared_prefs</td>
+<td>xml文件形式存储在本地，程序卸载后会也会一并被清除</td>
+<td>不适合大量的数据存储，多线程和跨进程无法保证</td>
+</tr>
+<tr>
+<td>SQLite数据库</td>
+<td>/data/data/appid/databases</td>
+<td>可以轻量级的操作增删改查</td>
+<td>读写操作容易阻塞或者出错</td>
+</tr>
+<tr>
+<td>文件存储</td>
+<td>外部存储/sdcard <!-- raw HTML omitted -->内部存储/data/data/appid/files 和 /data/data/appid/cache</td>
+<td>前者：大量储存图片，音频，视频，文档<!-- raw HTML omitted -->后者：app卸载后一并删除</td>
+<td>前者：app卸载需要手动删除<!-- raw HTML omitted -->后者：内存有限不能储存太多数据</td>
+</tr>
+<tr>
+<td>ContentProvider</td>
+<td>没有具体位置</td>
+<td>用于跨进程之间数据交互，数据交互提供了一个安全的增删改查环境</td>
+<td>一般出于安全原因，不会把数据提供给第三方App使用，用得不多</td>
+</tr>
+<tr>
+<td>网络存储</td>
+<td>没有具体位置</td>
+<td>不用担心内存问题</td>
+<td>完全依赖于网络</td>
+</tr>
+</tbody>
+</table>
+<p>本文主要针对前两种进行说明，文件存储这个类似于c中写文件不再展开，ContentProvider作为四大组件之一，后续会单独详解，网络存储也会在接下来的缓冲篇中梳理。</p>
+<h1 id="shraepreference">ShraePreference</h1>
+<p>SharedPreferences，它是一个轻量级的xml文件，用于保存k-v信息，通常包括一些username，passwd等信息的本地存储。这里边可以通过连接adb，查看到shared_prefs目录，当然可以在不需要root的情况下进行映射</p>
+<blockquote>
+<p>1.工程目录下AndroidManifest.xml中添加android:debuggable=&ldquo;true&rdquo;</p>
+<p>2.用命令run-as com.example.mydatastorage 通过映射方式来打开/data/data/包名/ 目录下文件</p>
+<p>注：这里虽然列出的是包名，但实际上只需要appid即可，类似debug和release版本虽然都是在同一个包名下，但是我的appid可以是不同的。上述操作只是为了查看不代表原来没有进行映射就没有这些文件，类似磁场电场。</p>
+</blockquote>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/datastorage/datastorage_1.png" title=" com.example.mydatastorage目录图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/datastorage/datastorage_1.png"  alt=" com.example.mydatastorage目录图">
+  
+    </a>
+  
+   
+    <span class="caption"> com.example.mydatastorage目录图</span>
+  
+</div>
+
+<h2 id="常用操作">常用操作</h2>
+<p>在Android中的操作比较简单</p>
+<blockquote>
+<p>1.初始化sp，生成一个my_shared_preferences.xml文件</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//这里边的第一个参数，指的是只能被当前应用访问，文件不存在创建，存在覆盖
+</span><span class="ln">2</span><span class="c1">//MODE_APPEND 只能被当前应用访问，文件不存在创建，存在追加
+</span><span class="ln">3</span><span class="c1">//像MODE_WORLD_READABLE和MODE_WORLD_WRITEABLE都被废弃，即跨应用已经不推荐使用
+</span><span class="ln">4</span><span class="c1"></span><span class="n">SharedPreferences</span> <span class="n">sp</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getSharedPreferences</span><span class="o">(</span><span class="s">&#34;my_shared_preferences&#34;</span><span class="o">,</span> <span class="n">Context</span><span class="o">.</span><span class="na">MODE_PRIVATE</span><span class="o">)</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/datastorage/datastorage_7.png" title=" Context参数图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/datastorage/datastorage_7.png"  alt=" Context参数图">
+  
+    </a>
+  
+   
+    <span class="caption"> Context参数图</span>
+  
+</div>
+
+<p>2.插入k-v键值</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="n">SharedPreferences</span><span class="o">.</span><span class="na">Editor</span> <span class="n">edit</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="na">edit</span><span class="o">();</span>
+<span class="ln">2</span><span class="c1">//通过editor对象写入数据
+</span><span class="ln">3</span><span class="c1"></span><span class="n">edit</span><span class="o">.</span><span class="na">putString</span><span class="o">(</span><span class="s">&#34;username&#34;</span><span class="o">,</span><span class="s">&#34;passwd&#34;</span><span class="o">);</span>
+<span class="ln">4</span><span class="c1">//提交数据存入到xml文件中
+</span><span class="ln">5</span><span class="c1"></span><span class="n">edit</span><span class="o">.</span><span class="na">commit</span><span class="o">();</span>
+</code></pre></div><p>3.读取k-v键值</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//这里只考虑k-v都为String类
+</span><span class="ln">2</span><span class="c1"></span><span class="n">String</span> <span class="n">value</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="na">getString</span><span class="o">(</span><span class="s">&#34;name&#34;</span><span class="o">,</span><span class="s">&#34;&#34;</span><span class="o">);</span>
+</code></pre></div></blockquote>
+<p>因为考虑到这里用到了账号密码，密码不允许明文保存，一般可以通到一些加密手段，这里使用的是多次md5值得加密手法，解密用的是输入的数做同样的加密去对比原先保存加密的字符串是否相同，相同则认为是相同的密码。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/datastorage/datastorage_5.png" title="MD5在线加密图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/datastorage/datastorage_5.png"  alt="MD5在线加密图">
+  
+    </a>
+  
+   
+    <span class="caption">MD5在线加密图</span>
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/datastorage/datastorage_6.png" title="xml中的k-v对应值" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/datastorage/datastorage_6.png"  alt="xml中的k-v对应值">
+  
+    </a>
+  
+   
+    <span class="caption">xml中的k-v对应值</span>
+  
+</div>
+
+<h2 id="常见的封装">常见的封装</h2>
+<p>这里边主要是用到两个封装，一个是来自讯飞的封装ConfigUtils.kt，一个是来自鸿洋的封装SPUtils.kt，前者还加入了xml键值对的监听。具体可以看一下源码是如何封装的，这里不展开描述，原理大同小异。</p>
+<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="ln">1</span><span class="c1">//ConfigUtils.kt
+</span><span class="ln">2</span><span class="c1">//1.初始化调用 初始化配置文件
+</span><span class="ln">3</span><span class="c1"></span><span class="n">ConfigUtils</span><span class="p">.</span><span class="k">init</span><span class="p">(</span><span class="k">this</span><span class="p">)</span>
+<span class="ln">4</span><span class="c1">//2.插入k-v键值
+</span><span class="ln">5</span><span class="c1"></span><span class="n">ConfigUtils</span><span class="p">.</span><span class="n">putString</span><span class="p">(</span><span class="n">strname</span><span class="p">,</span> <span class="n">strpasswd</span><span class="p">)</span>
+<span class="ln">6</span><span class="c1">//3.读取k-v键值
+</span><span class="ln">7</span><span class="c1"></span><span class="n">ConfigUtils</span><span class="p">.</span><span class="n">getString</span><span class="p">(</span><span class="n">strname</span><span class="p">,</span> <span class="s2">&#34;&#34;</span><span class="p">)</span>
+<span class="ln">8</span><span class="c1">//4.关闭xml读写
+</span><span class="ln">9</span><span class="c1"></span><span class="n">ConfigUtils</span><span class="p">.</span><span class="n">destroy</span><span class="p">()</span>
+</code></pre></div><div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="ln">1</span><span class="c1">//SPUtils.kt
+</span><span class="ln">2</span><span class="c1">//1.插入k-v键值
+</span><span class="ln">3</span><span class="c1"></span><span class="n">SPUtils</span><span class="p">.</span><span class="n">put</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">strname</span><span class="p">,</span> <span class="n">strpasswd</span><span class="p">)</span>
+<span class="ln">4</span><span class="c1">//2.读取k-v键值
+</span><span class="ln">5</span><span class="c1"></span><span class="n">SPUtils</span><span class="p">.</span><span class="k">get</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">strname</span><span class="p">,</span> <span class="s2">&#34;&#34;</span><span class="p">)</span>
+</code></pre></div><h1 id="sqlite">SQLite</h1>
+<p>这个就相当于Android端的数据库,目前内置的SQLite是SQLite3</p>
+<h2 id="常用操作-1">常用操作</h2>
+<blockquote>
+<p>1.创建一个类，用来继承SQLiteOpenHelper</p>
+<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="ln"> 1</span><span class="c1">//SQLite支持五种数据类型:NULL,INTEGER,REAL(浮点数),TEXT(字符串文本)和BLOB(二进制对象)
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">class</span> <span class="nc">SQLiteUtils</span><span class="p">(</span>
+<span class="ln"> 3</span>    <span class="n">context</span><span class="p">:</span> <span class="n">Context</span><span class="p">?,</span>
+<span class="ln"> 4</span>    <span class="n">name</span><span class="p">:</span> <span class="n">String</span><span class="p">?,</span>
+<span class="ln"> 5</span>    <span class="n">factory</span><span class="p">:</span> <span class="n">SQLiteDatabase</span><span class="p">.</span><span class="n">CursorFactory</span><span class="p">?,</span>
+<span class="ln"> 6</span>    <span class="n">version</span><span class="p">:</span> <span class="n">Int</span>
+<span class="ln"> 7</span><span class="p">)</span> <span class="p">:</span> <span class="n">SQLiteOpenHelper</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">factory</span><span class="p">,</span> <span class="n">version</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 8</span>    <span class="c1">//用于创建一个数据库，创建之后有personid和name两个字段，前者类型为INTEGER，后者类型是VARCHAR(20)
+</span><span class="ln"> 9</span><span class="c1"></span>    <span class="k">override</span> <span class="k">fun</span> <span class="nf">onCreate</span><span class="p">(</span><span class="n">db</span><span class="p">:</span> <span class="n">SQLiteDatabase</span><span class="p">?)</span> <span class="p">{</span>
+<span class="ln">10</span>        <span class="n">db</span><span class="o">?.</span><span class="n">execSQL</span><span class="p">(</span><span class="s2">&#34;CREATE TABLE person(personid INTEGER PRIMARY KEY AUTOINCREMENT,name VARCHAR(20))&#34;</span><span class="p">)</span>
+<span class="ln">11</span>    <span class="p">}</span>
+<span class="ln">12</span>	<span class="c1">//一般软件版本号改变的时候会调用
+</span><span class="ln">13</span><span class="c1"></span>    <span class="k">override</span> <span class="k">fun</span> <span class="nf">onUpgrade</span><span class="p">(</span><span class="n">db</span><span class="p">:</span> <span class="n">SQLiteDatabase</span><span class="p">?,</span> <span class="n">oldVersion</span><span class="p">:</span> <span class="n">Int</span><span class="p">,</span> <span class="n">newVersion</span><span class="p">:</span> <span class="n">Int</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">14</span>        <span class="n">db</span><span class="o">?.</span><span class="n">execSQL</span><span class="p">(</span><span class="s2">&#34;ALTER TABLE person ADD phone VARCHAR(12) &#34;</span> <span class="p">+</span> <span class="n">NULL</span><span class="p">)</span>
+<span class="ln">15</span>    <span class="p">}</span>
+<span class="ln">16</span><span class="p">}</span>
+</code></pre></div><p>2.对数据库操作，增删改查（有两种形式Android自带，和sql语句都可以使用）</p>
+<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="ln"> 1</span><span class="c1">//数据库操作-数据插入
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">val</span> <span class="py">values1</span> <span class="p">=</span> <span class="n">ContentValues</span><span class="p">()</span>
+<span class="ln"> 3</span><span class="n">values1</span><span class="p">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&#34;name&#34;</span><span class="p">,</span> <span class="s2">&#34;yangyang48,NO </span><span class="si">$i</span><span class="s2"> SQLIte data&#34;</span><span class="p">)</span>
+<span class="ln"> 4</span><span class="c1">//参数依次是：表名，强行插入null值得数据列的列名，一行记录的数据
+</span><span class="ln"> 5</span><span class="c1"></span><span class="n">db</span><span class="o">?.</span><span class="n">insert</span><span class="p">(</span><span class="s2">&#34;person&#34;</span><span class="p">,</span> <span class="k">null</span><span class="p">,</span> <span class="n">values1</span><span class="p">)</span>
+<span class="ln"> 6</span><span class="c1">//数据库操作-数据查询，通过轮询的方式将他们字符串拼接打印
+</span><span class="ln"> 7</span><span class="c1"></span> <span class="n">sb</span> <span class="p">=</span> <span class="n">StringBuilder</span><span class="p">()</span>
+<span class="ln"> 8</span><span class="c1">//参数依次是:表名，列名，where约束条件，where中占位符提供具体的值，指定group by的列，进一步约束
+</span><span class="ln"> 9</span><span class="c1">//指定查询结果的排序方式,通过遍历的方式将所有的data罗列出来
+</span><span class="ln">10</span><span class="c1"></span><span class="k">var</span> <span class="py">cursor</span><span class="p">:</span> <span class="n">Cursor</span><span class="p">?</span> <span class="p">=</span> <span class="n">db</span><span class="o">?.</span><span class="n">query</span><span class="p">(</span><span class="s2">&#34;person&#34;</span><span class="p">,</span> <span class="k">null</span><span class="p">,</span> <span class="k">null</span><span class="p">,</span> <span class="k">null</span><span class="p">,</span> <span class="k">null</span><span class="p">,</span> <span class="k">null</span><span class="p">,</span> <span class="k">null</span><span class="p">)</span>
+<span class="ln">11</span><span class="k">if</span> <span class="p">(</span><span class="n">cursor</span><span class="o">?.</span><span class="n">moveToFirst</span><span class="p">()</span> <span class="o">==</span> <span class="k">true</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">12</span>    <span class="k">do</span> <span class="p">{</span>
+<span class="ln">13</span>        <span class="k">var</span> <span class="py">pid</span><span class="p">:</span> <span class="n">Int</span><span class="p">?</span> <span class="p">=</span> <span class="n">cursor</span><span class="o">?.</span><span class="n">getInt</span><span class="p">(</span><span class="n">cursor</span><span class="p">.</span><span class="n">getColumnIndex</span><span class="p">(</span><span class="s2">&#34;personid&#34;</span><span class="p">))</span>
+<span class="ln">14</span>        <span class="k">var</span> <span class="py">name</span><span class="p">:</span> <span class="n">String</span><span class="p">?</span> <span class="p">=</span> <span class="n">cursor</span><span class="o">?.</span><span class="n">getString</span><span class="p">(</span><span class="n">cursor</span><span class="p">.</span><span class="n">getColumnIndex</span><span class="p">(</span><span class="s2">&#34;name&#34;</span><span class="p">))</span>
+<span class="ln">15</span>        <span class="n">sb</span><span class="o">?.</span><span class="n">append</span><span class="p">(</span><span class="s2">&#34;</span><span class="se">\n</span><span class="s2">id：</span><span class="si">$pid</span><span class="s2">：</span><span class="si">$name</span><span class="s2">&#34;</span><span class="p">)</span>
+<span class="ln">16</span>    <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">cursor</span><span class="o">?.</span><span class="n">moveToNext</span><span class="p">())</span>
+<span class="ln">17</span><span class="p">}</span>
+<span class="ln">18</span><span class="n">cursor</span><span class="o">?.</span><span class="n">close</span><span class="p">()</span>
+<span class="ln">19</span><span class="c1">//数据库操作-数据修改
+</span><span class="ln">20</span><span class="c1"></span><span class="k">val</span> <span class="py">values2</span> <span class="p">=</span> <span class="n">ContentValues</span><span class="p">()</span>
+<span class="ln">21</span><span class="n">values2</span><span class="p">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&#34;name&#34;</span><span class="p">,</span> <span class="s2">&#34;yangyang48 has modified </span><span class="si">$j</span><span class="s2">&#34;</span><span class="p">)</span>
+<span class="ln">22</span><span class="c1">//参数依次是表名，修改后的值，where条件，以及约束，如果不指定三四两个参数，会更改所有行
+</span><span class="ln">23</span><span class="c1">//约束主要是对两个字段的约束，personid和name
+</span><span class="ln">24</span><span class="c1"></span><span class="n">db</span><span class="o">?.</span><span class="n">update</span><span class="p">(</span><span class="s2">&#34;person&#34;</span><span class="p">,</span> <span class="n">values2</span><span class="p">,</span> <span class="s2">&#34;personid = ?&#34;</span><span class="p">,</span> <span class="n">arrayOf</span><span class="p">(</span><span class="s2">&#34;</span><span class="si">${i - 1}</span><span class="s2">&#34;</span><span class="p">))</span>
+<span class="ln">25</span><span class="c1">//数据库操作-数据删除
+</span><span class="ln">26</span><span class="c1">//参数依次是表名，以及where条件与约束,约束主要是对两个字段的约束，personid和name
+</span><span class="ln">27</span><span class="c1"></span><span class="n">db</span><span class="o">?.</span><span class="n">delete</span><span class="p">(</span><span class="s2">&#34;person&#34;</span><span class="p">,</span> <span class="s2">&#34;personid = ?&#34;</span><span class="p">,</span> <span class="n">arrayOf</span><span class="p">(</span><span class="s2">&#34;</span><span class="si">$i</span><span class="s2">&#34;</span><span class="p">))</span>
+</code></pre></div></blockquote>
+<h2 id="常见的封装-1">常见的封装</h2>
+<p>很多时候，SQLite也是直接用现成的框架，比如<a href="https://blog.csdn.net/qq_28643195/article/details/107780106">GreenDao</a></p>
+<p>直接用工具很难再非root的机子上操作数据库，这里导出数据来看，导出文件my.db，通过SQLite Expert可以查看到具体的内容</p>
+<p>非root用户可以如下操作</p>
+<blockquote>
+<p>1.cp将/data/data/com.example.mydatastorage/databases数据库文件复制到/sdcard下面</p>
+<p>2.adb pull从/sdcard导出db文件</p>
+<p>3.SQLite Expert可以查看到具体的内容</p>
+</blockquote>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/datastorage/datastorage_3.png" title="SQLite Expert 查看对应data数据图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/datastorage/datastorage_3.png"  alt="SQLite Expert 查看对应data数据图">
+  
+    </a>
+  
+   
+    <span class="caption">SQLite Expert 查看对应data数据图</span>
+  
+</div>
+
+<h1 id="demo">demo</h1>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/datastorage/datastorage_2.jpg" title="demo示例图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/datastorage/datastorage_2.jpg"  alt="demo示例图">
+  
+    </a>
+  
+   
+    <span class="caption">demo示例图</span>
+  
+</div>
+
+<p><a href="https://github.com/YangYang48/project/tree/master/MyDataStorage">本文所有实例代码下载</a></p>
+<h1 id="参考">参考</h1>
+<p><a href="https://blog.csdn.net/weixin_43468667/article/details/90243311?spm=1001.2014.3001.5501">[1] 明昕ztoy, Android学习之五种数据存储方式（一）, 2019.</a></p>
+<p><a href="https://blog.csdn.net/qq_37982823/article/details/86482154">[2] FamilyYan, Android五大数据存储, 2019.</a></p>
+<p><a href="https://www.runoob.com/w3cnote/android-tutorial-sharedpreferences.html">[3] 菜鸟教程, 6.2 数据存储与访问之——SharedPreferences保存用户偏好参数, 2015.</a></p>
+<p><a href="https://blog.csdn.net/weixin_43468667/article/details/91889829?spm=1001.2014.3001.5501">[4] 明昕ztoy, Android学习之五种数据存储方式（二）, 2019.</a></p>
+<p><a href="https://blog.csdn.net/qq_28643195/article/details/107556187">[5] 森森先生666, Android 五大数据存储 (最实用的开发详解) 一 五种存储方式区别, 2020.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/android/">Android</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/datastorage/">datastorage</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/08/aidl%E4%BD%BF%E7%94%A8/" data-tooltip="AIDL使用">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2021 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/08/aidl%E4%BD%BF%E7%94%A8/" data-tooltip="AIDL使用">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2021%2F10%2Fandroid%25E6%2595%25B0%25E6%258D%25AE%25E5%25AD%2598%25E5%2582%25A8%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2021%2F10%2Fandroid%25E6%2595%25B0%25E6%258D%25AE%25E5%25AD%2598%25E5%2582%25A8%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2021%2F10%2Fandroid%25E6%2595%25B0%25E6%258D%25AE%25E5%25AD%2598%25E5%2582%25A8%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2021\/10\/android%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8\/';
+          
+            this.page.identifier = '\/2021\/10\/android%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
