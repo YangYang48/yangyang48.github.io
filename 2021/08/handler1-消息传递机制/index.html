@@ -276,7 +276,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">2000 Words|Read in about 10 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">2100 Words|Read in about 10 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -841,36 +841,40 @@
 <span class="ln">17</span>        <span class="o">}</span>
 <span class="ln">18</span>        <span class="c1">// Make sure the observer won&#39;t change while processing a transaction.
 </span><span class="ln">19</span><span class="c1"></span>        <span class="c1">//observer是用于Handler分发操作的监听，监听产生问题的trace
-</span><span class="ln">20</span><span class="c1"></span>        <span class="kd">final</span> <span class="n">Observer</span> <span class="n">observer</span> <span class="o">=</span> <span class="n">sObserver</span><span class="o">;</span>
-<span class="ln">21</span>
-<span class="ln">22</span>        <span class="n">Object</span> <span class="n">token</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
-<span class="ln">23</span>        <span class="k">if</span> <span class="o">(</span><span class="n">observer</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-<span class="ln">24</span>            <span class="n">token</span> <span class="o">=</span> <span class="n">observer</span><span class="o">.</span><span class="na">messageDispatchStarting</span><span class="o">();</span>
-<span class="ln">25</span>        <span class="o">}</span>
-<span class="ln">26</span>        <span class="kt">long</span> <span class="n">origWorkSource</span> <span class="o">=</span> <span class="n">ThreadLocalWorkSource</span><span class="o">.</span><span class="na">setUid</span><span class="o">(</span><span class="n">msg</span><span class="o">.</span><span class="na">workSourceUid</span><span class="o">);</span>
-<span class="ln">27</span>        <span class="k">try</span> <span class="o">{</span>
-<span class="ln">28</span>            <span class="c1">//将获取到的msg分发到dispatchMessage
-</span><span class="ln">29</span><span class="c1"></span>            <span class="n">msg</span><span class="o">.</span><span class="na">target</span><span class="o">.</span><span class="na">dispatchMessage</span><span class="o">(</span><span class="n">msg</span><span class="o">);</span>
-<span class="ln">30</span>            <span class="k">if</span> <span class="o">(</span><span class="n">observer</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-<span class="ln">31</span>                <span class="n">observer</span><span class="o">.</span><span class="na">messageDispatched</span><span class="o">(</span><span class="n">token</span><span class="o">,</span> <span class="n">msg</span><span class="o">);</span>
-<span class="ln">32</span>            <span class="o">}</span>
-<span class="ln">33</span>            <span class="n">dispatchEnd</span> <span class="o">=</span> <span class="n">needEndTime</span> <span class="o">?</span> <span class="n">SystemClock</span><span class="o">.</span><span class="na">uptimeMillis</span><span class="o">()</span> <span class="o">:</span> <span class="n">0</span><span class="o">;</span>
-<span class="ln">34</span>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">exception</span><span class="o">)</span> <span class="o">{</span>
-<span class="ln">35</span>            <span class="k">if</span> <span class="o">(</span><span class="n">observer</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-<span class="ln">36</span>                <span class="n">observer</span><span class="o">.</span><span class="na">dispatchingThrewException</span><span class="o">(</span><span class="n">token</span><span class="o">,</span> <span class="n">msg</span><span class="o">,</span> <span class="n">exception</span><span class="o">);</span>
-<span class="ln">37</span>            <span class="o">}</span>
-<span class="ln">38</span>            <span class="k">throw</span> <span class="n">exception</span><span class="o">;</span>
-<span class="ln">39</span>        <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
-<span class="ln">40</span>            <span class="n">ThreadLocalWorkSource</span><span class="o">.</span><span class="na">restore</span><span class="o">(</span><span class="n">origWorkSource</span><span class="o">);</span>
-<span class="ln">41</span>            <span class="k">if</span> <span class="o">(</span><span class="n">traceTag</span> <span class="o">!=</span> <span class="n">0</span><span class="o">)</span> <span class="o">{</span>
-<span class="ln">42</span>                <span class="n">Trace</span><span class="o">.</span><span class="na">traceEnd</span><span class="o">(</span><span class="n">traceTag</span><span class="o">);</span>
-<span class="ln">43</span>            <span class="o">}</span>
-<span class="ln">44</span>        <span class="o">}</span>
-<span class="ln">45</span>        <span class="o">...</span>
-<span class="ln">46</span>        <span class="c1">//msg资源池回收机制    
-</span><span class="ln">47</span><span class="c1"></span>        <span class="n">msg</span><span class="o">.</span><span class="na">recycleUnchecked</span><span class="o">();</span>
-<span class="ln">48</span>    <span class="o">}</span>
-<span class="ln">49</span><span class="o">}</span>
+</span><span class="ln">20</span><span class="c1"></span>        <span class="c1">//补充说明：这里面的sObserver是在LooperStateService.java里面设置下来的
+</span><span class="ln">21</span><span class="c1"></span>        <span class="c1">//Looper.setObserver(enable ? mStates : null);
+</span><span class="ln">22</span><span class="c1"></span>        <span class="c1">//其中mStates定义 LooperState mStates implement Looper.Observer
+</span><span class="ln">23</span><span class="c1"></span>        <span class="c1">//这里的enable是通过系统属性来区分debug.sys.Looper_state_enabled
+</span><span class="ln">24</span><span class="c1"></span>        <span class="kd">final</span> <span class="n">Observer</span> <span class="n">observer</span> <span class="o">=</span> <span class="n">sObserver</span><span class="o">;</span>
+<span class="ln">25</span>
+<span class="ln">26</span>        <span class="n">Object</span> <span class="n">token</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">27</span>        <span class="k">if</span> <span class="o">(</span><span class="n">observer</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">28</span>            <span class="n">token</span> <span class="o">=</span> <span class="n">observer</span><span class="o">.</span><span class="na">messageDispatchStarting</span><span class="o">();</span>
+<span class="ln">29</span>        <span class="o">}</span>
+<span class="ln">30</span>        <span class="kt">long</span> <span class="n">origWorkSource</span> <span class="o">=</span> <span class="n">ThreadLocalWorkSource</span><span class="o">.</span><span class="na">setUid</span><span class="o">(</span><span class="n">msg</span><span class="o">.</span><span class="na">workSourceUid</span><span class="o">);</span>
+<span class="ln">31</span>        <span class="k">try</span> <span class="o">{</span>
+<span class="ln">32</span>            <span class="c1">//将获取到的msg分发到dispatchMessage
+</span><span class="ln">33</span><span class="c1"></span>            <span class="n">msg</span><span class="o">.</span><span class="na">target</span><span class="o">.</span><span class="na">dispatchMessage</span><span class="o">(</span><span class="n">msg</span><span class="o">);</span>
+<span class="ln">34</span>            <span class="k">if</span> <span class="o">(</span><span class="n">observer</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">35</span>                <span class="n">observer</span><span class="o">.</span><span class="na">messageDispatched</span><span class="o">(</span><span class="n">token</span><span class="o">,</span> <span class="n">msg</span><span class="o">);</span>
+<span class="ln">36</span>            <span class="o">}</span>
+<span class="ln">37</span>            <span class="n">dispatchEnd</span> <span class="o">=</span> <span class="n">needEndTime</span> <span class="o">?</span> <span class="n">SystemClock</span><span class="o">.</span><span class="na">uptimeMillis</span><span class="o">()</span> <span class="o">:</span> <span class="n">0</span><span class="o">;</span>
+<span class="ln">38</span>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">exception</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">39</span>            <span class="k">if</span> <span class="o">(</span><span class="n">observer</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">40</span>                <span class="n">observer</span><span class="o">.</span><span class="na">dispatchingThrewException</span><span class="o">(</span><span class="n">token</span><span class="o">,</span> <span class="n">msg</span><span class="o">,</span> <span class="n">exception</span><span class="o">);</span>
+<span class="ln">41</span>            <span class="o">}</span>
+<span class="ln">42</span>            <span class="k">throw</span> <span class="n">exception</span><span class="o">;</span>
+<span class="ln">43</span>        <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+<span class="ln">44</span>            <span class="n">ThreadLocalWorkSource</span><span class="o">.</span><span class="na">restore</span><span class="o">(</span><span class="n">origWorkSource</span><span class="o">);</span>
+<span class="ln">45</span>            <span class="k">if</span> <span class="o">(</span><span class="n">traceTag</span> <span class="o">!=</span> <span class="n">0</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">46</span>                <span class="n">Trace</span><span class="o">.</span><span class="na">traceEnd</span><span class="o">(</span><span class="n">traceTag</span><span class="o">);</span>
+<span class="ln">47</span>            <span class="o">}</span>
+<span class="ln">48</span>        <span class="o">}</span>
+<span class="ln">49</span>        <span class="o">...</span>
+<span class="ln">50</span>        <span class="c1">//msg资源池回收机制    
+</span><span class="ln">51</span><span class="c1"></span>        <span class="n">msg</span><span class="o">.</span><span class="na">recycleUnchecked</span><span class="o">();</span>
+<span class="ln">52</span>    <span class="o">}</span>
+<span class="ln">53</span><span class="o">}</span>
 </code></pre></div><p>拆解loop方法，其实就是做了几件事</p>
 <p>1）重复循环获取next方法，因为next方法存在阻塞，所以queue.next()也会阻塞，且唯一退出这个方法的是就是获取一个null的Messgae</p>
 <p>2）将获取到的msg分发到dispatchMessage，用这个方法来对消息进行处理，msg.target持有了Handler对象，那么依然会回到Handler中去使用。通过Looper使得整个消息队列形成了闭环。</p>

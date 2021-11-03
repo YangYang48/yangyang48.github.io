@@ -1,0 +1,2029 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="我们使用ThreadLocal能够解决线程局部变量统一定义问题，多线程数据不能共享的问题，使得每一个线程单独维护自己线程内的变量值（set、get、remove）。">
+
+
+<meta property="og:description" content="我们使用ThreadLocal能够解决线程局部变量统一定义问题，多线程数据不能共享的问题，使得每一个线程单独维护自己线程内的变量值（set、get、remove）。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ThreadLocal之初出茅庐">
+<meta name="twitter:title" content="ThreadLocal之初出茅庐">
+<meta property="og:url" content="https://yangyang48.github.io/2021/11/threadlocal%E4%B9%8B%E5%88%9D%E5%87%BA%E8%8C%85%E5%BA%90/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2021/11/threadlocal%E4%B9%8B%E5%88%9D%E5%87%BA%E8%8C%85%E5%BA%90/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="我们使用ThreadLocal能够解决线程局部变量统一定义问题，多线程数据不能共享的问题，使得每一个线程单独维护自己线程内的变量值（set、get、remove）。">
+<meta name="twitter:description" content="我们使用ThreadLocal能够解决线程局部变量统一定义问题，多线程数据不能共享的问题，使得每一个线程单独维护自己线程内的变量值（set、get、remove）。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2021-11-03T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2021-11-03T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="Handler">
+    
+      <meta property="article:section" content="2021">
+    
+      <meta property="article:section" content="November">
+    
+  
+  
+    
+      <meta property="article:tag" content="Android">
+    
+      <meta property="article:tag" content="源码">
+    
+      <meta property="article:tag" content="framework">
+    
+      <meta property="article:tag" content="ThreadLocal">
+    
+      <meta property="article:tag" content="Thread">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/ThreadLocal/threadlocal_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/ThreadLocal/threadlocal_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/ThreadLocal/threadlocal_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/ThreadLocal/threadlocal_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>ThreadLocal之初出茅庐</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2021/11/threadlocal%E4%B9%8B%E5%88%9D%E5%87%BA%E8%8C%85%E5%BA%90/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/ThreadLocal/threadlocal_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      ThreadLocal之初出茅庐
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2021-11-03T00:00:00Z">
+        
+  十一月 3, 2021
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/handler">Handler</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2021">2021</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/november">November</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">1600 Words|Read in about 8 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>我们使用ThreadLocal能够解决线程局部变量统一定义问题，多线程数据不能共享的问题，使得每一个线程单独维护自己线程内的变量值（set、get、remove）。</p>
+<h1 id="threadlocal含义">ThreadLocal含义</h1>
+<p>线程本地变量，也有些地方叫做线程本地存储，其实意思差不多。ThreadLocal可以让每一个线程拥有自己的变量副本，不会和其他线程的变量副本冲突，实现了线程的数据隔离。</p>
+<blockquote>
+<p>Thread.java里面有一个全局变量</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//ThreadLocal变量属于这个当前线程，并且通过ThreadLocalMap表里面维持了一个ThreadLocal类
+</span><span class="ln">2</span><span class="c1"></span><span class="n">ThreadLocal</span><span class="o">.</span><span class="na">ThreadLocalMap</span> <span class="n">threadLocals</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</code></pre></div></blockquote>
+<p>其实就是一句话，ThreadLocal内部类是ThreadLocalMap。当前线程ThreadLocal&lt;?&gt;对象，和&lt; ? &gt;类型的对象构成了Entry数组，存放在了ThreadLocalMap里面。</p>
+<h1 id="threadlocal类比故事">ThreadLocal类比故事</h1>
+<p>为了通俗理解，这里讲一个关于老师上课的故事。</p>
+<blockquote>
+<p>一个班级有30个学生，每个学生都有一个口袋，口袋里可以存放东西，口袋有16个格子，可以装16样东西。数学老师小数上课，拿出尺子。但是只有一把尺子不够分，那么数学老师小数又拿了30个尺子副本，发给30名学生，这样每个学生都可以分到属于自己的尺子。学生们在尺子上面写上自己和老师的名字，这样其他同学就不会拿错尺子，最后将尺子放入自己口袋的一个容纳尺子的格子里。</p>
+</blockquote>
+<p>这里的一名数学老师相当于是&lt; ? &gt;，学生相当于是线程，班级相当于是线程池，也就是说目前线程池里面有30个线程。学生的口袋相当于是ThreadLocalMap，尺子就是ThreadLocal，这个尺子是这个数学老师给这个学生单独分配的尺子，仅且只能这个学生使用。并且尺子在班级里数据是共享的，所有学生的尺子都是老师给的尺子的副本。其他学生只能拿自己的尺子，因为尺子上写了自己的名字。尺子上又写了老师的名字，说明学生拿到的这个尺子是数学老师给的。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_1.png" title="Thread、ThreadLocal和ThreadLocalMap" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_1.png"  alt="Thread、ThreadLocal和ThreadLocalMap">
+  
+    </a>
+  
+   
+    <span class="caption">Thread、ThreadLocal和ThreadLocalMap</span>
+  
+</div>
+
+<blockquote>
+<p>然后数学老师小数上完课，语文老师小语开始上课。语文老师小语拿出钢笔，钢笔也不够分，语文老师小语就又拿出了30只钢笔副本，发给30名学生，这样每个学生都可以拿到属于自己的钢笔。学生们在钢笔上面写上自己和老师的名字，这样其他同学就不会拿错钢笔，最后将钢笔放入自己口袋的一个容纳钢笔的格子里。</p>
+</blockquote>
+<p>说明目前学生口袋里除了数学老师小数给的尺子，还有语文老师小雨给的钢笔，也就是每个学生都存在尺子和钢笔。这里的尺子和钢笔属于班级里的共享变量。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_2.png" title="Thread、ThreadLocal和ThreadLocalMap" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_2.png"  alt="Thread、ThreadLocal和ThreadLocalMap">
+  
+    </a>
+  
+   
+    <span class="caption">Thread、ThreadLocal和ThreadLocalMap</span>
+  
+</div>
+
+<h1 id="源码分析">源码分析</h1>
+<p>讲完了故事，接下来主要对ThreadLocal源码进行解析</p>
+<p>ThreadLocal最核心的就是set，get和remove</p>
+<h2 id="set">set</h2>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//设置这个线程局部变量map保存当前线程的副本的值value
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kt">void</span> <span class="nf">set</span><span class="o">(</span><span class="n">T</span> <span class="n">value</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 3</span>    <span class="n">Thread</span> <span class="n">t</span> <span class="o">=</span> <span class="n">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">();</span>
+<span class="ln"> 4</span>    <span class="n">ThreadLocalMap</span> <span class="n">map</span> <span class="o">=</span> <span class="n">getMap</span><span class="o">(</span><span class="n">t</span><span class="o">);</span>
+<span class="ln"> 5</span>    <span class="k">if</span> <span class="o">(</span><span class="n">map</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
+<span class="ln"> 6</span>        <span class="n">map</span><span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="n">value</span><span class="o">);</span>
+<span class="ln"> 7</span>    <span class="k">else</span>
+<span class="ln"> 8</span>        <span class="n">createMap</span><span class="o">(</span><span class="n">t</span><span class="o">,</span> <span class="n">value</span><span class="o">);</span>
+<span class="ln"> 9</span><span class="o">}</span>
+<span class="ln">10</span>
+<span class="ln">11</span><span class="c1">//这个返回的就是Thread中一个全局变量ThreadLocalMap类型的对象threadLocals
+</span><span class="ln">12</span><span class="c1"></span><span class="n">ThreadLocalMap</span> <span class="nf">getMap</span><span class="o">(</span><span class="n">Thread</span> <span class="n">t</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">13</span>    <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="na">threadLocals</span><span class="o">;</span>
+<span class="ln">14</span><span class="o">}</span>
+<span class="ln">15</span>
+<span class="ln">16</span><span class="c1">//创建与 ThreadLocal 关联的映射ThreadLocalMap。
+</span><span class="ln">17</span><span class="c1"></span><span class="kt">void</span> <span class="nf">createMap</span><span class="o">(</span><span class="n">Thread</span> <span class="n">t</span><span class="o">,</span> <span class="n">T</span> <span class="n">firstValue</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">18</span>    <span class="n">t</span><span class="o">.</span><span class="na">threadLocals</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ThreadLocalMap</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="n">firstValue</span><span class="o">);</span>
+<span class="ln">19</span><span class="o">}</span>
+</code></pre></div><p>这里面调用了ThreadLocal内部类ThreadLocalMap的方法，主要是为了创建map表，存放Threadlocal。</p>
+<h2 id="get">get</h2>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//返回当前线程的 this 局部变量map保存的线程副本值
+</span><span class="ln"> 2</span><span class="c1">//如果没有找到该线程副本，返回线程本地的当前线程值
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kd">public</span> <span class="n">T</span> <span class="nf">get</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 4</span>    <span class="n">Thread</span> <span class="n">t</span> <span class="o">=</span> <span class="n">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">();</span>
+<span class="ln"> 5</span>    <span class="n">ThreadLocalMap</span> <span class="n">map</span> <span class="o">=</span> <span class="n">getMap</span><span class="o">(</span><span class="n">t</span><span class="o">);</span>
+<span class="ln"> 6</span>    <span class="k">if</span> <span class="o">(</span><span class="n">map</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 7</span>        <span class="n">ThreadLocalMap</span><span class="o">.</span><span class="na">Entry</span> <span class="n">e</span> <span class="o">=</span> <span class="n">map</span><span class="o">.</span><span class="na">getEntry</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+<span class="ln"> 8</span>        <span class="k">if</span> <span class="o">(</span><span class="n">e</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 9</span>            <span class="nd">@SuppressWarnings</span><span class="o">(</span><span class="s">&#34;unchecked&#34;</span><span class="o">)</span>
+<span class="ln">10</span>            <span class="n">T</span> <span class="n">result</span> <span class="o">=</span> <span class="o">(</span><span class="n">T</span><span class="o">)</span><span class="n">e</span><span class="o">.</span><span class="na">value</span><span class="o">;</span>
+<span class="ln">11</span>            <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
+<span class="ln">12</span>        <span class="o">}</span>
+<span class="ln">13</span>    <span class="o">}</span>
+<span class="ln">14</span>    <span class="k">return</span> <span class="n">setInitialValue</span><span class="o">();</span>
+<span class="ln">15</span><span class="o">}</span>
+<span class="ln">16</span>
+<span class="ln">17</span><span class="c1">//初始化，这个方法会覆写原来的set
+</span><span class="ln">18</span><span class="c1"></span><span class="kd">private</span> <span class="n">T</span> <span class="nf">setInitialValue</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln">19</span>    <span class="n">T</span> <span class="n">value</span> <span class="o">=</span> <span class="n">initialValue</span><span class="o">();</span>
+<span class="ln">20</span>    <span class="n">Thread</span> <span class="n">t</span> <span class="o">=</span> <span class="n">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">();</span>
+<span class="ln">21</span>    <span class="n">ThreadLocalMap</span> <span class="n">map</span> <span class="o">=</span> <span class="n">getMap</span><span class="o">(</span><span class="n">t</span><span class="o">);</span>
+<span class="ln">22</span>    <span class="k">if</span> <span class="o">(</span><span class="n">map</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
+<span class="ln">23</span>        <span class="n">map</span><span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="n">value</span><span class="o">);</span>
+<span class="ln">24</span>    <span class="k">else</span>
+<span class="ln">25</span>        <span class="n">createMap</span><span class="o">(</span><span class="n">t</span><span class="o">,</span> <span class="n">value</span><span class="o">);</span>
+<span class="ln">26</span>    <span class="k">return</span> <span class="n">value</span><span class="o">;</span>
+<span class="ln">27</span><span class="o">}</span>
+<span class="ln">28</span>
+<span class="ln">29</span><span class="c1">//每个线程只有一次，跟remove配套使用，可供子类覆写
+</span><span class="ln">30</span><span class="c1"></span><span class="kd">protected</span> <span class="n">T</span> <span class="nf">initialValue</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln">31</span>    <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">32</span><span class="o">}</span>
+</code></pre></div><p>这里面主要是查询当前thread里面创建的map表，查询map中threadlocal类型的this对应的value是否存在，存在返回值。否则两种情况，不存在map表则先创建表，其次不存在this对应的value值，那么就生成一个null（子类可覆写）的value，保存在map表中。</p>
+<h2 id="remove">remove</h2>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//移除当前线程的ThreadLocal对象
+</span><span class="ln">2</span><span class="c1"></span><span class="kd">public</span> <span class="kt">void</span> <span class="nf">remove</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln">3</span>    <span class="n">ThreadLocalMap</span> <span class="n">m</span> <span class="o">=</span> <span class="n">getMap</span><span class="o">(</span><span class="n">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">());</span>
+<span class="ln">4</span>    <span class="k">if</span> <span class="o">(</span><span class="n">m</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
+<span class="ln">5</span>        <span class="n">m</span><span class="o">.</span><span class="na">remove</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+<span class="ln">6</span><span class="o">}</span>
+</code></pre></div><p>这里面主要是一出当前线程的ThreadLocalMap类型的表。</p>
+<h2 id="threadlocalmap">ThreadLocalMap</h2>
+<p>上述好多真正的操作放在ThreadLocalMap中了，当相当于对ThreadLocal做了隔离，不用直接接触真实操作，都在ThreadLocalMap完成即可。也就是表面上操作了ThreadLocal set，get和remove，实际上都是在ThreadLocalMap中的操作set，get和remove。</p>
+<h3 id="构造函数">构造函数</h3>
+<p>ThreadLocalMap，有两个构造，目前先看有两个参数的</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="n">ThreadLocalMap</span><span class="o">(</span><span class="n">ThreadLocal</span><span class="o">&lt;?&gt;</span> <span class="n">firstKey</span><span class="o">,</span> <span class="n">Object</span> <span class="n">firstValue</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 2</span>    <span class="n">table</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Entry</span><span class="o">[</span><span class="n">INITIAL_CAPACITY</span><span class="o">];</span>
+<span class="ln"> 3</span>    <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">firstKey</span><span class="o">.</span><span class="na">threadLocalHashCode</span> <span class="o">&amp;</span> <span class="o">(</span><span class="n">INITIAL_CAPACITY</span> <span class="o">-</span> <span class="n">1</span><span class="o">);</span>
+<span class="ln"> 4</span>    <span class="n">table</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Entry</span><span class="o">(</span><span class="n">firstKey</span><span class="o">,</span> <span class="n">firstValue</span><span class="o">);</span>
+<span class="ln"> 5</span>    <span class="n">size</span> <span class="o">=</span> <span class="n">1</span><span class="o">;</span>
+<span class="ln"> 6</span>    <span class="n">setThreshold</span><span class="o">(</span><span class="n">INITIAL_CAPACITY</span><span class="o">);</span>
+<span class="ln"> 7</span><span class="o">}</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span><span class="kd">private</span> <span class="kt">void</span> <span class="nf">setThreshold</span><span class="o">(</span><span class="kt">int</span> <span class="n">len</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">10</span>    <span class="n">threshold</span> <span class="o">=</span> <span class="n">len</span> <span class="o">*</span> <span class="n">2</span> <span class="o">/</span> <span class="n">3</span><span class="o">;</span>
+<span class="ln">11</span><span class="o">}</span>
+</code></pre></div><p>这个ThreadlocalMap构造做了三件事。</p>
+<p>1）ThreadLocalMap内部类全局变量table默认新建了一个大小为16的数组</p>
+<p>2）新构造了一个Entry的键值对，K-V，并且使用了散列算法存放到table表里</p>
+<p>3）设置初始化扩容阈值，第一次设置为10</p>
+<h3 id="存储结构entry">存储结构Entry</h3>
+<p>这个ThreadLocalMap内部的类，数据结构为数组</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//Entry构造两个值，一个为key，ThreadLocal&lt;?&gt;,一个是value
+</span><span class="ln"> 2</span><span class="c1">//其中key是一个弱引用，只要发生垃圾回收，若这个对象只被弱引用指向，那么就会被回收
+</span><span class="ln"> 3</span><span class="c1">//其中value是强引用，不会被垃圾回收
+</span><span class="ln"> 4</span><span class="c1"></span><span class="kd">static</span> <span class="kd">class</span> <span class="nc">Entry</span> <span class="kd">extends</span> <span class="n">WeakReference</span><span class="o">&lt;</span><span class="n">ThreadLocal</span><span class="o">&lt;?&gt;&gt;</span> <span class="o">{</span>
+<span class="ln"> 5</span>    <span class="cm">/** The value associated with this ThreadLocal. */</span>
+<span class="ln"> 6</span>    <span class="n">Object</span> <span class="n">value</span><span class="o">;</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span>    <span class="n">Entry</span><span class="o">(</span><span class="n">ThreadLocal</span><span class="o">&lt;?&gt;</span> <span class="n">k</span><span class="o">,</span> <span class="n">Object</span> <span class="n">v</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 9</span>        <span class="kd">super</span><span class="o">(</span><span class="n">k</span><span class="o">);</span>
+<span class="ln">10</span>        <span class="n">value</span> <span class="o">=</span> <span class="n">v</span><span class="o">;</span>
+<span class="ln">11</span>    <span class="o">}</span>
+<span class="ln">12</span><span class="o">}</span>
+</code></pre></div><p>ThreadLocalMap中的Entry的key使用的是ThreadLocal对象的弱引用，<strong>在没有其他地方对ThreadLocal依赖，ThreadLocalMap中的ThreadLocal对象就会被回收掉。</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//初始容量，必须为2的幂
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">INITIAL_CAPACITY</span> <span class="o">=</span> <span class="n">16</span><span class="o">;</span>
+<span class="ln"> 3</span><span class="c1">//Entry表，大小必须为2的幂
+</span><span class="ln"> 4</span><span class="c1"></span><span class="kd">private</span> <span class="n">Entry</span><span class="o">[]</span> <span class="n">table</span><span class="o">;</span>
+<span class="ln"> 5</span><span class="c1">//表里entry的个数
+</span><span class="ln"> 6</span><span class="c1"></span><span class="kd">private</span> <span class="kt">int</span> <span class="n">size</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span>
+<span class="ln"> 7</span><span class="c1">//重新分配表大小的阈值，默认为0
+</span><span class="ln"> 8</span><span class="c1"></span><span class="kd">private</span> <span class="kt">int</span> <span class="n">threshold</span><span class="o">;</span> 
+<span class="ln"> 9</span>
+<span class="ln">10</span><span class="c1">//环形意义的下一个索引
+</span><span class="ln">11</span><span class="c1"></span><span class="kd">private</span> <span class="kd">static</span> <span class="kt">int</span> <span class="nf">nextIndex</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">,</span> <span class="kt">int</span> <span class="n">len</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">12</span>    <span class="k">return</span> <span class="o">((</span><span class="n">i</span> <span class="o">+</span> <span class="n">1</span> <span class="o">&lt;</span> <span class="n">len</span><span class="o">)</span> <span class="o">?</span> <span class="n">i</span> <span class="o">+</span> <span class="n">1</span> <span class="o">:</span> <span class="n">0</span><span class="o">);</span>
+<span class="ln">13</span><span class="o">}</span>
+<span class="ln">14</span>
+<span class="ln">15</span><span class="c1">//环形意义的上一个索引
+</span><span class="ln">16</span><span class="c1"></span><span class="kd">private</span> <span class="kd">static</span> <span class="kt">int</span> <span class="nf">prevIndex</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">,</span> <span class="kt">int</span> <span class="n">len</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">17</span>    <span class="k">return</span> <span class="o">((</span><span class="n">i</span> <span class="o">-</span> <span class="n">1</span> <span class="o">&gt;=</span> <span class="n">0</span><span class="o">)</span> <span class="o">?</span> <span class="n">i</span> <span class="o">-</span> <span class="n">1</span> <span class="o">:</span> <span class="n">len</span> <span class="o">-</span> <span class="n">1</span><span class="o">);</span>
+<span class="ln">18</span><span class="o">}</span>
+</code></pre></div><p>其数据结构，优点类似循环数组，也可以理解为环形逻辑，下图所示</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_8.png" title="ThreadLocalMap数据结构" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_8.png"  alt="ThreadLocalMap数据结构">
+  
+    </a>
+  
+   
+    <span class="caption">ThreadLocalMap数据结构</span>
+  
+</div>
+
+<h3 id="threadlocalhashcode">threadLocalHashCode</h3>
+<p>哈希函数和魔数。第一次看到这个会有点奇怪，实质上就是获取哈希散列表的下表的作用。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//它在该ThreadLocal被构造的时候就会生成，相当于一个ThreadLocal的ID。这个是哈希散列表的下一个
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">private</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">threadLocalHashCode</span> <span class="o">=</span> <span class="n">nextHashCode</span><span class="o">();</span>
+<span class="ln"> 3</span><span class="kd">private</span> <span class="kd">static</span> <span class="n">AtomicInteger</span> <span class="n">nextHashCode</span> <span class="o">=</span>
+<span class="ln"> 4</span>    <span class="k">new</span> <span class="n">AtomicInteger</span><span class="o">();</span>
+<span class="ln"> 5</span><span class="c1">//ThreadLocal中定义了一个AtomicInteger,一个魔数0x61c88647，利用算法实现了元素的完美散列
+</span><span class="ln"> 6</span><span class="c1"></span><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">HASH_INCREMENT</span> <span class="o">=</span> <span class="n">0x61c88647</span><span class="o">;</span>
+<span class="ln"> 7</span><span class="c1">//哈希函数
+</span><span class="ln"> 8</span><span class="c1"></span><span class="kd">private</span> <span class="kd">static</span> <span class="kt">int</span> <span class="nf">nextHashCode</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 9</span>    <span class="k">return</span> <span class="n">nextHashCode</span><span class="o">.</span><span class="na">getAndAdd</span><span class="o">(</span><span class="n">HASH_INCREMENT</span><span class="o">);</span>
+<span class="ln">10</span><span class="o">}</span>
+</code></pre></div><p>其中这里设计散列算法，魔数 0x61c88647。</p>
+<blockquote>
+<p>魔数的选取跟斐波那契散列有关。对应的十进制是1640531527。而按照斐波那契散列，魔数值应该为（根号5）/2*2^32=2654435769，这个值正好为unsigned int可以表示，int表示为-1640531527，恰好对应上述的十进制值。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="cm">/**
+</span><span class="ln"> 2</span><span class="cm"> *
+</span><span class="ln"> 3</span><span class="cm"> * @ClassName:MagicHashCode
+</span><span class="ln"> 4</span><span class="cm"> * @Description:ThreadLocalMap使用“开放寻址法”中最简单的“线性探测法”解决散列冲突问题
+</span><span class="ln"> 5</span><span class="cm"> */</span>
+<span class="ln"> 6</span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MagicHashCode</span> <span class="o">{</span>
+<span class="ln"> 7</span>    <span class="c1">//ThreadLocal中定义的hash魔数
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">HASH_INCREMENT</span> <span class="o">=</span> <span class="n">0x61c88647</span><span class="o">;</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span>    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">11</span>        <span class="n">hashCode</span><span class="o">(</span><span class="n">16</span><span class="o">);</span><span class="c1">//初始化16
+</span><span class="ln">12</span><span class="c1"></span>        <span class="n">hashCode</span><span class="o">(</span><span class="n">32</span><span class="o">);</span><span class="c1">//后续2倍扩容
+</span><span class="ln">13</span><span class="c1"></span>        <span class="n">hashCode</span><span class="o">(</span><span class="n">64</span><span class="o">);</span>
+<span class="ln">14</span>    <span class="o">}</span>
+<span class="ln">15</span>
+<span class="ln">16</span>    <span class="cm">/**
+</span><span class="ln">17</span><span class="cm">     *
+</span><span class="ln">18</span><span class="cm">     * @Description 寻找散列下标（对应数组小标）
+</span><span class="ln">19</span><span class="cm">     * @param length table长度
+</span><span class="ln">20</span><span class="cm">     * @author diandian.zhang
+</span><span class="ln">21</span><span class="cm">     * @date 2017年12月6日上午10:36:53
+</span><span class="ln">22</span><span class="cm">     * @since JDK1.8
+</span><span class="ln">23</span><span class="cm">     */</span>
+<span class="ln">24</span>    <span class="kd">private</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">hashCode</span><span class="o">(</span><span class="n">Integer</span> <span class="n">length</span><span class="o">){</span>
+<span class="ln">25</span>        <span class="kt">int</span> <span class="n">hashCode</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span>
+<span class="ln">26</span>        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="n">0</span><span class="o">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">length</span><span class="o">;</span><span class="n">i</span><span class="o">++){</span>
+<span class="ln">27</span>            <span class="n">hashCode</span> <span class="o">=</span> <span class="n">i</span><span class="o">*</span><span class="n">HASH_INCREMENT</span><span class="o">+</span><span class="n">HASH_INCREMENT</span><span class="o">;</span><span class="c1">//每次递增HASH_INCREMENT
+</span><span class="ln">28</span><span class="c1"></span>            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">print</span><span class="o">(</span><span class="n">hashCode</span> <span class="o">&amp;</span> <span class="o">(</span><span class="n">length</span><span class="o">-</span><span class="n">1</span><span class="o">));</span><span class="c1">//求散列下标，算法公式
+</span><span class="ln">29</span><span class="c1"></span>            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">print</span><span class="o">(</span><span class="s">&#34; &#34;</span><span class="o">);</span>
+<span class="ln">30</span>        <span class="o">}</span>
+<span class="ln">31</span>        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">();</span>
+<span class="ln">32</span>    <span class="o">}</span>
+<span class="ln">33</span><span class="o">}</span>
+</code></pre></div><p>Entry数组为16，32，64对应的下标值，正好可以形成一个完美散列，其他非2的幂次不能形成完美散列，<strong>这解释上述table大小和容量必须是2的幂次，默认为16</strong>。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="n">7</span> <span class="n">14</span> <span class="n">5</span> <span class="n">12</span> <span class="n">3</span> <span class="n">10</span> <span class="n">1</span> <span class="n">8</span> <span class="n">15</span> <span class="n">6</span> <span class="n">13</span> <span class="n">4</span> <span class="n">11</span> <span class="n">2</span> <span class="n">9</span> <span class="n">0</span> <span class="o">--</span><span class="err">》</span><span class="n">Entry</span><span class="o">[]</span><span class="n">初始化容量为16时</span><span class="err">，</span><span class="n">元素完美散列</span>  
+<span class="ln">2</span><span class="n">7</span> <span class="n">14</span> <span class="n">21</span> <span class="n">28</span> <span class="n">3</span> <span class="n">10</span> <span class="n">17</span> <span class="n">24</span> <span class="n">31</span> <span class="n">6</span> <span class="n">13</span> <span class="n">20</span> <span class="n">27</span> <span class="n">2</span> <span class="n">9</span> <span class="n">16</span> <span class="n">23</span> <span class="n">30</span> <span class="n">5</span> <span class="n">12</span> <span class="n">19</span> <span class="n">26</span> <span class="n">1</span> <span class="n">8</span> <span class="n">15</span> <span class="n">22</span> <span class="n">29</span> <span class="n">4</span> <span class="n">11</span> <span class="n">18</span> <span class="n">25</span> <span class="n">0</span><span class="o">--</span><span class="err">》</span><span class="n">Entry</span><span class="o">[]</span><span class="n">容量扩容2倍</span><span class="o">=</span><span class="n">32时</span><span class="err">，</span><span class="n">元素完美散列</span>
+<span class="ln">3</span><span class="n">7</span> <span class="n">14</span> <span class="n">21</span> <span class="n">28</span> <span class="n">35</span> <span class="n">42</span> <span class="n">49</span> <span class="n">56</span> <span class="n">63</span> <span class="n">6</span> <span class="n">13</span> <span class="n">20</span> <span class="n">27</span> <span class="n">34</span> <span class="n">41</span> <span class="n">48</span> <span class="n">55</span> <span class="n">62</span> <span class="n">5</span> <span class="n">12</span> <span class="n">19</span> <span class="n">26</span> <span class="n">33</span> <span class="n">40</span> <span class="n">47</span> <span class="n">54</span> <span class="n">61</span> <span class="n">4</span> <span class="n">11</span> <span class="n">18</span> <span class="n">25</span> <span class="n">32</span> <span class="n">39</span> <span class="n">46</span> <span class="n">53</span> <span class="n">60</span> <span class="n">3</span> <span class="n">10</span> <span class="n">17</span> <span class="n">24</span> <span class="n">31</span> <span class="n">38</span> <span class="n">45</span> <span class="n">52</span> <span class="n">59</span> <span class="n">2</span> <span class="n">9</span> <span class="n">16</span> <span class="n">23</span> <span class="n">30</span> <span class="n">37</span> <span class="n">44</span> <span class="n">51</span> <span class="n">58</span> <span class="n">1</span> <span class="n">8</span> <span class="n">15</span> <span class="n">22</span> <span class="n">29</span> <span class="n">36</span> <span class="n">43</span> <span class="n">50</span> <span class="n">57</span> <span class="n">0</span> <span class="o">--</span><span class="err">》</span><span class="n">Entry</span><span class="o">[]</span><span class="n">容量扩容2倍</span><span class="o">=</span><span class="n">64时</span><span class="err">，</span><span class="n">元素完美散列</span>
+</code></pre></div><p>以Entry大小16为例，计算如下：</p>
+<p>因为int有符号的特性，32位int型最大2^31-1=2147483647，在大1就会变成最大负数，对unsigned型的2654435769转化为int并去除符号为1640531527。这个值和最大2147483648的差值为506952121。</p>
+<p>1.第一个值就是魔数本身，看二进制最后四位，可以看出为7。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>2.第二个值就是魔数的2倍，其实相当于会溢出一次，直接拿魔数减去差值为506952121，为1133579406。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>3.第三个值是在2的基础上同样再减去506952121，为626627285</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>4.第四个值是在3的基础上同样减去506952121，为119675164。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>接下来亦复如是，不操作下去了。</p>
+</blockquote>
+<p>通俗的来讲用过散列算法，默认16个大小的数组，相当于从0-15共有16个数组下标。当某一个ThreadLocal初始化之后，就会通过哈希函数得到一个ThreadLocal的数值，我们这里称之为id。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">firstKey</span><span class="o">.</span><span class="na">threadLocalHashCode</span> <span class="o">&amp;</span> <span class="o">(</span><span class="n">INITIAL_CAPACITY</span> <span class="o">-</span> <span class="n">1</span><span class="o">);</span>
+</code></pre></div><p>上述结果i的值是Threadlocal的id和数组大小与的运算，其实跟求余运算相同，只是与运算更快，效率更高。最终i得到的是一个数组下标。举例说明，Entry数组大小16，ThreadLocal&lt; Interger &gt;的话值是固定的，这里暂定一个值，数组下标3。那么下次再有ThreadLocal&lt; Interger &gt;的值过来，还是会走到数组下标为3，这是固定的，除非Entry数组大小发生改变。</p>
+<h3 id="划分entry的类型">划分Entry的类型</h3>
+<p>了解到Entry数组和ThreadLocalMap的数据结构，那么这里首先将Entry数组分成三种类型，空类型(null Entry)、全类型(key存在,value可不存在)、部分回收类型(key被回收，value存在)，如下图所示。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_9.png" title="Entry类型" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_9.png"  alt="Entry类型">
+  
+    </a>
+  
+   
+    <span class="caption">Entry类型</span>
+  
+</div>
+
+<p>另外根据哈希散列算法，这边人为规定类型和散列顺序，即ThreadLocal&lt;?&gt;类型对应的firstKey.threadLocalHashCode &amp; (INITIAL_CAPACITY - 1)的值。</p>
+<p>表1 人为规定的散列表</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">T\tab size</th>
+<th style="text-align:center">16</th>
+<th style="text-align:center">32</th>
+<th style="text-align:center">64</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">尺子</td>
+<td style="text-align:center">7</td>
+<td style="text-align:center">7</td>
+<td style="text-align:center">7</td>
+</tr>
+<tr>
+<td style="text-align:center">白纸</td>
+<td style="text-align:center">14</td>
+<td style="text-align:center">14</td>
+<td style="text-align:center">14</td>
+</tr>
+<tr>
+<td style="text-align:center">钢笔</td>
+<td style="text-align:center">5</td>
+<td style="text-align:center">21</td>
+<td style="text-align:center">21</td>
+</tr>
+<tr>
+<td style="text-align:center">笔筒</td>
+<td style="text-align:center">12</td>
+<td style="text-align:center">28</td>
+<td style="text-align:center">28</td>
+</tr>
+<tr>
+<td style="text-align:center">铅笔</td>
+<td style="text-align:center">3</td>
+<td style="text-align:center">3</td>
+<td style="text-align:center">35</td>
+</tr>
+<tr>
+<td style="text-align:center">本子</td>
+<td style="text-align:center">10</td>
+<td style="text-align:center">10</td>
+<td style="text-align:center">42</td>
+</tr>
+<tr>
+<td style="text-align:center">袋子</td>
+<td style="text-align:center">1</td>
+<td style="text-align:center">17</td>
+<td style="text-align:center">49</td>
+</tr>
+<tr>
+<td style="text-align:center">夹子</td>
+<td style="text-align:center">8</td>
+<td style="text-align:center">24</td>
+<td style="text-align:center">56</td>
+</tr>
+<tr>
+<td style="text-align:center">墨水</td>
+<td style="text-align:center">15</td>
+<td style="text-align:center">31</td>
+<td style="text-align:center">63</td>
+</tr>
+<tr>
+<td style="text-align:center">梳子</td>
+<td style="text-align:center">6</td>
+<td style="text-align:center">6</td>
+<td style="text-align:center">6</td>
+</tr>
+<tr>
+<td style="text-align:center">镜子</td>
+<td style="text-align:center">13</td>
+<td style="text-align:center">13</td>
+<td style="text-align:center">13</td>
+</tr>
+<tr>
+<td style="text-align:center">电池</td>
+<td style="text-align:center">4</td>
+<td style="text-align:center">20</td>
+<td style="text-align:center">20</td>
+</tr>
+</tbody>
+</table>
+<h3 id="清理模式">清理模式</h3>
+<p>在介绍set和get之前，先快速熟悉一下两种清理模式</p>
+<p>1）expungeStaleEntry。探测式清理</p>
+<p>2）cleanSomeSlots。启发式清理</p>
+<p>1）expungeStaleEntry</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//传入的值对应table中的Entry为null或者k=null
+</span><span class="ln"> 2</span><span class="c1">//返回的值对应table中Entry为null
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kd">private</span> <span class="kt">int</span> <span class="nf">expungeStaleEntry</span><span class="o">(</span><span class="kt">int</span> <span class="n">staleSlot</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 4</span>    <span class="n">Entry</span><span class="o">[]</span> <span class="n">tab</span> <span class="o">=</span> <span class="n">table</span><span class="o">;</span>
+<span class="ln"> 5</span>    <span class="kt">int</span> <span class="n">len</span> <span class="o">=</span> <span class="n">tab</span><span class="o">.</span><span class="na">length</span><span class="o">;</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span>    <span class="c1">// 清理过时的插槽，即把部分回收类型变成空类型
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="n">tab</span><span class="o">[</span><span class="n">staleSlot</span><span class="o">].</span><span class="na">value</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln"> 9</span>    <span class="n">tab</span><span class="o">[</span><span class="n">staleSlot</span><span class="o">]</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">10</span>    <span class="n">size</span><span class="o">--;</span>
+<span class="ln">11</span>
+<span class="ln">12</span>    <span class="c1">//遇到null的时候会重新hash
+</span><span class="ln">13</span><span class="c1"></span>    <span class="n">Entry</span> <span class="n">e</span><span class="o">;</span>
+<span class="ln">14</span>    <span class="kt">int</span> <span class="n">i</span><span class="o">;</span>
+<span class="ln">15</span>    <span class="k">for</span> <span class="o">(</span><span class="n">i</span> <span class="o">=</span> <span class="n">nextIndex</span><span class="o">(</span><span class="n">staleSlot</span><span class="o">,</span> <span class="n">len</span><span class="o">);</span>
+<span class="ln">16</span>         <span class="o">(</span><span class="n">e</span> <span class="o">=</span> <span class="n">tab</span><span class="o">[</span><span class="n">i</span><span class="o">])</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">17</span>         <span class="n">i</span> <span class="o">=</span> <span class="n">nextIndex</span><span class="o">(</span><span class="n">i</span><span class="o">,</span> <span class="n">len</span><span class="o">))</span> <span class="o">{</span>
+<span class="ln">18</span>        <span class="n">ThreadLocal</span><span class="o">&lt;?&gt;</span> <span class="n">k</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+<span class="ln">19</span>        <span class="c1">//出现部分回收类型，置为空
+</span><span class="ln">20</span><span class="c1"></span>        <span class="k">if</span> <span class="o">(</span><span class="n">k</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">21</span>            <span class="n">e</span><span class="o">.</span><span class="na">value</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">22</span>            <span class="n">tab</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">23</span>            <span class="n">size</span><span class="o">--;</span>
+<span class="ln">24</span>        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln">25</span>            <span class="c1">//k不为null时候，重新hash函数
+</span><span class="ln">26</span><span class="c1"></span>            <span class="kt">int</span> <span class="n">h</span> <span class="o">=</span> <span class="n">k</span><span class="o">.</span><span class="na">threadLocalHashCode</span> <span class="o">&amp;</span> <span class="o">(</span><span class="n">len</span> <span class="o">-</span> <span class="n">1</span><span class="o">);</span>
+<span class="ln">27</span>            <span class="k">if</span> <span class="o">(</span><span class="n">h</span> <span class="o">!=</span> <span class="n">i</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">28</span>                <span class="n">tab</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">29</span>
+<span class="ln">30</span>                <span class="c1">//与Knuth 6.4算法R不同，我们必须扫描直到为空，因为多个条目可能已经过时
+</span><span class="ln">31</span><span class="c1"></span>                <span class="k">while</span> <span class="o">(</span><span class="n">tab</span><span class="o">[</span><span class="n">h</span><span class="o">]</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
+<span class="ln">32</span>                    <span class="n">h</span> <span class="o">=</span> <span class="n">nextIndex</span><span class="o">(</span><span class="n">h</span><span class="o">,</span> <span class="n">len</span><span class="o">);</span>
+<span class="ln">33</span>                <span class="n">tab</span><span class="o">[</span><span class="n">h</span><span class="o">]</span> <span class="o">=</span> <span class="n">e</span><span class="o">;</span>
+<span class="ln">34</span>            <span class="o">}</span>
+<span class="ln">35</span>        <span class="o">}</span>
+<span class="ln">36</span>    <span class="o">}</span>
+<span class="ln">37</span>    <span class="c1">//出现空类型，直接返回结果空类型的下标
+</span><span class="ln">38</span><span class="c1"></span>    <span class="k">return</span> <span class="n">i</span><span class="o">;</span>
+<span class="ln">39</span><span class="o">}</span>
+</code></pre></div><p>i）上述方法做了两件事，第一将传进来的值，变成null Entry（空类型）</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_10.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_10.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>ii）分三种情况，遇到空类型，部分回收类型和全类型</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_11.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_11.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_12.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_12.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_13.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_13.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>2）cleanSomeSlots</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//传入的值对应table中的Entry为null或者k!=null
+</span><span class="ln"> 2</span><span class="c1">//如果在接下来的循环顺序5个Entry中没有找到k=null，则返回false
+</span><span class="ln"> 3</span><span class="c1">//找到开始探测式清理，并重置循环5个Entry，最终返回true
+</span><span class="ln"> 4</span><span class="c1"></span><span class="kd">private</span> <span class="kt">boolean</span> <span class="nf">cleanSomeSlots</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">,</span> <span class="kt">int</span> <span class="n">n</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 5</span>    <span class="kt">boolean</span> <span class="n">removed</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+<span class="ln"> 6</span>    <span class="n">Entry</span><span class="o">[]</span> <span class="n">tab</span> <span class="o">=</span> <span class="n">table</span><span class="o">;</span>
+<span class="ln"> 7</span>    <span class="kt">int</span> <span class="n">len</span> <span class="o">=</span> <span class="n">tab</span><span class="o">.</span><span class="na">length</span><span class="o">;</span>
+<span class="ln"> 8</span>    <span class="k">do</span> <span class="o">{</span>
+<span class="ln"> 9</span>        <span class="n">i</span> <span class="o">=</span> <span class="n">nextIndex</span><span class="o">(</span><span class="n">i</span><span class="o">,</span> <span class="n">len</span><span class="o">);</span>
+<span class="ln">10</span>        <span class="n">Entry</span> <span class="n">e</span> <span class="o">=</span> <span class="n">tab</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+<span class="ln">11</span>        <span class="k">if</span> <span class="o">(</span><span class="n">e</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">e</span><span class="o">.</span><span class="na">get</span><span class="o">()</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">12</span>            <span class="n">n</span> <span class="o">=</span> <span class="n">len</span><span class="o">;</span>
+<span class="ln">13</span>            <span class="n">removed</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+<span class="ln">14</span>            <span class="n">i</span> <span class="o">=</span> <span class="n">expungeStaleEntry</span><span class="o">(</span><span class="n">i</span><span class="o">);</span>
+<span class="ln">15</span>        <span class="o">}</span>
+<span class="ln">16</span>    <span class="o">}</span> <span class="k">while</span> <span class="o">(</span> <span class="o">(</span><span class="n">n</span> <span class="o">&gt;&gt;&gt;=</span> <span class="n">1</span><span class="o">)</span> <span class="o">!=</span> <span class="n">0</span><span class="o">);</span>
+<span class="ln">17</span>    <span class="k">return</span> <span class="n">removed</span><span class="o">;</span>
+<span class="ln">18</span><span class="o">}</span>
+</code></pre></div><p>这里面的n&raquo;&gt;=1等于n=n&raquo;&gt;1，意思是强制右移1位。</p>
+<p>下列位需要循环顺序查找次数和对应的size表</p>
+<p>表2 顺序查找次数</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">次数\size</th>
+<th style="text-align:center">16</th>
+<th style="text-align:center">32</th>
+<th style="text-align:center">64</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">1</td>
+<td style="text-align:center">8</td>
+<td style="text-align:center">16</td>
+<td style="text-align:center">32</td>
+</tr>
+<tr>
+<td style="text-align:center">2</td>
+<td style="text-align:center">4</td>
+<td style="text-align:center">8</td>
+<td style="text-align:center">16</td>
+</tr>
+<tr>
+<td style="text-align:center">3</td>
+<td style="text-align:center">2</td>
+<td style="text-align:center">4</td>
+<td style="text-align:center">8</td>
+</tr>
+<tr>
+<td style="text-align:center">4</td>
+<td style="text-align:center">1</td>
+<td style="text-align:center">2</td>
+<td style="text-align:center">4</td>
+</tr>
+<tr>
+<td style="text-align:center">5</td>
+<td style="text-align:center">0</td>
+<td style="text-align:center">1</td>
+<td style="text-align:center">2</td>
+</tr>
+<tr>
+<td style="text-align:center">6</td>
+<td style="text-align:center">/</td>
+<td style="text-align:center">0</td>
+<td style="text-align:center">1</td>
+</tr>
+<tr>
+<td style="text-align:center">7</td>
+<td style="text-align:center">/</td>
+<td style="text-align:center">/</td>
+<td style="text-align:center">0</td>
+</tr>
+</tbody>
+</table>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_14.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_14.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>最终在重置后的五个Entry类型中为出现部分回收类型则结束清理。</p>
+<h3 id="set-1">set</h3>
+<p>这个方法应该是本文最复杂最难理解的一个方法，这里会将其拆解开来，分成set的三种情况。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="kd">private</span> <span class="kt">void</span> <span class="nf">set</span><span class="o">(</span><span class="n">ThreadLocal</span><span class="o">&lt;?&gt;</span> <span class="n">key</span><span class="o">,</span> <span class="n">Object</span> <span class="n">value</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 2</span>    <span class="c1">//set的流程相对来说会比较复杂，往往通过hash下标对应不上
+</span><span class="ln"> 3</span><span class="c1"></span>    <span class="n">Entry</span><span class="o">[]</span> <span class="n">tab</span> <span class="o">=</span> <span class="n">table</span><span class="o">;</span>
+<span class="ln"> 4</span>    <span class="kt">int</span> <span class="n">len</span> <span class="o">=</span> <span class="n">tab</span><span class="o">.</span><span class="na">length</span><span class="o">;</span>
+<span class="ln"> 5</span>    <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="na">threadLocalHashCode</span> <span class="o">&amp;</span> <span class="o">(</span><span class="n">len</span><span class="o">-</span><span class="n">1</span><span class="o">);</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span>    <span class="k">for</span> <span class="o">(</span><span class="n">Entry</span> <span class="n">e</span> <span class="o">=</span> <span class="n">tab</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+<span class="ln"> 8</span>         <span class="n">e</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln"> 9</span>         <span class="n">e</span> <span class="o">=</span> <span class="n">tab</span><span class="o">[</span><span class="n">i</span> <span class="o">=</span> <span class="n">nextIndex</span><span class="o">(</span><span class="n">i</span><span class="o">,</span> <span class="n">len</span><span class="o">)])</span> <span class="o">{</span>
+<span class="ln">10</span>        <span class="n">ThreadLocal</span><span class="o">&lt;?&gt;</span> <span class="n">k</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+<span class="ln">11</span>        <span class="c1">//情况2:找不到对应的k,循环下一个查找，直到找到当前的k为key，那么替换value值
+</span><span class="ln">12</span><span class="c1"></span>        <span class="k">if</span> <span class="o">(</span><span class="n">k</span> <span class="o">==</span> <span class="n">key</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">13</span>            <span class="n">e</span><span class="o">.</span><span class="na">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">;</span>
+<span class="ln">14</span>            <span class="k">return</span><span class="o">;</span>
+<span class="ln">15</span>        <span class="o">}</span>
+<span class="ln">16</span>        <span class="c1">//情况4:找不到对应的k,循环下一个查找，直到找到一个部分回收类型
+</span><span class="ln">17</span><span class="c1"></span>        <span class="k">if</span> <span class="o">(</span><span class="n">k</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">18</span>            <span class="n">replaceStaleEntry</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">value</span><span class="o">,</span> <span class="n">i</span><span class="o">);</span>
+<span class="ln">19</span>            <span class="k">return</span><span class="o">;</span>
+<span class="ln">20</span>        <span class="o">}</span>
+<span class="ln">21</span>    <span class="o">}</span>
+<span class="ln">22</span>
+<span class="ln">23</span>    <span class="c1">//情况1:下一个Entry为空类型，构造一个Entry放入，并作启发式清理
+</span><span class="ln">24</span><span class="c1"></span>    <span class="c1">//情况3:Entry类型一直为全类型，但是k != key，直到遇到空类型，并做启发式清理
+</span><span class="ln">25</span><span class="c1"></span>    <span class="n">tab</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Entry</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">value</span><span class="o">);</span>
+<span class="ln">26</span>    <span class="kt">int</span> <span class="n">sz</span> <span class="o">=</span> <span class="o">++</span><span class="n">size</span><span class="o">;</span>
+<span class="ln">27</span>    <span class="k">if</span> <span class="o">(!</span><span class="n">cleanSomeSlots</span><span class="o">(</span><span class="n">i</span><span class="o">,</span> <span class="n">sz</span><span class="o">)</span> <span class="o">&amp;&amp;</span> <span class="n">sz</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="o">)</span>
+<span class="ln">28</span>        <span class="n">rehash</span><span class="o">();</span>
+<span class="ln">29</span><span class="o">}</span>
+</code></pre></div><p>上述主要描述四种情况，实际上情况1和情况3是可以重合的，所以其实只存在三种情况</p>
+<p>1）遇到Entry空类型，构造一个k-v的Entry，然后启发式清理</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_15.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_15.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>2）找不到对应的k,循环下一个查找，直到找到当前的k为key，那么替换value值</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_16.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_16.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>3）找不到对应的k,循环下一个查找，直到找到一个部分回收类型，这种类型会在replaceStaleEntry方法中详解。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_17.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_17.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h4 id="replacestaleentry">replaceStaleEntry</h4>
+<p>第三种情况的方法，按逻辑来又分为向前找null Entry、向后替换、清理部分回收类型，其中向后替换又存在两种情况。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//set过程中遇到部分回收类型
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">private</span> <span class="kt">void</span> <span class="nf">replaceStaleEntry</span><span class="o">(</span><span class="n">ThreadLocal</span><span class="o">&lt;?&gt;</span> <span class="n">key</span><span class="o">,</span> <span class="n">Object</span> <span class="n">value</span><span class="o">,</span>
+<span class="ln"> 3</span>                               <span class="kt">int</span> <span class="n">staleSlot</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 4</span>    <span class="n">Entry</span><span class="o">[]</span> <span class="n">tab</span> <span class="o">=</span> <span class="n">table</span><span class="o">;</span>
+<span class="ln"> 5</span>    <span class="kt">int</span> <span class="n">len</span> <span class="o">=</span> <span class="n">tab</span><span class="o">.</span><span class="na">length</span><span class="o">;</span>
+<span class="ln"> 6</span>    <span class="n">Entry</span> <span class="n">e</span><span class="o">;</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span>    <span class="c1">//检查是否勋在部分回收类型，避免由于垃圾回收造成这种类型在散列表中持续增加
+</span><span class="ln"> 9</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">slotToExpunge</span> <span class="o">=</span> <span class="n">staleSlot</span><span class="o">;</span>
+<span class="ln">10</span>    <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">prevIndex</span><span class="o">(</span><span class="n">staleSlot</span><span class="o">,</span> <span class="n">len</span><span class="o">);</span>
+<span class="ln">11</span>         <span class="o">(</span><span class="n">e</span> <span class="o">=</span> <span class="n">tab</span><span class="o">[</span><span class="n">i</span><span class="o">])</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">12</span>         <span class="n">i</span> <span class="o">=</span> <span class="n">prevIndex</span><span class="o">(</span><span class="n">i</span><span class="o">,</span> <span class="n">len</span><span class="o">))</span>
+<span class="ln">13</span>        <span class="k">if</span> <span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">get</span><span class="o">()</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span>
+<span class="ln">14</span>            <span class="n">slotToExpunge</span> <span class="o">=</span> <span class="n">i</span><span class="o">;</span>
+<span class="ln">15</span>
+<span class="ln">16</span>    <span class="c1">//找到全类型和空类型
+</span><span class="ln">17</span><span class="c1"></span>    <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">nextIndex</span><span class="o">(</span><span class="n">staleSlot</span><span class="o">,</span> <span class="n">len</span><span class="o">);</span>
+<span class="ln">18</span>         <span class="o">(</span><span class="n">e</span> <span class="o">=</span> <span class="n">tab</span><span class="o">[</span><span class="n">i</span><span class="o">])</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">19</span>         <span class="n">i</span> <span class="o">=</span> <span class="n">nextIndex</span><span class="o">(</span><span class="n">i</span><span class="o">,</span> <span class="n">len</span><span class="o">))</span> <span class="o">{</span>
+<span class="ln">20</span>        <span class="n">ThreadLocal</span><span class="o">&lt;?&gt;</span> <span class="n">k</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+<span class="ln">21</span>
+<span class="ln">22</span>        <span class="c1">//找到key就交换，使用hash下标来维护哈希表的顺序
+</span><span class="ln">23</span><span class="c1"></span>        <span class="k">if</span> <span class="o">(</span><span class="n">k</span> <span class="o">==</span> <span class="n">key</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">24</span>            <span class="n">e</span><span class="o">.</span><span class="na">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">;</span>
+<span class="ln">25</span>
+<span class="ln">26</span>            <span class="n">tab</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">tab</span><span class="o">[</span><span class="n">staleSlot</span><span class="o">];</span>
+<span class="ln">27</span>            <span class="n">tab</span><span class="o">[</span><span class="n">staleSlot</span><span class="o">]</span> <span class="o">=</span> <span class="n">e</span><span class="o">;</span>
+<span class="ln">28</span>
+<span class="ln">29</span>            <span class="c1">// 开始清理
+</span><span class="ln">30</span><span class="c1"></span>            <span class="k">if</span> <span class="o">(</span><span class="n">slotToExpunge</span> <span class="o">==</span> <span class="n">staleSlot</span><span class="o">)</span>
+<span class="ln">31</span>                <span class="n">slotToExpunge</span> <span class="o">=</span> <span class="n">i</span><span class="o">;</span>
+<span class="ln">32</span>            <span class="n">cleanSomeSlots</span><span class="o">(</span><span class="n">expungeStaleEntry</span><span class="o">(</span><span class="n">slotToExpunge</span><span class="o">),</span> <span class="n">len</span><span class="o">);</span>
+<span class="ln">33</span>            <span class="k">return</span><span class="o">;</span>
+<span class="ln">34</span>        <span class="o">}</span>
+<span class="ln">35</span>        <span class="c1">//向后没有找到部分回收类型，那么开始扫描仍是第一个条目
+</span><span class="ln">36</span><span class="c1"></span>        <span class="k">if</span> <span class="o">(</span><span class="n">k</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">slotToExpunge</span> <span class="o">==</span> <span class="n">staleSlot</span><span class="o">)</span>
+<span class="ln">37</span>            <span class="n">slotToExpunge</span> <span class="o">=</span> <span class="n">i</span><span class="o">;</span>
+<span class="ln">38</span>    <span class="o">}</span>
+<span class="ln">39</span>
+<span class="ln">40</span>    <span class="c1">// 如果没有找到key，那么新建一个Entry，value为null
+</span><span class="ln">41</span><span class="c1"></span>    <span class="n">tab</span><span class="o">[</span><span class="n">staleSlot</span><span class="o">].</span><span class="na">value</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">42</span>    <span class="n">tab</span><span class="o">[</span><span class="n">staleSlot</span><span class="o">]</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Entry</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">value</span><span class="o">);</span>
+<span class="ln">43</span>    
+<span class="ln">44</span>    <span class="k">if</span> <span class="o">(</span><span class="n">slotToExpunge</span> <span class="o">!=</span> <span class="n">staleSlot</span><span class="o">)</span>
+<span class="ln">45</span>        <span class="n">cleanSomeSlots</span><span class="o">(</span><span class="n">expungeStaleEntry</span><span class="o">(</span><span class="n">slotToExpunge</span><span class="o">),</span> <span class="n">len</span><span class="o">);</span>
+<span class="ln">46</span><span class="o">}</span>
+</code></pre></div><p>这个方法看起来很多，实际上完成了三件事。</p>
+<p>1）向前找null Entry，即空类型</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_18.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_18.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>2）向后替换</p>
+<p>这里面又分为两种情况</p>
+<p>第一种情况：k == key直接命中，然后替换</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_19.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_19.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_20.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_20.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>第二种情况：非命中，则包括空类型，部分回收类型，slotExpunge会记录这种类型的下标</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_21.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_21.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_22.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_22.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_23.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_23.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>其实说白了也就是两种情况，唯一的区别就是slotExpunge下标不一样，会影响后续的清理，在第二部这个逻辑上无差别。</p>
+<p>3）探索式清理和启发式清理</p>
+<p>这里详细看上面两种清理的解释</p>
+<h4 id="扩容机制">扩容机制</h4>
+<p>这里涉及到了扩容机制</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//当大小大于等于扩容阈值，才有机会扩容
+</span><span class="ln">2</span><span class="c1"></span><span class="n">threshold</span> <span class="o">=</span> <span class="n">len</span> <span class="o">*</span> <span class="n">2</span> <span class="o">/</span> <span class="n">3</span><span class="o">;</span>
+<span class="ln">3</span><span class="n">sz</span> <span class="o">&gt;=</span> <span class="n">threshold</span>
+<span class="ln">4</span><span class="c1">//探测式清理完成之后，再次比较大小，一半的len    
+</span><span class="ln">5</span><span class="c1"></span><span class="n">size</span> <span class="o">&gt;=</span> <span class="n">threshold</span> <span class="o">-</span> <span class="n">threshold</span> <span class="o">/</span> <span class="n">4</span>
+</code></pre></div><p>表3 不同size的扩容机制</p>
+<table>
+<thead>
+<tr>
+<th>方法\size</th>
+<th>16</th>
+<th>32</th>
+<th>64</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>rehash</td>
+<td>10</td>
+<td>21</td>
+<td>42</td>
+</tr>
+<tr>
+<td>resize</td>
+<td>8</td>
+<td>16</td>
+<td>32</td>
+</tr>
+</tbody>
+</table>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_24.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_24.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>以铅笔，本子，袋子，夹子为例，在size16的时候，分别为哈希散列下标为3,10,1,8；size为32的时候，分别哈希散列下标为3,10,17,24。</p>
+<h3 id="get-1">get</h3>
+<p>相对于set来说，getMap的方法，更加容易理解。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="kd">private</span> <span class="n">Entry</span> <span class="nf">getEntry</span><span class="o">(</span><span class="n">ThreadLocal</span><span class="o">&lt;?&gt;</span> <span class="n">key</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 2</span>    <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="na">threadLocalHashCode</span> <span class="o">&amp;</span> <span class="o">(</span><span class="n">table</span><span class="o">.</span><span class="na">length</span> <span class="o">-</span> <span class="n">1</span><span class="o">);</span>
+<span class="ln"> 3</span>    <span class="n">Entry</span> <span class="n">e</span> <span class="o">=</span> <span class="n">table</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+<span class="ln"> 4</span>    <span class="c1">//直接命中
+</span><span class="ln"> 5</span><span class="c1"></span>    <span class="k">if</span> <span class="o">(</span><span class="n">e</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">e</span><span class="o">.</span><span class="na">get</span><span class="o">()</span> <span class="o">==</span> <span class="n">key</span><span class="o">)</span>
+<span class="ln"> 6</span>        <span class="k">return</span> <span class="n">e</span><span class="o">;</span>
+<span class="ln"> 7</span>    <span class="k">else</span>
+<span class="ln"> 8</span>        <span class="c1">//非直接命中
+</span><span class="ln"> 9</span><span class="c1"></span>        <span class="k">return</span> <span class="n">getEntryAfterMiss</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">i</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+<span class="ln">10</span><span class="o">}</span>
+</code></pre></div><p>这里面的方法，主要是两种情况</p>
+<p>1）直接命中</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_25.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_25.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>2）不直接命中</p>
+<p>这个会调用到getEntryAfterMiss方法去。</p>
+<h4 id="getentryaftermiss">getEntryAfterMiss</h4>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//非直接命中，通过循环依次遍历，看能否找到
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">private</span> <span class="n">Entry</span> <span class="nf">getEntryAfterMiss</span><span class="o">(</span><span class="n">ThreadLocal</span><span class="o">&lt;?&gt;</span> <span class="n">key</span><span class="o">,</span> <span class="kt">int</span> <span class="n">i</span><span class="o">,</span> <span class="n">Entry</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 3</span>    <span class="n">Entry</span><span class="o">[]</span> <span class="n">tab</span> <span class="o">=</span> <span class="n">table</span><span class="o">;</span>
+<span class="ln"> 4</span>    <span class="kt">int</span> <span class="n">len</span> <span class="o">=</span> <span class="n">tab</span><span class="o">.</span><span class="na">length</span><span class="o">;</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span>    <span class="k">while</span> <span class="o">(</span><span class="n">e</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 7</span>        <span class="n">ThreadLocal</span><span class="o">&lt;?&gt;</span> <span class="n">k</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+<span class="ln"> 8</span>        <span class="k">if</span> <span class="o">(</span><span class="n">k</span> <span class="o">==</span> <span class="n">key</span><span class="o">)</span>
+<span class="ln"> 9</span>            <span class="k">return</span> <span class="n">e</span><span class="o">;</span>
+<span class="ln">10</span>        <span class="k">if</span> <span class="o">(</span><span class="n">k</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span>
+<span class="ln">11</span>            <span class="n">expungeStaleEntry</span><span class="o">(</span><span class="n">i</span><span class="o">);</span>
+<span class="ln">12</span>        <span class="k">else</span>
+<span class="ln">13</span>            <span class="n">i</span> <span class="o">=</span> <span class="n">nextIndex</span><span class="o">(</span><span class="n">i</span><span class="o">,</span> <span class="n">len</span><span class="o">);</span>
+<span class="ln">14</span>        <span class="n">e</span> <span class="o">=</span> <span class="n">tab</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+<span class="ln">15</span>    <span class="o">}</span>
+<span class="ln">16</span>    <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">17</span><span class="o">}</span>
+</code></pre></div><p>当非直接命中的时候，这个时候有分成三种情况。</p>
+<p>1）k != key（全类型），return e</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_26.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_26.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>2）null Entry（空类型），return null Entry</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_27.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_27.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>3）k == null（部分回收类型），清理完之后继续循环</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_28.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_28.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>可以说逻辑还是非常清晰的，返回值只能是命中的值或者是null。</p>
+<h3 id="remove-1">remove</h3>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="kd">private</span> <span class="kt">void</span> <span class="nf">remove</span><span class="o">(</span><span class="n">ThreadLocal</span><span class="o">&lt;?&gt;</span> <span class="n">key</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 2</span>    <span class="n">Entry</span><span class="o">[]</span> <span class="n">tab</span> <span class="o">=</span> <span class="n">table</span><span class="o">;</span>
+<span class="ln"> 3</span>    <span class="kt">int</span> <span class="n">len</span> <span class="o">=</span> <span class="n">tab</span><span class="o">.</span><span class="na">length</span><span class="o">;</span>
+<span class="ln"> 4</span>    <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="na">threadLocalHashCode</span> <span class="o">&amp;</span> <span class="o">(</span><span class="n">len</span><span class="o">-</span><span class="n">1</span><span class="o">);</span>
+<span class="ln"> 5</span>    <span class="k">for</span> <span class="o">(</span><span class="n">Entry</span> <span class="n">e</span> <span class="o">=</span> <span class="n">tab</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+<span class="ln"> 6</span>         <span class="n">e</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln"> 7</span>         <span class="n">e</span> <span class="o">=</span> <span class="n">tab</span><span class="o">[</span><span class="n">i</span> <span class="o">=</span> <span class="n">nextIndex</span><span class="o">(</span><span class="n">i</span><span class="o">,</span> <span class="n">len</span><span class="o">)])</span> <span class="o">{</span>
+<span class="ln"> 8</span>        <span class="k">if</span> <span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">get</span><span class="o">()</span> <span class="o">==</span> <span class="n">key</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 9</span>            <span class="n">e</span><span class="o">.</span><span class="na">clear</span><span class="o">();</span>
+<span class="ln">10</span>            <span class="n">expungeStaleEntry</span><span class="o">(</span><span class="n">i</span><span class="o">);</span>
+<span class="ln">11</span>            <span class="k">return</span><span class="o">;</span>
+<span class="ln">12</span>        <span class="o">}</span>
+<span class="ln">13</span>    <span class="o">}</span>
+<span class="ln">14</span><span class="o">}</span>
+</code></pre></div><p>remove方法相对于getEntry和set方法比较简单，直接在table中找key，如果找到了，把弱引用断了做一次段清理。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_29.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_29.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_30.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_30.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>这边的逻辑其实只有在k == key的时候才做清理，其他k != key，k == null的时候继续下移一个，直到遇到null Entry退出。</p>
+<h1 id="总结">总结</h1>
+<p>整体的Threadlocal源码解析分析完了，主要是更加直观清晰的了解到ThreadLocal的组成部分和数据结构。接下来，会有Threadlocal的具体用途，尽请期待。</p>
+<h1 id="参考">参考</h1>
+<p><a href="https://www.it610.com/article/1287851703424561152.htm">[1] 并发编程艺术, ThreadLocal源码阅读一：散列算法，魔数 0x61c88647 学习, 2020.</a></p>
+<p><a href="https://www.cnblogs.com/micrari/p/6790229.html">[2] 活在夢裡, ThreadLocal源码解读, 2017.</a></p>
+<p><a href="https://www.cnblogs.com/dennyzhangdd/p/7978455.html">[3] 只会一点java, ThreadLocal终极源码剖析-一篇足矣！, 2017.</a></p>
+<p><a href="https://blog.csdn.net/Lammonpeter/article/details/105175187">[4] itlemon2021, 深入理解ThreadLocal：拨开迷雾，探究本质, 2020.</a></p>
+<p><a href="https://blog.csdn.net/Lammonpeter/article/details/105175187">[5] Bolon0708, 面试官：听说你看过ThreadLocal源码？我来瞅瞅？, 2020.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/android/">Android</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%BA%90%E7%A0%81/">源码</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/framework/">framework</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/threadlocal/">ThreadLocal</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/thread/">Thread</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/10/android%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8/" data-tooltip="Android数据存储">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2021 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/10/android%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8/" data-tooltip="Android数据存储">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2021%2F11%2Fthreadlocal%25E4%25B9%258B%25E5%2588%259D%25E5%2587%25BA%25E8%258C%2585%25E5%25BA%2590%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2021%2F11%2Fthreadlocal%25E4%25B9%258B%25E5%2588%259D%25E5%2587%25BA%25E8%258C%2585%25E5%25BA%2590%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2021%2F11%2Fthreadlocal%25E4%25B9%258B%25E5%2588%259D%25E5%2587%25BA%25E8%258C%2585%25E5%25BA%2590%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2021\/11\/threadlocal%E4%B9%8B%E5%88%9D%E5%87%BA%E8%8C%85%E5%BA%90\/';
+          
+            this.page.identifier = '\/2021\/11\/threadlocal%E4%B9%8B%E5%88%9D%E5%87%BA%E8%8C%85%E5%BA%90\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
