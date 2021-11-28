@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="比如你在澡堂洗完澡需要搓澡服务，你会联系大堂经理给你安排比较有名搓澡技师，这个时候大堂经理就会在预备的技师里面选一个给你服务。这种模式就是代理模式。">
+
+
+<meta property="og:description" content="比如你在澡堂洗完澡需要搓澡服务，你会联系大堂经理给你安排比较有名搓澡技师，这个时候大堂经理就会在预备的技师里面选一个给你服务。这种模式就是代理模式。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="设计模式之代理模式">
+<meta name="twitter:title" content="设计模式之代理模式">
+<meta property="og:url" content="https://yangyang48.github.io/2021/11/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2021/11/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="比如你在澡堂洗完澡需要搓澡服务，你会联系大堂经理给你安排比较有名搓澡技师，这个时候大堂经理就会在预备的技师里面选一个给你服务。这种模式就是代理模式。">
+<meta name="twitter:description" content="比如你在澡堂洗完澡需要搓澡服务，你会联系大堂经理给你安排比较有名搓澡技师，这个时候大堂经理就会在预备的技师里面选一个给你服务。这种模式就是代理模式。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2021-11-28T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2021-11-28T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="设计模式">
+    
+      <meta property="article:section" content="2021">
+    
+      <meta property="article:section" content="November">
+    
+  
+  
+    
+      <meta property="article:tag" content="Android">
+    
+      <meta property="article:tag" content="java">
+    
+      <meta property="article:tag" content="代理模式">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/proxy/proxy_thumb.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/proxy/proxy_thumb.png">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/proxy/proxy_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/proxy/proxy_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>设计模式之代理模式</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2021/11/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/proxy/proxy_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      设计模式之代理模式
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2021-11-28T00:00:00Z">
+        
+  十一月 28, 2021
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/%e8%ae%be%e8%ae%a1%e6%a8%a1%e5%bc%8f">设计模式</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2021">2021</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/november">November</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">1400 Words|Read in about 7 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>比如你在澡堂洗完澡需要搓澡服务，你会联系大堂经理给你安排比较有名搓澡技师，这个时候大堂经理就会在预备的技师里面选一个给你服务。这种模式就是代理模式。</p>
+<h1 id="什么是代理模式">什么是代理模式</h1>
+<blockquote>
+<p>由于某些原因需要给某对象提供一个代理以控制对该对象的访问。这时，访问对象不适合或者不能直接引用目标对象，代理对象作为访问对象和目标对象之间的中介。它是一种对象结构型模式。</p>
+<p>主要解决的是问题是为某些资源的访问、对象的类的易用操作上提供方便使用的代理服务。</p>
+</blockquote>
+<h1 id="uml图">UML图</h1>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/proxy/proxy_1.png" title="代理模式UML图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/proxy/proxy_1.png"  alt="代理模式UML图">
+  
+    </a>
+  
+   
+    <span class="caption">代理模式UML图</span>
+  
+</div>
+
+<p>代理模式一般会有三个角色</p>
+<p>**抽象角色：**指代代理角色和真实角色对外提供的公共方法，一般为一个接口</p>
+<p>**真实角色：**需要实现抽象角色接口，定义了真实角色所要实现的业务逻辑，一遍提供代理角色调用。</p>
+<p>**代理角色：**需要实现抽象角色接口，是真实角色的代理，通过真实角色的业务逻辑方法来实现抽象方法，并附加自己的操作。将统一的流程控制都放到代理角色中处理。</p>
+<p>作为一篇开篇的设计模式，这里有必要讲述一下<strong>箭头关系</strong></p>
+<blockquote>
+<p>总共有六种关系，具体可详见<a href="https://blog.csdn.net/qq_32391421/article/details/83340321">这篇文章</a></p>
+<ul>
+<li>
+<p>泛化（继承）：一种继承关系，箭头指向父类</p>
+</li>
+<li>
+<p>实现：一种接口和实现关系，箭头指向接口</p>
+</li>
+<li>
+<p>关联：一种拥有关系，指向被拥有者，平级关系</p>
+</li>
+<li>
+<p>聚合：一种整体与部分关系，指向整体，上下级关系</p>
+</li>
+<li>
+<p>组合：一种整体与部分关系，指向整体，部分必须存在整体才存在</p>
+</li>
+<li>
+<p>依赖：一种使用的关系，指向被使用者，如静态方法调用</p>
+</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/proxy/proxy_2.png" title="代理模式箭头关系" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/proxy/proxy_2.png"  alt="代理模式箭头关系">
+  
+    </a>
+  
+   
+    <span class="caption">代理模式箭头关系</span>
+  
+</div>
+
+</blockquote>
+<h1 id="静态代理">静态代理</h1>
+<p>举一个简单的demo，打官司。一般情况下打官司常见的人员原告人，被告人，原告人律师，被告人律师，大法官，陪审人员等。在法庭上我们需要一个拥有法律经验比较丰厚的律师，来替我们打官司，而律师接收原告人的委托就成为了原告人律师，主要是为了替原告打赢官司。</p>
+<p>拆解角色</p>
+<p>抽象角色：法律诉讼抽象类</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//法律诉讼抽象类
+</span><span class="ln">2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Ilawsuit</span>
+<span class="ln">3</span><span class="o">{</span>
+<span class="ln">4</span>    <span class="kt">void</span> <span class="nf">describ</span><span class="o">();</span><span class="c1">//案情描述，开始举证
+</span><span class="ln">5</span><span class="c1"></span><span class="o">}</span>
+</code></pre></div><p>代理角色：律师事务所的律师</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//律师事务所的律师
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Lawyer</span> <span class="kd">implements</span> <span class="n">Ilawsuit</span><span class="o">{</span>
+<span class="ln"> 3</span>    <span class="n">Ilawsuit</span> <span class="n">mIlawsuit</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln"> 4</span>
+<span class="ln"> 5</span>    <span class="c1">//实现外部注入
+</span><span class="ln"> 6</span><span class="c1"></span>    <span class="kd">public</span> <span class="nf">Lawyer</span><span class="o">(</span><span class="n">Ilawsuit</span> <span class="n">ilawsuit</span><span class="o">){</span>
+<span class="ln"> 7</span>        <span class="n">mIlawsuit</span> <span class="o">=</span> <span class="n">ilawsuit</span><span class="o">;</span>
+<span class="ln"> 8</span>    <span class="o">}</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span>    <span class="nd">@Override</span>
+<span class="ln">11</span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">describ</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln">12</span>        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&#34;Instead of client description&#34;</span><span class="o">);</span>
+<span class="ln">13</span>        <span class="n">mIlawsuit</span><span class="o">.</span><span class="na">describ</span><span class="o">();</span>
+<span class="ln">14</span>    <span class="o">}</span>
+<span class="ln">15</span><span class="o">}</span>
+</code></pre></div><p>真实角色：真实诉讼人（原告人）</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//真实诉讼人（原告人）
+</span><span class="ln">2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Plaintiff</span> <span class="kd">implements</span> <span class="n">Ilawsuit</span><span class="o">{</span>
+<span class="ln">3</span>    <span class="nd">@Override</span>
+<span class="ln">4</span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">describ</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln">5</span>        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&#34;Plaintiff describ case, the company boss Wage arrears&#34;</span><span class="o">);</span>
+<span class="ln">6</span>    <span class="o">}</span>
+<span class="ln">7</span><span class="o">}</span>
+</code></pre></div><p>调用客户端</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">StaticClient</span> <span class="o">{</span>
+<span class="ln"> 2</span>    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">){</span>
+<span class="ln"> 3</span>        <span class="c1">//原告人的身份是一名打工人
+</span><span class="ln"> 4</span><span class="c1"></span>        <span class="n">Ilawsuit</span> <span class="n">worker</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Plaintiff</span><span class="o">();</span>
+<span class="ln"> 5</span>        <span class="c1">//打工人委托给有经验的律师进行打官司
+</span><span class="ln"> 6</span><span class="c1"></span>        <span class="n">Ilawsuit</span> <span class="n">lawyer</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Lawyer</span><span class="o">(</span><span class="n">worker</span><span class="o">);</span>
+<span class="ln"> 7</span>        <span class="c1">//律师大法庭上描述案件，开始举证
+</span><span class="ln"> 8</span><span class="c1"></span>        <span class="n">lawyer</span><span class="o">.</span><span class="na">describ</span><span class="o">();</span>
+<span class="ln"> 9</span>    <span class="o">}</span>
+<span class="ln">10</span><span class="o">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/proxy/proxy_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/proxy/proxy_3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="动态代理">动态代理</h1>
+<p>这个时候存在一种情况，这个案件其实需要打三场官司，每一场官司都需要一名律师，如果能做到我打三场官司只用一名律师，我就相当于可以省很多钱。每场官司对应的主体内容是不一样的，相当于这个律师需要对<strong>这些主题内容</strong>都了解，能够帮助完成代理。</p>
+<p>这里边的主题内容就是抽象接口里面的方法，也就是说这个代理对象能够完成<strong>不同抽象接口的方法</strong>。</p>
+<h2 id="第一种情况">第一种情况</h2>
+<p>只需要打一场官司，对应一个诉讼</p>
+<p>抽象角色：法律诉讼抽象类，同上</p>
+<p>真实角色：真实诉讼人（原告人），同上</p>
+<p>代理角色：动态代理的角色，这里</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//newProxyInstance这里面有三个参数
+</span><span class="ln">2</span><span class="c1">//loader: 用哪个类加载器去加载代理对象,一般可用客户端调用的类
+</span><span class="ln">3</span><span class="c1">//interfaces:动态代理类需要实现的接口，这个相当于上面提到的代理者的能力，拥有不同抽象接口的方法
+</span><span class="ln">4</span><span class="c1">//h:动态代理方法在执行时，会调用h里面的invoke方法去执行，一般需要外部实现或者通过匿名内部类实现
+</span><span class="ln">5</span><span class="c1"></span><span class="n">Ilawsuit</span> <span class="n">proxy</span> <span class="o">=</span> <span class="o">(</span><span class="n">Ilawsuit</span><span class="o">)</span> <span class="n">Proxy</span><span class="o">.</span><span class="na">newProxyInstance</span><span class="o">(</span><span class="n">DynamicClinet</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getClassLoader</span><span class="o">(),</span>
+<span class="ln">6</span>                                                   <span class="k">new</span> <span class="n">Class</span><span class="o">[]{</span><span class="n">Ilawsuit</span><span class="o">.</span><span class="na">class</span><span class="o">},</span> <span class="k">new</span> <span class="n">DynamicHandler</span><span class="o">(</span><span class="n">worker</span><span class="o">));</span>
+</code></pre></div><p>客户端调用</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//原告人的身份是一名打工人
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">Ilawsuit</span> <span class="n">worker</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Plaintiff</span><span class="o">();</span>
+<span class="ln"> 3</span><span class="c1">//这个new Class[]{Ilawsuit.class}里面的还可以添加，主要根据真实对象有多少个实现
+</span><span class="ln"> 4</span><span class="c1">// 这里实现了BaseIlawsuit就只添加Ilawsuit.class即可
+</span><span class="ln"> 5</span><span class="c1"></span><span class="n">Ilawsuit</span> <span class="n">proxy</span> <span class="o">=</span> <span class="o">(</span><span class="n">Ilawsuit</span><span class="o">)</span> <span class="n">Proxy</span><span class="o">.</span><span class="na">newProxyInstance</span><span class="o">(</span><span class="n">DynamicClinet</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getClassLoader</span><span class="o">(),</span>
+<span class="ln"> 6</span>                                                   <span class="k">new</span> <span class="n">Class</span><span class="o">[]{</span><span class="n">Ilawsuit</span><span class="o">.</span><span class="na">class</span><span class="o">},</span> <span class="k">new</span> <span class="n">DynamicHandler</span><span class="o">(</span><span class="n">worker</span><span class="o">));</span>
+<span class="ln"> 7</span><span class="n">proxy</span><span class="o">.</span><span class="na">describ</span><span class="o">();</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">DynamicHandler</span> <span class="kd">implements</span> <span class="n">InvocationHandler</span>
+<span class="ln">10</span><span class="o">{</span>
+<span class="ln">11</span>    <span class="kd">private</span> <span class="n">Object</span> <span class="n">obj</span><span class="o">;</span>
+<span class="ln">12</span>
+<span class="ln">13</span>    <span class="kd">public</span> <span class="nf">DynamicHandler</span><span class="o">(</span><span class="kd">final</span> <span class="n">Object</span> <span class="n">obj</span><span class="o">)</span>
+<span class="ln">14</span>    <span class="o">{</span>
+<span class="ln">15</span>        <span class="k">this</span><span class="o">.</span><span class="na">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">;</span>
+<span class="ln">16</span>    <span class="o">}</span>
+<span class="ln">17</span>
+<span class="ln">18</span>    <span class="nd">@Override</span>
+<span class="ln">19</span>    <span class="kd">public</span> <span class="n">Object</span> <span class="nf">invoke</span><span class="o">(</span><span class="n">Object</span> <span class="n">proxy</span><span class="o">,</span> <span class="n">Method</span> <span class="n">method</span><span class="o">,</span> <span class="n">Object</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Throwable</span> <span class="o">{</span>
+<span class="ln">20</span>        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&#34;-&gt;&gt;&gt;before function&#34;</span><span class="o">);</span>
+<span class="ln">21</span>        <span class="c1">//这里面的proxy是上面Ilawsuit proxy，这是一一对应的
+</span><span class="ln">22</span><span class="c1"></span>        <span class="c1">//obj是构造时候的注入，一般指的是具体对象（被代理的对象）
+</span><span class="ln">23</span><span class="c1"></span>        <span class="c1">// args为基类函数中的参数，method为实际的方法，意思就是调用obj真实对象的method方法，且参数为args
+</span><span class="ln">24</span><span class="c1"></span>        <span class="n">Object</span> <span class="n">res</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="n">obj</span><span class="o">,</span> <span class="n">args</span><span class="o">);</span>
+<span class="ln">25</span>        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&#34;-&gt;&gt;&gt;after function&#34;</span><span class="o">);</span>
+<span class="ln">26</span>        <span class="k">return</span> <span class="n">res</span><span class="o">;</span>
+<span class="ln">27</span>    <span class="o">}</span>
+<span class="ln">28</span><span class="o">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/proxy/proxy_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/proxy/proxy_4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="第二种情况">第二种情况</h2>
+<p>打三场官司，对应三种不同的诉讼，使用一种代理，可以省很多钱</p>
+<p>抽象角色：这里有三场官司，有三个法律诉讼抽象类</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//三种不同类型的官司诉讼
+</span><span class="ln"> 2</span><span class="c1">//法律诉讼抽象类
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Ilawsuit</span>
+<span class="ln"> 4</span><span class="o">{</span>
+<span class="ln"> 5</span>    <span class="kt">void</span> <span class="nf">describ</span><span class="o">();</span><span class="c1">//案情描述，开始举证
+</span><span class="ln"> 6</span><span class="c1"></span><span class="o">}</span>
+<span class="ln"> 7</span><span class="c1">//法律诉讼抽象类
+</span><span class="ln"> 8</span><span class="c1"></span><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Ilawsuit2</span> <span class="o">{</span>
+<span class="ln"> 9</span>    <span class="c1">//罗列证物
+</span><span class="ln">10</span><span class="c1"></span>    <span class="kt">void</span> <span class="nf">Proof</span><span class="o">(</span><span class="kt">int</span> <span class="n">exhibit</span><span class="o">);</span>
+<span class="ln">11</span><span class="o">}</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="c1">//法律诉讼抽象类
+</span><span class="ln">14</span><span class="c1"></span><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Ilawsuit3</span> <span class="o">{</span>
+<span class="ln">15</span>    <span class="c1">//录音证据
+</span><span class="ln">16</span><span class="c1"></span>    <span class="kt">int</span> <span class="nf">recording</span><span class="o">();</span>
+<span class="ln">17</span><span class="o">}</span>
+</code></pre></div><p>真实角色：真实复合诉讼人（原告人），这个原告人实现了三个抽象接口方法</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//复合原告人，表示需要大三场不同类型官司的原告人
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PlaintiffComplex</span> <span class="kd">implements</span> <span class="n">Ilawsuit</span><span class="o">,</span><span class="n">Ilawsuit2</span><span class="o">,</span><span class="n">Ilawsuit3</span><span class="o">{</span>
+<span class="ln"> 3</span>
+<span class="ln"> 4</span>    <span class="nd">@Override</span>
+<span class="ln"> 5</span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">describ</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 6</span>        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&#34;PlaintiffComplex describ case, the company boss Wage arrears&#34;</span><span class="o">);</span>
+<span class="ln"> 7</span>    <span class="o">}</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span>    <span class="nd">@Override</span>
+<span class="ln">10</span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">Proof</span><span class="o">(</span><span class="kt">int</span> <span class="n">exhibit</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">11</span>        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&#34;PlaintiffComplex Proof case, the company boss not be human, list exhibit = &#34;</span><span class="o">+</span><span class="n">exhibit</span><span class="o">);</span>
+<span class="ln">12</span>    <span class="o">}</span>
+<span class="ln">13</span>
+<span class="ln">14</span>    <span class="nd">@Override</span>
+<span class="ln">15</span>    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">recording</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln">16</span>        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&#34;PlaintiffComplex recording case, the company boss just Draw flatbread&#34;</span><span class="o">);</span>
+<span class="ln">17</span>        <span class="k">return</span> <span class="n">0</span><span class="o">;</span>
+<span class="ln">18</span>    <span class="o">}</span>
+<span class="ln">19</span><span class="o">}</span>
+</code></pre></div><p>代理角色：动态代理的角色，这里</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//相当于我有好几个诉讼抽象类
+</span><span class="ln"> 2</span><span class="c1">// 诉讼抽象类A，主要案情描述，开始举证
+</span><span class="ln"> 3</span><span class="c1">// 法律诉讼抽象类B，主要是罗列证物
+</span><span class="ln"> 4</span><span class="c1">// 法律诉讼抽象类，主要是录音证据
+</span><span class="ln"> 5</span><span class="c1">// 最终通过一个原告反馈在一场官司里面，不然需要拆开分成三个律师代理三场官司，太浪费钱了
+</span><span class="ln"> 6</span><span class="c1"></span><span class="kd">final</span> <span class="n">PlaintiffComplex</span> <span class="n">workerA</span> <span class="o">=</span> <span class="k">new</span> <span class="n">PlaintiffComplex</span><span class="o">();</span>
+<span class="ln"> 7</span><span class="c1">//通过一个万能类来赋值，可对其任意强制转化类型
+</span><span class="ln"> 8</span><span class="c1"></span><span class="n">Object</span> <span class="n">obj</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span><span class="n">obj</span> <span class="o">=</span> <span class="n">Proxy</span><span class="o">.</span><span class="na">newProxyInstance</span><span class="o">(</span><span class="n">DynamicClinet</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getClassLoader</span><span class="o">(),</span>
+<span class="ln">11</span>                             <span class="k">new</span> <span class="n">Class</span><span class="o">[]{</span><span class="n">Ilawsuit</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">Ilawsuit2</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">Ilawsuit3</span><span class="o">.</span><span class="na">class</span><span class="o">},</span>
+<span class="ln">12</span>                             <span class="k">new</span> <span class="n">InvocationHandler</span><span class="o">(){</span>
+<span class="ln">13</span>                                 <span class="nd">@Override</span>
+<span class="ln">14</span>                                 <span class="kd">public</span> <span class="n">Object</span> <span class="nf">invoke</span><span class="o">(</span><span class="n">Object</span> <span class="n">proxy</span><span class="o">,</span> <span class="n">Method</span> <span class="n">method</span><span class="o">,</span> <span class="n">Object</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Throwable</span> <span class="o">{</span>
+<span class="ln">15</span>                                     <span class="k">return</span> <span class="n">method</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="n">workerA</span><span class="o">,</span> <span class="n">args</span><span class="o">);</span>
+<span class="ln">16</span>                                 <span class="o">}</span>
+<span class="ln">17</span>                             <span class="o">});</span>
+<span class="ln">18</span><span class="c1">//这里通过对obj对象的强制转换类型完成对三类对象的调用
+</span><span class="ln">19</span><span class="c1"></span><span class="n">Ilawsuit</span> <span class="n">ilawsuit</span> <span class="o">=</span> <span class="o">(</span><span class="n">Ilawsuit</span><span class="o">)</span> <span class="n">obj</span><span class="o">;</span>
+<span class="ln">20</span><span class="n">ilawsuit</span><span class="o">.</span><span class="na">describ</span><span class="o">();</span>
+<span class="ln">21</span><span class="n">Ilawsuit2</span> <span class="n">ilawsuit2</span> <span class="o">=</span> <span class="o">(</span><span class="n">Ilawsuit2</span><span class="o">)</span> <span class="n">obj</span><span class="o">;</span>
+<span class="ln">22</span><span class="n">ilawsuit2</span><span class="o">.</span><span class="na">Proof</span><span class="o">(</span><span class="n">100</span><span class="o">);</span>
+<span class="ln">23</span><span class="n">Ilawsuit3</span> <span class="n">ilawsuit3</span> <span class="o">=</span> <span class="o">(</span><span class="n">Ilawsuit3</span><span class="o">)</span> <span class="n">obj</span><span class="o">;</span>
+<span class="ln">24</span><span class="kt">int</span> <span class="n">ret</span> <span class="o">=</span> <span class="n">ilawsuit3</span><span class="o">.</span><span class="na">recording</span><span class="o">();</span>
+<span class="ln">25</span><span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&#34;DynamicClinet workerA recording ret =&#34;</span><span class="o">+</span><span class="n">ret</span><span class="o">);</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/proxy/proxy_5.png" title="代理模式调用流程图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/proxy/proxy_5.png"  alt="代理模式调用流程图">
+  
+    </a>
+  
+   
+    <span class="caption">代理模式调用流程图</span>
+  
+</div>
+
+<blockquote>
+<p>思考：为什么能够实现动态代理，动态代理的原理是什么？</p>
+</blockquote>
+<h1 id="动态代理的原理">动态代理的原理</h1>
+<p>一般的对象是由硬盘中加载，通过jdk中javac工具，将.java文件-编译生成.class文件，通过类加载得到Class对象。而动态代理的对象是内存来的 ，没有真实的class文件。</p>
+<p>笔者这里用的是jdk17的源码来分析。</p>
+<h2 id="1proxynewproxyinstance">1.Proxy.newProxyInstance</h2>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//proxy.java#newProxyInstance
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">static</span> <span class="n">Object</span> <span class="nf">newProxyInstance</span><span class="o">(</span><span class="n">ClassLoader</span> <span class="n">loader</span><span class="o">,</span>
+<span class="ln"> 3</span>                                      <span class="n">Class</span><span class="o">&lt;?&gt;[]</span> <span class="n">interfaces</span><span class="o">,</span>
+<span class="ln"> 4</span>                                      <span class="n">InvocationHandler</span> <span class="n">h</span><span class="o">)</span>
+<span class="ln"> 5</span>    <span class="kd">throws</span> <span class="n">IllegalArgumentException</span><span class="o">{</span>
+<span class="ln"> 6</span>    <span class="c1">// 1.null检查，h为null就抛出NullPointerException
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="n">Objects</span><span class="o">.</span><span class="na">requireNonNull</span><span class="o">(</span><span class="n">h</span><span class="o">);</span>
+<span class="ln"> 8</span>    <span class="c1">// 2.将接口类对象数组clone一份。
+</span><span class="ln"> 9</span><span class="c1"></span>    <span class="kd">final</span> <span class="n">Class</span><span class="o">&lt;?&gt;[]</span> <span class="n">intfs</span> <span class="o">=</span> <span class="n">interfaces</span><span class="o">.</span><span class="na">clone</span><span class="o">();</span>
+<span class="ln">10</span>
+<span class="ln">11</span>    <span class="c1">//执行权限检查
+</span><span class="ln">12</span><span class="c1"></span>    <span class="kd">final</span> <span class="n">SecurityManager</span> <span class="n">sm</span> <span class="o">=</span> <span class="n">System</span><span class="o">.</span><span class="na">getSecurityManager</span><span class="o">();</span>
+<span class="ln">13</span>    <span class="k">if</span> <span class="o">(</span><span class="n">sm</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">14</span>        <span class="n">checkProxyAccess</span><span class="o">(</span><span class="n">Reflection</span><span class="o">.</span><span class="na">getCallerClass</span><span class="o">(),</span> <span class="n">loader</span><span class="o">,</span> <span class="n">intfs</span><span class="o">);</span>
+<span class="ln">15</span>    <span class="o">}</span>
+<span class="ln">16</span>    <span class="c1">// 3.查找或者是生成一个特定的代理类对象
+</span><span class="ln">17</span><span class="c1"></span>    <span class="n">Class</span><span class="o">&lt;?&gt;</span> <span class="n">cl</span> <span class="o">=</span> <span class="n">getProxyClass0</span><span class="o">(</span><span class="n">loader</span><span class="o">,</span> <span class="n">intfs</span><span class="o">);</span>
+<span class="ln">18</span>
+<span class="ln">19</span>    <span class="k">try</span> <span class="o">{</span>
+<span class="ln">20</span>        <span class="k">if</span> <span class="o">(</span><span class="n">sm</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">21</span>            <span class="n">checkNewProxyPermission</span><span class="o">(</span><span class="n">Reflection</span><span class="o">.</span><span class="na">getCallerClass</span><span class="o">(),</span> <span class="n">cl</span><span class="o">);</span>
+<span class="ln">22</span>        <span class="o">}</span>
+<span class="ln">23</span>        <span class="c1">// 是static final 修饰的，源码： private static final Class&lt;?&gt;[] constructorParams ={ InvocationHandler.class };
+</span><span class="ln">24</span><span class="c1"></span>        <span class="c1">// 4.从代理类对象中查找参数为InvocationHandler的构造器
+</span><span class="ln">25</span><span class="c1"></span>        <span class="kd">final</span> <span class="n">Constructor</span><span class="o">&lt;?&gt;</span> <span class="n">cons</span> <span class="o">=</span> <span class="n">cl</span><span class="o">.</span><span class="na">getConstructor</span><span class="o">(</span><span class="n">constructorParams</span><span class="o">);</span>
+<span class="ln">26</span>        <span class="kd">final</span> <span class="n">InvocationHandler</span> <span class="n">ih</span> <span class="o">=</span> <span class="n">h</span><span class="o">;</span>
+<span class="ln">27</span>        <span class="c1">// 检测构造器是否是Public修饰，如果不是则强行转换为可以访问的。
+</span><span class="ln">28</span><span class="c1"></span>        <span class="k">if</span> <span class="o">(!</span><span class="n">Modifier</span><span class="o">.</span><span class="na">isPublic</span><span class="o">(</span><span class="n">cl</span><span class="o">.</span><span class="na">getModifiers</span><span class="o">()))</span> <span class="o">{</span>
+<span class="ln">29</span>            <span class="n">AccessController</span><span class="o">.</span><span class="na">doPrivileged</span><span class="o">(</span><span class="k">new</span> <span class="n">PrivilegedAction</span><span class="o">&lt;</span><span class="n">Void</span><span class="o">&gt;()</span> <span class="o">{</span>
+<span class="ln">30</span>                <span class="kd">public</span> <span class="n">Void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln">31</span>                    <span class="n">cons</span><span class="o">.</span><span class="na">setAccessible</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+<span class="ln">32</span>                    <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">33</span>                <span class="o">}</span>
+<span class="ln">34</span>            <span class="o">});</span>
+<span class="ln">35</span>        <span class="o">}</span>
+<span class="ln">36</span>        <span class="c1">// 5.通过反射，将h作为参数，实例化代理类，返回代理类实例。
+</span><span class="ln">37</span><span class="c1"></span>        <span class="k">return</span> <span class="n">cons</span><span class="o">.</span><span class="na">newInstance</span><span class="o">(</span><span class="k">new</span> <span class="n">Object</span><span class="o">[]{</span><span class="n">h</span><span class="o">});</span>
+<span class="ln">38</span>    <span class="o">}</span> <span class="k">catch</span> <span class="o">...</span>
+<span class="ln">39</span><span class="o">}</span>
+</code></pre></div><p>从源码分析，主要是分为五个步骤</p>
+<ol>
+<li>null检查，这个不重要</li>
+<li>接口类对象数组clone，将对象数组clone，这里是一个浅拷贝，具体clone用法详见设计模式的原型模式。</li>
+<li>生成一个特定的代理类对象，如果已经存在则返回存在，这个是最重要的一个方法</li>
+<li>从上述的代理类中找InvocationHandler调用构造器</li>
+<li>通过反射，将调用构造器对象作为参数，实例化代理类</li>
+</ol>
+<h2 id="2继续分析第三步的生成特定的代理类对象">2.继续分析第三步的生成特定的代理类对象</h2>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//Proxy.java#Proxy.getProxyClass0
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">private</span> <span class="kd">static</span> <span class="n">Class</span><span class="o">&lt;?&gt;</span> <span class="n">getProxyClass0</span><span class="o">(</span><span class="n">ClassLoader</span> <span class="n">loader</span><span class="o">,</span>
+<span class="ln"> 3</span>                                       <span class="n">Class</span><span class="o">&lt;?&gt;...</span> <span class="n">interfaces</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 4</span>    <span class="c1">// 接口类对象数组不能大于65535个，否则抛出异常
+</span><span class="ln"> 5</span><span class="c1"></span>    <span class="k">if</span> <span class="o">(</span><span class="n">interfaces</span><span class="o">.</span><span class="na">length</span> <span class="o">&gt;</span> <span class="n">65535</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 6</span>        <span class="k">throw</span> <span class="k">new</span> <span class="n">IllegalArgumentException</span><span class="o">(</span><span class="s">&#34;interface limit exceeded&#34;</span><span class="o">);</span>
+<span class="ln"> 7</span>    <span class="o">}</span>
+<span class="ln"> 8</span>    <span class="c1">// 从代理类对象缓存中，根据类加载器和接口类对象数组查找代理类对象，
+</span><span class="ln"> 9</span><span class="c1"></span>    <span class="c1">// If the proxy class defined by the given loader implementing
+</span><span class="ln">10</span><span class="c1"></span>    <span class="c1">// the given interfaces exists, this will simply return the cached copy;
+</span><span class="ln">11</span><span class="c1"></span>    <span class="c1">// otherwise, it will create the proxy class via the ProxyClassFactory
+</span><span class="ln">12</span><span class="c1"></span>    <span class="k">return</span> <span class="n">proxyClassCache</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">loader</span><span class="o">,</span> <span class="n">interfaces</span><span class="o">);</span>
+<span class="ln">13</span><span class="o">}</span>
+</code></pre></div><p>从上述源码的注释可以看到，如果能找到缓存中找到则返回缓存内容，如果找不到则通过ProxyClassFactory创建</p>
+<h2 id="3继续获取代理类对象">3.继续获取代理类对象</h2>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//WeakCache.java#get
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">WeakCache</span><span class="o">&lt;</span><span class="n">ClassLoader</span><span class="o">,</span> <span class="n">Class</span><span class="o">&lt;?&gt;[],</span> <span class="n">Class</span><span class="o">&lt;?&gt;&gt;</span> <span class="n">proxyClassCache</span> <span class="o">=</span> <span class="k">new</span> <span class="n">WeakCache</span><span class="o">&lt;&gt;(</span><span class="k">new</span> <span class="n">KeyFactory</span><span class="o">(),</span> <span class="k">new</span> <span class="n">ProxyClassFactory</span><span class="o">());</span>
+<span class="ln"> 3</span><span class="kd">private</span> <span class="kd">final</span> <span class="n">BiFunction</span><span class="o">&lt;</span><span class="n">K</span><span class="o">,</span> <span class="n">P</span><span class="o">,</span> <span class="o">?&gt;</span> <span class="n">subKeyFactory</span><span class="o">;</span>
+<span class="ln"> 4</span><span class="kd">private</span> <span class="kd">final</span> <span class="n">BiFunction</span><span class="o">&lt;</span><span class="n">K</span><span class="o">,</span> <span class="n">P</span><span class="o">,</span> <span class="n">V</span><span class="o">&gt;</span> <span class="n">valueFactory</span><span class="o">;</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span><span class="c1">//构造方法
+</span><span class="ln"> 7</span><span class="c1"></span><span class="kd">public</span> <span class="nf">WeakCache</span><span class="o">(</span><span class="n">BiFunction</span><span class="o">&lt;</span><span class="n">K</span><span class="o">,</span> <span class="n">P</span><span class="o">,</span> <span class="o">?&gt;</span> <span class="n">subKeyFactory</span><span class="o">,</span>
+<span class="ln"> 8</span>                 <span class="n">BiFunction</span><span class="o">&lt;</span><span class="n">K</span><span class="o">,</span> <span class="n">P</span><span class="o">,</span> <span class="n">V</span><span class="o">&gt;</span> <span class="n">valueFactory</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 9</span>    <span class="k">this</span><span class="o">.</span><span class="na">subKeyFactory</span> <span class="o">=</span> <span class="n">Objects</span><span class="o">.</span><span class="na">requireNonNull</span><span class="o">(</span><span class="n">subKeyFactory</span><span class="o">);</span>
+<span class="ln">10</span>    <span class="k">this</span><span class="o">.</span><span class="na">valueFactory</span> <span class="o">=</span> <span class="n">Objects</span><span class="o">.</span><span class="na">requireNonNull</span><span class="o">(</span><span class="n">valueFactory</span><span class="o">);</span>
+<span class="ln">11</span><span class="o">}</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="c1">// key是类加载器，parameter为接口类对象数组
+</span><span class="ln">14</span><span class="c1"></span><span class="kd">public</span> <span class="n">V</span> <span class="nf">get</span><span class="o">(</span><span class="n">K</span> <span class="n">key</span><span class="o">,</span> <span class="n">P</span> <span class="n">parameter</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">15</span>    <span class="o">...</span>
+<span class="ln">16</span>    <span class="c1">// 生成缓存key对象实例，如果key = null，cacheKey = new Object();
+</span><span class="ln">17</span><span class="c1"></span>    <span class="n">Object</span> <span class="n">cacheKey</span> <span class="o">=</span> <span class="n">CacheKey</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">refQueue</span><span class="o">);</span>
+<span class="ln">18</span>    <span class="c1">// 从缓存map中读取指定cacheKey的缓存数据valuesMap
+</span><span class="ln">19</span><span class="c1"></span>    <span class="n">ConcurrentMap</span><span class="o">&lt;</span><span class="n">Object</span><span class="o">,</span> <span class="n">Supplier</span><span class="o">&lt;</span><span class="n">V</span><span class="o">&gt;&gt;</span> <span class="n">valuesMap</span> <span class="o">=</span> <span class="n">map</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">cacheKey</span><span class="o">);</span>
+<span class="ln">20</span>	<span class="o">...</span>
+<span class="ln">21</span>    <span class="c1">// create subKey and retrieve the possible Supplier&lt;V&gt; stored by that
+</span><span class="ln">22</span><span class="c1"></span>    <span class="c1">// subKey from valuesMap
+</span><span class="ln">23</span><span class="c1"></span>    <span class="c1">// 获取subKey，这里用到了上面提到的Proxy的静态内部类KeyFactory:subKeyFactory.apply(ket,parameter)
+</span><span class="ln">24</span><span class="c1"></span>    <span class="n">Object</span> <span class="n">subKey</span> <span class="o">=</span> <span class="n">Objects</span><span class="o">.</span><span class="na">requireNonNull</span><span class="o">(</span><span class="n">subKeyFactory</span><span class="o">.</span><span class="na">apply</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">parameter</span><span class="o">));</span>
+<span class="ln">25</span>    <span class="c1">// 从valuesMap中获取supplier
+</span><span class="ln">26</span><span class="c1"></span>    <span class="n">Supplier</span><span class="o">&lt;</span><span class="n">V</span><span class="o">&gt;</span> <span class="n">supplier</span> <span class="o">=</span> <span class="n">valuesMap</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">subKey</span><span class="o">);</span>
+<span class="ln">27</span>    <span class="n">Factory</span> <span class="n">factory</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">28</span>
+<span class="ln">29</span>    <span class="k">while</span> <span class="o">(</span><span class="kc">true</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">30</span>        <span class="k">if</span> <span class="o">(</span><span class="n">supplier</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">31</span>            <span class="c1">// 4,从工厂中获取代理类对象
+</span><span class="ln">32</span><span class="c1"></span>            <span class="n">V</span> <span class="n">value</span> <span class="o">=</span> <span class="n">supplier</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+<span class="ln">33</span>            <span class="k">if</span> <span class="o">(</span><span class="n">value</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">34</span>                <span class="k">return</span> <span class="n">value</span><span class="o">;</span>
+<span class="ln">35</span>            <span class="o">}</span>
+<span class="ln">36</span>        <span class="o">}</span>
+<span class="ln">37</span>        
+<span class="ln">38</span>        <span class="k">if</span> <span class="o">(</span><span class="n">factory</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">39</span>            <span class="c1">//1,实例化工厂
+</span><span class="ln">40</span><span class="c1"></span>            <span class="n">factory</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Factory</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">parameter</span><span class="o">,</span> <span class="n">subKey</span><span class="o">,</span> <span class="n">valuesMap</span><span class="o">);</span>
+<span class="ln">41</span>        <span class="o">}</span>
+<span class="ln">42</span>
+<span class="ln">43</span>        <span class="k">if</span> <span class="o">(</span><span class="n">supplier</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">44</span>            <span class="c1">//2，保存到valuesMap中
+</span><span class="ln">45</span><span class="c1"></span>            <span class="n">supplier</span> <span class="o">=</span> <span class="n">valuesMap</span><span class="o">.</span><span class="na">putIfAbsent</span><span class="o">(</span><span class="n">subKey</span><span class="o">,</span> <span class="n">factory</span><span class="o">);</span>
+<span class="ln">46</span>            <span class="k">if</span> <span class="o">(</span><span class="n">supplier</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">47</span>                <span class="c1">// successfully installed Factory
+</span><span class="ln">48</span><span class="c1"></span>                <span class="c1">// 3，赋值
+</span><span class="ln">49</span><span class="c1"></span>                <span class="n">supplier</span> <span class="o">=</span> <span class="n">factory</span><span class="o">;</span>
+<span class="ln">50</span>            <span class="o">}</span>
+<span class="ln">51</span>            <span class="c1">// else retry with winning supplier
+</span><span class="ln">52</span><span class="c1"></span>        <span class="o">}</span> <span class="o">...</span>
+<span class="ln">53</span>    <span class="o">}</span>
+<span class="ln">54</span><span class="o">}</span>
+</code></pre></div><p>可以看到这个weekcache这个类内容比较多，主要内容集中在while循环里面。</p>
+<ol>
+<li>工厂对象不存在则实例化工厂</li>
+<li>将subkey和实例化的工厂参数保存到valuemap并实例化供给类，在供给类中可获取代理类</li>
+<li>没有实例化成功，则直接将工厂实例赋值给供给实例</li>
+<li>再次循环可从供给类中获取代理类对象，并返回</li>
+</ol>
+<h2 id="4着重来看上述第四点从供给类中获取代理类对象">4.着重来看上述第四点从供给类中获取代理类对象</h2>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//WeakCache.java#Class Factory#get
+</span><span class="ln"> 2</span><span class="c1">//Factory类是WeakCache的内部类，实现了Supplier&lt;V&gt;
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kd">public</span> <span class="kd">synchronized</span> <span class="n">V</span> <span class="nf">get</span><span class="o">()</span> <span class="o">{</span> <span class="c1">// serialize access
+</span><span class="ln"> 4</span><span class="c1"></span>    <span class="n">Supplier</span><span class="o">&lt;</span><span class="n">V</span><span class="o">&gt;</span> <span class="n">supplier</span> <span class="o">=</span> <span class="n">valuesMap</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">subKey</span><span class="o">);</span>
+<span class="ln"> 5</span>    <span class="k">if</span> <span class="o">(</span><span class="n">supplier</span> <span class="o">!=</span> <span class="k">this</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 6</span>        <span class="c1">//CacheValue可能被移除，直接返回上一级的下一个循环
+</span><span class="ln"> 7</span><span class="c1"></span>        <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln"> 8</span>    <span class="o">}</span>
+<span class="ln"> 9</span>    <span class="n">V</span> <span class="n">value</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">10</span>    <span class="k">try</span> <span class="o">{</span>
+<span class="ln">11</span>        <span class="c1">// valueFactory就是WeakCache的valueFactory属性，
+</span><span class="ln">12</span><span class="c1"></span>        <span class="c1">//因为Factory是WeakCache的内部类，所以可以直接访问WeakCache的valueFactory属性
+</span><span class="ln">13</span><span class="c1"></span>        <span class="n">value</span> <span class="o">=</span> <span class="n">Objects</span><span class="o">.</span><span class="na">requireNonNull</span><span class="o">(</span><span class="n">valueFactory</span><span class="o">.</span><span class="na">apply</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">parameter</span><span class="o">));</span>
+<span class="ln">14</span>    <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+<span class="ln">15</span>        <span class="k">if</span> <span class="o">(</span><span class="n">value</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span> <span class="c1">// remove us on failure
+</span><span class="ln">16</span><span class="c1"></span>            <span class="n">valuesMap</span><span class="o">.</span><span class="na">remove</span><span class="o">(</span><span class="n">subKey</span><span class="o">,</span> <span class="k">this</span><span class="o">);</span>
+<span class="ln">17</span>        <span class="o">}</span>
+<span class="ln">18</span>    <span class="o">}</span>
+<span class="ln">19</span>    <span class="o">...</span>
+<span class="ln">20</span>    <span class="c1">// wrapped by it
+</span><span class="ln">21</span><span class="c1"></span>    <span class="k">return</span> <span class="n">value</span><span class="o">;</span>
+<span class="ln">22</span><span class="o">}</span>
+<span class="ln">23</span>
+</code></pre></div><p>这里最重要的是valueFactory.apply(key, parameter)，其中valueFactory就是Proxy的静态内部类ProxyClassFactory，那么其实就是执行ProxyClassFactory.apply.</p>
+<h2 id="5proxyclassfactoryapply">5.ProxyClassFactory.apply.</h2>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//Proxy.java#Class ProxyClassFactory#apply
+</span><span class="ln"> 2</span><span class="c1">//ProxyClassFactory是Proxy的内部类，实现了BiFunction&lt;ClassLoader, Class&lt;?&gt;[], Class&lt;?&gt;&gt;
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">proxyClassNamePrefix</span> <span class="o">=</span> <span class="s">&#34;$Proxy&#34;</span><span class="o">;</span>
+<span class="ln"> 4</span><span class="c1">// 用于生成唯一代理类名称的下一个数字
+</span><span class="ln"> 5</span><span class="c1"></span><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">AtomicLong</span> <span class="n">nextUniqueNumber</span> <span class="o">=</span> <span class="k">new</span> <span class="n">AtomicLong</span><span class="o">();</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span><span class="kd">public</span> <span class="n">Class</span><span class="o">&lt;?&gt;</span> <span class="n">apply</span><span class="o">(</span><span class="n">ClassLoader</span> <span class="n">loader</span><span class="o">,</span> <span class="n">Class</span><span class="o">&lt;?&gt;[]</span> <span class="n">interfaces</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 8</span>    <span class="n">Map</span><span class="o">&lt;</span><span class="n">Class</span><span class="o">&lt;?&gt;,</span> <span class="n">Boolean</span><span class="o">&gt;</span> <span class="n">interfaceSet</span> <span class="o">=</span> <span class="k">new</span> <span class="n">IdentityHashMap</span><span class="o">&lt;&gt;(</span><span class="n">interfaces</span><span class="o">.</span><span class="na">length</span><span class="o">);</span>
+<span class="ln"> 9</span>    <span class="k">for</span> <span class="o">(</span><span class="n">Class</span><span class="o">&lt;?&gt;</span> <span class="n">intf</span> <span class="o">:</span> <span class="n">interfaces</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">10</span>        <span class="n">Class</span><span class="o">&lt;?&gt;</span> <span class="n">interfaceClass</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">11</span>        <span class="k">try</span> <span class="o">{</span>
+<span class="ln">12</span>            <span class="c1">// 1.加载接口类，获得接口类的类对象，第二个参数为false表示不进行实例化
+</span><span class="ln">13</span><span class="c1"></span>            <span class="n">interfaceClass</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="n">intf</span><span class="o">.</span><span class="na">getName</span><span class="o">(),</span> <span class="kc">false</span><span class="o">,</span> <span class="n">loader</span><span class="o">);</span>
+<span class="ln">14</span>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">ClassNotFoundException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">15</span>        <span class="o">}</span>
+<span class="ln">16</span>        <span class="o">...</span>
+<span class="ln">17</span>    <span class="o">}</span>
+<span class="ln">18</span>    <span class="c1">// 代理类的包名
+</span><span class="ln">19</span><span class="c1"></span>    <span class="n">String</span> <span class="n">proxyPkg</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">20</span>    <span class="kt">int</span> <span class="n">accessFlags</span> <span class="o">=</span> <span class="n">Modifier</span><span class="o">.</span><span class="na">PUBLIC</span> <span class="o">|</span> <span class="n">Modifier</span><span class="o">.</span><span class="na">FINAL</span><span class="o">;</span>
+<span class="ln">21</span>
+<span class="ln">22</span>    <span class="c1">//2.验证所有非公共代理接口都在同一个包中
+</span><span class="ln">23</span><span class="c1"></span>    <span class="k">for</span> <span class="o">(</span><span class="n">Class</span><span class="o">&lt;?&gt;</span> <span class="n">intf</span> <span class="o">:</span> <span class="n">interfaces</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">24</span>        <span class="kt">int</span> <span class="n">flags</span> <span class="o">=</span> <span class="n">intf</span><span class="o">.</span><span class="na">getModifiers</span><span class="o">();</span>
+<span class="ln">25</span>        <span class="k">if</span> <span class="o">(!</span><span class="n">Modifier</span><span class="o">.</span><span class="na">isPublic</span><span class="o">(</span><span class="n">flags</span><span class="o">))</span> <span class="o">{</span>
+<span class="ln">26</span>            <span class="n">accessFlags</span> <span class="o">=</span> <span class="n">Modifier</span><span class="o">.</span><span class="na">FINAL</span><span class="o">;</span>
+<span class="ln">27</span>            <span class="n">String</span> <span class="n">name</span> <span class="o">=</span> <span class="n">intf</span><span class="o">.</span><span class="na">getName</span><span class="o">();</span>
+<span class="ln">28</span>            <span class="kt">int</span> <span class="n">n</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="na">lastIndexOf</span><span class="o">(</span><span class="sc">&#39;.&#39;</span><span class="o">);</span>
+<span class="ln">29</span>            <span class="n">String</span> <span class="n">pkg</span> <span class="o">=</span> <span class="o">((</span><span class="n">n</span> <span class="o">==</span> <span class="o">-</span><span class="n">1</span><span class="o">)</span> <span class="o">?</span> <span class="s">&#34;&#34;</span> <span class="o">:</span> <span class="n">name</span><span class="o">.</span><span class="na">substring</span><span class="o">(</span><span class="n">0</span><span class="o">,</span> <span class="n">n</span> <span class="o">+</span> <span class="n">1</span><span class="o">));</span>
+<span class="ln">30</span>            <span class="k">if</span> <span class="o">(</span><span class="n">proxyPkg</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">31</span>                <span class="n">proxyPkg</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">;</span>
+<span class="ln">32</span>            <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">...</span>
+<span class="ln">33</span>        <span class="o">}</span>
+<span class="ln">34</span>    <span class="o">}</span>
+<span class="ln">35</span>    <span class="c1">//3.生成代理类的类名
+</span><span class="ln">36</span><span class="c1"></span>    <span class="kt">long</span> <span class="n">num</span> <span class="o">=</span> <span class="n">nextUniqueNumber</span><span class="o">.</span><span class="na">getAndIncrement</span><span class="o">();</span>
+<span class="ln">37</span>    <span class="n">String</span> <span class="n">proxyName</span> <span class="o">=</span> <span class="n">proxyPkg</span> <span class="o">+</span> <span class="n">proxyClassNamePrefix</span> <span class="o">+</span> <span class="n">num</span><span class="o">;</span>
+<span class="ln">38</span>    <span class="c1">//4.生成代理类class文件
+</span><span class="ln">39</span><span class="c1"></span>    <span class="kt">byte</span><span class="o">[]</span> <span class="n">proxyClassFile</span> <span class="o">=</span> <span class="n">ProxyGenerator</span><span class="o">.</span><span class="na">generateProxyClass</span><span class="o">(</span><span class="n">proxyName</span><span class="o">,</span> <span class="n">interfaces</span><span class="o">,</span> <span class="n">accessFlags</span><span class="o">);</span>
+<span class="ln">40</span>    <span class="k">try</span> <span class="o">{</span>
+<span class="ln">41</span>        <span class="c1">// 返回代理类对象
+</span><span class="ln">42</span><span class="c1"></span>        <span class="k">return</span> <span class="n">defineClass0</span><span class="o">(</span><span class="n">loader</span><span class="o">,</span> <span class="n">proxyName</span><span class="o">,</span> <span class="n">proxyClassFile</span><span class="o">,</span> <span class="n">0</span><span class="o">,</span> <span class="n">proxyClassFile</span><span class="o">.</span><span class="na">length</span><span class="o">);</span>
+<span class="ln">43</span>    <span class="o">}</span> <span class="k">catch</span><span class="o">...</span>
+<span class="ln">44</span><span class="o">}</span>
+</code></pre></div><p>这个内部类ProxyClassFactory看起来非常复杂，实际上只做了四件事</p>
+<ol>
+<li>加载接口类，获得接口类的类对象，第二个参数为false表示不进行实例化</li>
+<li>验证所有非公共代理接口都在同一个包中</li>
+<li>生成代理类的类名</li>
+<li>生成代理类class文件，并返回代理类对象</li>
+</ol>
+<p>这里面最重要的就是第四点生成代理类class文件，是通过ProxyGenerator.generateProxyClass生成的。下面就是ndk的内容了，笔者不展开研究了，有兴趣的宝宝们可以在深入看ndk。打不开ProxyGenerator的宝宝们，可以直接点击链接访问<a href="http://www.docjar.com/html/api/sun/misc/ProxyGenerator.java.html">ProxyGenerator 源码链接</a></p>
+<h2 id="6参考骑小猪看流星httpswwwjianshucompe9aa4d5952fe反编译生成一个comexamplelibproxy0class">6.参考<a href="https://www.jianshu.com/p/e9aa4d5952fe">骑小猪看流星</a>反编译生成一个com.example.lib.$Proxy0.class</h2>
+<p>这边笔者生成不了，就直接参考了</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//继承了Proxy类，实现了Ilawsuit接口，包名是com.sun.proxy;
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">$Proxy0</span> <span class="kd">extends</span> <span class="n">Proxy</span> <span class="kd">implements</span> <span class="n">Ilawsuit</span><span class="o">{</span>
+<span class="ln"> 3</span>  <span class="kd">private</span> <span class="kd">static</span> <span class="n">Method</span> <span class="n">m1</span><span class="o">;</span>
+<span class="ln"> 4</span>  <span class="kd">private</span> <span class="kd">static</span> <span class="n">Method</span> <span class="n">m3</span><span class="o">;</span>
+<span class="ln"> 5</span>  <span class="kd">private</span> <span class="kd">static</span> <span class="n">Method</span> <span class="n">m2</span><span class="o">;</span>
+<span class="ln"> 6</span>  <span class="kd">private</span> <span class="kd">static</span> <span class="n">Method</span> <span class="n">m0</span><span class="o">;</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span>  <span class="c1">//构造方法，直接调用了父类，也就是Proxy的构造方法
+</span><span class="ln"> 9</span><span class="c1"></span>  <span class="kd">public</span> <span class="nf">$Proxy0</span><span class="o">(</span><span class="n">InvocationHandler</span> <span class="n">paramInvocationHandler</span><span class="o">)</span><span class="kd">throws</span> <span class="o">{</span>
+<span class="ln">10</span>    <span class="kd">super</span><span class="o">(</span><span class="n">paramInvocationHandler</span><span class="o">);</span>
+<span class="ln">11</span>  <span class="o">}</span>
+<span class="ln">12</span>
+<span class="ln">13</span>  <span class="c1">//实现了describ
+</span><span class="ln">14</span><span class="c1"></span>  <span class="kd">public</span> <span class="kd">final</span> <span class="kt">void</span> <span class="nf">describ</span><span class="o">()</span>
+<span class="ln">15</span>    <span class="kd">throws</span> <span class="o">{</span>
+<span class="ln">16</span>    <span class="k">try</span>
+<span class="ln">17</span>    <span class="o">{</span>
+<span class="ln">18</span>      <span class="c1">// 这里的h就是我们的MyStorInvocationHandler实例化对象handler，原因在下方解释。
+</span><span class="ln">19</span><span class="c1"></span>      <span class="c1">// 这里直接调用了DynamicHandler的invoke方法
+</span><span class="ln">20</span><span class="c1"></span>      <span class="k">this</span><span class="o">.</span><span class="na">h</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="n">m3</span><span class="o">,</span> <span class="o">(</span><span class="n">Object</span><span class="o">[])</span><span class="kc">null</span><span class="o">);</span>
+<span class="ln">21</span>      <span class="k">return</span><span class="o">;</span>
+<span class="ln">22</span>    <span class="o">}</span>
+<span class="ln">23</span>    <span class="o">...</span>
+<span class="ln">24</span>  <span class="o">}</span>
+<span class="ln">25</span>  <span class="c1">//静态代码块，做初始化操作
+</span><span class="ln">26</span><span class="c1"></span>  <span class="kd">static</span>
+<span class="ln">27</span>  <span class="o">{</span>
+<span class="ln">28</span>    <span class="k">try</span>
+<span class="ln">29</span>    <span class="o">{</span>
+<span class="ln">30</span>      <span class="n">m1</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="s">&#34;java.lang.Object&#34;</span><span class="o">).</span><span class="na">getMethod</span><span class="o">(</span><span class="s">&#34;equals&#34;</span><span class="o">,</span> <span class="k">new</span> <span class="n">Class</span><span class="o">[]</span> <span class="o">{</span> <span class="n">Class</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="s">&#34;java.lang.Object&#34;</span><span class="o">)</span> <span class="o">});</span>
+<span class="ln">31</span>      <span class="c1">//通过反射，获取describ方法对象实例,这里面是基类
+</span><span class="ln">32</span><span class="c1"></span>      <span class="n">m3</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="s">&#34;com.example.lib.Ilawsuit&#34;</span><span class="o">).</span><span class="na">getMethod</span><span class="o">(</span><span class="s">&#34;describ&#34;</span><span class="o">);</span>
+<span class="ln">33</span>      <span class="n">m2</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="s">&#34;java.lang.Object&#34;</span><span class="o">).</span><span class="na">getMethod</span><span class="o">(</span><span class="s">&#34;toString&#34;</span><span class="o">,</span> <span class="k">new</span> <span class="n">Class</span><span class="o">[</span><span class="n">0</span><span class="o">]);</span>
+<span class="ln">34</span>      <span class="n">m0</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="s">&#34;java.lang.Object&#34;</span><span class="o">).</span><span class="na">getMethod</span><span class="o">(</span><span class="s">&#34;hashCode&#34;</span><span class="o">,</span> <span class="k">new</span> <span class="n">Class</span><span class="o">[</span><span class="n">0</span><span class="o">]);</span>
+<span class="ln">35</span>      <span class="k">return</span><span class="o">;</span>
+<span class="ln">36</span>    <span class="o">}</span>
+<span class="ln">37</span>    <span class="o">...</span>
+<span class="ln">38</span><span class="o">}</span>
+</code></pre></div><p>代理类实例化的代码是：cons.newInstance(new Object[]{h})。这里是通过反射调用代理类对象的构造方法，传入了参数h</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//Proxy.java#Proxy构造方法
+</span><span class="ln">2</span><span class="c1"></span><span class="kd">protected</span> <span class="n">InvocationHandler</span> <span class="n">h</span><span class="o">;</span>
+<span class="ln">3</span><span class="kd">protected</span> <span class="nf">Proxy</span><span class="o">(</span><span class="n">InvocationHandler</span> <span class="n">h</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">4</span>    <span class="n">Objects</span><span class="o">.</span><span class="na">requireNonNull</span><span class="o">(</span><span class="n">h</span><span class="o">);</span>
+<span class="ln">5</span>    <span class="k">this</span><span class="o">.</span><span class="na">h</span> <span class="o">=</span> <span class="n">h</span><span class="o">;</span>
+<span class="ln">6</span><span class="o">}</span>
+</code></pre></div><p>通过父类Proxy的构造函数，可以知道传入了参数h就是开始在newProxyInstance的第三个参数new DynamicHandler(worker)；</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/proxy/proxy_6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/proxy/proxy_6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="总结">总结</h1>
+<p>代理模式的优缺点</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">特点</th>
+<th style="text-align:center">具体内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">优点</td>
+<td style="text-align:center">业务类只需要关注业务逻辑本身，保证了业务类的重用性。这是代理的共有优点。</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center">能够协调调用者和被调用者，在一定程度上降低了系统的耦合度。</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center">虚拟代理通过使用一个小对象来代表一个大对象，可以减少系 统资源的消耗，对系统进行优化并提高运行速度。</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center">保护代理可以控制对真实对象的使用权限。</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center">远程代理使得客户端可以访问在远程机器上的对象，远程机器 可能具有更好的计算性能与处理速度，可以快速响应并处理客户端请求。</td>
+</tr>
+<tr>
+<td style="text-align:center">缺点</td>
+<td style="text-align:center">由于在客户端和真实主题之间增加了代理对象，因此有些类型的代理模式可能会造成请求的处理速度变慢，例如保护代理。</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center">实现代理模式需要额外的工作，而且有些代理模式的实现过程较为复杂，例如远程代理。</td>
+</tr>
+</tbody>
+</table>
+<p>关于代理模式和中介者模式的区别</p>
+<blockquote>
+<p>代理模式是将原类进行封装，客户端只需要与代理进行交流。代理就是原类的一个替身。简而言之就是用一个对象代表另外一个对象。强调的是个体，代理可以是多个，被代理者只能是一个。</p>
+<p>中介者模式定义一个中介对象来封装系列对象之间的交互。中介者使各个对象不需要显示地相互引用，从而使其耦合性松散，而且可以独立地改变他们之间的交互。
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/proxy/proxy_7.png" title="代理模式和中介者模式的区别" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/proxy/proxy_7.png"  alt="代理模式和中介者模式的区别">
+  
+    </a>
+  
+   
+    <span class="caption">代理模式和中介者模式的区别</span>
+  
+</div>
+</p>
+</blockquote>
+<p><a href="https://github.com/YangYang48/project/tree/master/MyProxy">本文所有实例代码下载</a></p>
+<h1 id="参考文献">参考文献</h1>
+<p><a href="http://product.dangdang.com/11003626260.html">[1]  付政委. 重学Java设计模式[M]. 电子工业出版社, 2021.</a></p>
+<p><a href="https://refactoringguru.cn/design-patterns">[2] 亚历山大·什韦茨,Refactoring.Guru背后的单人乐队</a>.</p>
+<p><a href="http://e.dangdang.com/products/1900655515.html">[3] 程杰, 大话设计模式[M], 清华大学出版社, 2007.</a></p>
+<p><a href="https://book.douban.com/subject/27080694/">[4] 刘望舒, Android进阶之光[M], 电子工业出版社, 2017.</a></p>
+<p><a href="https://blog.csdn.net/qq_32391421/article/details/83340321">[5] 冀遥, UML类图箭头关系, 2018.</a></p>
+<p><a href="https://www.cnblogs.com/zhangchengzi/p/9713807.html">[6] 张橙子, JAVA设计模式-动态代理(Proxy)源码分析, 2018.</a></p>
+<p><a href="https://www.jianshu.com/p/e9aa4d5952fe">[7] 骑小猪看流星, 设计模式之死磕代理模式（原创）, 2018.</a></p>
+<p><a href="https://www.jianshu.com/p/e9aa4d5952fe">[7] docjar</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/android/">Android</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/java/">java</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F/">代理模式</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/11/aidl%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" data-tooltip="AIDL源码分析">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2021 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/11/aidl%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" data-tooltip="AIDL源码分析">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2021%2F11%2F%25E8%25AE%25BE%25E8%25AE%25A1%25E6%25A8%25A1%25E5%25BC%258F%25E4%25B9%258B%25E4%25BB%25A3%25E7%2590%2586%25E6%25A8%25A1%25E5%25BC%258F%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2021%2F11%2F%25E8%25AE%25BE%25E8%25AE%25A1%25E6%25A8%25A1%25E5%25BC%258F%25E4%25B9%258B%25E4%25BB%25A3%25E7%2590%2586%25E6%25A8%25A1%25E5%25BC%258F%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2021%2F11%2F%25E8%25AE%25BE%25E8%25AE%25A1%25E6%25A8%25A1%25E5%25BC%258F%25E4%25B9%258B%25E4%25BB%25A3%25E7%2590%2586%25E6%25A8%25A1%25E5%25BC%258F%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2021\/11\/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F\/';
+          
+            this.page.identifier = '\/2021\/11\/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
