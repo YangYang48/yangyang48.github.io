@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="在并发编程中，频繁的创建和销毁线程非常影响处理的效率，而且会使得线程抢占系统资源从而导致阻塞。这时候就需要线程池的帮助，线程池的创建离不开阻塞队列。">
+
+
+<meta property="og:description" content="在并发编程中，频繁的创建和销毁线程非常影响处理的效率，而且会使得线程抢占系统资源从而导致阻塞。这时候就需要线程池的帮助，线程池的创建离不开阻塞队列。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="并发编程3 阻塞队列和线程池">
+<meta name="twitter:title" content="并发编程3 阻塞队列和线程池">
+<meta property="og:url" content="https://yangyang48.github.io/2021/12/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B3-%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97%E5%92%8C%E7%BA%BF%E7%A8%8B%E6%B1%A0/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2021/12/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B3-%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97%E5%92%8C%E7%BA%BF%E7%A8%8B%E6%B1%A0/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="在并发编程中，频繁的创建和销毁线程非常影响处理的效率，而且会使得线程抢占系统资源从而导致阻塞。这时候就需要线程池的帮助，线程池的创建离不开阻塞队列。">
+<meta name="twitter:description" content="在并发编程中，频繁的创建和销毁线程非常影响处理的效率，而且会使得线程抢占系统资源从而导致阻塞。这时候就需要线程池的帮助，线程池的创建离不开阻塞队列。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2021-12-19T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2021-12-19T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="ThreadPoolExecutor">
+    
+      <meta property="article:section" content="BlockingQueue">
+    
+      <meta property="article:section" content="2021">
+    
+      <meta property="article:section" content="December">
+    
+  
+  
+    
+      <meta property="article:tag" content="JDK">
+    
+      <meta property="article:tag" content="Concurrent">
+    
+      <meta property="article:tag" content="Thread">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/concurrent/concurrent3_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/concurrent/concurrent3_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/concurrent/concurrent3_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/concurrent/concurrent3_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>并发编程3 阻塞队列和线程池</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2021/12/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B3-%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97%E5%92%8C%E7%BA%BF%E7%A8%8B%E6%B1%A0/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/concurrent/concurrent3_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      并发编程3 阻塞队列和线程池
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2021-12-19T00:00:00Z">
+        
+  十二月 19, 2021
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/threadpoolexecutor">ThreadPoolExecutor</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/blockingqueue">BlockingQueue</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2021">2021</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/december">December</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">400 Words|Read in about 2 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>在并发编程中，频繁的创建和销毁线程非常影响处理的效率，而且会使得线程抢占系统资源从而导致阻塞。这时候就需要线程池的帮助，线程池的创建离不开阻塞队列。</p>
+<h1 id="阻塞队列">阻塞队列</h1>
+<h2 id="什么是阻塞队列">什么是阻塞队列</h2>
+<p>当阻塞队列是空的，从队列中获取元素的操作将会被阻塞；</p>
+<p>当阻塞队列是满的，往队列里添加元素的操作将会被阻塞；</p>
+<p>试图从空的阻塞队列中获取元素的线程将会被阻塞，直到其他的线程往空的队列插入新的元素；</p>
+<p>同样，试图从满的阻塞队列中添加新元素的线程同样也会被阻塞，直到其他线程从列中移除一个或者多个元素或者完全清空队列使队列重新变得空闲起来并后续新增。</p>
+<p>在多线程领域里：所谓阻塞，在某些情况下会挂起线程，一旦条件满足，被挂起的线程又会自动被唤醒。</p>
+<p>阻塞队列的关系如下图所示，其中<code>BlockingQueue</code>是继承与<code>Queue</code>。而下面七个阻塞队列，都是实现了<code>BlockingQueue</code>接口。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/concurrent/concurrent3_1.png" title="BlockingQueue实现结构" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/concurrent/concurrent3_1.png"  alt="BlockingQueue实现结构">
+  
+    </a>
+  
+   
+    <span class="caption">BlockingQueue实现结构</span>
+  
+</div>
+
+<p>上面七个具体的阻塞队列的UML图如下所示。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/concurrent/concurrent3_2.png" title="阻塞队列的UML图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/concurrent/concurrent3_2.png"  alt="阻塞队列的UML图">
+  
+    </a>
+  
+   
+    <span class="caption">阻塞队列的UML图</span>
+  
+</div>
+
+<p>表1 常用阻塞队列</p>
+<table>
+<thead>
+<tr>
+<th>阻塞队列名称</th>
+<th style="text-align:center">底层实现</th>
+<th style="text-align:center">出入队</th>
+<th style="text-align:center">锁</th>
+<th>名词解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ArrayBlockingQueue</code></td>
+<td style="text-align:center">数组</td>
+<td style="text-align:center">先进先出</td>
+<td style="text-align:center"><code>ReentrantLock</code>、<code>Condition</code></td>
+<td>一个由数组结构组成的有界阻塞队列</td>
+</tr>
+<tr>
+<td><code>LinkedBlockingQueue</code></td>
+<td style="text-align:center">链表</td>
+<td style="text-align:center">先进先出</td>
+<td style="text-align:center"><code>ReentrantLock</code>、<code>Condition</code></td>
+<td>一个由链表结构组成的有界阻塞队列</td>
+</tr>
+<tr>
+<td><code>PriorityBlockingQueue</code></td>
+<td style="text-align:center">数组实现的二叉树</td>
+<td style="text-align:center">优先级</td>
+<td style="text-align:center"><code>ReentrantLock</code>、<code>Condition</code></td>
+<td>一个支持优先级排序的<strong>无界</strong>阻塞队列</td>
+</tr>
+<tr>
+<td><code>DelayQueue</code></td>
+<td style="text-align:center">优先级队列+延迟</td>
+<td style="text-align:center">出队时间</td>
+<td style="text-align:center"><code>ReentrantLock</code>、<code>Condition</code></td>
+<td>一个使用优先级队列实现的<strong>无界</strong>阻塞队列</td>
+</tr>
+<tr>
+<td><code>SynchronousQueue</code></td>
+<td style="text-align:center">不存数据，阻塞线程链表</td>
+<td style="text-align:center">线程阻塞匹配</td>
+<td style="text-align:center">无锁，<code>CAS</code>实现</td>
+<td>一个不存储元素的阻塞队列</td>
+</tr>
+<tr>
+<td><code>LinkedTransferQueue</code></td>
+<td style="text-align:center">链表</td>
+<td style="text-align:center">先进先出</td>
+<td style="text-align:center">无锁，<code>CAS</code>实现</td>
+<td>一个由链表结构组成的<strong>无界</strong>阻塞队列</td>
+</tr>
+<tr>
+<td><code>LinkedBlockingDeque</code></td>
+<td style="text-align:center">双向链表</td>
+<td style="text-align:center">先进先出，先进后出，优先出入</td>
+<td style="text-align:center"><code>ReentrantLock</code>、<code>Condition</code></td>
+<td>一个由链表结构组成的双向阻塞队列</td>
+</tr>
+</tbody>
+</table>
+<p>这些常用的阻塞队列都是对<code>BlockingQueue</code>接口的实现，也都是线程安全的。</p>
+<h2 id="有界无界区别">有界无界区别</h2>
+<p>生产者消费者模型如图所示。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/concurrent/concurrent3_3.png" title="生产者消费者模式图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/concurrent/concurrent3_3.png"  alt="生产者消费者模式图">
+  
+    </a>
+  
+   
+    <span class="caption">生产者消费者模式图</span>
+  
+</div>
+
+<p>有限队列就是长度有限，满了以后生产者会阻塞。</p>
+<p>无界队列就是里面能放无数的东西而不会因为队列长度限制被阻塞，当然空间限制来源于系统资源的限制，如果处理不及时，导致队列越来越大越来越大，超出一定的限制致使内存超限，操作系统或者JVM帮你解决烦恼，直接把你 OOM kill 省事了。</p>
+<p>其实<strong>无界也会阻塞</strong>，因为阻塞不仅仅体现在生产者放入元素时会阻塞，消费者拿取元素时，如果没有元素，同样也会阻塞。</p>
+<h3 id="arrayblockingqueue">ArrayBlockingQueue</h3>
+<p>数组实现的有界阻塞队列。</p>
+<p>此队列按照先进先出（FIFO）的原则对元素进行排序。默认情况下<strong>不保证线程公平的</strong>访问队列，所谓公平访问队列是指阻塞的线程，可以按照阻塞的先后顺序访问队列，即先阻塞线程先访问队列。非公平性是对先等待的线程是非公平的，当队列可用时，阻塞的线程都可以争夺访问队列的资格，有可能先阻塞的线程最后才访问队列。初始化时可以设置参数。</p>
+<h3 id="linkedblockingqueue">LinkedBlockingQueue</h3>
+<p>链表实现的有界阻塞队列。</p>
+<p>此队列的默认和最大长度为Integer.MAX_VALUE。此队列按照先进先出的原则对元素进行排序。</p>
+<blockquote>
+<p><code>ArrayBlockingQueue</code>和<code>LinkedBlockingQueue</code>区别</p>
+<ol>
+<li>
+<p>队列中锁的实现不同</p>
+<p><code>ArrayBlockingQueue</code>实现的队列中的锁是没有分离的，即生产和消费用的是同一个锁；</p>
+<p><code>LinkedBlockingQueue</code>实现的队列中的锁是分离的，即生产用的是<code>putLock</code>，消费是<code>takeLock</code></p>
+</li>
+<li>
+<p>在生产或消费时操作不同</p>
+<p><code>ArrayBlockingQueue</code>实现的队列中在生产和消费的时候，是直接将枚举对象插入或移除的；</p>
+<p><code>LinkedBlockingQueue</code>实现的队列中在生产和消费的时候，需要把枚举对象转换为Node<!-- raw HTML omitted -->进行插入或移除，会影响性能</p>
+</li>
+<li>
+<p>队列大小初始化方式不同</p>
+<p><code>ArrayBlockingQueue</code>实现的队列中必须指定队列的大小；</p>
+<p><code>LinkedBlockingQueue</code>实现的队列中可以不指定队列的大小，但是默认是<code>Integer.MAX_VALUE</code></p>
+</li>
+</ol>
+</blockquote>
+<h3 id="priorityblockingqueue">PriorityBlockingQueue</h3>
+<p>支持优先级的无界阻塞队列。</p>
+<p>默认情况下元素采取自然顺序升序排列。也可以自定义类实现<code>compareTo()</code>方法来指定元素排序规则，或者初始化<code>PriorityBlockingQueue</code>时，指定构造参数Comparator来对元素进行排序。需要注意的是不能保证同优先级元素的顺序。<strong>Handler实现也用的是优先级阻塞队列</strong>。</p>
+<h3 id="delayqueue">DelayQueue</h3>
+<p>支持延时获取元素的无界阻塞队列。</p>
+<p>队列使用<code>PriorityQueue</code>来实现。队列中的元素必须实现Delayed接口，在创建元素时可以指定多久才能从队列中获取当前元素。只有在延迟期满时才能从队列中提取元素。</p>
+<p><code>DelayQueue</code>非常有用，用于<strong>缓存系统的设计</strong>。可以用<code>DelayQueue</code>保存缓存元素的有效期，使用一个线程循环查询<code>DelayQueue</code>，一旦能从<code>DelayQueue</code>中获取元素时，表示缓存有效期到了。</p>
+<h3 id="synchronousqueue">SynchronousQueue</h3>
+<p>不存储元素的阻塞队列。</p>
+<p>每一个put操作必须等待一个take操作，否则不能继续添加元素。<code>SynchronousQueue</code>可以看成是一个传球手，负责把生产者线程处理的数据直接传递给消费者线程。队列本身并不存储任何元素，非常适合传递性场景。<code>SynchronousQueue</code>的吞吐量高于<code>LinkedBlockingQueue</code>和<code>ArrayBlockingQueue</code>。</p>
+<h3 id="linkedtransferqueue">LinkedTransferQueue</h3>
+<p>链表结构组成的无界阻塞队列</p>
+<p>多了tryTransfer和transfer方法。</p>
+<p>（1）transfer方法</p>
+<p>如果当前有消费者正在等待接收元素（消费者使用take()方法或带时间限制的poll()方法时），transfer方法可以把生产者传入的元素立刻transfer（传输）给消费者。如果没有消费者在等待接收元素，transfer方法会将元素存放在队列的tail节点，并等到该元素被消费者消费了才返回。</p>
+<p>（2）tryTransfer方法</p>
+<p>tryTransfer方法是用来试探生产者传入的元素是否能直接传给消费者。如果没有消费者等待接收元素，则返回false。和transfer方法的区别是tryTransfer方法无论消费者是否接收，方法立即返回，而transfer方法是必须等到消费者消费了才返回。</p>
+<h3 id="linkedblockingdeque">LinkedBlockingDeque</h3>
+<p>链表结构组成的双向阻塞队列。</p>
+<p>所谓双向队列指的是可以从队列的两端插入和移出元素。双向队列因为多了一个操作队列的入口，在多线程同时入队时，也就减少了一半的竞争。</p>
+<p>表2 双向阻塞队列方法表</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">名称</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"><code>addFirst</code></td>
+<td>指定的元素插入此双端队列的开头，失败抛异常</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>offerFirst</code></td>
+<td>插入此双端队列表示的队列的开头，成功返回true，失败不抛异常</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>peekFirst</code></td>
+<td>获取但不移除此双端队列的第一个元素，队列为空则返回 null</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>pollFirst</code></td>
+<td>获取并移除此双端队列的第一个元素，队列为空则返回 null</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>removeFirst</code></td>
+<td>获取并移除此双端队列第一个元素，失败抛异常</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>takeFirst</code></td>
+<td>获取并移除此双端队列的第一个元素，必要时将一直等待可用元素</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>addLast</code></td>
+<td>指定的元素插入此双端队列的末尾，失败抛异常</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>offerLast</code></td>
+<td>插入此双端队列表示的队列的末尾，成功返回true，失败不抛异常</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>peekLast</code></td>
+<td>获取但不移除此双端队列的最后一个元素，队列为空则返回 null</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>pollLast</code></td>
+<td>获取并移除此双端队列的最后一个元素，队列为空则返回 null</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>removeLast</code></td>
+<td>获取并移除此双端队列最后一个元素，失败抛异常</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>takeLast</code></td>
+<td>获取并移除此双端队列的最后一个元素，必要时将一直等待可用元素</td>
+</tr>
+</tbody>
+</table>
+<p>在初始化<code>LinkedBlockingDeque</code>时可以设置容量防止其过度膨胀。另外，双向阻塞队列可以运用在“工作窃取”模式中。</p>
+<h3 id="总结">总结</h3>
+<p><strong>尽量使用有界队列</strong>，有界队列可以增加系统稳定性，无限受到系统的资源的限制。无界的话，线程池中永远<strong>只有核心线程</strong>。</p>
+<h1 id="线程池">线程池</h1>
+<h2 id="线程池简介">线程池简介</h2>
+<p>线程的创建和销毁都需要映射到操作系统，因此其代价是比较高昂的。出于避免频繁创建、销毁线程以及方便线程管理的需要，线程池应运而生。其中这个线程池跟之前Handler中的Message的设计思想类似，都属于享元设计模式。包括被<code>RxJava</code>代替的<code>AsyncTask</code>异步处理框架中，也有线程池的应用，用到了<code>executeOnExecutor  </code>的一个实例。 juc虽然为开发人员提供了Executors工具类以及内置的多种线程池，但那些线程池的使用非常局限，无法满足日益复杂的业务场景。阿里官方的编程规约中也推荐开发人员不要直接使用juc自带的线程池，而是根据自身业务场景通过<code>ThreadPoolExecutor</code>进行创建线程池。因此深入理解线程池是非常关键，便于对线程池的二次开发。</p>
+<h2 id="线程池原理">线程池原理</h2>
+<blockquote>
+<p>这不刚过完了双十一，我们对双十一进行复盘。作为一场购物狂欢节，剁手党会专门等到这几天疯狂购买一些商品。假设这次对应的商家是欧莱雅，其有自己的工厂，固定的一批工人，称为<code>正式工人</code>，工厂接收的订单由这些工人去完成。当前三分钟的时候，订单数量由正式员工处理。当前五分钟的时候订单增加，正式工人已经忙不过来了，将欧莱雅的生产原料暂时堆积在<code>仓库</code>中，等到忙完这阵子再处理（但实际上双十一任务只多不少没时间处理，所以需要<code>调度员</code>实时调度）。当前一小时的时候订单还在增加，仓库堆积满了后，工厂只能临时扩招一批工人来应对生产高峰，当然双十一结束后这批临时工要被清退。当一整天之后，订单数量还在增加，工厂能够招的临时工也以招满后，即工厂已经到达了<code>工厂最大容量数</code>，后面的订单只能通过<code>策略</code>来缓解，一般会让用户过几天下单或者其他策略不再接受新的订单。</p>
+<p>这里的工厂为线程池，正式员工为线程池中的核心线程，工厂最大容量数为线程池中的最大线程数量，仓库是线程池中的阻塞队列，策略是线程池中的拒绝策略。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/concurrent/concurrent3_n0.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/concurrent/concurrent3_n0.png" >
+  
+    </a>
+  
+  
+</div>
+
+</blockquote>
+<p>根据上面的双十一的例子抽象出来对应到具体的线程池，那么线程池原理如下图所示</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/concurrent/concurrent3_n.png" title="线程池原理图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/concurrent/concurrent3_n.png"  alt="线程池原理图">
+  
+    </a>
+  
+   
+    <span class="caption">线程池原理图</span>
+  
+</div>
+
+<p>线程池原理说明</p>
+<ol>
+<li>如果当前运行的线程少于核心线程数，则创建新线程来执行任务（注意，执行这一步骤需要获取全局锁）。</li>
+<li>如果运行的线程等于或多于核心线程数，则将任务加入阻塞队列。</li>
+<li>如果无法将任务加入阻塞队列（队列已满），则创建新的线程来处理任务。</li>
+<li>如果创建新线程将使当前运行的线程超出最大线程数，任务将被拒绝，并调用RejectedExecutionHandler.rejectedExecution()方法。</li>
+</ol>
+<p>线程池的调用关系图</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/concurrent/concurrent3_n1.png" title="线程池的调用关系图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/concurrent/concurrent3_n1.png"  alt="线程池的调用关系图">
+  
+    </a>
+  
+   
+    <span class="caption">线程池的调用关系图</span>
+  
+</div>
+
+<p>线程池对应的UML图</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/concurrent/concurrent3_n2.png" title="线程池对应的UML图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/concurrent/concurrent3_n2.png"  alt="线程池对应的UML图">
+  
+    </a>
+  
+   
+    <span class="caption">线程池对应的UML图</span>
+  
+</div>
+
+<h2 id="存在原因">存在原因</h2>
+<ol>
+<li>降低资源消耗。通过重复利用线程池中已创建的代码，来降低创建和销毁线程时的开销，从而降低资源消耗，提高利用效率。</li>
+<li>提高响应速度。当任务到达时，任务不需要来等待线程创建就能立即执行，因为线程池中有已创建好的线程可以直接供使用。假设一个服务器完成一项任务所需时间为三段时间，T1为 创建线程时间，T2 为线程中执行任务的时间，T3为 销毁线程时间。  如果：T1 + T3 远大于 T2，则可以采用线程池，以提高服务器性能。线程池技术正是关注如何缩短或调整T1和T3时间的技术，从而提高服务器程序性能的。它把T1，T3分别安排在服务器程序的启动和结束的时间段或者一些空闲的时间段，这样在服务器程序处理客户请求时，不会有T1，T3的开销了。</li>
+<li>提高线程的可管理性。线程池时稀缺资源，如果无限制的创建，当线程数到达一定数量时，不仅会消耗系统资源，还会降低系统的稳定性，所以使用线程池，就可以进行统一分配，调优和监控。</li>
+<li>提供定时执行、定期执行、单线程、并发数控制等功能。</li>
+</ol>
+<h2 id="七大参数">七大参数</h2>
+<p>这七大参数主要是集中在构造方法中，juc中有具体解释，这里笔者将其翻译润化了下。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="kd">public</span> <span class="nf">ThreadPoolExecutor</span><span class="o">(</span><span class="kt">int</span> <span class="n">corePoolSize</span><span class="o">,</span>
+<span class="ln">2</span>                          <span class="kt">int</span> <span class="n">maximumPoolSize</span><span class="o">,</span>
+<span class="ln">3</span>                          <span class="kt">long</span> <span class="n">keepAliveTime</span><span class="o">,</span>
+<span class="ln">4</span>                          <span class="n">TimeUnit</span> <span class="n">unit</span><span class="o">,</span>
+<span class="ln">5</span>                          <span class="n">BlockingQueue</span><span class="o">&lt;</span><span class="n">Runnable</span><span class="o">&gt;</span> <span class="n">workQueue</span><span class="o">,</span>
+<span class="ln">6</span>                          <span class="n">ThreadFactory</span> <span class="n">threadFactory</span><span class="o">,</span>	
+<span class="ln">7</span>                          <span class="n">RejectedExecutionHandler</span> <span class="n">handler</span><span class="o">)</span> 
+</code></pre></div><p>表3 构造函数的七大参数</p>
+<table>
+<thead>
+<tr>
+<th>构造参数</th>
+<th>名词解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>corePoolSize</code></td>
+<td><strong>核心线程数</strong>，空闲状态也要保留在池中的线程数，除非调用<code>allowCoreThreadTimeOut</code></td>
+</tr>
+<tr>
+<td><code>maximumPoolSize</code></td>
+<td><strong>最大线程数</strong>，允许池子中最大的线程数量</td>
+</tr>
+<tr>
+<td><code>keepAliveTime</code></td>
+<td><strong>线程空闲时的存活时间</strong>，当线程没有任务执行时，继续存活的时间。默认情况下，该参数只在线程数大于<code>corePoolSize</code>时才有用</td>
+</tr>
+<tr>
+<td><code>unit</code></td>
+<td><strong><code>keepAliveTime</code>的时间单位</strong></td>
+</tr>
+<tr>
+<td><code>workQueue</code></td>
+<td>**工作队列，**必须是<code>BlockingQueue</code>阻塞队列。当线程池中的线程数超过它的核心线程数时，线程会进入阻塞队列进行阻塞等待</td>
+</tr>
+<tr>
+<td><code>threadFactory</code></td>
+<td><strong>创建线程的工厂</strong>，工厂可以给每个新建的线程设置一个具有识别度的线程名，还可以更加自由的对线程做更多的设置，比如设置所有的线程为守护线程。</td>
+</tr>
+<tr>
+<td><code>handler</code></td>
+<td><strong>线程池的拒绝策略</strong>，当阻塞队列满了，且没有空闲的工作线程，如果继续提交任务，必须采取一种策略处理该任务</td>
+</tr>
+</tbody>
+</table>
+<p>上述的<strong>工作队列，创建线程的工厂，拒绝策略</strong>不可设置为空，否则当前这个构造返回一个空对象。</p>
+<h2 id="三大默认线程池方法">三大默认线程池方法</h2>
+<p>juc自带了的三大线程池，其实并不常用。这些线程池可由 Executors 这个工具类（或叫线程池工厂）来创建。</p>
+<h3 id="fixedthreadpool">FixedThreadPool</h3>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//Executors.java#newFixedThreadPool
+</span><span class="ln">2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">static</span> <span class="n">ExecutorService</span> <span class="nf">newFixedThreadPool</span><span class="o">(</span><span class="kt">int</span> <span class="n">nThreads</span><span class="o">,</span> <span class="n">ThreadFactory</span> <span class="n">threadFactory</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">3</span>    <span class="k">return</span> <span class="k">new</span> <span class="n">ThreadPoolExecutor</span><span class="o">(</span><span class="n">nThreads</span><span class="o">,</span> <span class="n">nThreads</span><span class="o">,</span>
+<span class="ln">4</span>                                  <span class="n">0L</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">MILLISECONDS</span><span class="o">,</span>
+<span class="ln">5</span>                                  <span class="k">new</span> <span class="n">LinkedBlockingQueue</span><span class="o">&lt;</span><span class="n">Runnable</span><span class="o">&gt;(),</span>
+<span class="ln">6</span>                                  <span class="n">threadFactory</span><span class="o">);</span>
+<span class="ln">7</span><span class="o">}</span>
+</code></pre></div><p>固定线程数线程池的创建方式如下：其中核心线程数与最大线程数固定且相等，采用以<strong>链表</strong>为底层结构的<strong>无界阻塞队列</strong>。<code>LinkedBlockingQueue</code>设置为默认大小为Integer的最大值。</p>
+<p><strong>特点</strong>：</p>
+<ul>
+<li>核心线程数与最大线程数相等，因此<strong>不会创建空闲线程</strong>。<code>keepAliveTime </code>设置与否无关紧要。</li>
+<li>采用无界队列，任务会被无限添加，直至内存溢出（OOM）。</li>
+<li>由于无界队列不可能被占满，任务在执行前不可能被拒绝（前提是线程池一直处于运行状态）。</li>
+</ul>
+<p><strong>应用场景</strong>：</p>
+<ul>
+<li>适用于<strong>线程数固定</strong>的场景</li>
+<li>适用<strong>负载比较重</strong>的服务器</li>
+</ul>
+<h3 id="singlethreadexecutor">SingleThreadExecutor</h3>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//Executors.java#newSingleThreadExecutor
+</span><span class="ln">2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">static</span> <span class="n">ExecutorService</span> <span class="nf">newSingleThreadExecutor</span><span class="o">(</span><span class="n">ThreadFactory</span> <span class="n">threadFactory</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">3</span>    <span class="k">return</span> <span class="k">new</span> <span class="n">FinalizableDelegatedExecutorService</span>
+<span class="ln">4</span>        <span class="o">(</span><span class="k">new</span> <span class="n">ThreadPoolExecutor</span><span class="o">(</span><span class="n">1</span><span class="o">,</span> <span class="n">1</span><span class="o">,</span>
+<span class="ln">5</span>                                <span class="n">0L</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">MILLISECONDS</span><span class="o">,</span>
+<span class="ln">6</span>                                <span class="k">new</span> <span class="n">LinkedBlockingQueue</span><span class="o">&lt;</span><span class="n">Runnable</span><span class="o">&gt;(),</span>
+<span class="ln">7</span>                                <span class="n">threadFactory</span><span class="o">));</span>
+<span class="ln">8</span><span class="o">}</span>
+</code></pre></div><p>单线程线程池的创建方式如下：其中<strong>核心线程数与最大线程数都为1</strong>，采用以链表为底层结构的无界阻塞队列。</p>
+<p><strong>特点</strong></p>
+<ul>
+<li>与 <code>FixedThreadPool</code> 类似，只是线程数为1而已。</li>
+</ul>
+<p><strong>应用场景</strong></p>
+<ul>
+<li>适用单线程的场景。</li>
+<li>适用于对<strong>提交任务的处理有顺序性</strong>要求的场景。</li>
+</ul>
+<h3 id="cachedthreadpool"><strong>CachedThreadPool</strong></h3>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//Executors.java#newCachedThreadPool
+</span><span class="ln">2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">static</span> <span class="n">ExecutorService</span> <span class="nf">newCachedThreadPool</span><span class="o">(</span><span class="n">ThreadFactory</span> <span class="n">threadFactory</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">3</span>    <span class="k">return</span> <span class="k">new</span> <span class="n">ThreadPoolExecutor</span><span class="o">(</span><span class="n">0</span><span class="o">,</span> <span class="n">Integer</span><span class="o">.</span><span class="na">MAX_VALUE</span><span class="o">,</span>
+<span class="ln">4</span>                                  <span class="n">60L</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">,</span>
+<span class="ln">5</span>                                  <span class="k">new</span> <span class="n">SynchronousQueue</span><span class="o">&lt;</span><span class="n">Runnable</span><span class="o">&gt;(),</span>
+<span class="ln">6</span>                                  <span class="n">threadFactory</span><span class="o">);</span>
+<span class="ln">7</span><span class="o">}</span>
+</code></pre></div><p>缓冲线程池的创建方式如下：其中<strong>核心线程数为0</strong>，最大线程数为Integer.MAX_VALUE（可以理解为无穷大）。采用同步阻塞队列。</p>
+<p><strong>特点</strong>：</p>
+<ul>
+<li>核心线程数为0，则初始就创建空闲线程，并且空闲线程的只能等待任务60s，60s内没有提交任务，空闲线程将被销毁。</li>
+<li>最大线程数为无穷大，这样会造成巨量线程同时运行，CPU负载过高，导致应用崩溃。</li>
+<li>采用同步阻塞队列，即队列不存储任务。提交一个消费一个。由于最大线程数为无穷大，因此，只要提交任务就一定会被消费（应用未崩溃前）。</li>
+</ul>
+<p><strong>应用场景</strong>：</p>
+<ul>
+<li>适用于耗时短、异步的小程序。</li>
+<li>适用于负载较轻的服务器。</li>
+</ul>
+<h2 id="三种排队策略">三种排队策略</h2>
+<p>juc中排队有三种通用策略：</p>
+<ul>
+<li><strong>直接提交</strong>。工作队列的默认选项是<code> SynchronousQueue</code>，它将任务直接提交给线程而不保持它们。如果不存在可用于立即运行任务的线程，则试图把任务加入队列将失败，因此会构造一个新的线程。此策略可以避免在处理可能具有内部依赖性的请求集时出现锁。直接提交通常要求无界 <code>maximumPoolSizes</code> 以避免拒绝新提交的任务,此策略允许无界线程具有增长的可能性。</li>
+<li><strong>无界队列</strong>。(不具有预定义容量的<code> LinkedBlockingQueue</code>）将导致在所有 <code>corePoolSize</code> 线程都忙时新任务在队列中等待。这样，创建的线程就不会超过 <code>corePoolSize</code>。（因此，<code>maximumPoolSize</code>的值也就无效了。）当每个任务完全独立于其他任务，即任务执行互不影响时，适合于使用无界队列；例如，在 Web页服务器中。这种排队可用于处理瞬态突发请求，当命令以超过队列所能处理的平均数连续到达时，此策略允许无界线程具有增长的可能性。</li>
+<li><strong>有界队列</strong>。当使用有限的 <code>maximumPoolSizes</code>时，有界队列（如 <code>ArrayBlockingQueue</code>）有助于防止资源耗尽，但是可能较难调整和控制。队列大小和最大池大小可能需要相互折衷：使用大型队列和小型池可以最大限度地降低 CPU 使用率、操作系统资源和上下文切换开销，但是可能导致人工降低吞吐量。如果任务频繁阻塞（例如，如果它们是 I/O边界），则系统可能为超过您许可的更多线程安排时间。使用小型队列通常要求较大的池大小，CPU使用率较高，但是可能遇到不可接受的调度开销，这样也会降低吞吐量。</li>
+</ul>
+<h2 id="五种状态">五种状态</h2>
+<p>juc提供线程池的五种状态state，RUNNING（运行状态）、SHUTDOWN（关闭态）、STOP（停止态）、TIDYING（已终止态）、TERMINATED（彻底终止态）</p>
+<blockquote>
+<p>RUNNING:  能够接收新任务，以及对已添加的任务进行处理</p>
+<p>SHUTDOWN: 不接收新任务，但能处理已添加的任务。</p>
+<p>STOP:不接收新任务，不处理已添加的任务，并且会中断正在处理的任务。</p>
+<p>TIDYING:  当所有的任务已终止，记录的”任务数量”为0，将转化到TERMINATED状态</p>
+<p>TERMINATED: 线程池任务完成</p>
+</blockquote>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/concurrent/concurrent3_n3.png" title="JUC提供线程池的五种状态图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/concurrent/concurrent3_n3.png"  alt="JUC提供线程池的五种状态图">
+  
+    </a>
+  
+   
+    <span class="caption">JUC提供线程池的五种状态图</span>
+  
+</div>
+
+<h2 id="四种拒绝策略">四种拒绝策略</h2>
+<p>表4 四种拒绝策略名词解释</p>
+<table>
+<thead>
+<tr>
+<th>拒绝策略</th>
+<th>名词解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AbortPolicy</code></td>
+<td>直接抛出异常，默认策略</td>
+</tr>
+<tr>
+<td><code>CallerRunsPolicy</code></td>
+<td>用调用者所在的线程来执行任务</td>
+</tr>
+<tr>
+<td><code>DiscardOldestPolicy</code></td>
+<td>丢弃阻塞队列中靠最前的任务，并执行当前任务</td>
+</tr>
+<tr>
+<td><code>DiscardPolicy</code></td>
+<td>直接丢弃任务</td>
+</tr>
+</tbody>
+</table>
+<p>当然也可以根据应用场景实现<code>RejectedExecutionHandler</code>接口，自定义饱和策略，如记录日志或持久化存储不能处理的任务。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/concurrent/concurrent3_n4.png" title="JUC四种拒绝策略" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/concurrent/concurrent3_n4.png"  alt="JUC四种拒绝策略">
+  
+    </a>
+  
+   
+    <span class="caption">JUC四种拒绝策略</span>
+  
+</div>
+
+<h2 id="合理配置线程池">合理配置线程池</h2>
+<p>这里的最大线程数一般设置值参考。</p>
+<blockquote>
+<p>最大线程数数量根据任务特性设置。</p>
+<p>CPU密集型：从内存中取数计算，不超过CPU核心数，最大数机器核心数+1，防止<strong>页缺失</strong></p>
+<p>IO密集型：网络通讯，磁盘读取，一般机器的CPU核心数*2</p>
+<p>混合型：上述两种结合</p>
+</blockquote>
+<p>可以通过Runtime.getRuntime().availableProcessors()方法获得当前设备的CPU个数。</p>
+<h2 id="最后">最后</h2>
+<p>这里笔者主要是通过阻塞队列和线程池两块内容，深刻的了解者整体过程。希望通过了解整体过程和源码分别剥离开来，然没有更加深入的研究对应的线程池源码，需要了解源码的可参考<a href="https://blog.csdn.net/u013332124/article/details/79587436">Java线程池原理详解</a>。</p>
+<h1 id="参考文献">参考文献</h1>
+<p><a href="https://blog.csdn.net/mu_wind/article/details/113806680">[1] 云深i不知处. 深入Java线程池：从设计思想到源码解读, 2021.</a></p>
+<p><a href="https://blog.csdn.net/qq_43295483/article/details/119882693">[2] Free的午后,备战Java面试[多线程并发] &ndash; 线程池详细讲解,2021</a>.</p>
+<p><a href="https://blog.csdn.net/wwj17647590781/article/details/117992344">[3] slow is fast.,大厂之路一由浅入深、并行基础、源码分析一 “J.U.C.L”之线程池（最全，最深，最喜欢！！！！）,2021</a>.</p>
+<p><a href="https://mp.weixin.qq.com/s/Z9g-2JihdTpQ5Zsf3xzKCw.">[4] Xu Weiteng,JDK ThreadPoolExecutor核心原理与实践,2021</a></p>
+<p><a href="https://blog.csdn.net/u013332124/article/details/79587436">[5] 疯狂哈丘,Java线程池实现原理详解,2018</a>.</p>
+<p><a href="https://www.cnblogs.com/FondWang/p/12157559.html">[6] 王大军,JUC之阻塞队列介绍,2020</a>.</p>
+<p><a href="https://blog.csdn.net/weixin_46421629/article/details/108836470">[7] IT乐知,一文总结常见阻塞队列,2020</a>.</p>
+<p><a href="https://blog.csdn.net/u013332124/article/details/79587436">[8] 疯狂哈丘,Java线程池实现原理详解,2018</a>.</p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/jdk/">JDK</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/concurrent/">Concurrent</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/thread/">Thread</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/12/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B2-cas%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86/" data-tooltip="并发编程2 CAS基本原理">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2021 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/12/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B2-cas%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86/" data-tooltip="并发编程2 CAS基本原理">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2021%2F12%2F%25E5%25B9%25B6%25E5%258F%2591%25E7%25BC%2596%25E7%25A8%258B3-%25E9%2598%25BB%25E5%25A1%259E%25E9%2598%259F%25E5%2588%2597%25E5%2592%258C%25E7%25BA%25BF%25E7%25A8%258B%25E6%25B1%25A0%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2021%2F12%2F%25E5%25B9%25B6%25E5%258F%2591%25E7%25BC%2596%25E7%25A8%258B3-%25E9%2598%25BB%25E5%25A1%259E%25E9%2598%259F%25E5%2588%2597%25E5%2592%258C%25E7%25BA%25BF%25E7%25A8%258B%25E6%25B1%25A0%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2021%2F12%2F%25E5%25B9%25B6%25E5%258F%2591%25E7%25BC%2596%25E7%25A8%258B3-%25E9%2598%25BB%25E5%25A1%259E%25E9%2598%259F%25E5%2588%2597%25E5%2592%258C%25E7%25BA%25BF%25E7%25A8%258B%25E6%25B1%25A0%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2021\/12\/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B3-%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97%E5%92%8C%E7%BA%BF%E7%A8%8B%E6%B1%A0\/';
+          
+            this.page.identifier = '\/2021\/12\/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B3-%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97%E5%92%8C%E7%BA%BF%E7%A8%8B%E6%B1%A0\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
