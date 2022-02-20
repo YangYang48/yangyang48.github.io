@@ -1,0 +1,2060 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="Intent数据会作为Parcel被存储在Binder事务缓冲区中的对象进行传输。Parcel作为Android底层IPC通信的基础，熟悉Parcel作为了解Binder的第一步。">
+
+
+<meta property="og:description" content="Intent数据会作为Parcel被存储在Binder事务缓冲区中的对象进行传输。Parcel作为Android底层IPC通信的基础，熟悉Parcel作为了解Binder的第一步。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Parcel1 Parcel和Parcelable源码分析">
+<meta name="twitter:title" content="Parcel1 Parcel和Parcelable源码分析">
+<meta property="og:url" content="https://yangyang48.github.io/2022/02/parcel1-parcel%E5%92%8Cparcelable%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2022/02/parcel1-parcel%E5%92%8Cparcelable%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="Intent数据会作为Parcel被存储在Binder事务缓冲区中的对象进行传输。Parcel作为Android底层IPC通信的基础，熟悉Parcel作为了解Binder的第一步。">
+<meta name="twitter:description" content="Intent数据会作为Parcel被存储在Binder事务缓冲区中的对象进行传输。Parcel作为Android底层IPC通信的基础，熟悉Parcel作为了解Binder的第一步。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2022-02-20T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2022-02-20T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="Parcel">
+    
+      <meta property="article:section" content="Parcelable">
+    
+      <meta property="article:section" content="2022">
+    
+      <meta property="article:section" content="February">
+    
+  
+  
+    
+      <meta property="article:tag" content="java">
+    
+      <meta property="article:tag" content="Android">
+    
+      <meta property="article:tag" content="源码">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/Parcel/Parcel1_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/Parcel/Parcel1_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/Parcel/Parcel1_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/Parcel/Parcel1_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>Parcel1 Parcel和Parcelable源码分析</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2022/02/parcel1-parcel%E5%92%8Cparcelable%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/Parcel/Parcel1_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      Parcel1 Parcel和Parcelable源码分析
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2022-02-20T00:00:00Z">
+        
+  二月 20, 2022
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/parcel">Parcel</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/parcelable">Parcelable</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2022">2022</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/february">February</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">3100 Words|Read in about 15 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>Intent数据会作为Parcel被存储在Binder事务缓冲区中的对象进行传输。Parcel作为Android底层IPC通信的基础，熟悉Parcel作为了解Binder的第一步。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/Parcel/Parcel1_1.png" title="Parcel在Binder通信中的传输图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/Parcel/Parcel1_1.png"  alt="Parcel在Binder通信中的传输图">
+  
+    </a>
+  
+   
+    <span class="caption">Parcel在Binder通信中的传输图</span>
+  
+</div>
+
+<p>(上图：Binder通信过程，绿色为相同进程的内部通信，红色为不同进程的跨进程通信)</p>
+<h1 id="parcel源码分析">Parcel源码分析</h1>
+<p>如果数据传递是基本类型，直接使用<code>Parcel</code>传递。其中在App中的<code>Parcel</code>只是一个幌子，具体是通过native指针的共享内存来调用最终的实现。关于<code>Parcel</code>的使用，请移步到<a href="">手写Parcel的C++层及其使用</a>。这里使用的是SDK API30，Android11源码分析。不同版本源码部分会有所区别，但原理是不变的。</p>
+<p>首先，对App的Parcel.java接口分为三部分(基本类型、泛型、二进制的序列化)</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">基本类型</th>
+<th style="text-align:center">基本类型的数组</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"><code>writeInt(int)</code></td>
+<td style="text-align:center"><code>writeIntArray(int[])</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>writeFloat(float)</code></td>
+<td style="text-align:center"><code>writeFloatArray(float[])</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>writeDouble(double)</code></td>
+<td style="text-align:center"><code>writeDoubleArray(double[])</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>writeLong(long)</code></td>
+<td style="text-align:center"><code>writeLongArray(long[])</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>writeString(String)</code></td>
+<td style="text-align:center"><code>writeStringArray(String[])</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>writeChar(char)</code></td>
+<td style="text-align:center"><code>writeCharArray(char[])</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>writeByte(byte)</code></td>
+<td style="text-align:center"><code>writeByteArray(byte[])</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>writeBoolean(boolean)</code></td>
+<td style="text-align:center"><code>writeBooleanArray(boolean[])</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>writeValue(Object)</code></td>
+<td style="text-align:center"><code>writeValueArray(Object[])</code></td>
+</tr>
+<tr>
+<td style="text-align:center">泛型</td>
+<td style="text-align:center">泛型数组</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>writeList(List)</code></td>
+<td style="text-align:center"><code>writeTypedList(List&lt;T&gt;)</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>writeMap(Map)</code></td>
+<td style="text-align:center"><code>writeArrayMap(ArrayMap&lt;String, Object&gt;)</code></td>
+</tr>
+<tr>
+<td style="text-align:center">二进制的序列化</td>
+<td style="text-align:center">二进制的序列化数组</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>writeParcelable(Parcelable, int)</code></td>
+<td style="text-align:center"><code>writeParcelableArray(T[], int)</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>writeSerializable(Serializable)</code></td>
+<td style="text-align:center">/</td>
+</tr>
+</tbody>
+</table>
+<h2 id="1首先获取parcel">1.首先获取Parcel</h2>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//Parcel.java#obtain
+</span><span class="ln"> 2</span><span class="c1">//这里面的sOwnedPool跟Message中的类似，这里判断有使用的就用使用过的，都没使用过再实例化一个新的
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kd">public</span> <span class="kd">static</span> <span class="n">Parcel</span> <span class="nf">obtain</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 4</span>    <span class="kd">final</span> <span class="n">Parcel</span><span class="o">[]</span> <span class="n">pool</span> <span class="o">=</span> <span class="n">sOwnedPool</span><span class="o">;</span>
+<span class="ln"> 5</span>    <span class="kd">synchronized</span> <span class="o">(</span><span class="n">pool</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 6</span>        <span class="n">Parcel</span> <span class="n">p</span><span class="o">;</span>
+<span class="ln"> 7</span>        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="n">0</span><span class="o">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">POOL_SIZE</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+<span class="ln"> 8</span>            <span class="n">p</span> <span class="o">=</span> <span class="n">pool</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+<span class="ln"> 9</span>            <span class="k">if</span> <span class="o">(</span><span class="n">p</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">10</span>                <span class="n">pool</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">11</span>                <span class="k">if</span> <span class="o">(</span><span class="n">DEBUG_RECYCLE</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">12</span>                    <span class="n">p</span><span class="o">.</span><span class="na">mStack</span> <span class="o">=</span> <span class="k">new</span> <span class="n">RuntimeException</span><span class="o">();</span>
+<span class="ln">13</span>                <span class="o">}</span>
+<span class="ln">14</span>                <span class="n">p</span><span class="o">.</span><span class="na">mReadWriteHelper</span> <span class="o">=</span> <span class="n">ReadWriteHelper</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">;</span>
+<span class="ln">15</span>                <span class="k">return</span> <span class="n">p</span><span class="o">;</span>
+<span class="ln">16</span>            <span class="o">}</span>
+<span class="ln">17</span>        <span class="o">}</span>
+<span class="ln">18</span>    <span class="o">}</span>
+<span class="ln">19</span>    <span class="c1">//第一次创建会走到这里
+</span><span class="ln">20</span><span class="c1"></span>    <span class="k">return</span> <span class="k">new</span> <span class="n">Parcel</span><span class="o">(</span><span class="n">0</span><span class="o">);</span>
+<span class="ln">21</span><span class="o">}</span>
+</code></pre></div><p>可以看到实例化之后，传入一个0的参数，这个参数实际上是C++端共享内存的<strong>地址初始化</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//Parcel.java#Parcel
+</span><span class="ln">2</span><span class="c1"></span><span class="kd">private</span> <span class="nf">Parcel</span><span class="o">(</span><span class="kt">long</span> <span class="n">nativePtr</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">3</span>    <span class="k">if</span> <span class="o">(</span><span class="n">DEBUG_RECYCLE</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">4</span>        <span class="n">mStack</span> <span class="o">=</span> <span class="k">new</span> <span class="n">RuntimeException</span><span class="o">();</span>
+<span class="ln">5</span>    <span class="o">}</span>
+<span class="ln">6</span>    <span class="n">init</span><span class="o">(</span><span class="n">nativePtr</span><span class="o">);</span>
+<span class="ln">7</span><span class="o">}</span>
+</code></pre></div><p>Parcel继续走到<code>init</code>中</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//Parcel.java#init
+</span><span class="ln"> 2</span><span class="c1">//如果已经存在mNativePtr且不为0，那么继续使用原先的
+</span><span class="ln"> 3</span><span class="c1">//这里是第一次初始化，所以会调用nativeCreate，这个是走到jni层了
+</span><span class="ln"> 4</span><span class="c1"></span><span class="kd">private</span> <span class="kt">long</span> <span class="n">mNativePtr</span><span class="o">;</span> <span class="c1">// used by native code
+</span><span class="ln"> 5</span><span class="c1"></span>
+<span class="ln"> 6</span><span class="kd">private</span> <span class="kt">void</span> <span class="nf">init</span><span class="o">(</span><span class="kt">long</span> <span class="n">nativePtr</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 7</span>    <span class="k">if</span> <span class="o">(</span><span class="n">nativePtr</span> <span class="o">!=</span> <span class="n">0</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 8</span>        <span class="n">mNativePtr</span> <span class="o">=</span> <span class="n">nativePtr</span><span class="o">;</span>
+<span class="ln"> 9</span>        <span class="n">mOwnsNativeParcelObject</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+<span class="ln">10</span>    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln">11</span>        <span class="n">mNativePtr</span> <span class="o">=</span> <span class="n">nativeCreate</span><span class="o">();</span>
+<span class="ln">12</span>        <span class="n">mOwnsNativeParcelObject</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+<span class="ln">13</span>    <span class="o">}</span>
+<span class="ln">14</span><span class="o">}</span>
+<span class="ln">15</span>
+<span class="ln">16</span><span class="kd">private</span> <span class="kd">static</span> <span class="kd">native</span> <span class="kt">long</span> <span class="nf">nativeCreate</span><span class="o">();</span>
+</code></pre></div><p>jni这边会调用到android_os_Parcel.cpp，这个就是设计模式中的外观者模式，真正实现的是Binder中的Parcel.cpp。并且在jni会返回一个实例化对象的地址，正好对应传入的<code>mNativePtr</code>。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/base/core/jni/android_os_Parcel.cpp#android_os_Parcel_create
+</span><span class="ln"> 2</span><span class="c1">//动态注册省略
+</span><span class="ln"> 3</span><span class="c1"></span><span class="k">static</span> <span class="k">const</span> <span class="n">JNINativeMethod</span> <span class="n">gParcelMethods</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln"> 4</span> <span class="p">{</span><span class="s">&#34;nativeCreate&#34;</span><span class="p">,</span>              <span class="s">&#34;()J&#34;</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="n">android_os_Parcel_create</span><span class="p">},</span>
+<span class="ln"> 5</span><span class="p">};</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span><span class="k">static</span> <span class="n">jlong</span> <span class="nf">android_os_Parcel_create</span><span class="p">(</span><span class="n">JNIEnv</span><span class="o">*</span> <span class="n">env</span><span class="p">,</span> <span class="n">jclass</span> <span class="n">clazz</span><span class="p">)</span>
+<span class="ln"> 8</span><span class="p">{</span>
+<span class="ln"> 9</span>    <span class="c1">//这个Parcel是在Binder目录下面的Parcel.cpp
+</span><span class="ln">10</span><span class="c1"></span>    <span class="n">Parcel</span><span class="o">*</span> <span class="n">parcel</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Parcel</span><span class="p">();</span>
+<span class="ln">11</span>    <span class="k">return</span> <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">jlong</span><span class="o">&gt;</span><span class="p">(</span><span class="n">parcel</span><span class="p">);</span>
+<span class="ln">12</span><span class="p">}</span>
+</code></pre></div><p>下面真正的Parcel实例化的实现</p>
+<p>特别是<code>mData</code>,<code>mDataSize</code>,<code>mDataCapacity</code>,<code>mDataPos</code>这四个值，以下简称四个值</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/Parcel.cpp#Parcel、initState
+</span><span class="ln"> 2</span><span class="c1">//下面不仅是一个简单的构造，还初始化一些值，后面write和read会用到
+</span><span class="ln"> 3</span><span class="c1">//特别是mData，mDataSize，mDataCapacity，mDataPos这四个值
+</span><span class="ln"> 4</span><span class="c1"></span><span class="n">Parcel</span><span class="o">::</span><span class="n">Parcel</span><span class="p">()</span>
+<span class="ln"> 5</span><span class="p">{</span>
+<span class="ln"> 6</span>    <span class="n">LOG_ALLOC</span><span class="p">(</span><span class="s">&#34;Parcel %p: constructing&#34;</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
+<span class="ln"> 7</span>    <span class="n">initState</span><span class="p">();</span>
+<span class="ln"> 8</span><span class="p">}</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span><span class="kt">void</span> <span class="n">Parcel</span><span class="o">::</span><span class="n">initState</span><span class="p">()</span>
+<span class="ln">11</span><span class="p">{</span>
+<span class="ln">12</span>    <span class="n">LOG_ALLOC</span><span class="p">(</span><span class="s">&#34;Parcel %p: initState&#34;</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
+<span class="ln">13</span>    <span class="n">mError</span> <span class="o">=</span> <span class="n">NO_ERROR</span><span class="p">;</span>
+<span class="ln">14</span>    <span class="n">mData</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln">15</span>    <span class="n">mDataSize</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">16</span>    <span class="n">mDataCapacity</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">17</span>    <span class="n">mDataPos</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">18</span>    <span class="n">mOwner</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln">19</span>    <span class="p">...</span>
+<span class="ln">20</span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/Parcel/Parcel1_2.png" title="obtain中四个值的分布图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/Parcel/Parcel1_2.png"  alt="obtain中四个值的分布图">
+  
+    </a>
+  
+   
+    <span class="caption">obtain中四个值的分布图</span>
+  
+</div>
+
+<h2 id="2parcel的写入">2.Parcel的写入</h2>
+<p>java层调用writeInt(2022)/writeString(“MyParcel”)/writeDouble(2.25)</p>
+<h3 id="writeint2022">writeInt(2022)</h3>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//Parcel.java#writeInt
+</span><span class="ln">2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">final</span> <span class="kt">void</span> <span class="nf">writeInt</span><span class="o">(</span><span class="kt">int</span> <span class="n">val</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">3</span>    <span class="n">nativeWriteInt</span><span class="o">(</span><span class="n">mNativePtr</span><span class="o">,</span> <span class="n">val</span><span class="o">);</span>
+<span class="ln">4</span><span class="o">}</span>
+<span class="ln">5</span>
+<span class="ln">6</span><span class="nd">@FastNative</span>
+<span class="ln">7</span><span class="kd">private</span> <span class="kd">static</span> <span class="kd">native</span> <span class="kt">void</span> <span class="nf">nativeWriteInt</span><span class="o">(</span><span class="kt">long</span> <span class="n">nativePtr</span><span class="o">,</span> <span class="kt">int</span> <span class="n">val</span><span class="o">);</span>
+</code></pre></div><p>这里直接调用到native层，可以发现这里用到了初始化的<code>mNativePtr</code></p>
+<blockquote>
+<p>使用 <a href="https://android.googlesource.com/platform/libcore/+/master/dalvik/src/main/java/dalvik/annotation/optimization/FastNative.java"><code>@FastNative</code></a> 注解可实现对 Java 原生接口 (JNI) 更快速的原生调用。<code>@FastNative</code> 注解支持非静态方法。如果某种方法将 <code>jobject</code> 作为参数或返回值进行访问，请使用此注解。<code>@FastNative</code> 可以使原生方法的性能提升高达 3 倍。</p>
+</blockquote>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/base/core/jni/android_os_Parcel.cpp#android_os_Parcel_writeInt
+</span><span class="ln"> 2</span><span class="c1">//动态注册省略
+</span><span class="ln"> 3</span><span class="c1"></span><span class="k">static</span> <span class="k">const</span> <span class="n">JNINativeMethod</span> <span class="n">gParcelMethods</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln"> 4</span><span class="c1">// @FastNative
+</span><span class="ln"> 5</span><span class="c1"></span><span class="p">{</span><span class="s">&#34;nativeWriteInt&#34;</span><span class="p">,</span>            <span class="s">&#34;(JI)V&#34;</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="n">android_os_Parcel_writeInt</span><span class="p">},</span>
+<span class="ln"> 6</span><span class="p">};</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span><span class="k">static</span> <span class="kt">void</span> <span class="nf">android_os_Parcel_writeInt</span><span class="p">(</span><span class="n">JNIEnv</span><span class="o">*</span> <span class="n">env</span><span class="p">,</span> <span class="n">jclass</span> <span class="n">clazz</span><span class="p">,</span> <span class="n">jlong</span> <span class="n">nativePtr</span><span class="p">,</span> <span class="n">jint</span> <span class="n">val</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 9</span>    <span class="n">Parcel</span><span class="o">*</span> <span class="n">parcel</span> <span class="o">=</span> <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">Parcel</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">nativePtr</span><span class="p">);</span>
+<span class="ln">10</span>    <span class="k">if</span> <span class="p">(</span><span class="n">parcel</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">11</span>        <span class="k">const</span> <span class="n">status_t</span> <span class="n">err</span> <span class="o">=</span> <span class="n">parcel</span><span class="o">-&gt;</span><span class="n">writeInt32</span><span class="p">(</span><span class="n">val</span><span class="p">);</span>
+<span class="ln">12</span>        <span class="k">if</span> <span class="p">(</span><span class="n">err</span> <span class="o">!=</span> <span class="n">NO_ERROR</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">13</span>            <span class="n">signalExceptionForError</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">clazz</span><span class="p">,</span> <span class="n">err</span><span class="p">);</span>
+<span class="ln">14</span>        <span class="p">}</span>
+<span class="ln">15</span>    <span class="p">}</span>
+<span class="ln">16</span><span class="p">}</span>
+</code></pre></div><p>调用到Parcel.cpp中的<code>writeInt32</code>，最终调用到模板类</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/Parcel.cpp#writeInt32、writeAligned
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">status_t</span> <span class="n">Parcel</span><span class="o">::</span><span class="n">writeInt32</span><span class="p">(</span><span class="kt">int32_t</span> <span class="n">val</span><span class="p">)</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="k">return</span> <span class="nf">writeAligned</span><span class="p">(</span><span class="n">val</span><span class="p">);</span>
+<span class="ln"> 5</span><span class="p">}</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span><span class="c1">//初次进入模板类的流程如下
+</span><span class="ln"> 8</span><span class="c1">//1.判断当前的mDataPos和传入大小是否是比已存在的容量小
+</span><span class="ln"> 9</span><span class="c1">//2.扩容当前的容量
+</span><span class="ln">10</span><span class="c1">//3.扩容完成之后，跳转到restart_write中写入，进入finishWrite对数据移位
+</span><span class="ln">11</span><span class="c1"></span><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
+<span class="ln">12</span><span class="n">status_t</span> <span class="n">Parcel</span><span class="o">::</span><span class="n">writeAligned</span><span class="p">(</span><span class="n">T</span> <span class="n">val</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">13</span>    <span class="n">COMPILE_TIME_ASSERT_FUNCTION_SCOPE</span><span class="p">(</span><span class="n">PAD_SIZE_UNSAFE</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">T</span><span class="p">))</span> <span class="o">==</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">T</span><span class="p">));</span>
+<span class="ln">14</span>	<span class="c1">//首先判断
+</span><span class="ln">15</span><span class="c1"></span>    <span class="k">if</span> <span class="p">((</span><span class="n">mDataPos</span><span class="o">+</span><span class="k">sizeof</span><span class="p">(</span><span class="n">val</span><span class="p">))</span> <span class="o">&lt;=</span> <span class="n">mDataCapacity</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">16</span><span class="nl">restart_write</span><span class="p">:</span>
+<span class="ln">17</span>        <span class="o">*</span><span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">mData</span><span class="o">+</span><span class="n">mDataPos</span><span class="p">)</span> <span class="o">=</span> <span class="n">val</span><span class="p">;</span>
+<span class="ln">18</span>        <span class="k">return</span> <span class="nf">finishWrite</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">val</span><span class="p">));</span>
+<span class="ln">19</span>    <span class="p">}</span>
+<span class="ln">20</span>	<span class="c1">//开始扩容
+</span><span class="ln">21</span><span class="c1"></span>    <span class="n">status_t</span> <span class="n">err</span> <span class="o">=</span> <span class="n">growData</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">val</span><span class="p">));</span>
+<span class="ln">22</span>    <span class="k">if</span> <span class="p">(</span><span class="n">err</span> <span class="o">==</span> <span class="n">NO_ERROR</span><span class="p">)</span> <span class="k">goto</span> <span class="n">restart_write</span><span class="p">;</span>
+<span class="ln">23</span>    <span class="k">return</span> <span class="n">err</span><span class="p">;</span>
+<span class="ln">24</span><span class="p">}</span>
+</code></pre></div><p>这个是用于判断扩容的函数</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/Parcel.cpp#growData
+</span><span class="ln"> 2</span><span class="c1">//这里的#define SIZE_MAX ((size_t)(-1)) 
+</span><span class="ln"> 3</span><span class="c1">//可以得知扩容方式newSize = ((mDataSize+len)*3)/2;
+</span><span class="ln"> 4</span><span class="c1"></span><span class="n">status_t</span> <span class="n">Parcel</span><span class="o">::</span><span class="n">growData</span><span class="p">(</span><span class="n">size_t</span> <span class="n">len</span><span class="p">)</span>
+<span class="ln"> 5</span><span class="p">{</span>
+<span class="ln"> 6</span>    <span class="k">if</span> <span class="p">(</span><span class="n">len</span> <span class="o">&gt;</span> <span class="n">INT32_MAX</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 7</span>        <span class="k">return</span> <span class="n">BAD_VALUE</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="p">}</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span>    <span class="k">if</span> <span class="p">(</span><span class="n">len</span> <span class="o">&gt;</span> <span class="n">SIZE_MAX</span> <span class="o">-</span> <span class="n">mDataSize</span><span class="p">)</span> <span class="k">return</span> <span class="n">NO_MEMORY</span><span class="p">;</span> <span class="c1">// overflow
+</span><span class="ln">11</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">mDataSize</span> <span class="o">+</span> <span class="n">len</span> <span class="o">&gt;</span> <span class="n">SIZE_MAX</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span> <span class="k">return</span> <span class="n">NO_MEMORY</span><span class="p">;</span> <span class="c1">// overflow
+</span><span class="ln">12</span><span class="c1"></span>    <span class="n">size_t</span> <span class="n">newSize</span> <span class="o">=</span> <span class="p">((</span><span class="n">mDataSize</span><span class="o">+</span><span class="n">len</span><span class="p">)</span><span class="o">*</span><span class="mi">3</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">;</span>
+<span class="ln">13</span>    <span class="k">return</span> <span class="p">(</span><span class="n">newSize</span> <span class="o">&lt;=</span> <span class="n">mDataSize</span><span class="p">)</span>
+<span class="ln">14</span>            <span class="o">?</span> <span class="p">(</span><span class="n">status_t</span><span class="p">)</span> <span class="nl">NO_MEMORY</span>
+<span class="ln">15</span>            <span class="p">:</span> <span class="n">continueWrite</span><span class="p">(</span><span class="n">newSize</span><span class="p">);</span>
+<span class="ln">16</span><span class="p">}</span>
+</code></pre></div><p>设置了扩容方式之后，开始分配内存</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/Parcel.cpp#continueWrite
+</span><span class="ln"> 2</span><span class="c1">//这里分配内存分两种情况
+</span><span class="ln"> 3</span><span class="c1">//1.如果从未扩容，直接malloc分配内存,并对四个值赋值
+</span><span class="ln"> 4</span><span class="c1">//2.如果本身存在数据，那么就realloc方式扩容,并对四个值赋值
+</span><span class="ln"> 5</span><span class="c1"></span><span class="n">status_t</span> <span class="n">Parcel</span><span class="o">::</span><span class="n">continueWrite</span><span class="p">(</span><span class="n">size_t</span> <span class="n">desired</span><span class="p">)</span>
+<span class="ln"> 6</span><span class="p">{</span>
+<span class="ln"> 7</span>    <span class="p">...</span>
+<span class="ln"> 8</span>    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">mData</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 9</span>        <span class="p">...</span>
+<span class="ln">10</span>        <span class="c1">//如果本身存在数据，那么就realloc方式扩容,并对四个值赋值
+</span><span class="ln">11</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="n">desired</span> <span class="o">&gt;</span> <span class="n">mDataCapacity</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">12</span>            <span class="kt">uint8_t</span><span class="o">*</span> <span class="n">data</span> <span class="o">=</span> <span class="p">(</span><span class="kt">uint8_t</span><span class="o">*</span><span class="p">)</span><span class="n">realloc</span><span class="p">(</span><span class="n">mData</span><span class="p">,</span> <span class="n">desired</span><span class="p">);</span>
+<span class="ln">13</span>            <span class="k">if</span> <span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">14</span>                <span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">gParcelGlobalAllocSizeLock</span><span class="p">);</span>
+<span class="ln">15</span>                <span class="n">gParcelGlobalAllocSize</span> <span class="o">+=</span> <span class="n">desired</span><span class="p">;</span>
+<span class="ln">16</span>                <span class="n">gParcelGlobalAllocSize</span> <span class="o">-=</span> <span class="n">mDataCapacity</span><span class="p">;</span>
+<span class="ln">17</span>                <span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">gParcelGlobalAllocSizeLock</span><span class="p">);</span>
+<span class="ln">18</span>                <span class="n">mData</span> <span class="o">=</span> <span class="n">data</span><span class="p">;</span>
+<span class="ln">19</span>                <span class="n">mDataCapacity</span> <span class="o">=</span> <span class="n">desired</span><span class="p">;</span>
+<span class="ln">20</span>            <span class="p">}</span> 
+<span class="ln">21</span>        <span class="p">}</span>
+<span class="ln">22</span>        <span class="p">...</span>
+<span class="ln">23</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">24</span>        <span class="c1">//如果从未扩容，第一次会进入这里，直接malloc分配内存,并对四个值赋值
+</span><span class="ln">25</span><span class="c1"></span>        <span class="kt">uint8_t</span><span class="o">*</span> <span class="n">data</span> <span class="o">=</span> <span class="p">(</span><span class="kt">uint8_t</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="n">desired</span><span class="p">);</span>
+<span class="ln">26</span>        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">data</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">27</span>            <span class="n">mError</span> <span class="o">=</span> <span class="n">NO_MEMORY</span><span class="p">;</span>
+<span class="ln">28</span>            <span class="k">return</span> <span class="n">NO_MEMORY</span><span class="p">;</span>
+<span class="ln">29</span>        <span class="p">}</span>
+<span class="ln">30</span>        <span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">gParcelGlobalAllocSizeLock</span><span class="p">);</span>
+<span class="ln">31</span>        <span class="n">gParcelGlobalAllocSize</span> <span class="o">+=</span> <span class="n">desired</span><span class="p">;</span>
+<span class="ln">32</span>        <span class="n">gParcelGlobalAllocCount</span><span class="o">++</span><span class="p">;</span>
+<span class="ln">33</span>        <span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">gParcelGlobalAllocSizeLock</span><span class="p">);</span>
+<span class="ln">34</span>
+<span class="ln">35</span>        <span class="n">mData</span> <span class="o">=</span> <span class="n">data</span><span class="p">;</span>
+<span class="ln">36</span>        <span class="n">mDataSize</span> <span class="o">=</span> <span class="n">mDataPos</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">37</span>        <span class="n">mDataCapacity</span> <span class="o">=</span> <span class="n">desired</span><span class="p">;</span>
+<span class="ln">38</span>    <span class="p">}</span>
+<span class="ln">39</span>
+<span class="ln">40</span>    <span class="k">return</span> <span class="n">NO_ERROR</span><span class="p">;</span>
+<span class="ln">41</span><span class="p">}</span>
+</code></pre></div><p>扩容完成写入数据之后，进行数据移位</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/Parcel.cpp#finishWrite
+</span><span class="ln"> 2</span><span class="c1">//可以发现这里的逻辑跟bytebuffer原理类似，都是通过mData,mDataPos，mDataSize，mDataCapacity操作的
+</span><span class="ln"> 3</span><span class="c1"></span><span class="n">status_t</span> <span class="n">Parcel</span><span class="o">::</span><span class="n">finishWrite</span><span class="p">(</span><span class="n">size_t</span> <span class="n">len</span><span class="p">)</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span>    <span class="k">if</span> <span class="p">(</span><span class="n">len</span> <span class="o">&gt;</span> <span class="n">INT32_MAX</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 6</span>        <span class="k">return</span> <span class="n">BAD_VALUE</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="p">}</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span>    <span class="c1">//这里开始数据移位
+</span><span class="ln">10</span><span class="c1"></span>    <span class="n">mDataPos</span> <span class="o">+=</span> <span class="n">len</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="k">if</span> <span class="p">(</span><span class="n">mDataPos</span> <span class="o">&gt;</span> <span class="n">mDataSize</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">12</span>        <span class="n">mDataSize</span> <span class="o">=</span> <span class="n">mDataPos</span><span class="p">;</span>
+<span class="ln">13</span>    <span class="p">}</span>
+<span class="ln">14</span>    <span class="k">return</span> <span class="n">NO_ERROR</span><span class="p">;</span>
+<span class="ln">15</span><span class="p">}</span>
+</code></pre></div><p>这里用<strong>绿色</strong>标识<code>Int</code>类型的数据存储。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/Parcel/Parcel1_3.png" title="writeInt(2022)中四个值的分布图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/Parcel/Parcel1_3.png"  alt="writeInt(2022)中四个值的分布图">
+  
+    </a>
+  
+   
+    <span class="caption">writeInt(2022)中四个值的分布图</span>
+  
+</div>
+
+<h3 id="writestringmyparcel">writeString(&ldquo;MyParcel&rdquo;)</h3>
+<p>同理可知道<code>writeString</code>跟<code>writeInt</code>类似</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//Parcel.java#writeString
+</span><span class="ln">2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">final</span> <span class="kt">void</span> <span class="nf">writeString</span><span class="o">(</span><span class="nd">@Nullable</span> <span class="n">String</span> <span class="n">val</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">3</span>    <span class="n">writeString16</span><span class="o">(</span><span class="n">val</span><span class="o">);</span>
+<span class="ln">4</span><span class="o">}</span>
+</code></pre></div><p>这个String的写入比较特殊，会经过<code>mReadWriteHelper</code>来转一下，最终调用<code>writeString16NoHelper</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//Parcel.java#writeString16NoHelper
+</span><span class="ln">2</span><span class="c1"></span><span class="kd">public</span> <span class="kt">void</span> <span class="nf">writeString16NoHelper</span><span class="o">(</span><span class="nd">@Nullable</span> <span class="n">String</span> <span class="n">val</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">3</span>    <span class="n">nativeWriteString16</span><span class="o">(</span><span class="n">mNativePtr</span><span class="o">,</span> <span class="n">val</span><span class="o">);</span>
+<span class="ln">4</span><span class="o">}</span>
+<span class="ln">5</span>
+<span class="ln">6</span><span class="nd">@FastNative</span>
+<span class="ln">7</span><span class="kd">private</span> <span class="kd">static</span> <span class="kd">native</span> <span class="kt">void</span> <span class="nf">nativeWriteString16</span><span class="o">(</span><span class="kt">long</span> <span class="n">nativePtr</span><span class="o">,</span> <span class="n">String</span> <span class="n">val</span><span class="o">);</span>
+</code></pre></div><p>这里直接调用到native层，可以发现这里也用到了初始化的<code>mNativePtr</code></p>
+<p>这里有一个<code>GetStringCritical</code>，得到的是一个指向JVM内部字符串的直接指针，提高JVM返回源字符串直接指针的可能性，具体可看<a href="https://blog.csdn.net/xyang81/article/details/42066665">这里</a>。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/base/core/jni/android_os_Parcel.cpp#android_os_Parcel_writeString16
+</span><span class="ln"> 2</span><span class="c1">//这里需要传入两个值，一个为字符串的地址，一个是字符串的length长度
+</span><span class="ln"> 3</span><span class="c1">//动态注册省略
+</span><span class="ln"> 4</span><span class="c1"></span><span class="k">static</span> <span class="k">const</span> <span class="n">JNINativeMethod</span> <span class="n">gParcelMethods</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln"> 5</span><span class="c1">// @FastNative
+</span><span class="ln"> 6</span><span class="c1"></span>    <span class="p">{</span><span class="s">&#34;nativeWriteString16&#34;</span><span class="p">,</span>       <span class="s">&#34;(JLjava/lang/String;)V&#34;</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="n">android_os_Parcel_writeString16</span><span class="p">},</span>
+<span class="ln"> 7</span><span class="p">}</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span><span class="k">static</span> <span class="kt">void</span> <span class="nf">android_os_Parcel_writeString16</span><span class="p">(</span><span class="n">JNIEnv</span><span class="o">*</span> <span class="n">env</span><span class="p">,</span> <span class="n">jclass</span> <span class="n">clazz</span><span class="p">,</span> <span class="n">jlong</span> <span class="n">nativePtr</span><span class="p">,</span> <span class="n">jstring</span> <span class="n">val</span><span class="p">)</span>
+<span class="ln">10</span><span class="p">{</span>
+<span class="ln">11</span>    <span class="n">Parcel</span><span class="o">*</span> <span class="n">parcel</span> <span class="o">=</span> <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">Parcel</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">nativePtr</span><span class="p">);</span>
+<span class="ln">12</span>    <span class="k">if</span> <span class="p">(</span><span class="n">parcel</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">13</span>        <span class="n">status_t</span> <span class="n">err</span> <span class="o">=</span> <span class="n">NO_MEMORY</span><span class="p">;</span>
+<span class="ln">14</span>        <span class="k">if</span> <span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">15</span>            <span class="c1">//通过val，获取到str
+</span><span class="ln">16</span><span class="c1"></span>            <span class="k">const</span> <span class="n">jchar</span><span class="o">*</span> <span class="n">str</span> <span class="o">=</span> <span class="n">env</span><span class="o">-&gt;</span><span class="n">GetStringCritical</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="ln">17</span>            <span class="k">if</span> <span class="p">(</span><span class="n">str</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">18</span>                <span class="c1">//传入两个值，一个值为str字符串，另一个为string内容的length
+</span><span class="ln">19</span><span class="c1"></span>                <span class="n">err</span> <span class="o">=</span> <span class="n">parcel</span><span class="o">-&gt;</span><span class="n">writeString16</span><span class="p">(</span>
+<span class="ln">20</span>                    <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">char16_t</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">str</span><span class="p">),</span>
+<span class="ln">21</span>                    <span class="n">env</span><span class="o">-&gt;</span><span class="n">GetStringLength</span><span class="p">(</span><span class="n">val</span><span class="p">));</span>
+<span class="ln">22</span>                <span class="n">env</span><span class="o">-&gt;</span><span class="n">ReleaseStringCritical</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">str</span><span class="p">);</span>
+<span class="ln">23</span>            <span class="p">}</span>
+<span class="ln">24</span>        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">25</span>            <span class="n">err</span> <span class="o">=</span> <span class="n">parcel</span><span class="o">-&gt;</span><span class="n">writeString16</span><span class="p">(</span><span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="ln">26</span>        <span class="p">}</span>
+<span class="ln">27</span>        <span class="k">if</span> <span class="p">(</span><span class="n">err</span> <span class="o">!=</span> <span class="n">NO_ERROR</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">28</span>            <span class="n">signalExceptionForError</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">clazz</span><span class="p">,</span> <span class="n">err</span><span class="p">);</span>
+<span class="ln">29</span>        <span class="p">}</span>
+<span class="ln">30</span>    <span class="p">}</span>
+<span class="ln">31</span><span class="p">}</span>
+</code></pre></div><p>调用到<code>writeString16</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/Parcel.cpp#writeString16
+</span><span class="ln"> 2</span><span class="c1">//writeString写入分成两个部分
+</span><span class="ln"> 3</span><span class="c1">//1.写入String类型的长度，这个跟上述writeInt(2022)完全一致
+</span><span class="ln"> 4</span><span class="c1">//2.写入String类型的内容（考虑到String需要最后加‘\0’，且为String16类型，单个字符占两个字节）
+</span><span class="ln"> 5</span><span class="c1"></span><span class="n">status_t</span> <span class="n">Parcel</span><span class="o">::</span><span class="n">writeString16</span><span class="p">(</span><span class="k">const</span> <span class="kt">char16_t</span><span class="o">*</span> <span class="n">str</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">len</span><span class="p">)</span>
+<span class="ln"> 6</span><span class="p">{</span>
+<span class="ln"> 7</span>    <span class="k">if</span> <span class="p">(</span><span class="n">str</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="k">return</span> <span class="n">writeInt32</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln"> 8</span>    <span class="c1">//1.writeInt跟上述一致
+</span><span class="ln"> 9</span><span class="c1"></span>    <span class="n">status_t</span> <span class="n">err</span> <span class="o">=</span> <span class="n">writeInt32</span><span class="p">(</span><span class="n">len</span><span class="p">);</span>
+<span class="ln">10</span>    <span class="k">if</span> <span class="p">(</span><span class="n">err</span> <span class="o">==</span> <span class="n">NO_ERROR</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">11</span>        <span class="c1">//2.len的大小为原来的两倍
+</span><span class="ln">12</span><span class="c1"></span>        <span class="n">len</span> <span class="o">*=</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">char16_t</span><span class="p">);</span>
+<span class="ln">13</span>        <span class="kt">uint8_t</span><span class="o">*</span> <span class="n">data</span> <span class="o">=</span> <span class="p">(</span><span class="kt">uint8_t</span><span class="o">*</span><span class="p">)</span><span class="n">writeInplace</span><span class="p">(</span><span class="n">len</span><span class="o">+</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">char16_t</span><span class="p">));</span>
+<span class="ln">14</span>        <span class="k">if</span> <span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">15</span>            <span class="n">memcpy</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">str</span><span class="p">,</span> <span class="n">len</span><span class="p">);</span>
+<span class="ln">16</span>            <span class="c1">//将返回已分配好内存的地址返回，字符串最后设置为‘\0’
+</span><span class="ln">17</span><span class="c1"></span>            <span class="c1">//这个设置0的原因，writeInplace中paded分配长度可能会大于传入的len，触发大段覆盖逻辑
+</span><span class="ln">18</span><span class="c1"></span>            <span class="o">*</span><span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="kt">char16_t</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">data</span><span class="o">+</span><span class="n">len</span><span class="p">)</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">19</span>            <span class="k">return</span> <span class="n">NO_ERROR</span><span class="p">;</span>
+<span class="ln">20</span>        <span class="p">}</span>
+<span class="ln">21</span>        <span class="n">err</span> <span class="o">=</span> <span class="n">mError</span><span class="p">;</span>
+<span class="ln">22</span>    <span class="p">}</span>
+<span class="ln">23</span>    <span class="k">return</span> <span class="n">err</span><span class="p">;</span>
+<span class="ln">24</span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/Parcel/Parcel1_4.png" title="writeString(&#34;MyParcel&#34;)中长度部分四个值的分布图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/Parcel/Parcel1_4.png"  alt="writeString(&#34;MyParcel&#34;)中长度部分四个值的分布图">
+  
+    </a>
+  
+   
+    <span class="caption">writeString(&#34;MyParcel&#34;)中长度部分四个值的分布图</span>
+  
+</div>
+
+<p><code>writeInt</code>这里不再阐述，直接看<code>writeInplace</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/Parcel.cpp#writeInplace
+</span><span class="ln"> 2</span><span class="c1">//这里的len为字符串的(length+1)*2
+</span><span class="ln"> 3</span><span class="c1">//这里的String用到了计算所需长度特殊的函数pad_size
+</span><span class="ln"> 4</span><span class="c1"></span><span class="kt">void</span><span class="o">*</span> <span class="n">Parcel</span><span class="o">::</span><span class="n">writeInplace</span><span class="p">(</span><span class="n">size_t</span> <span class="n">len</span><span class="p">)</span>
+<span class="ln"> 5</span><span class="p">{</span>
+<span class="ln"> 6</span>    <span class="c1">//通过paded方式计算所需空间
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="k">const</span> <span class="n">size_t</span> <span class="n">padded</span> <span class="o">=</span> <span class="n">pad_size</span><span class="p">(</span><span class="n">len</span><span class="p">);</span>
+<span class="ln"> 8</span>    <span class="k">if</span> <span class="p">(</span><span class="n">mDataPos</span><span class="o">+</span><span class="n">padded</span> <span class="o">&lt;</span> <span class="n">mDataPos</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 9</span>        <span class="k">return</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln">10</span>    <span class="p">}</span>
+<span class="ln">11</span>
+<span class="ln">12</span>    <span class="k">if</span> <span class="p">((</span><span class="n">mDataPos</span><span class="o">+</span><span class="n">padded</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">mDataCapacity</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">13</span><span class="nl">restart_write</span><span class="p">:</span>
+<span class="ln">14</span>        <span class="kt">uint8_t</span><span class="o">*</span> <span class="k">const</span> <span class="n">data</span> <span class="o">=</span> <span class="n">mData</span><span class="o">+</span><span class="n">mDataPos</span><span class="p">;</span>
+<span class="ln">15</span>        <span class="c1">//大段覆盖逻辑：判断paded的长度和传入的len长度，如果不相等，那么最后四个字节就按照打断方式赋值
+</span><span class="ln">16</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="n">padded</span> <span class="o">!=</span> <span class="n">len</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">17</span>            <span class="c1">//这里定义了大端和小端，我们用的是大端
+</span><span class="ln">18</span><span class="c1"></span><span class="cp">#if BYTE_ORDER == BIG_ENDIAN
+</span><span class="ln">19</span><span class="cp"></span>            <span class="k">static</span> <span class="k">const</span> <span class="kt">uint32_t</span> <span class="n">mask</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln">20</span>                <span class="mh">0x00000000</span><span class="p">,</span> <span class="mh">0xffffff00</span><span class="p">,</span> <span class="mh">0xffff0000</span><span class="p">,</span> <span class="mh">0xff000000</span>
+<span class="ln">21</span>            <span class="p">};</span>
+<span class="ln">22</span><span class="cp">#endif
+</span><span class="ln">23</span><span class="cp">#if BYTE_ORDER == LITTLE_ENDIAN
+</span><span class="ln">24</span><span class="cp"></span>            <span class="k">static</span> <span class="k">const</span> <span class="kt">uint32_t</span> <span class="n">mask</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln">25</span>                <span class="mh">0x00000000</span><span class="p">,</span> <span class="mh">0x00ffffff</span><span class="p">,</span> <span class="mh">0x0000ffff</span><span class="p">,</span> <span class="mh">0x000000ff</span>
+<span class="ln">26</span>            <span class="p">};</span>
+<span class="ln">27</span><span class="cp">#endif
+</span><span class="ln">28</span><span class="cp"></span>            <span class="o">*</span><span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="kt">uint32_t</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">data</span><span class="o">+</span><span class="n">padded</span><span class="o">-</span><span class="mi">4</span><span class="p">)</span> <span class="o">&amp;=</span> <span class="n">mask</span><span class="p">[</span><span class="n">padded</span><span class="o">-</span><span class="n">len</span><span class="p">];</span>
+<span class="ln">29</span>        <span class="p">}</span>
+<span class="ln">30</span>
+<span class="ln">31</span>        <span class="n">finishWrite</span><span class="p">(</span><span class="n">padded</span><span class="p">);</span>
+<span class="ln">32</span>        <span class="k">return</span> <span class="n">data</span><span class="p">;</span>
+<span class="ln">33</span>    <span class="p">}</span>
+<span class="ln">34</span>    <span class="n">status_t</span> <span class="n">err</span> <span class="o">=</span> <span class="n">growData</span><span class="p">(</span><span class="n">padded</span><span class="p">);</span>
+<span class="ln">35</span>    <span class="k">if</span> <span class="p">(</span><span class="n">err</span> <span class="o">==</span> <span class="n">NO_ERROR</span><span class="p">)</span> <span class="k">goto</span> <span class="n">restart_write</span><span class="p">;</span>
+<span class="ln">36</span>    <span class="k">return</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln">37</span><span class="p">}</span>
+</code></pre></div><p>这里还有一个<code>padded</code>的长度，这个是<code>writeString</code>里面独有的</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//frameworks/native/libs/binder/Parcel.cpp#pad_size
+</span><span class="ln">2</span><span class="c1"></span><span class="cp">#define PAD_SIZE_UNSAFE(s) (((s)+3)&amp;~3)
+</span><span class="ln">3</span><span class="cp"></span>
+<span class="ln">4</span><span class="k">static</span> <span class="n">size_t</span> <span class="nf">pad_size</span><span class="p">(</span><span class="n">size_t</span> <span class="n">s</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">5</span>    <span class="k">if</span> <span class="p">(</span><span class="n">s</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">numeric_limits</span><span class="o">&lt;</span><span class="n">size_t</span><span class="o">&gt;::</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="mi">3</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">6</span>        <span class="n">LOG_ALWAYS_FATAL</span><span class="p">(</span><span class="s">&#34;pad size too big %zu&#34;</span><span class="p">,</span> <span class="n">s</span><span class="p">);</span>
+<span class="ln">7</span>    <span class="p">}</span>
+<span class="ln">8</span>    <span class="k">return</span> <span class="n">PAD_SIZE_UNSAFE</span><span class="p">(</span><span class="n">s</span><span class="p">);</span>
+<span class="ln">9</span><span class="p">}</span>
+</code></pre></div><p>可以知道，传入的“MyParcel”，<code>paded</code>大小为20，<code>len</code>为18，不相等，触发<strong>大段覆盖</strong>逻辑。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/Parcel/Parcel1_5.png" title="writeString(&#34;MyParcel&#34;)中数据部分四个值的分布图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/Parcel/Parcel1_5.png"  alt="writeString(&#34;MyParcel&#34;)中数据部分四个值的分布图">
+  
+    </a>
+  
+   
+    <span class="caption">writeString(&#34;MyParcel&#34;)中数据部分四个值的分布图</span>
+  
+</div>
+
+<p>这里用<strong>黄红两色</strong>标识<code>String</code>类型的数据存储。</p>
+<h3 id="writedouble225">writeDouble(2.25)</h3>
+<p>同理可知道<code>writeDouble</code>跟<code>writeInt</code>类似</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//Parcel.java#writeDouble
+</span><span class="ln">2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">final</span> <span class="kt">void</span> <span class="nf">writeDouble</span><span class="o">(</span><span class="kt">double</span> <span class="n">val</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">3</span>    <span class="n">nativeWriteDouble</span><span class="o">(</span><span class="n">mNativePtr</span><span class="o">,</span> <span class="n">val</span><span class="o">);</span>
+<span class="ln">4</span><span class="o">}</span>
+<span class="ln">5</span>
+<span class="ln">6</span><span class="nd">@FastNative</span>
+<span class="ln">7</span><span class="kd">private</span> <span class="kd">static</span> <span class="kd">native</span> <span class="kt">void</span> <span class="nf">nativeWriteDouble</span><span class="o">(</span><span class="kt">long</span> <span class="n">nativePtr</span><span class="o">,</span> <span class="kt">double</span> <span class="n">val</span><span class="o">);</span>
+</code></pre></div><p>这里直接调用到native层，可以发现这里也用到了初始化的<code>mNativePtr</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-C++" data-lang="C++"><span class="ln"> 1</span><span class="c1">//frameworks/base/core/jni/android_os_Parcel.cpp#android_os_Parcel_writeDouble
+</span><span class="ln"> 2</span><span class="c1">//动态注册省略
+</span><span class="ln"> 3</span><span class="c1"></span><span class="k">static</span> <span class="k">const</span> <span class="n">JNINativeMethod</span> <span class="n">gParcelMethods</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>    
+<span class="ln"> 4</span><span class="c1">// @FastNative
+</span><span class="ln"> 5</span><span class="c1"></span>    <span class="p">{</span><span class="s">&#34;nativeWriteDouble&#34;</span><span class="p">,</span>         <span class="s">&#34;(JD)V&#34;</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="n">android_os_Parcel_writeDouble</span><span class="p">},</span>
+<span class="ln"> 6</span><span class="p">}</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span><span class="k">static</span> <span class="kt">void</span> <span class="nf">android_os_Parcel_writeDouble</span><span class="p">(</span><span class="n">JNIEnv</span><span class="o">*</span> <span class="n">env</span><span class="p">,</span> <span class="n">jclass</span> <span class="n">clazz</span><span class="p">,</span> <span class="n">jlong</span> <span class="n">nativePtr</span><span class="p">,</span> <span class="n">jdouble</span> <span class="n">val</span><span class="p">)</span>
+<span class="ln"> 9</span><span class="p">{</span>
+<span class="ln">10</span>    <span class="n">Parcel</span><span class="o">*</span> <span class="n">parcel</span> <span class="o">=</span> <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">Parcel</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">nativePtr</span><span class="p">);</span>
+<span class="ln">11</span>    <span class="k">if</span> <span class="p">(</span><span class="n">parcel</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">12</span>        <span class="k">const</span> <span class="n">status_t</span> <span class="n">err</span> <span class="o">=</span> <span class="n">parcel</span><span class="o">-&gt;</span><span class="n">writeDouble</span><span class="p">(</span><span class="n">val</span><span class="p">);</span>
+<span class="ln">13</span>        <span class="k">if</span> <span class="p">(</span><span class="n">err</span> <span class="o">!=</span> <span class="n">NO_ERROR</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">14</span>            <span class="n">signalExceptionForError</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">clazz</span><span class="p">,</span> <span class="n">err</span><span class="p">);</span>
+<span class="ln">15</span>        <span class="p">}</span>
+<span class="ln">16</span>    <span class="p">}</span>
+<span class="ln">17</span><span class="p">}</span>
+</code></pre></div><p>调用到<code>writeDouble</code>。显然这个和writeInt类似，都进入到模板函数中</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//frameworks/native/libs/binder/Parcel.cpp#pad_size
+</span><span class="ln">2</span><span class="c1"></span><span class="n">status_t</span> <span class="n">Parcel</span><span class="o">::</span><span class="n">writeDouble</span><span class="p">(</span><span class="kt">double</span> <span class="n">val</span><span class="p">)</span>
+<span class="ln">3</span><span class="p">{</span>
+<span class="ln">4</span>    <span class="k">return</span> <span class="nf">writeAligned</span><span class="p">(</span><span class="n">val</span><span class="p">);</span>
+<span class="ln">5</span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/Parcel/Parcel1_6.png" title="writeDouble(2.25)中四个值的分布图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/Parcel/Parcel1_6.png"  alt="writeDouble(2.25)中四个值的分布图">
+  
+    </a>
+  
+   
+    <span class="caption">writeDouble(2.25)中四个值的分布图</span>
+  
+</div>
+
+<p>这里用<strong>蓝色</strong>标识<code>Double</code>类型的数据存储。</p>
+<p>可以发现三次<code>write</code>操作，实际上存储是一段连续的空间，并且对空间的数进行划分存储。</p>
+<h2 id="3parcel的读出">3.Parcel的读出</h2>
+<p>java层调用readInt()/readString()/readDouble</p>
+<h3 id="readint">readInt()</h3>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//Parcel.java#readInt
+</span><span class="ln">2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">final</span> <span class="kt">int</span> <span class="nf">readInt</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln">3</span>    <span class="k">return</span> <span class="n">nativeReadInt</span><span class="o">(</span><span class="n">mNativePtr</span><span class="o">);</span>
+<span class="ln">4</span><span class="o">}</span>
+<span class="ln">5</span>
+<span class="ln">6</span><span class="nd">@CriticalNative</span>
+<span class="ln">7</span><span class="kd">private</span> <span class="kd">static</span> <span class="kd">native</span> <span class="kt">int</span> <span class="nf">nativeReadInt</span><span class="o">(</span><span class="kt">long</span> <span class="n">nativePtr</span><span class="o">);</span>
+</code></pre></div><p>用初始化的<code>mNativePtr</code>调用<code>nativeReadInt</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/base/core/jni/android_os_Parcel.cpp#android_os_Parcel_readInt
+</span><span class="ln"> 2</span><span class="c1">//动态注册省略
+</span><span class="ln"> 3</span><span class="c1"></span><span class="k">static</span> <span class="k">const</span> <span class="n">JNINativeMethod</span> <span class="n">gParcelMethods</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln"> 4</span><span class="c1">// @CriticalNative
+</span><span class="ln"> 5</span><span class="c1"></span>    <span class="p">{</span><span class="s">&#34;nativeReadInt&#34;</span><span class="p">,</span>             <span class="s">&#34;(J)I&#34;</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="n">android_os_Parcel_readInt</span><span class="p">},</span>
+<span class="ln"> 6</span><span class="p">};</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span><span class="k">static</span> <span class="n">jint</span> <span class="nf">android_os_Parcel_readInt</span><span class="p">(</span><span class="n">jlong</span> <span class="n">nativePtr</span><span class="p">)</span>
+<span class="ln"> 9</span><span class="p">{</span>
+<span class="ln">10</span>    <span class="n">Parcel</span><span class="o">*</span> <span class="n">parcel</span> <span class="o">=</span> <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">Parcel</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">nativePtr</span><span class="p">);</span>
+<span class="ln">11</span>    <span class="k">if</span> <span class="p">(</span><span class="n">parcel</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">12</span>        <span class="k">return</span> <span class="n">parcel</span><span class="o">-&gt;</span><span class="n">readInt32</span><span class="p">();</span>
+<span class="ln">13</span>    <span class="p">}</span>
+<span class="ln">14</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">15</span><span class="p">}</span>
+</code></pre></div><p>跟<code>writeInt32</code>同理，最终<code>readInt32</code>调用到模板函数<code>readAligned</code>中</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/Parcel.cpp#readInt32、readAligned
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int32_t</span> <span class="n">Parcel</span><span class="o">::</span><span class="n">readInt32</span><span class="p">()</span> <span class="k">const</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="k">return</span> <span class="n">readAligned</span><span class="o">&lt;</span><span class="kt">int32_t</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="ln"> 5</span><span class="p">}</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
+<span class="ln"> 8</span><span class="n">T</span> <span class="n">Parcel</span><span class="o">::</span><span class="n">readAligned</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span>
+<span class="ln"> 9</span>    <span class="n">T</span> <span class="n">result</span><span class="p">;</span>
+<span class="ln">10</span>    <span class="k">if</span> <span class="p">(</span><span class="n">readAligned</span><span class="p">(</span><span class="o">&amp;</span><span class="n">result</span><span class="p">)</span> <span class="o">!=</span> <span class="n">NO_ERROR</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">11</span>        <span class="n">result</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">12</span>    <span class="p">}</span>
+<span class="ln">13</span>
+<span class="ln">14</span>    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="ln">15</span><span class="p">}</span>
+<span class="ln">16</span>
+<span class="ln">17</span><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
+<span class="ln">18</span><span class="n">status_t</span> <span class="n">Parcel</span><span class="o">::</span><span class="n">readAligned</span><span class="p">(</span><span class="n">T</span> <span class="o">*</span><span class="n">pArg</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span>
+<span class="ln">19</span>    <span class="n">COMPILE_TIME_ASSERT_FUNCTION_SCOPE</span><span class="p">(</span><span class="n">PAD_SIZE_UNSAFE</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">T</span><span class="p">))</span> <span class="o">==</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">T</span><span class="p">));</span>
+<span class="ln">20</span>
+<span class="ln">21</span>    <span class="k">if</span> <span class="p">((</span><span class="n">mDataPos</span><span class="o">+</span><span class="k">sizeof</span><span class="p">(</span><span class="n">T</span><span class="p">))</span> <span class="o">&lt;=</span> <span class="n">mDataSize</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">22</span>        <span class="k">if</span> <span class="p">(</span><span class="n">mObjectsSize</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">23</span>            <span class="c1">//这个是在内存中的数据有效性校验，如果传入的值跟内存的所需长度不一致就会异常
+</span><span class="ln">24</span><span class="c1"></span>            <span class="n">status_t</span> <span class="n">err</span> <span class="o">=</span> <span class="n">validateReadData</span><span class="p">(</span><span class="n">mDataPos</span> <span class="o">+</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">T</span><span class="p">));</span>
+<span class="ln">25</span>            <span class="k">if</span><span class="p">(</span><span class="n">err</span> <span class="o">!=</span> <span class="n">NO_ERROR</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">26</span>                <span class="c1">// Still increment the data position by the expected length
+</span><span class="ln">27</span><span class="c1"></span>                <span class="n">mDataPos</span> <span class="o">+=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">T</span><span class="p">);</span>
+<span class="ln">28</span>                <span class="k">return</span> <span class="n">err</span><span class="p">;</span>
+<span class="ln">29</span>            <span class="p">}</span>
+<span class="ln">30</span>        <span class="p">}</span>
+<span class="ln">31</span>        <span class="c1">//这里开始读取数据
+</span><span class="ln">32</span><span class="c1"></span>        <span class="k">const</span> <span class="kt">void</span><span class="o">*</span> <span class="n">data</span> <span class="o">=</span> <span class="n">mData</span><span class="o">+</span><span class="n">mDataPos</span><span class="p">;</span>
+<span class="ln">33</span>        <span class="n">mDataPos</span> <span class="o">+=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">T</span><span class="p">);</span>
+<span class="ln">34</span>        <span class="o">*</span><span class="n">pArg</span> <span class="o">=</span>  <span class="o">*</span><span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="k">const</span> <span class="n">T</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">data</span><span class="p">);</span>
+<span class="ln">35</span>        <span class="k">return</span> <span class="n">NO_ERROR</span><span class="p">;</span>
+<span class="ln">36</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">37</span>        <span class="k">return</span> <span class="n">NOT_ENOUGH_DATA</span><span class="p">;</span>
+<span class="ln">38</span>    <span class="p">}</span>
+<span class="ln">39</span><span class="p">}</span>
+</code></pre></div><p>但是发现如果在write之后直接read，pos和data所指的位置在最后，是不正确的。</p>
+<p>所需在write和read之间必须调用<code>setDataPosition(0);</code>，让其重置到数据的第一位。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//Parcel.java#setDataPosition
+</span><span class="ln">2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">final</span> <span class="kt">void</span> <span class="nf">setDataPosition</span><span class="o">(</span><span class="kt">int</span> <span class="n">pos</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">3</span>    <span class="n">nativeSetDataPosition</span><span class="o">(</span><span class="n">mNativePtr</span><span class="o">,</span> <span class="n">pos</span><span class="o">);</span>
+<span class="ln">4</span><span class="o">}</span>
+<span class="ln">5</span>
+<span class="ln">6</span><span class="nd">@CriticalNative</span>
+<span class="ln">7</span><span class="kd">private</span> <span class="kd">static</span> <span class="kd">native</span> <span class="kt">void</span> <span class="nf">nativeSetDataPosition</span><span class="o">(</span><span class="kt">long</span> <span class="n">nativePtr</span><span class="o">,</span> <span class="kt">int</span> <span class="n">pos</span><span class="o">);</span>
+</code></pre></div><p>用初始化的<code>mNativePtr</code>调用<code>nativeReadInt</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/base/core/jni/android_os_Parcel.cpp#android_os_Parcel_setDataPosition
+</span><span class="ln"> 2</span><span class="c1">//动态注册省略
+</span><span class="ln"> 3</span><span class="c1"></span><span class="k">static</span> <span class="k">const</span> <span class="n">JNINativeMethod</span> <span class="n">gParcelMethods</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln"> 4</span><span class="c1">// @CriticalNative
+</span><span class="ln"> 5</span><span class="c1"></span>    <span class="p">{</span><span class="s">&#34;nativeSetDataPosition&#34;</span><span class="p">,</span>     <span class="s">&#34;(JI)V&#34;</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="n">android_os_Parcel_setDataPosition</span><span class="p">},</span>
+<span class="ln"> 6</span><span class="p">}</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span><span class="k">static</span> <span class="kt">void</span> <span class="nf">android_os_Parcel_setDataPosition</span><span class="p">(</span><span class="n">jlong</span> <span class="n">nativePtr</span><span class="p">,</span> <span class="n">jint</span> <span class="n">pos</span><span class="p">)</span>
+<span class="ln"> 9</span><span class="p">{</span>
+<span class="ln">10</span>    <span class="n">Parcel</span><span class="o">*</span> <span class="n">parcel</span> <span class="o">=</span> <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">Parcel</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">nativePtr</span><span class="p">);</span>
+<span class="ln">11</span>    <span class="k">if</span> <span class="p">(</span><span class="n">parcel</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">12</span>        <span class="n">parcel</span><span class="o">-&gt;</span><span class="n">setDataPosition</span><span class="p">(</span><span class="n">pos</span><span class="p">);</span>
+<span class="ln">13</span>    <span class="p">}</span>
+<span class="ln">14</span><span class="p">}</span>
+</code></pre></div><p>可以看到最终使得pos重置为0</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/Parcel.cpp#setDataPosition
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span> <span class="n">Parcel</span><span class="o">::</span><span class="n">setDataPosition</span><span class="p">(</span><span class="n">size_t</span> <span class="n">pos</span><span class="p">)</span> <span class="k">const</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="k">if</span> <span class="p">(</span><span class="n">pos</span> <span class="o">&gt;</span> <span class="n">INT32_MAX</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 5</span>        <span class="c1">// don&#39;t accept size_t values which may have come from an
+</span><span class="ln"> 6</span><span class="c1"></span>        <span class="c1">// inadvertent conversion from a negative int.
+</span><span class="ln"> 7</span><span class="c1"></span>        <span class="n">LOG_ALWAYS_FATAL</span><span class="p">(</span><span class="s">&#34;pos too big: %zu&#34;</span><span class="p">,</span> <span class="n">pos</span><span class="p">);</span>
+<span class="ln"> 8</span>    <span class="p">}</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span>    <span class="n">mDataPos</span> <span class="o">=</span> <span class="n">pos</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="n">mNextObjectHint</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">12</span>    <span class="n">mObjectsSorted</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">13</span><span class="p">}</span>
+</code></pre></div><p>重置完成之后，开始读取Int值就正常了。数值为2022。</p>
+<p><code>readString</code>和<code>readDouble</code>也是如此，这里不在展开详细解释了。</p>
+<p>可以发现读取也是一段连续的空间，并且对存储的空间划分区域取出。这就是为什么写入之后，必须也按<strong>顺序读取</strong>的原因。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/Parcel/Parcel1_12.png" title="Parcel源码分析原理图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/Parcel/Parcel1_12.png"  alt="Parcel源码分析原理图">
+  
+    </a>
+  
+   
+    <span class="caption">Parcel源码分析原理图</span>
+  
+</div>
+
+<h1 id="parcelablejava源码分析">Parcelable.java源码分析</h1>
+<p>如果传递的不是基本类型是对象，那么需要用到的是<code>Parcelable</code>的实现类。</p>
+<p>然而Parcelable.java最终也是通过Parcel.java来实现的。</p>
+<p>下面通过简单的两个<code>Activity</code>页面的跳转<code>Intent</code>传递的<code>Bundle</code>值来说明<code>Parcalable</code>原理，具体请移步到<a href="">手写Parcel的C++层及其使用</a>。</p>
+<h2 id="数据写入">数据写入</h2>
+<h3 id="1putextra">1.putExtra</h3>
+<p>这里直接从<code>Activity</code>中调用<code>putExtra</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//MainActivity.java#onCreate
+</span><span class="ln">2</span><span class="c1">//我们从这里开始调用
+</span><span class="ln">3</span><span class="c1"></span><span class="n">intent</span><span class="o">.</span><span class="na">putExtra</span><span class="o">(</span><span class="s">&#34;P1&#34;</span><span class="o">,</span> <span class="n">bean1</span><span class="o">);</span><span class="c1">//这里的bean1的javaBean为(2022,&#34;MyParcel&#34;,2.25)
+</span><span class="ln">4</span><span class="c1"></span><span class="n">intent</span><span class="o">.</span><span class="na">putExtra</span><span class="o">(</span><span class="s">&#34;P2&#34;</span><span class="o">,</span> <span class="n">bean2</span><span class="o">);</span><span class="c1">//这里的bean2的javaBean为(2022,&#34;AndroidSourceCode&#34;,2.25)
+</span></code></pre></div><p>调用到<code>Intent</code>中的<code>putExtra</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//Intent.java#putExtra
+</span><span class="ln">2</span><span class="c1">//可以看到最终调用Bundle里面的putParcelable方法
+</span><span class="ln">3</span><span class="c1"></span><span class="kd">public</span> <span class="nd">@NonNull</span> <span class="n">Intent</span> <span class="nf">putExtra</span><span class="o">(</span><span class="n">String</span> <span class="n">name</span><span class="o">,</span> <span class="nd">@Nullable</span> <span class="n">Parcelable</span> <span class="n">value</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">4</span>    <span class="k">if</span> <span class="o">(</span><span class="n">mExtras</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">5</span>        <span class="n">mExtras</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Bundle</span><span class="o">();</span>
+<span class="ln">6</span>    <span class="o">}</span>
+<span class="ln">7</span>    <span class="n">mExtras</span><span class="o">.</span><span class="na">putParcelable</span><span class="o">(</span><span class="n">name</span><span class="o">,</span> <span class="n">value</span><span class="o">);</span>
+<span class="ln">8</span>    <span class="k">return</span> <span class="k">this</span><span class="o">;</span>
+<span class="ln">9</span><span class="o">}</span>
+</code></pre></div><p>很显然，传递进去的值都是通过<code>Bundle</code>来传递的</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//Bundle.java#putParcelable
+</span><span class="ln">2</span><span class="c1">//这里面有两个比较重要的一个是unparcel
+</span><span class="ln">3</span><span class="c1">//这个unparcel先按下不表，作用是mParcelledData这个Parcel中解包,把数据取出存入mMap中
+</span><span class="ln">4</span><span class="c1">//另一个是mMap,这个用于将刚刚放入Bundle中的数据，通过键值对存到mMap中
+</span><span class="ln">5</span><span class="c1"></span><span class="kd">public</span> <span class="kt">void</span> <span class="nf">putParcelable</span><span class="o">(</span><span class="nd">@Nullable</span> <span class="n">String</span> <span class="n">key</span><span class="o">,</span> <span class="nd">@Nullable</span> <span class="n">Parcelable</span> <span class="n">value</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">6</span>    <span class="n">unparcel</span><span class="o">();</span>
+<span class="ln">7</span>    <span class="n">mMap</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">value</span><span class="o">);</span>
+<span class="ln">8</span>    <span class="n">mFlags</span> <span class="o">&amp;=</span> <span class="o">~</span><span class="n">FLAG_HAS_FDS_KNOWN</span><span class="o">;</span>
+<span class="ln">9</span><span class="o">}</span>
+</code></pre></div><p>上面的流程是将数据存入到<code>Bundle</code>中的<code>mMap</code>中。</p>
+<h3 id="2ams的回调">2.AMS的回调</h3>
+<p>在Activity启动过程中，由AMS完成进程通信，期间，将调用**Intent.writeToParcel()**将所有必要数据进行序列化，并完成传输。(具体AMS如何调到Intent的writeToParcel，接下来的AMS篇章会解释)</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//Intent.java#writeToParcel
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kt">void</span> <span class="nf">writeToParcel</span><span class="o">(</span><span class="n">Parcel</span> <span class="n">out</span><span class="o">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 3</span>    <span class="n">out</span><span class="o">.</span><span class="na">writeString8</span><span class="o">(</span><span class="n">mAction</span><span class="o">);</span>
+<span class="ln"> 4</span>    <span class="n">Uri</span><span class="o">.</span><span class="na">writeToParcel</span><span class="o">(</span><span class="n">out</span><span class="o">,</span> <span class="n">mData</span><span class="o">);</span>
+<span class="ln"> 5</span>    <span class="n">out</span><span class="o">.</span><span class="na">writeString8</span><span class="o">(</span><span class="n">mType</span><span class="o">);</span>
+<span class="ln"> 6</span>    <span class="n">out</span><span class="o">.</span><span class="na">writeString8</span><span class="o">(</span><span class="n">mIdentifier</span><span class="o">);</span>
+<span class="ln"> 7</span>    <span class="n">out</span><span class="o">.</span><span class="na">writeInt</span><span class="o">(</span><span class="n">mFlags</span><span class="o">);</span>
+<span class="ln"> 8</span>    <span class="n">out</span><span class="o">.</span><span class="na">writeString8</span><span class="o">(</span><span class="n">mPackage</span><span class="o">);</span>
+<span class="ln"> 9</span>    <span class="n">ComponentName</span><span class="o">.</span><span class="na">writeToParcel</span><span class="o">(</span><span class="n">mComponent</span><span class="o">,</span> <span class="n">out</span><span class="o">);</span>
+<span class="ln">10</span>
+<span class="ln">11</span>    <span class="k">if</span> <span class="o">(</span><span class="n">mSourceBounds</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">12</span>        <span class="n">out</span><span class="o">.</span><span class="na">writeInt</span><span class="o">(</span><span class="n">1</span><span class="o">);</span>
+<span class="ln">13</span>        <span class="n">mSourceBounds</span><span class="o">.</span><span class="na">writeToParcel</span><span class="o">(</span><span class="n">out</span><span class="o">,</span> <span class="n">flags</span><span class="o">);</span>
+<span class="ln">14</span>    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln">15</span>        <span class="n">out</span><span class="o">.</span><span class="na">writeInt</span><span class="o">(</span><span class="n">0</span><span class="o">);</span>
+<span class="ln">16</span>    <span class="o">}</span>
+<span class="ln">17</span>
+<span class="ln">18</span>    <span class="k">if</span> <span class="o">(</span><span class="n">mCategories</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">19</span>        <span class="kd">final</span> <span class="kt">int</span> <span class="n">N</span> <span class="o">=</span> <span class="n">mCategories</span><span class="o">.</span><span class="na">size</span><span class="o">();</span>
+<span class="ln">20</span>        <span class="n">out</span><span class="o">.</span><span class="na">writeInt</span><span class="o">(</span><span class="n">N</span><span class="o">);</span>
+<span class="ln">21</span>        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="n">0</span><span class="o">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">N</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+<span class="ln">22</span>            <span class="n">out</span><span class="o">.</span><span class="na">writeString8</span><span class="o">(</span><span class="n">mCategories</span><span class="o">.</span><span class="na">valueAt</span><span class="o">(</span><span class="n">i</span><span class="o">));</span>
+<span class="ln">23</span>        <span class="o">}</span>
+<span class="ln">24</span>    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln">25</span>        <span class="n">out</span><span class="o">.</span><span class="na">writeInt</span><span class="o">(</span><span class="n">0</span><span class="o">);</span>
+<span class="ln">26</span>    <span class="o">}</span>
+<span class="ln">27</span>
+<span class="ln">28</span>    <span class="k">if</span> <span class="o">(</span><span class="n">mSelector</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">29</span>        <span class="n">out</span><span class="o">.</span><span class="na">writeInt</span><span class="o">(</span><span class="n">1</span><span class="o">);</span>
+<span class="ln">30</span>        <span class="n">mSelector</span><span class="o">.</span><span class="na">writeToParcel</span><span class="o">(</span><span class="n">out</span><span class="o">,</span> <span class="n">flags</span><span class="o">);</span>
+<span class="ln">31</span>    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln">32</span>        <span class="n">out</span><span class="o">.</span><span class="na">writeInt</span><span class="o">(</span><span class="n">0</span><span class="o">);</span>
+<span class="ln">33</span>    <span class="o">}</span>
+<span class="ln">34</span>
+<span class="ln">35</span>    <span class="k">if</span> <span class="o">(</span><span class="n">mClipData</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">36</span>        <span class="n">out</span><span class="o">.</span><span class="na">writeInt</span><span class="o">(</span><span class="n">1</span><span class="o">);</span>
+<span class="ln">37</span>        <span class="n">mClipData</span><span class="o">.</span><span class="na">writeToParcel</span><span class="o">(</span><span class="n">out</span><span class="o">,</span> <span class="n">flags</span><span class="o">);</span>
+<span class="ln">38</span>    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln">39</span>        <span class="n">out</span><span class="o">.</span><span class="na">writeInt</span><span class="o">(</span><span class="n">0</span><span class="o">);</span>
+<span class="ln">40</span>    <span class="o">}</span>
+<span class="ln">41</span>    <span class="n">out</span><span class="o">.</span><span class="na">writeInt</span><span class="o">(</span><span class="n">mContentUserHint</span><span class="o">);</span>
+<span class="ln">42</span>    <span class="n">out</span><span class="o">.</span><span class="na">writeBundle</span><span class="o">(</span><span class="n">mExtras</span><span class="o">);</span>
+<span class="ln">43</span><span class="o">}</span>
+</code></pre></div><p>可以看到实际上通过Parcel写入很多信息，包括动作，数据，类型，认证等</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/Parcel/Parcel1_9.png" title="AMS中写入的数据结构图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/Parcel/Parcel1_9.png"  alt="AMS中写入的数据结构图">
+  
+    </a>
+  
+   
+    <span class="caption">AMS中写入的数据结构图</span>
+  
+</div>
+
+<p>这里只对Bundle进行展开分析，其他的感兴趣的宝宝可以自助分析</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//Bundle.java#writeBundle、writeToParcel
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">final</span> <span class="kt">void</span> <span class="nf">writeBundle</span><span class="o">(</span><span class="nd">@Nullable</span> <span class="n">Bundle</span> <span class="n">val</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 3</span>    <span class="k">if</span> <span class="o">(</span><span class="n">val</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 4</span>        <span class="n">writeInt</span><span class="o">(-</span><span class="n">1</span><span class="o">);</span>
+<span class="ln"> 5</span>        <span class="k">return</span><span class="o">;</span>
+<span class="ln"> 6</span>    <span class="o">}</span>
+<span class="ln"> 7</span>    <span class="n">val</span><span class="o">.</span><span class="na">writeToParcel</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="n">0</span><span class="o">);</span>
+<span class="ln"> 8</span><span class="o">}</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span><span class="nd">@Override</span>
+<span class="ln">11</span><span class="kd">public</span> <span class="kt">void</span> <span class="nf">writeToParcel</span><span class="o">(</span><span class="n">Parcel</span> <span class="n">parcel</span><span class="o">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">12</span>    <span class="kd">final</span> <span class="kt">boolean</span> <span class="n">oldAllowFds</span> <span class="o">=</span> <span class="n">parcel</span><span class="o">.</span><span class="na">pushAllowFds</span><span class="o">((</span><span class="n">mFlags</span> <span class="o">&amp;</span> <span class="n">FLAG_ALLOW_FDS</span><span class="o">)</span> <span class="o">!=</span> <span class="n">0</span><span class="o">);</span>
+<span class="ln">13</span>    <span class="k">try</span> <span class="o">{</span>
+<span class="ln">14</span>        <span class="kd">super</span><span class="o">.</span><span class="na">writeToParcelInner</span><span class="o">(</span><span class="n">parcel</span><span class="o">,</span> <span class="n">flags</span><span class="o">);</span>
+<span class="ln">15</span>    <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+<span class="ln">16</span>        <span class="n">parcel</span><span class="o">.</span><span class="na">restoreAllowFds</span><span class="o">(</span><span class="n">oldAllowFds</span><span class="o">);</span>
+<span class="ln">17</span>    <span class="o">}</span>
+<span class="ln">18</span><span class="o">}</span>
+</code></pre></div><p>最终调用到了<code>Bundle</code>基类中的<code>writeToParcelInner</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//BaseBundle.java#writeToParcelInner
+</span><span class="ln"> 2</span><span class="c1">//这个方法内容比较多，拆分成几部分
+</span><span class="ln"> 3</span><span class="c1">//1.unparcel，先按下不表，数据压入到mMap
+</span><span class="ln"> 4</span><span class="c1">//2.第一次进入mParcelledData没有数据，直接往下走不退出，且将unparcel中的mMap数据给到map
+</span><span class="ln"> 5</span><span class="c1">//3.不是第一次进入，mParcelledData有数据，Parcel数据拼接给mParcelledData
+</span><span class="ln"> 6</span><span class="c1"></span><span class="kt">void</span> <span class="nf">writeToParcelInner</span><span class="o">(</span><span class="n">Parcel</span> <span class="n">parcel</span><span class="o">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 7</span>    <span class="k">if</span> <span class="o">(</span><span class="n">parcel</span><span class="o">.</span><span class="na">hasReadWriteHelper</span><span class="o">())</span> <span class="o">{</span>
+<span class="ln"> 8</span>        <span class="n">unparcel</span><span class="o">();</span>
+<span class="ln"> 9</span>    <span class="o">}</span>
+<span class="ln">10</span>    <span class="kd">final</span> <span class="n">ArrayMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Object</span><span class="o">&gt;</span> <span class="n">map</span><span class="o">;</span>
+<span class="ln">11</span>    <span class="kd">synchronized</span> <span class="o">(</span><span class="k">this</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">12</span>        <span class="k">if</span> <span class="o">(</span><span class="n">mParcelledData</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">13</span>            <span class="k">if</span> <span class="o">(</span><span class="n">mParcelledData</span> <span class="o">==</span> <span class="n">NoImagePreloadHolder</span><span class="o">.</span><span class="na">EMPTY_PARCEL</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">14</span>                <span class="n">parcel</span><span class="o">.</span><span class="na">writeInt</span><span class="o">(</span><span class="n">0</span><span class="o">);</span>
+<span class="ln">15</span>            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln">16</span>                <span class="c1">//mParcelledData有数据，Parcel数据拼接给mParcelledData
+</span><span class="ln">17</span><span class="c1"></span>                <span class="kt">int</span> <span class="n">length</span> <span class="o">=</span> <span class="n">mParcelledData</span><span class="o">.</span><span class="na">dataSize</span><span class="o">();</span>
+<span class="ln">18</span>                <span class="n">parcel</span><span class="o">.</span><span class="na">writeInt</span><span class="o">(</span><span class="n">length</span><span class="o">);</span>
+<span class="ln">19</span>                <span class="n">parcel</span><span class="o">.</span><span class="na">writeInt</span><span class="o">(</span><span class="n">mParcelledByNative</span> <span class="o">?</span> <span class="n">BUNDLE_MAGIC_NATIVE</span> <span class="o">:</span> <span class="n">BUNDLE_MAGIC</span><span class="o">);</span>
+<span class="ln">20</span>                <span class="n">parcel</span><span class="o">.</span><span class="na">appendFrom</span><span class="o">(</span><span class="n">mParcelledData</span><span class="o">,</span> <span class="n">0</span><span class="o">,</span> <span class="n">length</span><span class="o">);</span>
+<span class="ln">21</span>            <span class="o">}</span>
+<span class="ln">22</span>            <span class="k">return</span><span class="o">;</span>
+<span class="ln">23</span>        <span class="o">}</span>
+<span class="ln">24</span>        <span class="c1">//第一次进入mParcelledData没有数据，直接往下走不退出
+</span><span class="ln">25</span><span class="c1"></span>        <span class="n">map</span> <span class="o">=</span> <span class="n">mMap</span><span class="o">;</span>
+<span class="ln">26</span>    <span class="o">}</span>
+<span class="ln">27</span>
+<span class="ln">28</span>    <span class="k">if</span> <span class="o">(</span><span class="n">map</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="n">map</span><span class="o">.</span><span class="na">size</span><span class="o">()</span> <span class="o">&lt;=</span> <span class="n">0</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">29</span>        <span class="n">parcel</span><span class="o">.</span><span class="na">writeInt</span><span class="o">(</span><span class="n">0</span><span class="o">);</span>
+<span class="ln">30</span>        <span class="k">return</span><span class="o">;</span>
+<span class="ln">31</span>    <span class="o">}</span>
+<span class="ln">32</span>    <span class="c1">//开始写入一些信息，-1（map的长度），魔数和map数据
+</span><span class="ln">33</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">lengthPos</span> <span class="o">=</span> <span class="n">parcel</span><span class="o">.</span><span class="na">dataPosition</span><span class="o">();</span>
+<span class="ln">34</span>    <span class="n">parcel</span><span class="o">.</span><span class="na">writeInt</span><span class="o">(-</span><span class="n">1</span><span class="o">);</span> <span class="c1">// dummy, will hold length
+</span><span class="ln">35</span><span class="c1"></span>    <span class="n">parcel</span><span class="o">.</span><span class="na">writeInt</span><span class="o">(</span><span class="n">BUNDLE_MAGIC</span><span class="o">);</span>
+<span class="ln">36</span>
+<span class="ln">37</span>    <span class="kt">int</span> <span class="n">startPos</span> <span class="o">=</span> <span class="n">parcel</span><span class="o">.</span><span class="na">dataPosition</span><span class="o">();</span>
+<span class="ln">38</span>    <span class="n">parcel</span><span class="o">.</span><span class="na">writeArrayMapInternal</span><span class="o">(</span><span class="n">map</span><span class="o">);</span>
+<span class="ln">39</span>    <span class="kt">int</span> <span class="n">endPos</span> <span class="o">=</span> <span class="n">parcel</span><span class="o">.</span><span class="na">dataPosition</span><span class="o">();</span>
+<span class="ln">40</span>	<span class="c1">//写完map数据后，再将原来是-1的值改成map的长度
+</span><span class="ln">41</span><span class="c1"></span>    <span class="n">parcel</span><span class="o">.</span><span class="na">setDataPosition</span><span class="o">(</span><span class="n">lengthPos</span><span class="o">);</span>
+<span class="ln">42</span>    <span class="kt">int</span> <span class="n">length</span> <span class="o">=</span> <span class="n">endPos</span> <span class="o">-</span> <span class="n">startPos</span><span class="o">;</span>
+<span class="ln">43</span>    <span class="n">parcel</span><span class="o">.</span><span class="na">writeInt</span><span class="o">(</span><span class="n">length</span><span class="o">);</span>
+<span class="ln">44</span>    <span class="n">parcel</span><span class="o">.</span><span class="na">setDataPosition</span><span class="o">(</span><span class="n">endPos</span><span class="o">);</span>
+<span class="ln">45</span><span class="o">}</span>
+</code></pre></div><p>然后对map具体进一步写入分析，把写入的每一步细化出来</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//Parcel.java#writeArrayMapInternal、writeValue
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span> <span class="nf">writeArrayMapInternal</span><span class="o">(</span><span class="nd">@Nullable</span> <span class="n">ArrayMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Object</span><span class="o">&gt;</span> <span class="n">val</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 3</span>    <span class="k">if</span> <span class="o">(</span><span class="n">val</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 4</span>        <span class="n">writeInt</span><span class="o">(-</span><span class="n">1</span><span class="o">);</span>
+<span class="ln"> 5</span>        <span class="k">return</span><span class="o">;</span>
+<span class="ln"> 6</span>    <span class="o">}</span>
+<span class="ln"> 7</span>    <span class="c1">//统计val的map中有多少个元素，然后循环遍历key和value
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="kd">final</span> <span class="kt">int</span> <span class="n">N</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="na">size</span><span class="o">();</span>
+<span class="ln"> 9</span>    <span class="n">writeInt</span><span class="o">(</span><span class="n">N</span><span class="o">);</span>
+<span class="ln">10</span>    <span class="kt">int</span> <span class="n">startPos</span><span class="o">;</span>
+<span class="ln">11</span>    <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="n">0</span><span class="o">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">N</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+<span class="ln">12</span>        <span class="k">if</span> <span class="o">(</span><span class="n">DEBUG_ARRAY_MAP</span><span class="o">)</span> <span class="n">startPos</span> <span class="o">=</span> <span class="n">dataPosition</span><span class="o">();</span>
+<span class="ln">13</span>        <span class="n">writeString</span><span class="o">(</span><span class="n">val</span><span class="o">.</span><span class="na">keyAt</span><span class="o">(</span><span class="n">i</span><span class="o">));</span>
+<span class="ln">14</span>        <span class="n">writeValue</span><span class="o">(</span><span class="n">val</span><span class="o">.</span><span class="na">valueAt</span><span class="o">(</span><span class="n">i</span><span class="o">));</span>
+<span class="ln">15</span>    <span class="o">}</span>
+<span class="ln">16</span><span class="o">}</span>
+<span class="ln">17</span>
+<span class="ln">18</span><span class="kd">public</span> <span class="kd">final</span> <span class="kt">void</span> <span class="nf">writeValue</span><span class="o">(</span><span class="nd">@Nullable</span> <span class="n">Object</span> <span class="n">v</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">19</span>    <span class="k">if</span> <span class="o">(</span><span class="n">v</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">20</span>        <span class="n">writeInt</span><span class="o">(</span><span class="n">VAL_NULL</span><span class="o">);</span>
+<span class="ln">21</span>    <span class="o">}</span>
+<span class="ln">22</span>    <span class="o">...</span>
+<span class="ln">23</span>    <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">v</span> <span class="k">instanceof</span> <span class="n">Parcelable</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">24</span>        <span class="c1">//写入value的类型
+</span><span class="ln">25</span><span class="c1"></span>        <span class="n">writeInt</span><span class="o">(</span><span class="n">VAL_PARCELABLE</span><span class="o">);</span>
+<span class="ln">26</span>        <span class="n">writeParcelable</span><span class="o">((</span><span class="n">Parcelable</span><span class="o">)</span> <span class="n">v</span><span class="o">,</span> <span class="n">0</span><span class="o">);</span>
+<span class="ln">27</span>    <span class="o">}</span>
+<span class="ln">28</span>    <span class="o">...</span>
+<span class="ln">29</span><span class="o">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/Parcel/Parcel1_7.png" title="Bundle的数据结构图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/Parcel/Parcel1_7.png"  alt="Bundle的数据结构图">
+  
+    </a>
+  
+   
+    <span class="caption">Bundle的数据结构图</span>
+  
+</div>
+
+<p>传入到<code>v</code>，实际上就是实现<code>Parcelable</code>的Bean类的对象</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//Parcel.java#writeParcelable、writeParcelableCreator
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">final</span> <span class="kt">void</span> <span class="nf">writeParcelable</span><span class="o">(</span><span class="nd">@Nullable</span> <span class="n">Parcelable</span> <span class="n">p</span><span class="o">,</span> <span class="kt">int</span> <span class="n">parcelableFlags</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 3</span>    <span class="k">if</span> <span class="o">(</span><span class="n">p</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 4</span>        <span class="n">writeString</span><span class="o">(</span><span class="kc">null</span><span class="o">);</span>
+<span class="ln"> 5</span>        <span class="k">return</span><span class="o">;</span>
+<span class="ln"> 6</span>    <span class="o">}</span>
+<span class="ln"> 7</span>    <span class="n">writeParcelableCreator</span><span class="o">(</span><span class="n">p</span><span class="o">);</span>
+<span class="ln"> 8</span>    <span class="n">p</span><span class="o">.</span><span class="na">writeToParcel</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="n">parcelableFlags</span><span class="o">);</span>
+<span class="ln"> 9</span><span class="o">}</span>
+<span class="ln">10</span>
+<span class="ln">11</span><span class="kd">public</span> <span class="kd">final</span> <span class="kt">void</span> <span class="nf">writeParcelableCreator</span><span class="o">(</span><span class="nd">@NonNull</span> <span class="n">Parcelable</span> <span class="n">p</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">12</span>    <span class="c1">//写入全类名
+</span><span class="ln">13</span><span class="c1"></span>    <span class="n">String</span> <span class="n">name</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="na">getClass</span><span class="o">().</span><span class="na">getName</span><span class="o">();</span>
+<span class="ln">14</span>    <span class="n">writeString</span><span class="o">(</span><span class="n">name</span><span class="o">);</span>
+<span class="ln">15</span><span class="o">}</span>
+</code></pre></div><p>最终调用到了Bean类中的<code>writeToParcel</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//Bean#writeToParcel
+</span><span class="ln">2</span><span class="c1"></span><span class="nd">@Override</span>
+<span class="ln">3</span><span class="kd">public</span> <span class="kt">void</span> <span class="nf">writeToParcel</span><span class="o">(</span><span class="n">Parcel</span> <span class="n">dest</span><span class="o">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">4</span>    <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;-&gt;&gt;&gt;ParcelTest|writeToParcel|dest = &#34;</span> <span class="o">+</span> <span class="n">dest</span> <span class="o">+</span> <span class="s">&#34; flags = &#34;</span> <span class="o">+</span> <span class="n">flags</span><span class="o">);</span>
+<span class="ln">5</span>    <span class="n">dest</span><span class="o">.</span><span class="na">writeInt</span><span class="o">(</span><span class="n">age</span><span class="o">);</span>
+<span class="ln">6</span>    <span class="n">dest</span><span class="o">.</span><span class="na">writeString</span><span class="o">(</span><span class="n">name</span><span class="o">);</span>
+<span class="ln">7</span>    <span class="n">dest</span><span class="o">.</span><span class="na">writeInt</span><span class="o">(</span><span class="n">count</span><span class="o">);</span>
+<span class="ln">8</span><span class="o">}</span>
+</code></pre></div><p>这里的bean1的javaBean为<code>(2022,&quot;MyParcel&quot;,2.25)</code>和bean2的javaBean为<code>(2022,&quot;AndroidSourceCode&quot;,2.25)</code></p>
+<p>那么实际的数为下图所示。绿色代表<code>Int</code>类型，浅绿色代表<code>Int</code>的魔数数据，黄红双色为<code>String</code>类，蓝色代表<code>Double</code>类型，具体可根据Parcel源码解析结合Parcal写入分析。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/Parcel/Parcel1_8.png" title="实例的Bundle的数据结构图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/Parcel/Parcel1_8.png"  alt="实例的Bundle的数据结构图">
+  
+    </a>
+  
+   
+    <span class="caption">实例的Bundle的数据结构图</span>
+  
+</div>
+
+<p><code>Parcelable</code>写入的流程如下图所示。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/Parcel/Parcel1_10.png" title="Parcelable写入的流程图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/Parcel/Parcel1_10.png"  alt="Parcelable写入的流程图">
+  
+    </a>
+  
+   
+    <span class="caption">Parcelable写入的流程图</span>
+  
+</div>
+
+<h2 id="数据读出">数据读出</h2>
+<p>从新的<code>Activity</code>中读取</p>
+<p><code>getIntent().getParcelableExtra(&quot;P1&quot;);</code>和<code>getIntent().getParcelableExtra(&quot;P2&quot;);</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//Intent.java#getParcelableExtra
+</span><span class="ln">2</span><span class="c1"></span><span class="kd">public</span> <span class="nd">@Nullable</span> <span class="o">&lt;</span><span class="n">T</span> <span class="kd">extends</span> <span class="n">Parcelable</span><span class="o">&gt;</span> <span class="n">T</span> <span class="nf">getParcelableExtra</span><span class="o">(</span><span class="n">String</span> <span class="n">name</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">3</span>    <span class="k">return</span> <span class="n">mExtras</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">?</span> <span class="kc">null</span> <span class="o">:</span> <span class="n">mExtras</span><span class="o">.&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="n">getParcelable</span><span class="o">(</span><span class="n">name</span><span class="o">);</span>
+<span class="ln">4</span><span class="o">}</span>
+</code></pre></div><p>很显然，先前传递进去的值都是通过<code>Bundle</code>来获取的</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//Bundle.java
+</span><span class="ln"> 2</span><span class="c1">//这里分成两部分
+</span><span class="ln"> 3</span><span class="c1">//1.unparcel，这个是读取过程中最重要的，将数据放入到mMap中
+</span><span class="ln"> 4</span><span class="c1">//2.通过mMap中的key获取对应value的Parcelable数据
+</span><span class="ln"> 5</span><span class="c1"></span><span class="nd">@Nullable</span>
+<span class="ln"> 6</span><span class="kd">public</span> <span class="o">&lt;</span><span class="n">T</span> <span class="kd">extends</span> <span class="n">Parcelable</span><span class="o">&gt;</span> <span class="n">T</span> <span class="nf">getParcelable</span><span class="o">(</span><span class="nd">@Nullable</span> <span class="n">String</span> <span class="n">key</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 7</span>    <span class="n">unparcel</span><span class="o">();</span>
+<span class="ln"> 8</span>    <span class="n">Object</span> <span class="n">o</span> <span class="o">=</span> <span class="n">mMap</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">key</span><span class="o">);</span>
+<span class="ln"> 9</span>    <span class="k">if</span> <span class="o">(</span><span class="n">o</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">10</span>        <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">11</span>    <span class="o">}</span>
+<span class="ln">12</span>    <span class="k">try</span> <span class="o">{</span>
+<span class="ln">13</span>        <span class="k">return</span> <span class="o">(</span><span class="n">T</span><span class="o">)</span> <span class="n">o</span><span class="o">;</span>
+<span class="ln">14</span>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">ClassCastException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">15</span>        <span class="n">typeWarning</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">o</span><span class="o">,</span> <span class="s">&#34;Parcelable&#34;</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+<span class="ln">16</span>        <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">17</span>    <span class="o">}</span>
+<span class="ln">18</span><span class="o">}</span>
+</code></pre></div><p>主要分析这个unparcel</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//BaseBundle.java#unparcel
+</span><span class="ln"> 2</span><span class="c1">//显然是通过mParcelledData数据来处理这个过程，这个数据在Bundle基类中的writeToParcelInner也存在
+</span><span class="ln"> 3</span><span class="c1"></span><span class="nd">@UnsupportedAppUsage</span>
+<span class="ln"> 4</span><span class="cm">/* package */</span> <span class="kt">void</span> <span class="nf">unparcel</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 5</span>    <span class="kd">synchronized</span> <span class="o">(</span><span class="k">this</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 6</span>        <span class="kd">final</span> <span class="n">Parcel</span> <span class="n">source</span> <span class="o">=</span> <span class="n">mParcelledData</span><span class="o">;</span>
+<span class="ln"> 7</span>        <span class="k">if</span> <span class="o">(</span><span class="n">source</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 8</span>            <span class="n">initializeFromParcelLocked</span><span class="o">(</span><span class="n">source</span><span class="o">,</span> <span class="cm">/*recycleParcel=*/</span> <span class="kc">true</span><span class="o">,</span> <span class="n">mParcelledByNative</span><span class="o">);</span>
+<span class="ln"> 9</span>        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln">10</span>            <span class="k">if</span> <span class="o">(</span><span class="n">DEBUG</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">11</span>                <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;unparcel &#34;</span>
+<span class="ln">12</span>                      <span class="o">+</span> <span class="n">Integer</span><span class="o">.</span><span class="na">toHexString</span><span class="o">(</span><span class="n">System</span><span class="o">.</span><span class="na">identityHashCode</span><span class="o">(</span><span class="k">this</span><span class="o">))</span>
+<span class="ln">13</span>                      <span class="o">+</span> <span class="s">&#34;: no parcelled data&#34;</span><span class="o">);</span>
+<span class="ln">14</span>            <span class="o">}</span>
+<span class="ln">15</span>        <span class="o">}</span>
+<span class="ln">16</span>    <span class="o">}</span>
+<span class="ln">17</span><span class="o">}</span>
+</code></pre></div><p>通过传入的<code>mParcelledData</code>来分析这个读取过程</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//BaseBundle.java
+</span><span class="ln"> 2</span><span class="c1">//这个内容比较多，分成几个部分
+</span><span class="ln"> 3</span><span class="c1">//1.parcelledData的有效性判断
+</span><span class="ln"> 4</span><span class="c1">//2.清空mMap数据，并开始重新写入
+</span><span class="ln"> 5</span><span class="c1">//3.ParcelData的读取Map内容过程，将数据读取到map中，赋值给mMap
+</span><span class="ln"> 6</span><span class="c1"></span><span class="kd">private</span> <span class="kt">void</span> <span class="nf">initializeFromParcelLocked</span><span class="o">(</span><span class="nd">@NonNull</span> <span class="n">Parcel</span> <span class="n">parcelledData</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">recycleParcel</span><span class="o">,</span>
+<span class="ln"> 7</span>                                        <span class="kt">boolean</span> <span class="n">parcelledByNative</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 8</span>    <span class="o">...</span>
+<span class="ln"> 9</span>    <span class="k">if</span> <span class="o">(</span><span class="n">isEmptyParcel</span><span class="o">(</span><span class="n">parcelledData</span><span class="o">))</span> <span class="o">{</span>
+<span class="ln">10</span>        <span class="o">...</span>
+<span class="ln">11</span>            <span class="k">if</span> <span class="o">(</span><span class="n">mMap</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">12</span>                <span class="n">mMap</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayMap</span><span class="o">&lt;&gt;(</span><span class="n">1</span><span class="o">);</span>
+<span class="ln">13</span>            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln">14</span>                <span class="n">mMap</span><span class="o">.</span><span class="na">erase</span><span class="o">();</span>
+<span class="ln">15</span>            <span class="o">}</span>
+<span class="ln">16</span>        <span class="n">mParcelledData</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">17</span>        <span class="n">mParcelledByNative</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+<span class="ln">18</span>        <span class="k">return</span><span class="o">;</span>
+<span class="ln">19</span>    <span class="o">}</span>
+<span class="ln">20</span>	<span class="c1">//先读取二进制中存入的map的size
+</span><span class="ln">21</span><span class="c1"></span>    <span class="kd">final</span> <span class="kt">int</span> <span class="n">count</span> <span class="o">=</span> <span class="n">parcelledData</span><span class="o">.</span><span class="na">readInt</span><span class="o">();</span>
+<span class="ln">22</span>    <span class="o">...</span>
+<span class="ln">23</span>    <span class="k">if</span> <span class="o">(</span><span class="n">count</span> <span class="o">&lt;</span> <span class="n">0</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">24</span>        <span class="k">return</span><span class="o">;</span>
+<span class="ln">25</span>    <span class="o">}</span>
+<span class="ln">26</span>    <span class="c1">//这里操作为清空mMap数据，并开始重新写入
+</span><span class="ln">27</span><span class="c1"></span>    <span class="n">ArrayMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Object</span><span class="o">&gt;</span> <span class="n">map</span> <span class="o">=</span> <span class="n">mMap</span><span class="o">;</span>
+<span class="ln">28</span>    <span class="k">if</span> <span class="o">(</span><span class="n">map</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">29</span>        <span class="n">map</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayMap</span><span class="o">&lt;&gt;(</span><span class="n">count</span><span class="o">);</span>
+<span class="ln">30</span>    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln">31</span>        <span class="n">map</span><span class="o">.</span><span class="na">erase</span><span class="o">();</span>
+<span class="ln">32</span>        <span class="n">map</span><span class="o">.</span><span class="na">ensureCapacity</span><span class="o">(</span><span class="n">count</span><span class="o">);</span>
+<span class="ln">33</span>    <span class="o">}</span>
+<span class="ln">34</span>    
+<span class="ln">35</span>    <span class="k">try</span> <span class="o">{</span>
+<span class="ln">36</span>        <span class="k">if</span> <span class="o">(</span><span class="n">parcelledByNative</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">37</span>            <span class="n">parcelledData</span><span class="o">.</span><span class="na">readArrayMapSafelyInternal</span><span class="o">(</span><span class="n">map</span><span class="o">,</span> <span class="n">count</span><span class="o">,</span> <span class="n">mClassLoader</span><span class="o">);</span>
+<span class="ln">38</span>        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln">39</span>            <span class="c1">//这个是ParcelData的读取Map内容过程
+</span><span class="ln">40</span><span class="c1"></span>            <span class="n">parcelledData</span><span class="o">.</span><span class="na">readArrayMapInternal</span><span class="o">(</span><span class="n">map</span><span class="o">,</span> <span class="n">count</span><span class="o">,</span> <span class="n">mClassLoader</span><span class="o">);</span>
+<span class="ln">41</span>        <span class="o">}</span>
+<span class="ln">42</span>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">BadParcelableException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">43</span>        <span class="k">if</span> <span class="o">(</span><span class="n">sShouldDefuse</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">44</span>            <span class="n">Log</span><span class="o">.</span><span class="na">w</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;Failed to parse Bundle, but defusing quietly&#34;</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+<span class="ln">45</span>            <span class="n">map</span><span class="o">.</span><span class="na">erase</span><span class="o">();</span>
+<span class="ln">46</span>        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln">47</span>            <span class="k">throw</span> <span class="n">e</span><span class="o">;</span>
+<span class="ln">48</span>        <span class="o">}</span>
+<span class="ln">49</span>    <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+<span class="ln">50</span>        <span class="c1">//读取中的数据，重新写入到空的mMap中
+</span><span class="ln">51</span><span class="c1"></span>        <span class="n">mMap</span> <span class="o">=</span> <span class="n">map</span><span class="o">;</span>
+<span class="ln">52</span>        <span class="c1">//这个是用来将上述的parcelledData保存到Parcel的sOwnedPool中
+</span><span class="ln">53</span><span class="c1"></span>        <span class="k">if</span> <span class="o">(</span><span class="n">recycleParcel</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">54</span>            <span class="n">recycleParcel</span><span class="o">(</span><span class="n">parcelledData</span><span class="o">);</span>
+<span class="ln">55</span>        <span class="o">}</span>
+<span class="ln">56</span>        <span class="n">mParcelledData</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">57</span>        <span class="n">mParcelledByNative</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+<span class="ln">58</span>    <span class="o">}</span>
+<span class="ln">59</span>    <span class="o">...</span>
+<span class="ln">60</span><span class="o">}</span>
+</code></pre></div><p>读取<code>parcelledData</code>中的数据，这里传入的<code>map</code>是空的</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//Parcel.java#readArrayMapInternal
+</span><span class="ln"> 2</span><span class="c1">//这里是真正意义上读取二进制的map数据中的key和value
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kt">void</span> <span class="nf">readArrayMapInternal</span><span class="o">(</span><span class="nd">@NonNull</span> <span class="n">ArrayMap</span> <span class="n">outVal</span><span class="o">,</span> <span class="kt">int</span> <span class="n">N</span><span class="o">,</span>
+<span class="ln"> 4</span>                          <span class="nd">@Nullable</span> <span class="n">ClassLoader</span> <span class="n">loader</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 5</span>    <span class="kt">int</span> <span class="n">startPos</span><span class="o">;</span>
+<span class="ln"> 6</span>    <span class="k">while</span> <span class="o">(</span><span class="n">N</span> <span class="o">&gt;</span> <span class="n">0</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 7</span>        <span class="k">if</span> <span class="o">(</span><span class="n">DEBUG_ARRAY_MAP</span><span class="o">)</span> <span class="n">startPos</span> <span class="o">=</span> <span class="n">dataPosition</span><span class="o">();</span>
+<span class="ln"> 8</span>        <span class="n">String</span> <span class="n">key</span> <span class="o">=</span> <span class="n">readString</span><span class="o">();</span>
+<span class="ln"> 9</span>        <span class="n">Object</span> <span class="n">value</span> <span class="o">=</span> <span class="n">readValue</span><span class="o">(</span><span class="n">loader</span><span class="o">);</span>
+<span class="ln">10</span>        <span class="c1">//开始通过读取key，value保存到outVal中
+</span><span class="ln">11</span><span class="c1"></span>        <span class="n">outVal</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">value</span><span class="o">);</span>
+<span class="ln">12</span>        <span class="n">N</span><span class="o">--;</span>
+<span class="ln">13</span>    <span class="o">}</span>
+<span class="ln">14</span>    <span class="n">outVal</span><span class="o">.</span><span class="na">validate</span><span class="o">();</span>
+<span class="ln">15</span><span class="o">}</span>
+</code></pre></div><p>对<code>readValue</code>进一步分析，这个<code>value</code>实际就是<code>Parcelable</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//Parcel.java#readValue
+</span><span class="ln"> 2</span><span class="c1"></span><span class="nd">@Nullable</span>
+<span class="ln"> 3</span><span class="kd">public</span> <span class="kd">final</span> <span class="n">Object</span> <span class="nf">readValue</span><span class="o">(</span><span class="nd">@Nullable</span> <span class="n">ClassLoader</span> <span class="n">loader</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 4</span>    <span class="kt">int</span> <span class="n">type</span> <span class="o">=</span> <span class="n">readInt</span><span class="o">();</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span>    <span class="k">switch</span> <span class="o">(</span><span class="n">type</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 7</span>        <span class="k">case</span> <span class="n">VAL_NULL</span><span class="o">:</span>
+<span class="ln"> 8</span>            <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span>        <span class="k">case</span> <span class="n">VAL_PARCELABLE</span><span class="o">:</span>
+<span class="ln">11</span>            <span class="k">return</span> <span class="n">readParcelable</span><span class="o">(</span><span class="n">loader</span><span class="o">);</span>
+<span class="ln">12</span>        <span class="o">...</span>
+<span class="ln">13</span><span class="o">}</span>
+</code></pre></div><p>这里对<code>Parcelable</code>读取操作</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//Parcel.java#readParcelable
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">final</span> <span class="o">&lt;</span><span class="n">T</span> <span class="kd">extends</span> <span class="n">Parcelable</span><span class="o">&gt;</span> <span class="n">T</span> <span class="nf">readParcelable</span><span class="o">(</span><span class="nd">@Nullable</span> <span class="n">ClassLoader</span> <span class="n">loader</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 3</span>    <span class="c1">//通过类加载器获取到Parcelable实现的Bean类中的creator
+</span><span class="ln"> 4</span><span class="c1"></span>    <span class="n">Parcelable</span><span class="o">.</span><span class="na">Creator</span><span class="o">&lt;?&gt;</span> <span class="n">creator</span> <span class="o">=</span> <span class="n">readParcelableCreator</span><span class="o">(</span><span class="n">loader</span><span class="o">);</span>
+<span class="ln"> 5</span>    <span class="k">if</span> <span class="o">(</span><span class="n">creator</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 6</span>        <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln"> 7</span>    <span class="o">}</span>
+<span class="ln"> 8</span>    <span class="k">if</span> <span class="o">(</span><span class="n">creator</span> <span class="k">instanceof</span> <span class="n">Parcelable</span><span class="o">.</span><span class="na">ClassLoaderCreator</span><span class="o">&lt;?&gt;)</span> <span class="o">{</span>
+<span class="ln"> 9</span>        <span class="n">Parcelable</span><span class="o">.</span><span class="na">ClassLoaderCreator</span><span class="o">&lt;?&gt;</span> <span class="n">classLoaderCreator</span> <span class="o">=</span>
+<span class="ln">10</span>            <span class="o">(</span><span class="n">Parcelable</span><span class="o">.</span><span class="na">ClassLoaderCreator</span><span class="o">&lt;?&gt;)</span> <span class="n">creator</span><span class="o">;</span>
+<span class="ln">11</span>        <span class="k">return</span> <span class="o">(</span><span class="n">T</span><span class="o">)</span> <span class="n">classLoaderCreator</span><span class="o">.</span><span class="na">createFromParcel</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="n">loader</span><span class="o">);</span>
+<span class="ln">12</span>    <span class="o">}</span>
+<span class="ln">13</span>    <span class="c1">//调用到Bean内部类的createFromParcel
+</span><span class="ln">14</span><span class="c1"></span>    <span class="k">return</span> <span class="o">(</span><span class="n">T</span><span class="o">)</span> <span class="n">creator</span><span class="o">.</span><span class="na">createFromParcel</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+<span class="ln">15</span><span class="o">}</span>
+</code></pre></div><p>这边会使用到一次java反射，并对传入的类加载器进入处理</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//Parcel.java#readParcelableCreator
+</span><span class="ln"> 2</span><span class="c1">//第一次进入做了一次反射操作，获取creator
+</span><span class="ln"> 3</span><span class="c1">//1.第一次进去，map中通过全类名获取不到对应的Bean的creator，反射获取，存入到map中
+</span><span class="ln"> 4</span><span class="c1">//2.非第一次进入，通过全类名可以获取到对应的Bean的creator
+</span><span class="ln"> 5</span><span class="c1"></span><span class="nd">@Nullable</span>
+<span class="ln"> 6</span><span class="kd">public</span> <span class="kd">final</span> <span class="n">Parcelable</span><span class="o">.</span><span class="na">Creator</span><span class="o">&lt;?&gt;</span> <span class="n">readParcelableCreator</span><span class="o">(</span><span class="nd">@Nullable</span> <span class="n">ClassLoader</span> <span class="n">loader</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 7</span>    <span class="c1">//获取全类名
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="n">String</span> <span class="n">name</span> <span class="o">=</span> <span class="n">readString</span><span class="o">();</span>
+<span class="ln"> 9</span>    <span class="k">if</span> <span class="o">(</span><span class="n">name</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">10</span>        <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">11</span>    <span class="o">}</span>
+<span class="ln">12</span>    <span class="n">Parcelable</span><span class="o">.</span><span class="na">Creator</span><span class="o">&lt;?&gt;</span> <span class="n">creator</span><span class="o">;</span>
+<span class="ln">13</span>    <span class="n">HashMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Parcelable</span><span class="o">.</span><span class="na">Creator</span><span class="o">&lt;?&gt;&gt;</span> <span class="n">map</span><span class="o">;</span>
+<span class="ln">14</span>    <span class="kd">synchronized</span> <span class="o">(</span><span class="n">mCreators</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">15</span>        <span class="n">map</span> <span class="o">=</span> <span class="n">mCreators</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">loader</span><span class="o">);</span>
+<span class="ln">16</span>        <span class="k">if</span> <span class="o">(</span><span class="n">map</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">17</span>            <span class="n">map</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HashMap</span><span class="o">&lt;&gt;();</span>
+<span class="ln">18</span>            <span class="n">mCreators</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">loader</span><span class="o">,</span> <span class="n">map</span><span class="o">);</span>
+<span class="ln">19</span>        <span class="o">}</span>
+<span class="ln">20</span>        <span class="n">creator</span> <span class="o">=</span> <span class="n">map</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">name</span><span class="o">);</span>
+<span class="ln">21</span>    <span class="o">}</span>
+<span class="ln">22</span>    <span class="c1">//非第一次进入,通过在map中全类名获取到具体的creator
+</span><span class="ln">23</span><span class="c1"></span>    <span class="k">if</span> <span class="o">(</span><span class="n">creator</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">24</span>        <span class="k">return</span> <span class="n">creator</span><span class="o">;</span>
+<span class="ln">25</span>    <span class="o">}</span>
+<span class="ln">26</span>    <span class="c1">//第一次进入获取不到具体的creator
+</span><span class="ln">27</span><span class="c1"></span>    <span class="k">try</span> <span class="o">{</span>
+<span class="ln">28</span>        <span class="n">ClassLoader</span> <span class="n">parcelableClassLoader</span> <span class="o">=</span>
+<span class="ln">29</span>            <span class="o">(</span><span class="n">loader</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">?</span> <span class="n">getClass</span><span class="o">().</span><span class="na">getClassLoader</span><span class="o">()</span> <span class="o">:</span> <span class="n">loader</span><span class="o">);</span>
+<span class="ln">30</span>        <span class="c1">//通过全类名，类加载器，获取对应的Class对象，即Bean对象
+</span><span class="ln">31</span><span class="c1"></span>        <span class="n">Class</span><span class="o">&lt;?&gt;</span> <span class="n">parcelableClass</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="n">name</span><span class="o">,</span> <span class="kc">false</span> <span class="cm">/* initialize */</span><span class="o">,</span>
+<span class="ln">32</span>                                                 <span class="n">parcelableClassLoader</span><span class="o">);</span>
+<span class="ln">33</span>        <span class="k">if</span> <span class="o">(!</span><span class="n">Parcelable</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">isAssignableFrom</span><span class="o">(</span><span class="n">parcelableClass</span><span class="o">))</span> <span class="o">{</span>
+<span class="ln">34</span>            <span class="k">throw</span> <span class="k">new</span> <span class="n">BadParcelableException</span><span class="o">(</span><span class="s">&#34;Parcelable protocol requires subclassing &#34;</span>
+<span class="ln">35</span>                                             <span class="o">+</span> <span class="s">&#34;from Parcelable on class &#34;</span> <span class="o">+</span> <span class="n">name</span><span class="o">);</span>
+<span class="ln">36</span>        <span class="o">}</span>
+<span class="ln">37</span>        <span class="c1">//获取Bean对象中的静态内部类CREATOR字段信息
+</span><span class="ln">38</span><span class="c1"></span>        <span class="n">Field</span> <span class="n">f</span> <span class="o">=</span> <span class="n">parcelableClass</span><span class="o">.</span><span class="na">getField</span><span class="o">(</span><span class="s">&#34;CREATOR&#34;</span><span class="o">);</span>
+<span class="ln">39</span>        <span class="c1">//getModifiers的解释详见如下
+</span><span class="ln">40</span><span class="c1"></span>        <span class="k">if</span> <span class="o">((</span><span class="n">f</span><span class="o">.</span><span class="na">getModifiers</span><span class="o">()</span> <span class="o">&amp;</span> <span class="n">Modifier</span><span class="o">.</span><span class="na">STATIC</span><span class="o">)</span> <span class="o">==</span> <span class="n">0</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">41</span>            <span class="k">throw</span> <span class="k">new</span> <span class="n">BadParcelableException</span><span class="o">(</span><span class="s">&#34;Parcelable protocol requires &#34;</span>
+<span class="ln">42</span>                                             <span class="o">+</span> <span class="s">&#34;the CREATOR object to be static on class &#34;</span> <span class="o">+</span> <span class="n">name</span><span class="o">);</span>
+<span class="ln">43</span>        <span class="o">}</span>
+<span class="ln">44</span>        <span class="c1">//获取静态内部类的类型，并判断是否和Bean中的类型一致
+</span><span class="ln">45</span><span class="c1"></span>        <span class="n">Class</span><span class="o">&lt;?&gt;</span> <span class="n">creatorType</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="na">getType</span><span class="o">();</span>
+<span class="ln">46</span>        <span class="k">if</span> <span class="o">(!</span><span class="n">Parcelable</span><span class="o">.</span><span class="na">Creator</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">isAssignableFrom</span><span class="o">(</span><span class="n">creatorType</span><span class="o">))</span> <span class="o">{</span>
+<span class="ln">47</span>            <span class="k">throw</span> <span class="k">new</span> <span class="n">BadParcelableException</span><span class="o">(</span><span class="s">&#34;Parcelable protocol requires a &#34;</span>
+<span class="ln">48</span>                                             <span class="o">+</span> <span class="s">&#34;Parcelable.Creator object called &#34;</span>
+<span class="ln">49</span>                                             <span class="o">+</span> <span class="s">&#34;CREATOR on class &#34;</span> <span class="o">+</span> <span class="n">name</span><span class="o">);</span>
+<span class="ln">50</span>        <span class="o">}</span>
+<span class="ln">51</span>        <span class="c1">//获取静态对象的Field属性值，静态方法可以传递null
+</span><span class="ln">52</span><span class="c1"></span>        <span class="n">creator</span> <span class="o">=</span> <span class="o">(</span><span class="n">Parcelable</span><span class="o">.</span><span class="na">Creator</span><span class="o">&lt;?&gt;)</span> <span class="n">f</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="kc">null</span><span class="o">);</span>
+<span class="ln">53</span>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IllegalAccessException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">54</span>        <span class="n">Log</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;Illegal access when unmarshalling: &#34;</span> <span class="o">+</span> <span class="n">name</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+<span class="ln">55</span>        <span class="k">throw</span> <span class="k">new</span> <span class="n">BadParcelableException</span><span class="o">(</span>
+<span class="ln">56</span>            <span class="s">&#34;IllegalAccessException when unmarshalling: &#34;</span> <span class="o">+</span> <span class="n">name</span><span class="o">);</span>
+<span class="ln">57</span>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">ClassNotFoundException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">58</span>        <span class="n">Log</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;Class not found when unmarshalling: &#34;</span> <span class="o">+</span> <span class="n">name</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+<span class="ln">59</span>        <span class="k">throw</span> <span class="k">new</span> <span class="n">BadParcelableException</span><span class="o">(</span>
+<span class="ln">60</span>            <span class="s">&#34;ClassNotFoundException when unmarshalling: &#34;</span> <span class="o">+</span> <span class="n">name</span><span class="o">);</span>
+<span class="ln">61</span>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">NoSuchFieldException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">62</span>        <span class="k">throw</span> <span class="k">new</span> <span class="n">BadParcelableException</span><span class="o">(</span><span class="s">&#34;Parcelable protocol requires a &#34;</span>
+<span class="ln">63</span>                                         <span class="o">+</span> <span class="s">&#34;Parcelable.Creator object called &#34;</span>
+<span class="ln">64</span>                                         <span class="o">+</span> <span class="s">&#34;CREATOR on class &#34;</span> <span class="o">+</span> <span class="n">name</span><span class="o">);</span>
+<span class="ln">65</span>    <span class="o">}</span>
+<span class="ln">66</span>    <span class="k">if</span> <span class="o">(</span><span class="n">creator</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">67</span>        <span class="k">throw</span> <span class="k">new</span> <span class="n">BadParcelableException</span><span class="o">(</span><span class="s">&#34;Parcelable protocol requires a &#34;</span>
+<span class="ln">68</span>                                         <span class="o">+</span> <span class="s">&#34;non-null Parcelable.Creator object called &#34;</span>
+<span class="ln">69</span>                                         <span class="o">+</span> <span class="s">&#34;CREATOR on class &#34;</span> <span class="o">+</span> <span class="n">name</span><span class="o">);</span>
+<span class="ln">70</span>    <span class="o">}</span>
+<span class="ln">71</span>    <span class="c1">//得到所想要的creator之后，将其存入值map中，下一次可以通过全类名去获取到
+</span><span class="ln">72</span><span class="c1"></span>    <span class="kd">synchronized</span> <span class="o">(</span><span class="n">mCreators</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">73</span>        <span class="n">map</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">name</span><span class="o">,</span> <span class="n">creator</span><span class="o">);</span>
+<span class="ln">74</span>    <span class="o">}</span>
+<span class="ln">75</span>
+<span class="ln">76</span>    <span class="k">return</span> <span class="n">creator</span><span class="o">;</span>
+<span class="ln">77</span><span class="o">}</span>
+</code></pre></div><blockquote>
+<p>Java反射机制的常用方法</p>
+<p><strong>1.getModifiers</strong></p>
+<p>Field的getModifiers()方法返回int类型值表示该字段的修饰符</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln"> 1</span>PUBLIC: 1
+<span class="ln"> 2</span>PRIVATE: 2
+<span class="ln"> 3</span>PROTECTED: 4
+<span class="ln"> 4</span>STATIC: 8
+<span class="ln"> 5</span>FINAL: 16
+<span class="ln"> 6</span>SYNCHRONIZED: 32
+<span class="ln"> 7</span>VOLATILE: 64
+<span class="ln"> 8</span>TRANSIENT: 128
+<span class="ln"> 9</span>NATIVE: 256
+<span class="ln">10</span>INTERFACE: 512
+<span class="ln">11</span>ABSTRACT: 1024
+<span class="ln">12</span>STRICT: 2048
+</code></pre></div><p><strong>2.isAssignableFrom</strong></p>
+<ul>
+<li>isAssignableFrom()方法是从类继承的角度去判断，instanceof关键字是从实例继承的角度去判断。</li>
+<li>isAssignableFrom()方法是判断是否为某个类的父类，instanceof关键字是判断是否某个类的子类。</li>
+</ul>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="n">父类</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">isAssignableFrom</span><span class="o">(</span><span class="n">子类</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+<span class="ln">2</span>
+<span class="ln">3</span><span class="n">子类实例</span> <span class="k">instanceof</span> <span class="n">父类类型</span>
+</code></pre></div><p><strong>3.Field.get(null)</strong></p>
+<p>关于Field.get(null)，详见<a href="https://blog.csdn.net/moakun/article/details/80577194">这里</a></p>
+<p>定义了嵌套接口，那么接口默认修饰为public static</p>
+</blockquote>
+<p>最终调用到了<code>creator.createFromParcel</code>，这个就是我们实现的Bean</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//Bean.java
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Creator</span><span class="o">&lt;</span><span class="n">ParcelTest</span><span class="o">&gt;</span> <span class="n">CREATOR</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Creator</span><span class="o">&lt;</span><span class="n">ParcelTest</span><span class="o">&gt;()</span> <span class="o">{</span>
+<span class="ln"> 3</span>    <span class="nd">@Override</span>
+<span class="ln"> 4</span>    <span class="kd">public</span> <span class="n">ParcelTest</span> <span class="nf">createFromParcel</span><span class="o">(</span><span class="n">Parcel</span> <span class="n">in</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 5</span>        <span class="c1">//最终会调用到这里，这里会调用Parcel的有参构造，完成真正意义的Bean内容读取
+</span><span class="ln"> 6</span><span class="c1"></span>        <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;-&gt;&gt;&gt;ParcelTest|createFromParcel|in = &#34;</span> <span class="o">+</span> <span class="n">in</span><span class="o">);</span>
+<span class="ln"> 7</span>        <span class="k">return</span> <span class="k">new</span> <span class="n">ParcelTest</span><span class="o">(</span><span class="n">in</span><span class="o">);</span>
+<span class="ln"> 8</span>    <span class="o">}</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span>    <span class="nd">@Override</span>
+<span class="ln">11</span>    <span class="kd">public</span> <span class="n">ParcelTest</span><span class="o">[]</span> <span class="nf">newArray</span><span class="o">(</span><span class="kt">int</span> <span class="n">size</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">12</span>        <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;-&gt;&gt;&gt;ParcelTest|newArray|size = &#34;</span> <span class="o">+</span> <span class="n">size</span><span class="o">);</span>
+<span class="ln">13</span>        <span class="k">return</span> <span class="k">new</span> <span class="n">ParcelTest</span><span class="o">[</span><span class="n">size</span><span class="o">];</span>
+<span class="ln">14</span>    <span class="o">}</span>
+<span class="ln">15</span><span class="o">};</span>
+<span class="ln">16</span>
+<span class="ln">17</span><span class="kd">protected</span> <span class="nf">ParcelTest</span><span class="o">(</span><span class="n">Parcel</span> <span class="n">in</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">18</span>    <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;-&gt;&gt;&gt;ParcelTest|in = &#34;</span> <span class="o">+</span> <span class="n">in</span><span class="o">);</span>
+<span class="ln">19</span>    <span class="n">age</span> <span class="o">=</span> <span class="n">in</span><span class="o">.</span><span class="na">readInt</span><span class="o">();</span>
+<span class="ln">20</span>    <span class="n">name</span> <span class="o">=</span> <span class="n">in</span><span class="o">.</span><span class="na">readString</span><span class="o">();</span>
+<span class="ln">21</span>    <span class="n">count</span> <span class="o">=</span> <span class="n">in</span><span class="o">.</span><span class="na">readInt</span><span class="o">();</span>
+<span class="ln">22</span><span class="o">}</span>
+</code></pre></div><p>读取流程如下图所示。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/Parcel/Parcel1_11.png" title="Parcelable读取流程图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/Parcel/Parcel1_11.png"  alt="Parcelable读取流程图">
+  
+    </a>
+  
+   
+    <span class="caption">Parcelable读取流程图</span>
+  
+</div>
+
+<blockquote>
+<p>补充：</p>
+<p>Q:关于<code>Bundle</code>中的<code>mMap</code>是哪里来的?</p>
+<p>A:来自<code>readArrayMapInternal</code>中的<code>outVal</code>。</p>
+<p>Bundle中的mMap是继承自BaseBundle，BaseBundle中的mMap通过readArrayMapInternal传入空的outval。</p>
+<p>Parcel通过mParcelableData的数据，读取key和value拼接放置到outVal中。其中value是通过Parcel读取readParcel，通过反射真正读取到Bean的三种类型数据。如下图所示。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/Parcel/Parcel1_13.png" title="mMap数据跟踪图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/Parcel/Parcel1_13.png"  alt="mMap数据跟踪图">
+  
+    </a>
+  
+   
+    <span class="caption">mMap数据跟踪图</span>
+  
+</div>
+
+</blockquote>
+<h1 id="总结">总结：</h1>
+<p>1.Parcel</p>
+<p>实际上我们调用的java层的Parcel不是真正的实现，通过jni获取到的<code>mNativePtr</code>共享内存最终调用到<code>Binder</code>下面的Parcel.cpp。</p>
+<p>这个cpp中真正意义上的实现并且可以写入读取一段连续的内存，因此我们需要在读取按照写入的顺序依次读取。</p>
+<p>2.Parcelable</p>
+<ul>
+<li><code>unparcel</code>反序列化过程，将二进制的连续内存转化存入为<code>mMap</code>中（<code>mParcelableData</code>&mdash;&gt;<code>mMap</code>）</li>
+<li><code>parcel</code>是二进制序列化过程，将<code>mMap</code>中的数据转化为二进制的连续内存（<code>mMap</code>&mdash;&gt;<code>mParcelableData</code>）</li>
+</ul>
+<p><code>Parcel</code>不仅仅是序列化，确切是二进制的序列化。因为序列化的种类很多，<code>Parcel</code>和<code>Serializable</code>是二进制序列化。反序列化过程，java会出现一次反射，序列化过程中不需要反射。</p>
+<p>3.嵌套的Bean对象</p>
+<p>如果javaBean中对象嵌套了另一个javaBean，如果BeanInnerBean类里面有其他对象（比如实体类DataBean）的话，那么DataBean也需要实现Parcelable接口，用法与上面的Bean类一样。</p>
+<p>writeToParcel里面需要写上：</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="nd">@Override</span>
+<span class="ln">2</span><span class="kd">public</span> <span class="kt">void</span> <span class="nf">writeToParcel</span><span class="o">(</span><span class="n">Parcel</span> <span class="n">dest</span><span class="o">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">3</span>    <span class="o">...</span>
+<span class="ln">4</span>    <span class="n">dest</span><span class="o">.</span><span class="na">writeParcelable</span><span class="o">(</span><span class="n">dataBean</span><span class="o">,</span> <span class="n">0</span><span class="o">);</span>
+<span class="ln">5</span><span class="o">}</span>
+</code></pre></div><p>BeanInnerBean构造函数中</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="kd">protected</span> <span class="nf">BeanInnerBean</span><span class="o">(</span><span class="n">Parcel</span> <span class="n">in</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">2</span>    <span class="o">...</span>
+<span class="ln">3</span>    <span class="n">dataBean</span> <span class="o">=</span> <span class="n">in</span><span class="o">.</span><span class="na">readParcelable</span><span class="o">(</span><span class="n">DataBean</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getClassLoader</span><span class="o">());</span>
+<span class="ln">4</span><span class="o">}</span>
+</code></pre></div><h1 id="猜你想看">猜你想看</h1>
+<p><a href="">bytebuffer使用</a></p>
+<p><a href="">java序列化</a></p>
+<p><a href="">jni6 手写Parcel的C++层及其使用</a></p>
+<h1 id="特别感谢">特别感谢</h1>
+<p>微博用户<a href="https://weibo.com/u/1864580434">S小吠</a>提供的冰墩墩的壁纸</p>
+<h1 id="参考">参考</h1>
+<p><a href="https://zhuanlan.zhihu.com/p/402790867">[1] 韦东锏, Parcel的源码上手, 2021.</a></p>
+<p><a href="https://juejin.im/user/3491704658736942">[2] MxsQ, Parcelable 是如何实现的？, 2020.</a></p>
+<p><a href="https://blog.csdn.net/zaojian0848/article/details/102503836">[3] Boyikia, 理解 Parcel 和 Parcelable, 2019.</a></p>
+<p><a href="https://blog.csdn.net/qq_40434646/article/details/82351488">[4] 铁憨憨的学习记录, Java反射机制getModifiers()方法的作用, 2018.</a></p>
+<p><a href="https://blog.csdn.net/zero9988/article/details/73459022">[5] zero9988, 简要分析Android中的Intent,Bundle,Parcel中的数据传递, 2017.</a></p>
+<p><a href="https://blog.csdn.net/freshui/article/details/55051268">[6] freshui, Parcel数据传输过程，简要分析Binder流程, 2017.</a></p>
+<p><a href="https://blog.csdn.net/mrliuzhao/article/details/89453082">[7] 水蓝城城主, java.nio.ByteBuffer用法小结, 2019.</a></p>
+<p><a href="https://blog.csdn.net/zhangbijun1230/article/details/80562747">[8] zhangbijun1230, Android 8.0学习（31）&mdash;Android 8.0 中的 ART 功能改进, 2018.</a></p>
+<p><a href="https://blog.csdn.net/xyang81/article/details/42066665">[9] xyang0917, JNI/NDK开发指南（四）——字符串处理, 2014.</a></p>
+<p><a href="https://blog.csdn.net/moakun/article/details/80577194">[10] 茅坤宝骏氹, java反射的field.get(null), 2018.</a></p>
+<p><a href="https://blog.csdn.net/qq_36666651/article/details/81215221">[11] wkCaeser_, java中isAssignableFrom()方法与instanceof关键字用法及通过反射配合注解为字段设置默认值, 2018.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/java/">java</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/android/">Android</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%BA%90%E7%A0%81/">源码</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/12/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B3-%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97%E5%92%8C%E7%BA%BF%E7%A8%8B%E6%B1%A0/" data-tooltip="并发编程3 阻塞队列和线程池">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2022 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/12/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B3-%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97%E5%92%8C%E7%BA%BF%E7%A8%8B%E6%B1%A0/" data-tooltip="并发编程3 阻塞队列和线程池">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2022%2F02%2Fparcel1-parcel%25E5%2592%258Cparcelable%25E6%25BA%2590%25E7%25A0%2581%25E5%2588%2586%25E6%259E%2590%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2022%2F02%2Fparcel1-parcel%25E5%2592%258Cparcelable%25E6%25BA%2590%25E7%25A0%2581%25E5%2588%2586%25E6%259E%2590%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2022%2F02%2Fparcel1-parcel%25E5%2592%258Cparcelable%25E6%25BA%2590%25E7%25A0%2581%25E5%2588%2586%25E6%259E%2590%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2022\/02\/parcel1-parcel%E5%92%8Cparcelable%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90\/';
+          
+            this.page.identifier = '\/2022\/02\/parcel1-parcel%E5%92%8Cparcelable%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
