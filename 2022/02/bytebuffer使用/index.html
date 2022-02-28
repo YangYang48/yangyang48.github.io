@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="ByteBuffer，一个字节缓冲区。我们通常通过这类缓冲区(Buffer)在内存中预留指定大小的存储空间用来对输入/输出(I/O)的数据作临时存储。">
+
+
+<meta property="og:description" content="ByteBuffer，一个字节缓冲区。我们通常通过这类缓冲区(Buffer)在内存中预留指定大小的存储空间用来对输入/输出(I/O)的数据作临时存储。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ByteBuffer使用">
+<meta name="twitter:title" content="ByteBuffer使用">
+<meta property="og:url" content="https://yangyang48.github.io/2022/02/bytebuffer%E4%BD%BF%E7%94%A8/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2022/02/bytebuffer%E4%BD%BF%E7%94%A8/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="ByteBuffer，一个字节缓冲区。我们通常通过这类缓冲区(Buffer)在内存中预留指定大小的存储空间用来对输入/输出(I/O)的数据作临时存储。">
+<meta name="twitter:description" content="ByteBuffer，一个字节缓冲区。我们通常通过这类缓冲区(Buffer)在内存中预留指定大小的存储空间用来对输入/输出(I/O)的数据作临时存储。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2022-02-27T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2022-02-27T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="ByteBuffer">
+    
+      <meta property="article:section" content="2022">
+    
+      <meta property="article:section" content="February">
+    
+  
+  
+    
+      <meta property="article:tag" content="java">
+    
+      <meta property="article:tag" content="NIO">
+    
+      <meta property="article:tag" content="Android">
+    
+      <meta property="article:tag" content="源码">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/bytebuffer/bytebuffer_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/bytebuffer/bytebuffer_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/bytebuffer/bytebuffer_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/bytebuffer/bytebuffer_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>ByteBuffer使用</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2022/02/bytebuffer%E4%BD%BF%E7%94%A8/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/bytebuffer/bytebuffer_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      ByteBuffer使用
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2022-02-27T00:00:00Z">
+        
+  二月 27, 2022
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/bytebuffer">ByteBuffer</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2022">2022</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/february">February</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">500 Words|Read in about 2 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>ByteBuffer，一个字节缓冲区。我们通常通过这类缓冲区(Buffer)在内存中预留指定大小的存储空间用来对输入/输出(I/O)的数据作临时存储。</p>
+<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220228224941453.png" alt="image-20220228224941453"></p>
+<p>缓冲区的概念如上图所示。</p>
+<h1 id="1bytebuffer说明">1.ByteBuffer说明</h1>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="kd">public</span> <span class="kd">abstract</span> <span class="kd">class</span> <span class="nc">ByteBuffer</span> <span class="kd">extends</span> <span class="n">Buffer</span> <span class="kd">implements</span> <span class="n">Comparable</span><span class="o">&lt;</span><span class="n">ByteBuffer</span><span class="o">&gt;;</span>
+</code></pre></div><h2 id="bytebuffer的扩展">ByteBuffer的扩展</h2>
+<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220228223523484.png" alt="image-20220228223523484"></p>
+<h2 id="bytebuffer的属性及方法">ByteBuffer的属性及方法</h2>
+<h3 id="bytebuffer的属性">ByteBuffer的属性</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">属性</th>
+<th>属性说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"><code>position</code></td>
+<td>当前读取的位置</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>capacity</code></td>
+<td>初始化时候的容量</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>limit</code></td>
+<td>当写数据到buffer中时，limit一般和capacity相等，当读数据时，limit代表buffer中有效数据的长度</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>mark</code></td>
+<td>为某一读过的位置做标记，便于某些时候回退到该位置，这个一般不太使用</td>
+</tr>
+</tbody>
+</table>
+<p>这些属性总是满足以下条件：</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="n">0</span> <span class="o">&lt;=</span> <span class="n">mark</span> <span class="o">&lt;=</span> <span class="n">position</span> <span class="o">&lt;=</span> <span class="n">limit</span> <span class="o">&lt;=</span> <span class="n">capacity</span>
+</code></pre></div><h3 id="bytebuffer的方法">ByteBuffer的方法</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">常规函数</th>
+<th>函数说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"><code>allocate</code></td>
+<td>从堆空间中分配一个容量大小为capacity的byte数组作为缓冲区的byte数据存储器</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>allocateDirect</code></td>
+<td>不使用JVM堆栈而是通过操作系统来创建内存块用作缓冲区，使用的内存为共享内存</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>wrap</code></td>
+<td>数据会存放在byte数组中，bytes数组或buff缓冲区任何一方中数据的改动都会影响另一方</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>get</code></td>
+<td>从buffer里读一个字节，并把postion移动一位。上限是limit，即写入数据的最后位置</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>getInt</code></td>
+<td>从buffer里读int型的字节，并把postion移动int类型的位数</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>getDouble</code></td>
+<td>从buffer里读double型的字节，并把postion移动double类型的位数</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>getLong</code></td>
+<td>从buffer里读long型的字节，并把postion移动long类型的位数</td>
+</tr>
+<tr>
+<td style="text-align:center">&hellip;</td>
+<td>&hellip;</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>put</code></td>
+<td>写模式下，往buffer里写一个字节，并把postion移动一位。通常limit与capacity相等</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>putInt</code></td>
+<td>写模式下，往buffer里写int类型的字节，并把postion移动int类型的位数</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>putDouble</code></td>
+<td>写模式下，往buffer里写double类型的字节，并把postion移动double类型的位数</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>putLong</code></td>
+<td>写模式下，往buffer里写long类型的字节，并把postion移动long类型的位数</td>
+</tr>
+<tr>
+<td style="text-align:center">&hellip;</td>
+<td>&hellip;</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>其他函数(复位函数)</strong></td>
+<td><strong>其他函数说明</strong></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>clear</code></td>
+<td>一般在把数据写入Buffer前调用(<strong>继续写入模式</strong>)<!-- raw HTML omitted -->position = 0<!-- raw HTML omitted -->limit = capacity<!-- raw HTML omitted -->mark = -1</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>flip</code></td>
+<td>一般在从Buffer读出数据前调用(<strong>读出模式</strong>)<!-- raw HTML omitted -->limit = position<!-- raw HTML omitted -->position = 0<!-- raw HTML omitted -->mark = -1</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>rewind</code></td>
+<td>一般在把数据重写入Buffer前调用(<strong>读出模式</strong>)<!-- raw HTML omitted -->position = 0<!-- raw HTML omitted -->mark = -1</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>compact</code></td>
+<td>将 position 与 limit之间的数据复制到buffer的开始位置(<strong>继续写入模式</strong>)<!-- raw HTML omitted -->position = limit -position<!-- raw HTML omitted -->limit = capacity<!-- raw HTML omitted -->mark = -1</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>mark&amp;reset</code></td>
+<td>通过调用mark方法，可以标记Buffer中的一个特定position。通过调用reset方法恢复到这个position</td>
+</tr>
+</tbody>
+</table>
+<p>除了上述的<code>byte</code>，<code>int</code>，<code>double</code>，<code>long</code>，还有<code>char</code>，<code>float</code>，<code>short</code>类型，这里没有列举出来。</p>
+<h2 id="nio特性">NIO特性</h2>
+<p>在NIO中主要有八种缓冲区类(其中MappedByteBuffer是专门用于内存映射的一种ByteBuffer)</p>
+<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220228231850186.png" alt="image-20220228231850186"></p>
+<blockquote>
+<h4 id="nio模型">NIO模型</h4>
+<p>NIO（JDK1.4）模型是一种同步非阻塞IO，主要有三大核心部分：Channel(通道)，Buffer(缓冲区), Selector（多路复用器）。传统IO基于字节流和字符流进行操作，而NIO基于Channel和Buffer(缓冲区)进行操作，数据总是从通道读取到缓冲区中，或者从缓冲区写入到通道中。Selector(多路复用器)用于监听多个通道的事件（比如：连接打开，数据到达）。因此，单个线程可以监听多个数据通道。</p>
+<p>NIO和传统IO（一下简称IO）之间第一个最大的区别是，IO是面向流的，NIO是面向缓冲区的。 Java IO面向流意味着每次从流中读一个或多个字节，直至读取所有字节，它们没有被缓存在任何地方。</p>
+</blockquote>
+<h1 id="2bytebuffer的nio特性">2.bytebuffer的NIO特性</h1>
+<h2 id="初始化">初始化</h2>
+<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220222232541782.png" alt="image-20220222232541782"></p>
+<h2 id="写数据">写数据</h2>
+<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220222232608322.png" alt="image-20220222232608322"></p>
+<p><!-- raw HTML omitted --></p>
+<h2 id="读数据">读数据</h2>
+<p>首先看一个<code>rewind()</code>方法，该方法仅仅是简单粗暴地将position直接复原到0，limit不变。这样进行读取操作的话，就是从第一个字节开始读取了。如下图：</p>
+<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220222232655108.png" alt="image-20220222232655108"></p>
+<p>实际应用中更常用的是<code>flip()</code>方法，该方法不仅将position复位为0，同时也将limit的位置放置在了position之前所在的位置上，这样position和limit之间即为新读取到的有效数据。如下图：</p>
+<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220222232718571.png" alt="image-20220222232718571"></p>
+<h2 id="读数据-1">读数据</h2>
+<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220222232744042.png" alt="image-20220222232744042"></p>
+<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220222232756831.png" alt="image-20220222232756831"></p>
+<p>为了防止出现上述的 BufferUnderflowException 异常，最好要在读取数据之前确保 ByteBuffer 中的有效数据长度足够。</p>
+<p>继续写入数据</p>
+<p>由于ByteBuffer往往是非阻塞式的，故不能确定新的数据是否已经读完，但这时候依然可以调用ByteBuffer的compact()方法切换到读取模式。该方法就是将 position 到 limit 之间还未读取的数据拷贝到 ByteBuffer 中数组的最前面，然后再将 position 移动至这些数据之后的一位，将 limit 移动至 capacity。这样 position 和 limit 之间就是已经读取过的老的数据或初始化的数据，就可以放心大胆地继续写入覆盖了。仍然使用之前的例子，调用 compact() 方法后状态如下
+<img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220222232902469.png" alt="image-20220222232902469"></p>
+<p>总之ByteBuffer的基本用法就是：
+初始化（<code>allocate</code>）–&gt; 写入数据（<code>read / put</code>）–&gt; 转换为写出模式（<code>flip</code>）–&gt; 写出数据（<code>get</code>）–&gt; 转换为写入模式（<code>compact</code>）–&gt; 写入数据（<code>read / put</code>）…</p>
+<h1 id="2共享内存">2.共享内存</h1>
+<p>通过<code>allocateDirect</code>实现</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="ln">1</span><span class="k">private</span> <span class="nx">ByteBuffer</span> <span class="nx">_recBuffer</span><span class="p">;</span>
+<span class="ln">2</span> 
+<span class="ln">3</span> <span class="k">try</span><span class="p">{</span>
+<span class="ln">4</span>    <span class="nx">_recBuffer</span> <span class="o">=</span> <span class="nx">ByteBuffer</span><span class="o">.</span><span class="nx">allocateDirect</span><span class="p">(</span><span class="mi">204800</span><span class="p">);</span> <span class="c1">// Max 10 ms @ 48
+</span><span class="ln">5</span><span class="c1"></span>    <span class="p">}</span> <span class="k">catch</span><span class="p">(</span><span class="nx">Exception</span> <span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">6</span>      <span class="nx">Log</span><span class="o">.</span><span class="nx">d</span><span class="p">(</span><span class="s2">&#34;UVCCamera&#34;</span><span class="p">,</span><span class="s2">&#34;can not get _capBuffer&#34;</span><span class="p">);</span>
+<span class="ln">7</span>    <span class="p">}</span>
+</code></pre></div><blockquote>
+<p>直接allocate和allocateDirect区别</p>
+<p>第一种分配方式产生的内存开销是在JVM中的，而另外一种的分配方式产生的开销在JVM之外，以就是系统级的内存分配。当Java程序接收到外部传来的数据时，首先是被系统内存所获取，然后在由系统内存复制复制到JVM内存中供Java程序使用。所以在另外一种分配方式中，能够省去复制这一步操作，效率上会有所提高。可是系统级内存的分配比起JVM内存的分配要耗时得多，所以并非不论什么时候allocateDirect的操作效率都是最高的。</p>
+</blockquote>
+<ol>
+<li>MappedByteBuffer使用虚拟内存，因此分配(map)的内存大小不受JVM的-Xmx参数限制，但是也是有大小限制的。</li>
+<li>如果当文件超出1.5G限制时，可以通过position参数重新map文件后面的内容。</li>
+<li>MappedByteBuffer在处理大文件时的确性能很高，但也存在一些问题，如内存占用、文件关闭不确定，被其打开的文件只有在垃圾回收的才会被关闭，而且这个时间点是不确定的。
+javadoc中也提到：<strong>A mapped byte buffer and the file mapping that it represents remain valid until the buffer itself is garbage-collected.</strong></li>
+</ol>
+<p><a href="https://blog.csdn.net/mrliuzhao/article/details/89453082">https://blog.csdn.net/mrliuzhao/article/details/89453082</a></p>
+<p>两种方式在jni获取</p>
+<p>1.通过类似java反射获取到java属性的值</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//第一种方式
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span><span class="o">*</span> <span class="n">_javaDirectRecBuffer</span><span class="p">;</span> <span class="c1">// Direct buffer pointer to rec buffer
+</span><span class="ln"> 3</span><span class="c1"></span><span class="n">jobject</span> <span class="n">_javaRecBuffer</span><span class="p">;</span>
+<span class="ln"> 4</span>
+<span class="ln"> 5</span><span class="n">jclass</span> <span class="n">cls</span> <span class="o">=</span> <span class="n">env</span><span class="o">-&gt;</span><span class="n">GetObjectClass</span><span class="p">(</span><span class="n">thiz</span><span class="p">);</span>
+<span class="ln"> 6</span>    <span class="k">if</span><span class="p">(</span><span class="n">cls</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">){</span>
+<span class="ln"> 7</span>        <span class="n">LOGE</span><span class="p">(</span><span class="s">&#34;cls == NULL&#34;</span><span class="p">);</span>
+<span class="ln"> 8</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span>    <span class="p">}</span>
+<span class="ln">11</span>    <span class="n">jfieldID</span> <span class="n">fidRecBuffer</span> <span class="o">=</span> <span class="n">env</span><span class="o">-&gt;</span><span class="n">GetFieldID</span><span class="p">(</span> <span class="n">cls</span><span class="p">,</span> <span class="s">&#34;_recBuffer&#34;</span><span class="p">,</span>  <span class="s">&#34;Ljava/nio/ByteBuffer;&#34;</span><span class="p">);</span>
+<span class="ln">12</span>    <span class="k">if</span><span class="p">(</span><span class="n">fidRecBuffer</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">){</span>
+<span class="ln">13</span>        <span class="n">LOGE</span><span class="p">(</span><span class="s">&#34;fidRecBuffer == NULL&#34;</span><span class="p">);</span>
+<span class="ln">14</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">15</span>
+<span class="ln">16</span>    <span class="p">}</span>
+<span class="ln">17</span>    <span class="n">jobject</span> <span class="n">javaRecBufferLocal</span> <span class="o">=</span>  <span class="n">env</span><span class="o">-&gt;</span><span class="n">GetObjectField</span><span class="p">(</span><span class="n">thiz</span><span class="p">,</span> <span class="n">fidRecBuffer</span><span class="p">);</span>
+<span class="ln">18</span>    <span class="k">if</span><span class="p">(</span><span class="n">javaPlayBufferLocal</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">){</span>
+<span class="ln">19</span>        <span class="n">LOGE</span><span class="p">(</span><span class="s">&#34;javaPlayBufferLocal == NULL&#34;</span><span class="p">);</span>
+<span class="ln">20</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">21</span>
+<span class="ln">22</span>    <span class="p">}</span>
+<span class="ln">23</span>    <span class="n">_javaRecBuffer</span> <span class="o">=</span> <span class="n">env</span><span class="o">-&gt;</span><span class="n">NewGlobalRef</span><span class="p">(</span><span class="n">javaRecBufferLocal</span><span class="p">);</span>
+<span class="ln">24</span>    <span class="k">if</span><span class="p">(</span><span class="n">_javaRecBuffer</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">){</span>
+<span class="ln">25</span>        <span class="n">LOGE</span><span class="p">(</span><span class="s">&#34;_javaRecBuffer == NULL&#34;</span><span class="p">);</span>
+<span class="ln">26</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">27</span>        <span class="n">_javaDirectRecBuffer</span> <span class="o">=</span><span class="n">env</span><span class="o">-&gt;</span><span class="n">GetDirectBufferAddress</span><span class="p">(</span><span class="n">_javaRecBuffer</span><span class="p">);</span>
+<span class="ln">28</span>    <span class="p">}</span>
+<span class="ln">29</span>
+</code></pre></div><p>2.直接通过java端传入</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//第二种方式
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="n">g_audioQueueLenByAudioRecorder</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="kt">char</span><span class="o">*</span> <span class="n">g_audioBufFromJava</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln"> 4</span>
+<span class="ln"> 5</span><span class="n">jint</span> <span class="nf">setAudioDirectBuf</span><span class="p">(</span><span class="n">JNIEnv</span><span class="o">*</span> <span class="n">env</span><span class="p">,</span> <span class="n">jclass</span> <span class="n">cls</span><span class="p">,</span> <span class="n">jobject</span> <span class="n">audioBuf</span><span class="p">,</span> <span class="n">jint</span> <span class="n">iLen</span><span class="p">){</span>
+<span class="ln"> 6</span>    <span class="n">jint</span> <span class="n">ret</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="n">g_audioQueueLenByAudioRecorder</span> <span class="o">=</span> <span class="n">iLen</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="n">g_audioBufFromJava</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">env</span><span class="o">-&gt;</span><span class="n">GetDirectBufferAddress</span><span class="p">(</span><span class="n">audioBuf</span><span class="p">);</span>
+<span class="ln"> 9</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">10</span><span class="p">}</span>
+<span class="ln">11</span>    
+</code></pre></div><h1 id="3关于大小端字节序">3.关于大小端字节序</h1>
+<p><img src="D:%5Chugo%5CMyBlog%5Cstatic%5Cbytebuffer%5Cbytebuffer_1.png" alt="bytebuffer_1"></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//c++示例
+</span><span class="ln"> 2</span><span class="c1">//小端排列
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span>    <span class="k">union</span><span class="p">{</span>
+<span class="ln"> 6</span>        <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+<span class="ln"> 7</span>        <span class="k">struct</span><span class="p">{</span>
+<span class="ln"> 8</span>            <span class="kt">char</span> <span class="n">first</span><span class="p">;</span>
+<span class="ln"> 9</span>            <span class="n">chat</span> <span class="n">second</span><span class="p">;</span>
+<span class="ln">10</span>        <span class="p">}</span><span class="n">half</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="p">}</span><span class="n">number</span><span class="p">;</span>
+<span class="ln">12</span>    
+<span class="ln">13</span>    <span class="n">number</span><span class="p">.</span><span class="n">i</span> <span class="o">=</span> <span class="mh">0x4241</span><span class="p">;</span>
+<span class="ln">14</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;c %c</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">number</span><span class="p">.</span><span class="n">half</span><span class="p">.</span><span class="n">first</span><span class="p">,</span> <span class="n">number</span><span class="p">.</span><span class="n">half</span><span class="p">.</span><span class="n">second</span><span class="p">);</span><span class="c1">//AB
+</span><span class="ln">15</span><span class="c1"></span>    <span class="n">number</span><span class="p">.</span><span class="n">half</span><span class="p">.</span><span class="n">first</span> <span class="o">=</span> <span class="sc">&#39;a&#39;</span><span class="p">;</span>
+<span class="ln">16</span>    <span class="n">number</span><span class="p">.</span><span class="n">half</span><span class="p">.</span><span class="n">second</span> <span class="o">=</span> <span class="sc">&#39;b&#39;</span><span class="p">;</span>
+<span class="ln">17</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;%x</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">number</span><span class="p">.</span><span class="n">i</span><span class="p">);</span><span class="c1">//0x6261
+</span><span class="ln">18</span><span class="c1"></span><span class="p">}</span>
+</code></pre></div><p><img src="D:%5Chugo%5CMyBlog%5Cstatic%5Cbytebuffer%5Cbytebuffer_2.png" alt="bytebuffer_2"></p>
+<p>结论：</p>
+<p>在80X86平台上，系统将多字节中的低位存储在变量起始地址，使用小端法。htonl将i_num转换成网络字节序，可见网络字节序是大端法。</p>
+<h1 id="参考文献">参考文献</h1>
+<p><a href="https://www.cnblogs.com/crazymakercircle/p/15625329.html">[1] 疯狂创客圈. MappedByteBuffer 详解（图解+秒懂+史上最全）, 2021.</a></p>
+<p><a href="https://www.cnblogs.com/chap-xw/p/11872001.html">[1] 东风快递员.Notepad++配置HexEditor插件 , 2019.</a></p>
+<p><a href="https://www.jianshu.com/p/5bb812ca5f8e">[1] 林亚希.IO与NIO, 2019.</a></p>
+<p><a href="https://www.jianshu.com/p/ebc52832dca0">[1] TTTTTriM.ByteBuffer详解, 2018.</a></p>
+<p><a href="https://www.cnblogs.com/JAYIT/p/8384476.html">[1] Lost blog.ByteBuffer常用方法详解, 2018.</a></p>
+<p><a href="https://docs.oracle.com/javase/7/docs/api/java/nio/ByteBuffer.html">[1] java.nio Class ByteBuffer&ndash;官方文档</a></p>
+<p><a href="https://blog.csdn.net/xialong_927/article/details/81044759">[1] 沧海龙腾LV.JAVA NIO缓冲区(Buffer)&mdash;&mdash;ByteBuffer常用方法详解, 2018.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/java/">java</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/nio/">NIO</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/android/">Android</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%BA%90%E7%A0%81/">源码</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/02/parcel1-parcel%E5%92%8Cparcelable%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" data-tooltip="Parcel1 Parcel和Parcelable源码分析">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2022 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/02/parcel1-parcel%E5%92%8Cparcelable%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" data-tooltip="Parcel1 Parcel和Parcelable源码分析">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2022%2F02%2Fbytebuffer%25E4%25BD%25BF%25E7%2594%25A8%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2022%2F02%2Fbytebuffer%25E4%25BD%25BF%25E7%2594%25A8%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2022%2F02%2Fbytebuffer%25E4%25BD%25BF%25E7%2594%25A8%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2022\/02\/bytebuffer%E4%BD%BF%E7%94%A8\/';
+          
+            this.page.identifier = '\/2022\/02\/bytebuffer%E4%BD%BF%E7%94%A8\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
