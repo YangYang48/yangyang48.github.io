@@ -274,17 +274,17 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">500 Words|Read in about 2 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">600 Words|Read in about 3 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
               <p>ByteBuffer，一个字节缓冲区。我们通常通过这类缓冲区(Buffer)在内存中预留指定大小的存储空间用来对输入/输出(I/O)的数据作临时存储。</p>
-<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220228224941453.png" alt="image-20220228224941453"></p>
+<p><img src="D:%5Chugo%5CMyBlog%5Cstatic%5Cbytebuffer%5Cbytebuffer_3.png" alt="bytebuffer_3"></p>
 <p>缓冲区的概念如上图所示。</p>
 <h1 id="1bytebuffer说明">1.ByteBuffer说明</h1>
 <div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="kd">public</span> <span class="kd">abstract</span> <span class="kd">class</span> <span class="nc">ByteBuffer</span> <span class="kd">extends</span> <span class="n">Buffer</span> <span class="kd">implements</span> <span class="n">Comparable</span><span class="o">&lt;</span><span class="n">ByteBuffer</span><span class="o">&gt;;</span>
 </code></pre></div><h2 id="bytebuffer的扩展">ByteBuffer的扩展</h2>
-<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220228223523484.png" alt="image-20220228223523484"></p>
+<p><img src="D:%5Chugo%5CMyBlog%5Cstatic%5Cbytebuffer%5Cbytebuffer_4.png" alt="bytebuffer_4"></p>
 <h2 id="bytebuffer的属性及方法">ByteBuffer的属性及方法</h2>
 <h3 id="bytebuffer的属性">ByteBuffer的属性</h3>
 <table>
@@ -404,14 +404,87 @@
 </table>
 <p>除了上述的<code>byte</code>，<code>int</code>，<code>double</code>，<code>long</code>，还有<code>char</code>，<code>float</code>，<code>short</code>类型，这里没有列举出来。</p>
 <h2 id="nio特性">NIO特性</h2>
-<p>在NIO中主要有八种缓冲区类(其中MappedByteBuffer是专门用于内存映射的一种ByteBuffer)</p>
-<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220228231850186.png" alt="image-20220228231850186"></p>
+<p>在<code>NIO</code>中主要有八种缓冲区<strong>抽象</strong>类(其中<code>MappedByteBuffer</code>是专门用于内存映射的一种<code>ByteBuffer</code>)。这里除了<code>ByteBuffer</code>和<code>CharBuffer</code>以外，都只能读写「自己类名中的类型」。<code>ByteBuffer</code>可以读写byte，int，char，float，double，short，long类型，<code>CharBuffer</code>可以读写char和String类型。</p>
+<p><img src="D:%5Chugo%5CMyBlog%5Cstatic%5Cbytebuffer%5Cbytebuffer_5.png" alt="bytebuffer_5"></p>
 <blockquote>
 <h4 id="nio模型">NIO模型</h4>
 <p>NIO（JDK1.4）模型是一种同步非阻塞IO，主要有三大核心部分：Channel(通道)，Buffer(缓冲区), Selector（多路复用器）。传统IO基于字节流和字符流进行操作，而NIO基于Channel和Buffer(缓冲区)进行操作，数据总是从通道读取到缓冲区中，或者从缓冲区写入到通道中。Selector(多路复用器)用于监听多个通道的事件（比如：连接打开，数据到达）。因此，单个线程可以监听多个数据通道。</p>
 <p>NIO和传统IO（一下简称IO）之间第一个最大的区别是，IO是面向流的，NIO是面向缓冲区的。 Java IO面向流意味着每次从流中读一个或多个字节，直至读取所有字节，它们没有被缓存在任何地方。</p>
 </blockquote>
-<h1 id="2bytebuffer的nio特性">2.bytebuffer的NIO特性</h1>
+<h1 id="2bytebuffer的nio特性">2.Bytebuffer的NIO特性</h1>
+<p>为了说明ByteBuffer的NIO特性，本文举一个例子，如下</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//example
+</span><span class="ln"> 2</span><span class="c1">//1.初始化（两种方式）
+</span><span class="ln"> 3</span><span class="c1">//1.1 第一种初始化方式
+</span><span class="ln"> 4</span><span class="c1"></span><span class="n">ByteBuffer</span> <span class="n">exampleBuffer</span> <span class="o">=</span> <span class="n">ByteBuffer</span><span class="o">.</span><span class="na">alloc</span><span class="o">(</span><span class="n">64</span><span class="o">);</span>
+<span class="ln"> 5</span><span class="c1">//1.2 第二种初始化方式
+</span><span class="ln"> 6</span><span class="c1">//ByteBuffer exampleBuffer = ByteBuffer.wrap(new byte[64]);
+</span><span class="ln"> 7</span><span class="c1"></span>
+<span class="ln"> 8</span><span class="c1">//2 切换写数据模式，清除数据
+</span><span class="ln"> 9</span><span class="c1"></span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">clear</span><span class="o">();</span>
+<span class="ln">10</span>
+<span class="ln">11</span><span class="c1">//3 写数据
+</span><span class="ln">12</span><span class="c1">//3 写入byte数据、int数据、char数据、float数据、double数据、short数据、long数据
+</span><span class="ln">13</span><span class="c1"></span><span class="kt">byte</span><span class="o">[]</span> <span class="n">byteData</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="n">8</span><span class="o">];</span>
+<span class="ln">14</span><span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">8</span><span class="o">;</span> <span class="n">i</span><span class="o">++){</span>
+<span class="ln">15</span>    <span class="n">byteData</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">125</span> <span class="o">+</span> <span class="n">i</span><span class="o">;</span>
+<span class="ln">16</span><span class="o">}</span>
+<span class="ln">17</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">byteData</span><span class="o">);</span>
+<span class="ln">18</span>
+<span class="ln">19</span><span class="kt">char</span><span class="o">[]</span> <span class="n">charData</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">char</span><span class="o">[</span><span class="n">2</span><span class="o">];</span>
+<span class="ln">20</span><span class="n">charData</span><span class="o">[</span><span class="n">0</span><span class="o">]</span> <span class="o">=</span> <span class="sc">&#39;中&#39;</span><span class="o">;</span><span class="c1">//&#39;\u4e2d&#39;;
+</span><span class="ln">21</span><span class="c1"></span><span class="n">charData</span><span class="o">[</span><span class="n">1</span><span class="o">]</span> <span class="o">=</span> <span class="sc">&#39;国&#39;</span><span class="o">;</span><span class="c1">//&#39;\u56fd&#39;;
+</span><span class="ln">22</span><span class="c1"></span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putChar</span><span class="o">(</span><span class="n">charData</span><span class="o">[</span><span class="n">0</span><span class="o">]);</span>
+<span class="ln">23</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putChar</span><span class="o">(</span><span class="n">charData</span><span class="o">[</span><span class="n">1</span><span class="o">]);</span>
+<span class="ln">24</span>
+<span class="ln">25</span><span class="kt">float</span><span class="o">[]</span> <span class="n">floatData</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">float</span><span class="o">[</span><span class="n">2</span><span class="o">];</span>
+<span class="ln">26</span><span class="n">floatData</span><span class="o">[</span><span class="n">0</span><span class="o">]</span> <span class="o">=</span> <span class="n">2</span><span class="o">.</span><span class="na">25f</span><span class="o">;</span>
+<span class="ln">27</span><span class="n">floatData</span><span class="o">[</span><span class="n">1</span><span class="o">]</span> <span class="o">=</span> <span class="n">3</span><span class="o">.</span><span class="na">25f</span><span class="o">;</span>
+<span class="ln">28</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putFloat</span><span class="o">(</span><span class="n">floatData</span><span class="o">[</span><span class="n">0</span><span class="o">]);</span>
+<span class="ln">29</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putFloat</span><span class="o">(</span><span class="n">floatData</span><span class="o">[</span><span class="n">1</span><span class="o">]);</span>
+<span class="ln">30</span>
+<span class="ln">31</span><span class="kt">double</span><span class="o">[]</span> <span class="n">doubleData</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">2</span><span class="o">];</span>
+<span class="ln">32</span><span class="n">doubleData</span><span class="o">[</span><span class="n">0</span><span class="o">]</span> <span class="o">=</span> <span class="n">2</span><span class="o">.</span><span class="na">25</span><span class="o">;</span>
+<span class="ln">33</span><span class="n">doubleData</span><span class="o">[</span><span class="n">1</span><span class="o">]</span> <span class="o">=</span> <span class="n">3</span><span class="o">.</span><span class="na">25</span><span class="o">;</span>
+<span class="ln">34</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putDouble</span><span class="o">(</span><span class="n">doubleData</span><span class="o">[</span><span class="n">0</span><span class="o">]);</span>
+<span class="ln">35</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putDouble</span><span class="o">(</span><span class="n">doubleData</span><span class="o">[</span><span class="n">1</span><span class="o">]);</span>
+<span class="ln">36</span>
+<span class="ln">37</span><span class="kt">short</span><span class="o">[]</span> <span class="n">shortData</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">short</span><span class="o">[</span><span class="n">2</span><span class="o">];</span>
+<span class="ln">38</span><span class="n">shortData</span><span class="o">[</span><span class="n">0</span><span class="o">]</span> <span class="o">=</span> <span class="n">0x2022</span><span class="o">;</span>
+<span class="ln">39</span><span class="n">shortData</span><span class="o">[</span><span class="n">1</span><span class="o">]</span> <span class="o">=</span> <span class="n">0x0301</span><span class="o">;</span>
+<span class="ln">40</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putShort</span><span class="o">(</span><span class="n">shortData</span><span class="o">[</span><span class="n">0</span><span class="o">]);</span>
+<span class="ln">41</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putShort</span><span class="o">(</span><span class="n">shortData</span><span class="o">[</span><span class="n">1</span><span class="o">]);</span>
+<span class="ln">42</span>
+<span class="ln">43</span><span class="kt">long</span><span class="o">[]</span> <span class="n">longData</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">long</span><span class="o">[</span><span class="n">2</span><span class="o">];</span>
+<span class="ln">44</span><span class="n">longData</span><span class="o">[</span><span class="n">0</span><span class="o">]</span> <span class="o">=</span> <span class="n">0x31415926</span><span class="o">;</span>
+<span class="ln">45</span><span class="n">longData</span><span class="o">[</span><span class="n">1</span><span class="o">]</span> <span class="o">=</span> <span class="n">0x20220301</span><span class="o">;</span>
+<span class="ln">46</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putLong</span><span class="o">(</span><span class="n">longData</span><span class="o">[</span><span class="n">0</span><span class="o">]);</span>
+<span class="ln">47</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putLong</span><span class="o">(</span><span class="n">longData</span><span class="o">[</span><span class="n">1</span><span class="o">]);</span>
+<span class="ln">48</span><span class="c1">//4 切换读数据模式
+</span><span class="ln">49</span><span class="c1">//4.1 第一种方式，推荐
+</span><span class="ln">50</span><span class="c1"></span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">flip</span><span class="o">();</span>
+<span class="ln">51</span><span class="c1">//4.2 第二种方式，通常用于完全拷贝
+</span><span class="ln">52</span><span class="c1">//exampleBuffer.rewind();
+</span><span class="ln">53</span><span class="c1">//5 读数据
+</span><span class="ln">54</span><span class="c1">//5 读出byte数据、int数据、char数据
+</span><span class="ln">55</span><span class="c1"></span><span class="kt">byte</span><span class="o">[]</span> <span class="n">byteRes</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="n">8</span><span class="o">];</span>
+<span class="ln">56</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">byteRes</span><span class="o">);</span>
+<span class="ln">57</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">getChar</span><span class="o">();</span>
+<span class="ln">58</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">getChar</span><span class="o">();</span>
+<span class="ln">59</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">getFloat</span><span class="o">();</span>
+<span class="ln">60</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">getFloat</span><span class="o">();</span>
+<span class="ln">61</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">getDouble</span><span class="o">();</span>
+<span class="ln">62</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">getDouble</span><span class="o">();</span>
+<span class="ln">63</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">getShort</span><span class="o">();</span>
+<span class="ln">64</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">getShort</span><span class="o">();</span>
+<span class="ln">65</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">getLong</span><span class="o">();</span>
+<span class="ln">66</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">getLong</span><span class="o">();</span>
+<span class="ln">67</span>
+<span class="ln">68</span><span class="c1">//6 切换继续写数据模式
+</span><span class="ln">69</span><span class="c1"></span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">compact</span><span class="o">();</span>
+<span class="ln">70</span><span class="c1">//7.继续写数据
+</span><span class="ln">71</span><span class="c1"></span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putInt</span><span class="o">(</span><span class="n">0x20220301</span><span class="o">);</span>
+</code></pre></div><p>注：关于通过charData打出中国，原理可详见<a href="https://blog.csdn.net/yangju147532896/article/details/104961781?spm=1001.2014.3001.5502">一篇能看懂unicode的文章</a>。</p>
 <h2 id="初始化">初始化</h2>
 <p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220222232541782.png" alt="image-20220222232541782"></p>
 <h2 id="写数据">写数据</h2>
@@ -519,12 +592,13 @@ javadoc中也提到：<strong>A mapped byte buffer and the file mapping that it 
 <p>在80X86平台上，系统将多字节中的低位存储在变量起始地址，使用小端法。htonl将i_num转换成网络字节序，可见网络字节序是大端法。</p>
 <h1 id="参考文献">参考文献</h1>
 <p><a href="https://www.cnblogs.com/crazymakercircle/p/15625329.html">[1] 疯狂创客圈. MappedByteBuffer 详解（图解+秒懂+史上最全）, 2021.</a></p>
-<p><a href="https://www.cnblogs.com/chap-xw/p/11872001.html">[1] 东风快递员.Notepad++配置HexEditor插件 , 2019.</a></p>
-<p><a href="https://www.jianshu.com/p/5bb812ca5f8e">[1] 林亚希.IO与NIO, 2019.</a></p>
-<p><a href="https://www.jianshu.com/p/ebc52832dca0">[1] TTTTTriM.ByteBuffer详解, 2018.</a></p>
-<p><a href="https://www.cnblogs.com/JAYIT/p/8384476.html">[1] Lost blog.ByteBuffer常用方法详解, 2018.</a></p>
-<p><a href="https://docs.oracle.com/javase/7/docs/api/java/nio/ByteBuffer.html">[1] java.nio Class ByteBuffer&ndash;官方文档</a></p>
-<p><a href="https://blog.csdn.net/xialong_927/article/details/81044759">[1] 沧海龙腾LV.JAVA NIO缓冲区(Buffer)&mdash;&mdash;ByteBuffer常用方法详解, 2018.</a></p>
+<p><a href="https://www.cnblogs.com/chap-xw/p/11872001.html">[2] 东风快递员.Notepad++配置HexEditor插件 , 2019.</a></p>
+<p><a href="https://www.jianshu.com/p/5bb812ca5f8e">[3] 林亚希.IO与NIO, 2019.</a></p>
+<p><a href="https://www.jianshu.com/p/ebc52832dca0">[4] TTTTTriM.ByteBuffer详解, 2018.</a></p>
+<p><a href="https://www.cnblogs.com/JAYIT/p/8384476.html">[5] Lost blog.ByteBuffer常用方法详解, 2018.</a></p>
+<p><a href="https://docs.oracle.com/javase/7/docs/api/java/nio/ByteBuffer.html">[6] java.nio Class ByteBuffer&ndash;官方文档</a></p>
+<p><a href="https://blog.csdn.net/xialong_927/article/details/81044759">[7] 沧海龙腾LV.JAVA NIO缓冲区(Buffer)&mdash;&mdash;ByteBuffer常用方法详解, 2018.</a></p>
+<p><a href="https://www.runoob.com/java/java-basic-datatypes.html">[8] 菜鸟教程.Java 基本数据类型.</a></p>
               
             </div>
           </div>
