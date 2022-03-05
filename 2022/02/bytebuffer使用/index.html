@@ -274,17 +274,77 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">600 Words|Read in about 3 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">800 Words|Read in about 4 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
               <p>ByteBuffer，一个字节缓冲区。我们通常通过这类缓冲区(Buffer)在内存中预留指定大小的存储空间用来对输入/输出(I/O)的数据作临时存储。</p>
-<p><img src="D:%5Chugo%5CMyBlog%5Cstatic%5Cbytebuffer%5Cbytebuffer_3.png" alt="bytebuffer_3"></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/bytebuffer/bytebuffer_3.png" title="缓冲区的概念图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/bytebuffer/bytebuffer_3.png"  alt="缓冲区的概念图">
+  
+    </a>
+  
+   
+    <span class="caption">缓冲区的概念图</span>
+  
+</div>
+
 <p>缓冲区的概念如上图所示。</p>
 <h1 id="1bytebuffer说明">1.ByteBuffer说明</h1>
 <div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="kd">public</span> <span class="kd">abstract</span> <span class="kd">class</span> <span class="nc">ByteBuffer</span> <span class="kd">extends</span> <span class="n">Buffer</span> <span class="kd">implements</span> <span class="n">Comparable</span><span class="o">&lt;</span><span class="n">ByteBuffer</span><span class="o">&gt;;</span>
 </code></pre></div><h2 id="bytebuffer的扩展">ByteBuffer的扩展</h2>
-<p><img src="D:%5Chugo%5CMyBlog%5Cstatic%5Cbytebuffer%5Cbytebuffer_4.png" alt="bytebuffer_4"></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/bytebuffer/bytebuffer_4.png" title="ByteBuffer类图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/bytebuffer/bytebuffer_4.png"  alt="ByteBuffer类图">
+  
+    </a>
+  
+   
+    <span class="caption">ByteBuffer类图</span>
+  
+</div>
+
 <h2 id="bytebuffer的属性及方法">ByteBuffer的属性及方法</h2>
 <h3 id="bytebuffer的属性">ByteBuffer的属性</h3>
 <table>
@@ -405,7 +465,37 @@
 <p>除了上述的<code>byte</code>，<code>int</code>，<code>double</code>，<code>long</code>，还有<code>char</code>，<code>float</code>，<code>short</code>类型，这里没有列举出来。</p>
 <h2 id="nio特性">NIO特性</h2>
 <p>在<code>NIO</code>中主要有八种缓冲区<strong>抽象</strong>类(其中<code>MappedByteBuffer</code>是专门用于内存映射的一种<code>ByteBuffer</code>)。这里除了<code>ByteBuffer</code>和<code>CharBuffer</code>以外，都只能读写「自己类名中的类型」。<code>ByteBuffer</code>可以读写byte，int，char，float，double，short，long类型，<code>CharBuffer</code>可以读写char和String类型。</p>
-<p><img src="D:%5Chugo%5CMyBlog%5Cstatic%5Cbytebuffer%5Cbytebuffer_5.png" alt="bytebuffer_5"></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/bytebuffer/bytebuffer_5.png" title="NIO特性图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/bytebuffer/bytebuffer_5.png"  alt="NIO特性图">
+  
+    </a>
+  
+   
+    <span class="caption">NIO特性图</span>
+  
+</div>
+
 <blockquote>
 <h4 id="nio模型">NIO模型</h4>
 <p>NIO（JDK1.4）模型是一种同步非阻塞IO，主要有三大核心部分：Channel(通道)，Buffer(缓冲区), Selector（多路复用器）。传统IO基于字节流和字符流进行操作，而NIO基于Channel和Buffer(缓冲区)进行操作，数据总是从通道读取到缓冲区中，或者从缓冲区写入到通道中。Selector(多路复用器)用于监听多个通道的事件（比如：连接打开，数据到达）。因此，单个线程可以监听多个数据通道。</p>
@@ -475,55 +565,641 @@
 <span class="ln">60</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">getFloat</span><span class="o">();</span>
 <span class="ln">61</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">getDouble</span><span class="o">();</span>
 <span class="ln">62</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">getDouble</span><span class="o">();</span>
-<span class="ln">63</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">getShort</span><span class="o">();</span>
-<span class="ln">64</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">getShort</span><span class="o">();</span>
-<span class="ln">65</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">getLong</span><span class="o">();</span>
-<span class="ln">66</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">getLong</span><span class="o">();</span>
-<span class="ln">67</span>
-<span class="ln">68</span><span class="c1">//6 切换继续写数据模式
-</span><span class="ln">69</span><span class="c1"></span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">compact</span><span class="o">();</span>
-<span class="ln">70</span><span class="c1">//7.继续写数据
-</span><span class="ln">71</span><span class="c1"></span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putInt</span><span class="o">(</span><span class="n">0x20220301</span><span class="o">);</span>
+<span class="ln">63</span>
+<span class="ln">64</span><span class="c1">//6 切换继续写数据模式
+</span><span class="ln">65</span><span class="c1"></span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">compact</span><span class="o">();</span>
+<span class="ln">66</span><span class="c1">//7.继续写数据
+</span><span class="ln">67</span><span class="c1"></span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putInt</span><span class="o">(</span><span class="n">0x20220301</span><span class="o">);</span>
 </code></pre></div><p>注：关于通过charData打出中国，原理可详见<a href="https://blog.csdn.net/yangju147532896/article/details/104961781?spm=1001.2014.3001.5502">一篇能看懂unicode的文章</a>。</p>
+<p>这初始化前，人为规定橘色代表两个字节(<code>char</code>和<code>short</code>类型)，浅绿代表四个字节(<code>float</code>和<code>int</code>类型)，蓝色代表八个字节(<code>double</code>类型)，红色代表八个字节(<code>long</code>类型)。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/bytebuffer/bytebuffer_6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/bytebuffer/bytebuffer_6.png" >
+  
+    </a>
+  
+  
+</div>
+
 <h2 id="初始化">初始化</h2>
-<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220222232541782.png" alt="image-20220222232541782"></p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="n">ByteBuffer</span> <span class="n">exampleBuffer</span> <span class="o">=</span> <span class="n">ByteBuffer</span><span class="o">.</span><span class="na">alloc</span><span class="o">(</span><span class="n">64</span><span class="o">);</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/bytebuffer/bytebuffer_7.png" title="初始化图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/bytebuffer/bytebuffer_7.png"  alt="初始化图">
+  
+    </a>
+  
+   
+    <span class="caption">初始化图</span>
+  
+</div>
+
 <h2 id="写数据">写数据</h2>
-<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220222232608322.png" alt="image-20220222232608322"></p>
-<p><!-- raw HTML omitted --></p>
+<h3 id="写byte类型数据">写byte类型数据</h3>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">byteData</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="n">8</span><span class="o">];</span>
+<span class="ln">2</span><span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">8</span><span class="o">;</span> <span class="n">i</span><span class="o">++){</span>
+<span class="ln">3</span>    <span class="n">byteData</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">125</span> <span class="o">+</span> <span class="n">i</span><span class="o">;</span>
+<span class="ln">4</span><span class="o">}</span>
+<span class="ln">5</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">byteData</span><span class="o">);</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/bytebuffer/bytebuffer_8.png" title="写byte类型数据图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/bytebuffer/bytebuffer_8.png"  alt="写byte类型数据图">
+  
+    </a>
+  
+   
+    <span class="caption">写byte类型数据图</span>
+  
+</div>
+
+<h3 id="写char类型数据">写char类型数据</h3>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="kt">char</span><span class="o">[]</span> <span class="n">charData</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">char</span><span class="o">[</span><span class="n">2</span><span class="o">];</span>
+<span class="ln">2</span><span class="n">charData</span><span class="o">[</span><span class="n">0</span><span class="o">]</span> <span class="o">=</span> <span class="sc">&#39;中&#39;</span><span class="o">;</span><span class="c1">//&#39;\u4e2d&#39;;
+</span><span class="ln">3</span><span class="c1"></span><span class="n">charData</span><span class="o">[</span><span class="n">1</span><span class="o">]</span> <span class="o">=</span> <span class="sc">&#39;国&#39;</span><span class="o">;</span><span class="c1">//&#39;\u56fd&#39;;
+</span><span class="ln">4</span><span class="c1"></span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putChar</span><span class="o">(</span><span class="n">charData</span><span class="o">[</span><span class="n">0</span><span class="o">]);</span>
+<span class="ln">5</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putChar</span><span class="o">(</span><span class="n">charData</span><span class="o">[</span><span class="n">1</span><span class="o">]);</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/bytebuffer/bytebuffer_9.png" title="写char类型数据图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/bytebuffer/bytebuffer_9.png"  alt="写char类型数据图">
+  
+    </a>
+  
+   
+    <span class="caption">写char类型数据图</span>
+  
+</div>
+
+<h3 id="写float类型数据">写float类型数据</h3>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="kt">float</span><span class="o">[]</span> <span class="n">floatData</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">float</span><span class="o">[</span><span class="n">2</span><span class="o">];</span>
+<span class="ln">2</span><span class="n">floatData</span><span class="o">[</span><span class="n">0</span><span class="o">]</span> <span class="o">=</span> <span class="n">2</span><span class="o">.</span><span class="na">25f</span><span class="o">;</span>
+<span class="ln">3</span><span class="n">floatData</span><span class="o">[</span><span class="n">1</span><span class="o">]</span> <span class="o">=</span> <span class="n">3</span><span class="o">.</span><span class="na">25f</span><span class="o">;</span>
+<span class="ln">4</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putFloat</span><span class="o">(</span><span class="n">floatData</span><span class="o">[</span><span class="n">0</span><span class="o">]);</span>
+<span class="ln">5</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putFloat</span><span class="o">(</span><span class="n">floatData</span><span class="o">[</span><span class="n">1</span><span class="o">]);</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/bytebuffer/bytebuffer_10.png" title="写float类型数据图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/bytebuffer/bytebuffer_10.png"  alt="写float类型数据图">
+  
+    </a>
+  
+   
+    <span class="caption">写float类型数据图</span>
+  
+</div>
+
+<h3 id="写double数据类型">写double数据类型</h3>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="kt">double</span><span class="o">[]</span> <span class="n">doubleData</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">2</span><span class="o">];</span>
+<span class="ln">2</span><span class="n">doubleData</span><span class="o">[</span><span class="n">0</span><span class="o">]</span> <span class="o">=</span> <span class="n">2</span><span class="o">.</span><span class="na">25</span><span class="o">;</span>
+<span class="ln">3</span><span class="n">doubleData</span><span class="o">[</span><span class="n">1</span><span class="o">]</span> <span class="o">=</span> <span class="n">3</span><span class="o">.</span><span class="na">25</span><span class="o">;</span>
+<span class="ln">4</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putDouble</span><span class="o">(</span><span class="n">doubleData</span><span class="o">[</span><span class="n">0</span><span class="o">]);</span>
+<span class="ln">5</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putDouble</span><span class="o">(</span><span class="n">doubleData</span><span class="o">[</span><span class="n">1</span><span class="o">]);</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/bytebuffer/bytebuffer_11.png" title="写double类型数据图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/bytebuffer/bytebuffer_11.png"  alt="写double类型数据图">
+  
+    </a>
+  
+   
+    <span class="caption">写double类型数据图</span>
+  
+</div>
+
+<h3 id="写short类型数据">写short类型数据</h3>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="kt">short</span><span class="o">[]</span> <span class="n">shortData</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">short</span><span class="o">[</span><span class="n">2</span><span class="o">];</span>
+<span class="ln">2</span><span class="n">shortData</span><span class="o">[</span><span class="n">0</span><span class="o">]</span> <span class="o">=</span> <span class="n">0x2022</span><span class="o">;</span>
+<span class="ln">3</span><span class="n">shortData</span><span class="o">[</span><span class="n">1</span><span class="o">]</span> <span class="o">=</span> <span class="n">0x0301</span><span class="o">;</span>
+<span class="ln">4</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putShort</span><span class="o">(</span><span class="n">shortData</span><span class="o">[</span><span class="n">0</span><span class="o">]);</span>
+<span class="ln">5</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putShort</span><span class="o">(</span><span class="n">shortData</span><span class="o">[</span><span class="n">1</span><span class="o">]);</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/bytebuffer/bytebuffer_12.png" title="写short类型数据图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/bytebuffer/bytebuffer_12.png"  alt="写short类型数据图">
+  
+    </a>
+  
+   
+    <span class="caption">写short类型数据图</span>
+  
+</div>
+
+<h3 id="写long类型数据">写long类型数据</h3>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="kt">long</span><span class="o">[]</span> <span class="n">longData</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">long</span><span class="o">[</span><span class="n">2</span><span class="o">];</span>
+<span class="ln">2</span><span class="n">longData</span><span class="o">[</span><span class="n">0</span><span class="o">]</span> <span class="o">=</span> <span class="n">0x31415926</span><span class="o">;</span>
+<span class="ln">3</span><span class="n">longData</span><span class="o">[</span><span class="n">1</span><span class="o">]</span> <span class="o">=</span> <span class="n">0x20220301</span><span class="o">;</span>
+<span class="ln">4</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putLong</span><span class="o">(</span><span class="n">longData</span><span class="o">[</span><span class="n">0</span><span class="o">]);</span>
+<span class="ln">5</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putLong</span><span class="o">(</span><span class="n">longData</span><span class="o">[</span><span class="n">1</span><span class="o">]);</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/bytebuffer/bytebuffer_13.png" title="写long类型数据图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/bytebuffer/bytebuffer_13.png"  alt="写long类型数据图">
+  
+    </a>
+  
+   
+    <span class="caption">写long类型数据图</span>
+  
+</div>
+
+<h2 id="复位状态值">复位状态值</h2>
+<h3 id="clear">clear</h3>
+<p><code>clear()</code>方法相当于是所有值复位，用于读取完之后清除数据。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/bytebuffer/bytebuffer_7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/bytebuffer/bytebuffer_7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="rewind">rewind</h3>
+<p><code>rewind()</code>方法，该方法仅仅是简单粗暴地将position直接复原到0，limit不变。这样进行读取操作的话，就是从第一个字节开始读取了。</p>
+<p>虽然会存在分配大小中有<strong>未写入的非法数据</strong>。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/bytebuffer/bytebuffer_14.png" title="rewind数据图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/bytebuffer/bytebuffer_14.png"  alt="rewind数据图">
+  
+    </a>
+  
+   
+    <span class="caption">rewind数据图</span>
+  
+</div>
+
+<h3 id="flip">flip</h3>
+<p><code>flip()</code>方法，该方法不仅将position复位为0，同时也将limit的位置放置在了position之前所在的位置上，这样position和limit之间即为新读取到的有效数据。一般来说，这个方法更加常用，不会去访问到<strong>非法数据区</strong>。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/bytebuffer/bytebuffer_15.png" title="flip数据图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/bytebuffer/bytebuffer_15.png"  alt="flip数据图">
+  
+    </a>
+  
+   
+    <span class="caption">flip数据图</span>
+  
+</div>
+
 <h2 id="读数据">读数据</h2>
-<p>首先看一个<code>rewind()</code>方法，该方法仅仅是简单粗暴地将position直接复原到0，limit不变。这样进行读取操作的话，就是从第一个字节开始读取了。如下图：</p>
-<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220222232655108.png" alt="image-20220222232655108"></p>
-<p>实际应用中更常用的是<code>flip()</code>方法，该方法不仅将position复位为0，同时也将limit的位置放置在了position之前所在的位置上，这样position和limit之间即为新读取到的有效数据。如下图：</p>
-<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220222232718571.png" alt="image-20220222232718571"></p>
-<h2 id="读数据-1">读数据</h2>
-<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220222232744042.png" alt="image-20220222232744042"></p>
-<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220222232756831.png" alt="image-20220222232756831"></p>
-<p>为了防止出现上述的 BufferUnderflowException 异常，最好要在读取数据之前确保 ByteBuffer 中的有效数据长度足够。</p>
-<p>继续写入数据</p>
-<p>由于ByteBuffer往往是非阻塞式的，故不能确定新的数据是否已经读完，但这时候依然可以调用ByteBuffer的compact()方法切换到读取模式。该方法就是将 position 到 limit 之间还未读取的数据拷贝到 ByteBuffer 中数组的最前面，然后再将 position 移动至这些数据之后的一位，将 limit 移动至 capacity。这样 position 和 limit 之间就是已经读取过的老的数据或初始化的数据，就可以放心大胆地继续写入覆盖了。仍然使用之前的例子，调用 compact() 方法后状态如下
-<img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220222232902469.png" alt="image-20220222232902469"></p>
-<p>总之ByteBuffer的基本用法就是：
-初始化（<code>allocate</code>）–&gt; 写入数据（<code>read / put</code>）–&gt; 转换为写出模式（<code>flip</code>）–&gt; 写出数据（<code>get</code>）–&gt; 转换为写入模式（<code>compact</code>）–&gt; 写入数据（<code>read / put</code>）…</p>
+<p>读数据的起点通常是从0开始，然后按照写入的顺序去读出即可。</p>
+<h3 id="读byte类型数据">读byte类型数据</h3>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">byteRes</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="n">8</span><span class="o">];</span>
+<span class="ln">2</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">byteRes</span><span class="o">);</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/bytebuffer/bytebuffer_16.png" title="读byte类型数据图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/bytebuffer/bytebuffer_16.png"  alt="读byte类型数据图">
+  
+    </a>
+  
+   
+    <span class="caption">读byte类型数据图</span>
+  
+</div>
+
+<h3 id="读char类型数据">读char类型数据</h3>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">getChar</span><span class="o">();</span>
+<span class="ln">2</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">getChar</span><span class="o">();</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/bytebuffer/bytebuffer_17.png" title="读char类型数据图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/bytebuffer/bytebuffer_17.png"  alt="读char类型数据图">
+  
+    </a>
+  
+   
+    <span class="caption">读char类型数据图</span>
+  
+</div>
+
+<h3 id="读float类型数据">读float类型数据</h3>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">getFloat</span><span class="o">();</span>
+<span class="ln">2</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">getFloat</span><span class="o">();</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/bytebuffer/bytebuffer_18.png" title="读float类型数据图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/bytebuffer/bytebuffer_18.png"  alt="读float类型数据图">
+  
+    </a>
+  
+   
+    <span class="caption">读float类型数据图</span>
+  
+</div>
+
+<h3 id="读double类型数据">读double类型数据</h3>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">getDouble</span><span class="o">();</span>
+<span class="ln">2</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">getDouble</span><span class="o">();</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/bytebuffer/bytebuffer_19.png" title="读double类型数据图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/bytebuffer/bytebuffer_19.png"  alt="读double类型数据图">
+  
+    </a>
+  
+   
+    <span class="caption">读double类型数据图</span>
+  
+</div>
+
+<h2 id="继续写入数据">继续写入数据</h2>
+<p>由于ByteBuffer往往是非阻塞式的，故不能确定新的数据是否已经读完。可以调用<code>ByteBuffer</code>的<code>compact()</code>方法切换到继续写入，模式。该方法就是将 position 到 limit 之间还未读取的数据拷贝到 ByteBuffer 中数组的最前面，然后再将 position 移动至这些数据之后的一位，将 limit 移动至 capacity。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/bytebuffer/bytebuffer_20.png" title="继续写入数据图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/bytebuffer/bytebuffer_20.png"  alt="继续写入数据图">
+  
+    </a>
+  
+   
+    <span class="caption">继续写入数据图</span>
+  
+</div>
+
+<p>可以看到这里的<code>short</code>和<code>long</code>类型并没有读取，把没有读取的数据放到最前面，通过postion来继续在剩下的空间写入。</p>
+<h3 id="继续写入int类型数据">继续写入int类型数据</h3>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="n">exampleBuffer</span><span class="o">.</span><span class="na">putInt</span><span class="o">(</span><span class="n">0x20220301</span><span class="o">);</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/bytebuffer/bytebuffer_20.png" title="写入int类型数据图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/bytebuffer/bytebuffer_20.png"  alt="写入int类型数据图">
+  
+    </a>
+  
+   
+    <span class="caption">写入int类型数据图</span>
+  
+</div>
+
+<h2 id="总结">总结</h2>
+<p>ByteBuffer的基本用法</p>
+<p><strong>复位</strong></p>
+<p><code>clear</code>、<code>rewind</code>、<code>flip</code></p>
+<p><strong>写入数据</strong></p>
+<p><code>putXX</code></p>
+<p><strong>读取数据</strong></p>
+<p><code>getXX</code></p>
+<p><strong>重新写入</strong></p>
+<p><code>compact</code></p>
 <h1 id="2共享内存">2.共享内存</h1>
-<p>通过<code>allocateDirect</code>实现</p>
-<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="ln">1</span><span class="k">private</span> <span class="nx">ByteBuffer</span> <span class="nx">_recBuffer</span><span class="p">;</span>
+<p>除了上述的<code>NIO</code>特性之外，ByteBuffer实际上有一个实现类，底层原理用到了共享内存。</p>
+<p>共享内存，通过<code>allocateDirect</code>实现，举例如下</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="kd">private</span> <span class="n">ByteBuffer</span> <span class="n">_recBuffer</span><span class="o">;</span>
 <span class="ln">2</span> 
-<span class="ln">3</span> <span class="k">try</span><span class="p">{</span>
-<span class="ln">4</span>    <span class="nx">_recBuffer</span> <span class="o">=</span> <span class="nx">ByteBuffer</span><span class="o">.</span><span class="nx">allocateDirect</span><span class="p">(</span><span class="mi">204800</span><span class="p">);</span> <span class="c1">// Max 10 ms @ 48
-</span><span class="ln">5</span><span class="c1"></span>    <span class="p">}</span> <span class="k">catch</span><span class="p">(</span><span class="nx">Exception</span> <span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln">6</span>      <span class="nx">Log</span><span class="o">.</span><span class="nx">d</span><span class="p">(</span><span class="s2">&#34;UVCCamera&#34;</span><span class="p">,</span><span class="s2">&#34;can not get _capBuffer&#34;</span><span class="p">);</span>
-<span class="ln">7</span>    <span class="p">}</span>
-</code></pre></div><blockquote>
-<p>直接allocate和allocateDirect区别</p>
+<span class="ln">3</span> <span class="k">try</span><span class="o">{</span>
+<span class="ln">4</span>    <span class="n">_recBuffer</span> <span class="o">=</span> <span class="n">ByteBuffer</span><span class="o">.</span><span class="na">allocateDirect</span><span class="o">(</span><span class="n">204800</span><span class="o">);</span> <span class="c1">// Max 10 ms @ 48
+</span><span class="ln">5</span><span class="c1"></span>    <span class="o">}</span> <span class="k">catch</span><span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">6</span>      <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="s">&#34;UVCCamera&#34;</span><span class="o">,</span><span class="s">&#34;can not get _capBuffer&#34;</span><span class="o">);</span>
+<span class="ln">7</span>    <span class="o">}</span>
+</code></pre></div><h3 id="allocate和allocatedirect区别">allocate和allocateDirect区别</h3>
 <p>第一种分配方式产生的内存开销是在JVM中的，而另外一种的分配方式产生的开销在JVM之外，以就是系统级的内存分配。当Java程序接收到外部传来的数据时，首先是被系统内存所获取，然后在由系统内存复制复制到JVM内存中供Java程序使用。所以在另外一种分配方式中，能够省去复制这一步操作，效率上会有所提高。可是系统级内存的分配比起JVM内存的分配要耗时得多，所以并非不论什么时候allocateDirect的操作效率都是最高的。</p>
-</blockquote>
+<blockquote>
 <ol>
-<li>MappedByteBuffer使用虚拟内存，因此分配(map)的内存大小不受JVM的-Xmx参数限制，但是也是有大小限制的。</li>
-<li>如果当文件超出1.5G限制时，可以通过position参数重新map文件后面的内容。</li>
-<li>MappedByteBuffer在处理大文件时的确性能很高，但也存在一些问题，如内存占用、文件关闭不确定，被其打开的文件只有在垃圾回收的才会被关闭，而且这个时间点是不确定的。
-javadoc中也提到：<strong>A mapped byte buffer and the file mapping that it represents remain valid until the buffer itself is garbage-collected.</strong></li>
+<li>
+<p>MappedByteBuffer使用虚拟内存，因此分配(map)的内存大小不受JVM的-Xmx参数限制，但是也是有大小限制的。</p>
+</li>
+<li>
+<p>如果当文件超出1.5G限制时，可以通过position参数重新map文件后面的内容。</p>
+</li>
+<li>
+<p>MappedByteBuffer在处理大文件时的确性能很高，但也存在一些问题，如内存占用、文件关闭不确定，被其打开的文件只有在垃圾回收的才会被关闭，而且这个时间点是不确定的。
+javadoc中也提到：<strong>A mapped byte buffer and the file mapping that it represents remain valid until the buffer itself is garbage-collected.</strong></p>
+<p>具体原理可参考这按文章<a href="https://blog.csdn.net/linxdcn/article/details/72903422">【Java8源码分析】NIO包-Buffer类：内存映射文件DirectByteBuffer与MappedByteBuffer（二）</a></p>
+</li>
 </ol>
-<p><a href="https://blog.csdn.net/mrliuzhao/article/details/89453082">https://blog.csdn.net/mrliuzhao/article/details/89453082</a></p>
+</blockquote>
+<h3 id="共享内存的实例">共享内存的实例</h3>
+<p>Java端创建一个共享内存Bytebuffer实例，可以通过反射或者传入的方式，使得jni层也能够通过C++的方式去操作这个ByteBuffer实例。</p>
 <p>两种方式在jni获取</p>
 <p>1.通过类似java反射获取到java属性的值</p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//第一种方式
@@ -554,7 +1230,6 @@ javadoc中也提到：<strong>A mapped byte buffer and the file mapping that it 
 <span class="ln">26</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
 <span class="ln">27</span>        <span class="n">_javaDirectRecBuffer</span> <span class="o">=</span><span class="n">env</span><span class="o">-&gt;</span><span class="n">GetDirectBufferAddress</span><span class="p">(</span><span class="n">_javaRecBuffer</span><span class="p">);</span>
 <span class="ln">28</span>    <span class="p">}</span>
-<span class="ln">29</span>
 </code></pre></div><p>2.直接通过java端传入</p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//第二种方式
 </span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="n">g_audioQueueLenByAudioRecorder</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
@@ -566,9 +1241,41 @@ javadoc中也提到：<strong>A mapped byte buffer and the file mapping that it 
 <span class="ln"> 8</span>    <span class="n">g_audioBufFromJava</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">env</span><span class="o">-&gt;</span><span class="n">GetDirectBufferAddress</span><span class="p">(</span><span class="n">audioBuf</span><span class="p">);</span>
 <span class="ln"> 9</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 <span class="ln">10</span><span class="p">}</span>
-<span class="ln">11</span>    
-</code></pre></div><h1 id="3关于大小端字节序">3.关于大小端字节序</h1>
-<p><img src="D:%5Chugo%5CMyBlog%5Cstatic%5Cbytebuffer%5Cbytebuffer_1.png" alt="bytebuffer_1"></p>
+</code></pre></div><h3 id="总结-1">总结</h3>
+<p>共享内存是一种优秀的内存分配方式，提供给了开发者新的方式，使得C++可以操控Java分配的共享内存后可以同步到Java端。共享内存通过<code>allocateDirect()</code>方法去实现。</p>
+<h1 id="3关于大小端字节序">3.关于大小端字节序</h1>
+<p>本文使用的都是大端字节序，但是为了进一步说明大小端的区别，这里通过图文的形式来说明。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/bytebuffer/bytebuffer_1.png" title="大小端区别图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/bytebuffer/bytebuffer_1.png"  alt="大小端区别图">
+  
+    </a>
+  
+   
+    <span class="caption">大小端区别图</span>
+  
+</div>
+
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//c++示例
 </span><span class="ln"> 2</span><span class="c1">//小端排列
 </span><span class="ln"> 3</span><span class="c1"></span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
@@ -587,9 +1294,38 @@ javadoc中也提到：<strong>A mapped byte buffer and the file mapping that it 
 <span class="ln">16</span>    <span class="n">number</span><span class="p">.</span><span class="n">half</span><span class="p">.</span><span class="n">second</span> <span class="o">=</span> <span class="sc">&#39;b&#39;</span><span class="p">;</span>
 <span class="ln">17</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;%x</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">number</span><span class="p">.</span><span class="n">i</span><span class="p">);</span><span class="c1">//0x6261
 </span><span class="ln">18</span><span class="c1"></span><span class="p">}</span>
-</code></pre></div><p><img src="D:%5Chugo%5CMyBlog%5Cstatic%5Cbytebuffer%5Cbytebuffer_2.png" alt="bytebuffer_2"></p>
-<p>结论：</p>
-<p>在80X86平台上，系统将多字节中的低位存储在变量起始地址，使用小端法。htonl将i_num转换成网络字节序，可见网络字节序是大端法。</p>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/bytebuffer/bytebuffer_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/bytebuffer/bytebuffer_2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="结论">结论</h3>
+<p>在80X86平台上，系统将多字节中的低位存储在变量起始地址使用小端法。</p>
+<p>网络字节序，系统将多字节中的高位存储在变量起始地址使用大端法。</p>
 <h1 id="参考文献">参考文献</h1>
 <p><a href="https://www.cnblogs.com/crazymakercircle/p/15625329.html">[1] 疯狂创客圈. MappedByteBuffer 详解（图解+秒懂+史上最全）, 2021.</a></p>
 <p><a href="https://www.cnblogs.com/chap-xw/p/11872001.html">[2] 东风快递员.Notepad++配置HexEditor插件 , 2019.</a></p>
@@ -599,6 +1335,7 @@ javadoc中也提到：<strong>A mapped byte buffer and the file mapping that it 
 <p><a href="https://docs.oracle.com/javase/7/docs/api/java/nio/ByteBuffer.html">[6] java.nio Class ByteBuffer&ndash;官方文档</a></p>
 <p><a href="https://blog.csdn.net/xialong_927/article/details/81044759">[7] 沧海龙腾LV.JAVA NIO缓冲区(Buffer)&mdash;&mdash;ByteBuffer常用方法详解, 2018.</a></p>
 <p><a href="https://www.runoob.com/java/java-basic-datatypes.html">[8] 菜鸟教程.Java 基本数据类型.</a></p>
+<p><a href="https://blog.csdn.net/linxdcn/article/details/72903422">[9] linxdcn.【Java8源码分析】NIO包-Buffer类：内存映射文件DirectByteBuffer与MappedByteBuffer（二）, 2017.</a></p>
               
             </div>
           </div>
