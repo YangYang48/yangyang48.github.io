@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="在当前编译平台下，编译出来的程序能运行在另一种目标平台上，但是编译平台本身却不能运行该程序。而我们在linux服务器编译的库可以直接在Android工程中编译。">
+
+
+<meta property="og:description" content="在当前编译平台下，编译出来的程序能运行在另一种目标平台上，但是编译平台本身却不能运行该程序。而我们在linux服务器编译的库可以直接在Android工程中编译。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="linux2 NDK交叉编译">
+<meta name="twitter:title" content="linux2 NDK交叉编译">
+<meta property="og:url" content="https://yangyang48.github.io/2022/03/linux2-ndk%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2022/03/linux2-ndk%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="在当前编译平台下，编译出来的程序能运行在另一种目标平台上，但是编译平台本身却不能运行该程序。而我们在linux服务器编译的库可以直接在Android工程中编译。">
+<meta name="twitter:description" content="在当前编译平台下，编译出来的程序能运行在另一种目标平台上，但是编译平台本身却不能运行该程序。而我们在linux服务器编译的库可以直接在Android工程中编译。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2022-03-06T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2022-03-06T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="NDK">
+    
+      <meta property="article:section" content="2022">
+    
+      <meta property="article:section" content="March">
+    
+  
+  
+    
+      <meta property="article:tag" content="linux">
+    
+      <meta property="article:tag" content="Android">
+    
+      <meta property="article:tag" content="交叉编译">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/linux/linux2_thumb.jpeg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/linux/linux2_thumb.jpeg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/linux/linux2_cover.jpeg.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/linux/linux2_cover.jpeg.jpg">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>linux2 NDK交叉编译</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2022/03/linux2-ndk%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/linux/linux2_cover.jpeg.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      linux2 NDK交叉编译
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2022-03-06T00:00:00Z">
+        
+  三月 6, 2022
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/ndk">NDK</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2022">2022</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/march">March</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">600 Words|Read in about 3 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>在当前编译平台下，编译出来的程序能运行在另一种目标平台上，但是编译平台本身却不能运行该程序。而我们在linux服务器编译的库可以直接在Android工程中编译。</p>
+<p>交叉编译</p>
+<h1 id="1编译简单的交叉编译">1.编译简单的交叉编译</h1>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1">#ubuntu下载命令</span>
+<span class="ln">2</span>sudo apt-get install xxx
+<span class="ln">3</span><span class="c1">#centOs下载命令</span>
+<span class="ln">4</span>sudo yum install xxx
+<span class="ln">5</span><span class="c1"># 下载文件命令，两者都可用</span>
+<span class="ln">6</span>sudo wget xxx<span class="o">(</span>下载地址<span class="o">)</span>
+<span class="ln">7</span><span class="c1"># NDK下载地址</span>
+<span class="ln">8</span>sudo wget https://dl.google.com/android/repository/android-ndk-r17c-linux-x86_64.zip?
+<span class="ln">9</span><span class="nv">hl</span><span class="o">=</span>zh_cn
+</code></pre></div><p>查看手机 CPU架构（arm64-v8a架构）</p>
+<p>笔者用得是root过的红米5手机，Android8.1，Api版本27。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>picasso:/ $ cat /proc/cpuinfo
+<span class="ln">2</span><span class="c1"># arm64的</span>
+<span class="ln">3</span>Processor       : AArch64 Processor rev <span class="m">14</span> <span class="o">(</span>aarch64<span class="o">)</span>
+</code></pre></div><p>error01:stdio.h: No such file or directory</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>yangyang@iZbp1788g5aoi5p9z8e0ugZ:~/other$ <span class="nb">export</span> <span class="nv">NDK_GCC</span><span class="o">=</span><span class="s2">&#34;/home/yangyang/NDK/android-ndk-r17c/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/bin/aarch64-linux-android-gcc&#34;</span>
+<span class="ln">2</span>yangyang@iZbp1788g5aoi5p9z8e0ugZ:~/other$ <span class="nv">$NDK_GCC</span> ndk01.c -o ndk01_exe         ndk01.c:1:19: fatal error: stdio.h: No such file or directory
+<span class="ln">3</span> <span class="c1">#include &lt;stdio.h&gt;</span>
+<span class="ln">4</span>                   ^
+<span class="ln">5</span>compilation terminated.
+</code></pre></div><p>注：这里需要写全路径，不能写成~/NDK/android-ndk-r17c/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/arm-linux-androideabi-gcc会提示找不到路径</p>
+<p>error02: undefined reference to &lsquo;main&rsquo;</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span>/home/yangyang/NDK/android-ndk-r17c/platforms/android-28/arch-arm64
+<span class="ln"> 2</span>
+<span class="ln"> 3</span>/home/yangyang/NDK/android-ndk-r17c/sysroot/usr/include
+<span class="ln"> 4</span>
+<span class="ln"> 5</span>/home/yangyang/NDK/android-ndk-r17c/sysroot/usr/include/aarch64-linux-android
+<span class="ln"> 6</span>
+<span class="ln"> 7</span><span class="nb">export</span> <span class="nv">NDKPATH</span><span class="o">=</span><span class="s2">&#34;--sysroot=/home/yangyang/NDK/android-ndk-r17c/platforms/android-27/arch-arm64 -isystem /home/yangyang/NDK/android-ndk-r17c/sysroot/usr/include -isystem /home/yangyang/NDK/android-ndk-r17c/sysroot/usr/include/aarch64-linux-android&#34;</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span>yangyang@iZbp1788g5aoi5p9z8e0ugZ:~/other$ <span class="nv">$NDK_GCC</span> <span class="nv">$NDKPATH</span> ndk01.c -o ndk_EXE
+<span class="ln">10</span>/home/yangyang/NDK/android-ndk-r17c/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9.x/../../../../arm-linux-androideabi/bin/ld: error: /tmp/ccetB5z2.o: incompatible target
+<span class="ln">11</span>/home/yangyang/NDK/android-ndk-r17c/platforms/android-28/arch-arm64/usr/lib/crtbegin_dynamic.o:crtbegin.c:function _start_main: error: undefined reference to <span class="s1">&#39;main&#39;</span>
+<span class="ln">12</span>/home/yangyang/NDK/android-ndk-r17c/platforms/android-28/arch-arm64/usr/lib/crtbegin_dynamic.o:crtbegin.c:function _start_main: error: undefined reference to <span class="s1">&#39;main&#39;</span>
+<span class="ln">13</span>collect2: error: ld returned <span class="m">1</span> <span class="nb">exit</span> status
+</code></pre></div><p>上述问题，可能是两种情况引起的。</p>
+<p>第一种情况：配置的NDK_GCC和NDKPATH中的工具链版本不一致（32不能匹配64）。</p>
+<p>第二种情况：需要增加请在编译命令中加上**-shared** 或加在LD_FLAGS 后。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>yangyang@iZbp1788g5aoi5p9z8e0ugZ:~/other$ <span class="nv">$NDK_GCC</span> <span class="nv">$NDKPATH</span> ndk01.c -o ndk_EXE
+<span class="ln">2</span>yangyang@iZbp1788g5aoi5p9z8e0ugZ:~/other$ ls -al
+<span class="ln">3</span>-rw-rw-r--  <span class="m">1</span> yangyang yangyang   <span class="m">82</span> Mar  <span class="m">6</span> 10:31 ndk01.c
+<span class="ln">4</span>-rwxrwxr-x  <span class="m">1</span> yangyang yangyang <span class="m">7832</span> Mar  <span class="m">6</span> 11:17 ndk_EXE
+</code></pre></div><p>手机中验证如下</p>
+<p>error03：position-independent executables (-fPIE)</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>vince:/data <span class="c1"># ./ndk_EXE</span>
+<span class="ln">2</span><span class="s2">&#34;./ndk_EXE&#34;</span>: error: Android 5.0 and later only support position-independent executables <span class="o">(</span>-fPIE<span class="o">)</span>.
+</code></pre></div><p>服务器编译的时候加上pie</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>yangyang@iZbp1788g5aoi5p9z8e0ugZ:~/other$ <span class="nv">$NDK_GCC</span> -pie <span class="nv">$NDKPATH</span> ndk01.c -o ndk_EXE
+</code></pre></div><p>在手机中继续验证</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>$ adb push C:<span class="se">\U</span>sers<span class="se">\A</span>dmin<span class="se">\D</span>esktop<span class="se">\n</span>dk_EXE /data
+<span class="ln">2</span>C:<span class="se">\U</span>sers<span class="se">\A</span>dmin<span class="se">\D</span>esktop<span class="se">\n</span>dk_EXE: <span class="m">1</span> file pushed. 1.3 MB/s <span class="o">(</span><span class="m">7832</span> bytes in 0.006s<span class="o">)</span>
+<span class="ln">3</span>1<span class="p">|</span>vince:/data <span class="c1"># ls -al ndk_EXE</span>
+<span class="ln">4</span>-rw-rw-rw- <span class="m">1</span> root root <span class="m">7832</span> 2022-03-06 17:42 ndk_EXE
+<span class="ln">5</span>vince:/data <span class="c1"># chmod +x ndk_EXE</span>
+<span class="ln">6</span>vince:/data <span class="c1"># ./ndk_EXE</span>
+<span class="ln">7</span>-&gt;&gt;&gt;hello world!
+</code></pre></div><p>每次配置环境变量比较麻烦，一般直接在linux服务器中添加到内部环境变量中。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1">#【i686-xx x86=32】</span>
+<span class="ln">2</span><span class="nb">export</span> <span class="nv">NDK_GCC_x86</span><span class="o">=</span><span class="s2">&#34;/home/yangyang/NDK/android-ndk-r17c/toolchains/x86-4.9/prebuilt/linux-x86_64/bin/i686-linux-android-gcc&#34;</span>
+<span class="ln">3</span><span class="c1">#【x86_64-xx x86_64=64】</span>
+<span class="ln">4</span><span class="nb">export</span> <span class="nv">NDK_GCC_x64</span><span class="o">=</span><span class="s2">&#34;/home/yangyang/NDK/android-ndk-r17c/toolchains/x86_64-4.9/prebuilt/linux-x86_64/bin/x86_64-linux-android-gcc&#34;</span>
+<span class="ln">5</span><span class="c1">#【arm32 == arm-linuxandroideabi-gcc】</span>
+<span class="ln">6</span><span class="nb">export</span> <span class="nv">NDK_GCC_arm</span><span class="o">=</span><span class="s2">&#34;/home/yangyang/NDK/android-ndk-r17c/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/arm-linux-androideabi-gcc&#34;</span>
+<span class="ln">7</span><span class="c1">#【arm64 == aarch64-linux-android-gcc】</span>
+<span class="ln">8</span><span class="nb">export</span> <span class="nv">NDK_GCC_arm_64</span><span class="o">=</span><span class="s2">&#34;/home/yangyang/NDK/android-ndk-r17c/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/bin/aarch64-linux-android-gcc&#34;</span>
+</code></pre></div><div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="nb">export</span> <span class="nv">NDK_CFIG_x86</span><span class="o">=</span><span class="s2">&#34;--sysroot=/home/yangyang/NDK/android-ndk-r17c/platforms/android-27/arch-x86/ -isystem /home/yangyang/NDK/android-ndk-r17c/sysroot/usr/include -isystem /home/yangyang/NDK/android-ndk-r17c/sysroot/usr/include/i686-linux-android&#34;</span>
+<span class="ln">2</span>
+<span class="ln">3</span><span class="nb">export</span> <span class="nv">NDK_CFIG_x64</span><span class="o">=</span><span class="s2">&#34;--sysroot=/home/yangyang/NDK/android-ndk-r17c/platforms/android-27/arch-x86_64/ -isystem /home/yangyang/NDK/android-ndk-r17c/sysroot/usr/include -isystem /home/yangyang/NDK/android-ndk-r17c/sysroot/usr/include/x86_64-linux-android&#34;</span>
+<span class="ln">4</span>
+<span class="ln">5</span><span class="nb">export</span> <span class="nv">NDK_CFIG_arm</span><span class="o">=</span><span class="s2">&#34;--sysroot=/home/yangyang/NDK/android-ndk-r17c/platforms/android-27/arch-arm/ -isystem /home/yangyang/NDK/android-ndk-r17c/sysroot/usr/include -isystem /home/yangyang/NDK/android-ndk-r17c/sysroot/usr/include/arm-linux-androideabi&#34;</span>
+<span class="ln">6</span>
+<span class="ln">7</span><span class="nb">export</span> <span class="nv">NDK_CFIG_arm_64</span><span class="o">=</span><span class="s2">&#34;--sysroot=/home/yangyang/NDK/android-ndk-r17c/platforms/android-27/arch-arm64/ -isystem /home/yangyang/NDK/android-ndk-r17c/sysroot/usr/include -isystem /home/yangyang/NDK/android-ndk-r17c/sysroot/usr/include/aarch64-linux-android&#34;</span>
+</code></pre></div><div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1">#方法1：让/etc/profile文件修改后立即生效 ,可以使用如下命令:</span>
+<span class="ln">2</span>.  /etc/profile
+<span class="ln">3</span><span class="c1">#注意: . 和 /etc/profile 有空格</span>
+<span class="ln">4</span><span class="c1">#方法2：让/etc/profile文件修改后立即生效 ,可以使用如下命令:</span>
+<span class="ln">5</span><span class="nb">source</span> /etc/profile
+</code></pre></div><h1 id="2交叉编译动态库">2.交叉编译动态库</h1>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>yangyang@iZbp1788g5aoi5p9z8e0ugZ:~/other$ <span class="nv">$NDK_GCC_arm_64</span> <span class="nv">$NDK_CFIG_arm_64</span> -fPIC -shared get.c -o libgetndkso.so
+<span class="ln">2</span>
+<span class="ln">3</span>yangyang@iZbp1788g5aoi5p9z8e0ugZ:~/other$ file libgetndkso.so
+<span class="ln">4</span>libgetndkso.so: ELF 64-bit LSB shared object, ARM aarch64, version <span class="m">1</span> <span class="o">(</span>SYSV<span class="o">)</span>, dynamically linked, not stripped
+</code></pre></div><p>查看是否为get函数</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>yangyang@iZbp1788g5aoi5p9z8e0ugZ:~/other$ nm -D libgetndkso.so <span class="p">|</span>awk <span class="s1">&#39;{if($2 == &#34;T&#34;){print $3}}&#39;</span>
+<span class="ln">2</span>get
+</code></pre></div><h1 id="3交叉编译静态库">3.交叉编译静态库</h1>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="nb">export</span> <span class="nv">NDK_AR_x86</span><span class="o">=</span><span class="s2">&#34;/home/yangyang/NDK/android-ndk-r17c/toolchains/x86-4.9/prebuilt/linux-x86_64/bin/i686-linux-android-ar&#34;</span>
+<span class="ln">2</span><span class="nb">export</span> <span class="nv">NDK_AR_x64</span><span class="o">=</span><span class="s2">&#34;/home/yangyang/NDK/android-ndk-r17c/toolchains/x86_64-4.9/prebuilt/linux-x86_64/bin/x86_64-linux-android-ar&#34;</span>
+<span class="ln">3</span><span class="nb">export</span> <span class="nv">NDK_AR_arm</span><span class="o">=</span><span class="s2">&#34;/home/yangyang/NDK/android-ndk-r17c/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/arm-linux-androideabi-ar&#34;</span>
+<span class="ln">4</span><span class="nb">export</span> <span class="nv">NDK_AR_arm_64</span><span class="o">=</span><span class="s2">&#34;/home/yangyang/NDK/android-ndk-r17c/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/bin/aarch64-linux-android-ar&#34;</span>
+</code></pre></div><div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>yangyang@iZbp1788g5aoi5p9z8e0ugZ:~/other$ <span class="nv">$NDK_GCC_arm_64</span> <span class="nv">$NDK_CFIG_arm_64</span> -fPIC -c get.c -o getndka.o
+<span class="ln">2</span>yangyang@iZbp1788g5aoi5p9z8e0ugZ:~/other$ <span class="nv">$NDK_AR_arm_64</span> rcs -o libgetndka.a getndka.o
+</code></pre></div><h1 id="4android-studio编译验证">4.Android Studio编译验证</h1>
+<p>配置文件</p>
+<p>cmake</p>
+<h2 id="静态库">静态库</h2>
+<div class="highlight"><pre class="chroma"><code class="language-cmake" data-lang="cmake"><span class="ln"> 1</span><span class="nb">cmake_minimum_required</span><span class="p">(</span><span class="s">VERSION</span> <span class="s">3.10.2</span><span class="p">)</span><span class="err">
+</span><span class="ln"> 2</span><span class="err">
+</span><span class="ln"> 3</span><span class="err"></span><span class="nb">project</span><span class="p">(</span><span class="s2">&#34;mycrosscompile&#34;</span><span class="p">)</span><span class="err">
+</span><span class="ln"> 4</span><span class="err">
+</span><span class="ln"> 5</span><span class="err"></span><span class="nb">file</span><span class="p">(</span><span class="s">GLOB</span> <span class="s">allCPP</span> <span class="s">*.cpp</span><span class="p">)</span><span class="err">
+</span><span class="ln"> 6</span><span class="err">
+</span><span class="ln"> 7</span><span class="err"></span><span class="nb">add_library</span><span class="p">(</span> <span class="c"># Sets the name of the library.
+</span><span class="ln"> 8</span><span class="c"></span>             <span class="s">native-lib</span>
+<span class="ln"> 9</span>             <span class="s">SHARED</span>
+<span class="ln">10</span>             <span class="o">${</span><span class="nv">allCPP</span><span class="o">}</span> <span class="p">)</span><span class="err">
+</span><span class="ln">11</span><span class="err">
+</span><span class="ln">12</span><span class="err"></span><span class="nb">find_library</span><span class="p">(</span> <span class="c"># Sets the name of the path variable.
+</span><span class="ln">13</span><span class="c"></span>              <span class="s">log-lib</span>
+<span class="ln">14</span>              <span class="s">log</span> <span class="p">)</span><span class="err">
+</span><span class="ln">15</span><span class="err">
+</span><span class="ln">16</span><span class="err"></span><span class="c">## 导入静态库,这里的import是一个标识
+</span><span class="ln">17</span><span class="c"></span><span class="nb">add_library</span><span class="p">(</span><span class="s">getStaticNdk</span> <span class="s">STATIC</span> <span class="s">IMPORTED</span><span class="p">)</span><span class="err">
+</span><span class="ln">18</span><span class="err">
+</span><span class="ln">19</span><span class="err"></span><span class="nb">set_target_properties</span><span class="p">(</span><span class="s">getStaticNdk</span> <span class="s">PROPERTIES</span> <span class="s">IMPORTED_LOCATION</span> <span class="o">${</span><span class="nv">CMAKE_SOURCE_DIR</span><span class="o">}</span><span class="s">/libgetndka.a</span><span class="p">)</span><span class="err">
+</span><span class="ln">20</span><span class="err">
+</span><span class="ln">21</span><span class="err"></span><span class="nb">target_link_libraries</span><span class="p">(</span> <span class="c"># Specifies the target library.
+</span><span class="ln">22</span><span class="c"></span>        <span class="s">native-lib</span>
+<span class="ln">23</span>        <span class="o">${</span><span class="nv">log-lib</span><span class="o">}</span>
+<span class="ln">24</span>        <span class="s">getStaticNdk</span><span class="p">)</span><span class="err">
+</span></code></pre></div><h2 id="动态库">动态库</h2>
+<p>2 files found with path &lsquo;lib/arm64-v8a/libgetndkso.so&rsquo;.
+If you are using jniLibs and CMake IMPORTED targets, see
+<a href="https://developer.android.com/r/tools/jniLibs-vs-imported-targets">https://developer.android.com/r/tools/jniLibs-vs-imported-targets</a></p>
+<div class="highlight"><pre class="chroma"><code class="language-cmake" data-lang="cmake"><span class="ln"> 1</span><span class="nb">cmake_minimum_required</span><span class="p">(</span><span class="s">VERSION</span> <span class="s">3.10.2</span><span class="p">)</span><span class="err">
+</span><span class="ln"> 2</span><span class="err">
+</span><span class="ln"> 3</span><span class="err"></span><span class="nb">project</span><span class="p">(</span><span class="s2">&#34;mycrosscompile&#34;</span><span class="p">)</span><span class="err">
+</span><span class="ln"> 4</span><span class="err">
+</span><span class="ln"> 5</span><span class="err"></span><span class="nb">file</span><span class="p">(</span><span class="s">GLOB</span> <span class="s">allCPP</span> <span class="s">*.cpp</span><span class="p">)</span><span class="err">
+</span><span class="ln"> 6</span><span class="err">
+</span><span class="ln"> 7</span><span class="err"></span><span class="nb">add_library</span><span class="p">(</span> <span class="c"># Sets the name of the library.
+</span><span class="ln"> 8</span><span class="c"></span>             <span class="s">native-lib</span>
+<span class="ln"> 9</span>             <span class="s">SHARED</span>
+<span class="ln">10</span>             <span class="o">${</span><span class="nv">allCPP</span><span class="o">}</span> <span class="p">)</span><span class="err">
+</span><span class="ln">11</span><span class="err">
+</span><span class="ln">12</span><span class="err"></span><span class="nb">find_library</span><span class="p">(</span> <span class="c"># Sets the name of the path variable.
+</span><span class="ln">13</span><span class="c"></span>              <span class="s">log-lib</span>
+<span class="ln">14</span>              <span class="s">log</span> <span class="p">)</span><span class="err">
+</span><span class="ln">15</span><span class="err">
+</span><span class="ln">16</span><span class="err"></span><span class="c">## 导入静态库,这里的import是一个标识
+</span><span class="ln">17</span><span class="c">#add_library(getStaticNdk STATIC IMPORTED)
+</span><span class="ln">18</span><span class="c"></span><span class="err">
+</span><span class="ln">19</span><span class="err"></span><span class="c">#set_target_properties(getStaticNdk PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/libgetndka.a)
+</span><span class="ln">20</span><span class="c"></span><span class="err">
+</span><span class="ln">21</span><span class="err"></span><span class="c">## 导入动态库,这里的import是一个标识
+</span><span class="ln">22</span><span class="c"></span><span class="nb">add_library</span><span class="p">(</span><span class="s">getSharedNdk</span> <span class="s">SHARED</span> <span class="s">IMPORTED</span><span class="p">)</span><span class="err">
+</span><span class="ln">23</span><span class="err">
+</span><span class="ln">24</span><span class="err"></span><span class="nb">set_target_properties</span><span class="p">(</span><span class="s">getSharedNdk</span> <span class="s">PROPERTIES</span> <span class="s">IMPORTED_LOCATION</span>
+<span class="ln">25</span>        <span class="o">${</span><span class="nv">CMAKE_SOURCE_DIR</span><span class="o">}</span><span class="s">/../jniLibs/arm64-v8a/libgetndkso.so</span><span class="p">)</span><span class="err">
+</span><span class="ln">26</span><span class="err">
+</span><span class="ln">27</span><span class="err"></span><span class="nb">target_link_libraries</span><span class="p">(</span> <span class="c"># Specifies the target library.
+</span><span class="ln">28</span><span class="c"></span>        <span class="s">native-lib</span>
+<span class="ln">29</span>        <span class="o">${</span><span class="nv">log-lib</span><span class="o">}</span>
+<span class="ln">30</span>        <span class="s">getSharedNdk</span><span class="p">)</span><span class="err">
+</span></code></pre></div><p>build.gradle</p>
+<div class="highlight"><pre class="chroma"><code class="language-groovy" data-lang="groovy"><span class="ln"> 1</span><span class="n">android</span> <span class="o">{</span>
+<span class="ln"> 2</span>    <span class="n">compileSdkVersion</span> <span class="mi">30</span>
+<span class="ln"> 3</span>    <span class="n">buildToolsVersion</span> <span class="s2">&#34;30.0.3&#34;</span>
+<span class="ln"> 4</span>
+<span class="ln"> 5</span>    <span class="n">defaultConfig</span> <span class="o">{</span>
+<span class="ln"> 6</span>        <span class="n">applicationId</span> <span class="s2">&#34;com.example.mycrosscompile&#34;</span>
+<span class="ln"> 7</span>        <span class="n">minSdkVersion</span> <span class="mi">21</span>
+<span class="ln"> 8</span>        <span class="n">targetSdkVersion</span> <span class="mi">30</span>
+<span class="ln"> 9</span>        <span class="n">versionCode</span> <span class="mi">1</span>
+<span class="ln">10</span>        <span class="n">versionName</span> <span class="s2">&#34;1.0&#34;</span>
+<span class="ln">11</span>
+<span class="ln">12</span>        <span class="n">testInstrumentationRunner</span> <span class="s2">&#34;androidx.test.runner.AndroidJUnitRunner&#34;</span>
+<span class="ln">13</span>        <span class="n">externalNativeBuild</span> <span class="o">{</span>
+<span class="ln">14</span>            <span class="c1">//===========新增
+</span><span class="ln">15</span><span class="c1"></span>            <span class="n">cmake</span> <span class="o">{</span>
+<span class="ln">16</span>                 <span class="c1">//cppFlags&#39;&#39;
+</span><span class="ln">17</span><span class="c1"></span>                <span class="n">abiFilters</span> <span class="s2">&#34;arm64-v8a&#34;</span>
+<span class="ln">18</span>            <span class="o">}</span>
+<span class="ln">19</span>            <span class="c1">//===========
+</span><span class="ln">20</span><span class="c1"></span>        <span class="o">}</span>
+<span class="ln">21</span>        <span class="c1">//===========新增
+</span><span class="ln">22</span><span class="c1"></span>        <span class="n">ndk</span><span class="o">{</span>
+<span class="ln">23</span>            <span class="n">abiFilters</span> <span class="s2">&#34;arm64-v8a&#34;</span>
+<span class="ln">24</span>        <span class="o">}</span>
+<span class="ln">25</span>        <span class="c1">//===========
+</span><span class="ln">26</span><span class="c1"></span>    <span class="o">}</span>
+</code></pre></div><h1 id="4关于手机没有root权限">4.关于手机没有root权限</h1>
+<p>网上有好多刷机工具可选择。笔者用得是红米5的手机，直接可以在官网下载开发版本<a href="https://www.miui.com/download-340.html">红米5 Plus</a>。下载完成之后，根据官网提示手动选择自动安装包，选择下载的开发版本即可。</p>
+<p>没有手动更新选项，需要连续点击MIUI的LOGO10次。</p>
+<p>下载完成后，通过应用权限中开启root权限，稍等片刻即会有root权限。如果应用权限需要通过解锁工具，点击<a href="https://github.com/YangYang48/project/tree/master/miflash_v5.5.224.55">这里</a>下载。</p>
+<p><a href="">本文所有实例代码下载</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/linux/">linux</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/android/">Android</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91/">交叉编译</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/02/bytebuffer%E4%BD%BF%E7%94%A8/" data-tooltip="ByteBuffer使用">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2022 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/02/bytebuffer%E4%BD%BF%E7%94%A8/" data-tooltip="ByteBuffer使用">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2022%2F03%2Flinux2-ndk%25E4%25BA%25A4%25E5%258F%2589%25E7%25BC%2596%25E8%25AF%2591%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2022%2F03%2Flinux2-ndk%25E4%25BA%25A4%25E5%258F%2589%25E7%25BC%2596%25E8%25AF%2591%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2022%2F03%2Flinux2-ndk%25E4%25BA%25A4%25E5%258F%2589%25E7%25BC%2596%25E8%25AF%2591%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2022\/03\/linux2-ndk%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91\/';
+          
+            this.page.identifier = '\/2022\/03\/linux2-ndk%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
