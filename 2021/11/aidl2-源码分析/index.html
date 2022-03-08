@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="aidl一种android接口描述语言，本文主要是对.aidl文件自动生成的.java文件的具体源码进行分析，描述AIDL生成的java类细节。">
+
+
+<meta property="og:description" content="aidl一种android接口描述语言，本文主要是对.aidl文件自动生成的.java文件的具体源码进行分析，描述AIDL生成的java类细节。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AIDL2 源码分析">
+<meta name="twitter:title" content="AIDL2 源码分析">
+<meta property="og:url" content="https://yangyang48.github.io/2021/11/aidl2-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2021/11/aidl2-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="aidl一种android接口描述语言，本文主要是对.aidl文件自动生成的.java文件的具体源码进行分析，描述AIDL生成的java类细节。">
+<meta name="twitter:description" content="aidl一种android接口描述语言，本文主要是对.aidl文件自动生成的.java文件的具体源码进行分析，描述AIDL生成的java类细节。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2021-11-14T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2021-11-14T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="AIDL">
+    
+      <meta property="article:section" content="2021">
+    
+      <meta property="article:section" content="November">
+    
+  
+  
+    
+      <meta property="article:tag" content="Android">
+    
+      <meta property="article:tag" content="IPC">
+    
+      <meta property="article:tag" content="Binder">
+    
+      <meta property="article:tag" content="源码">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/aidl/aidl2_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/aidl/aidl2_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/aidl/aidl2_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/aidl/aidl2_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>AIDL2 源码分析</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2021/11/aidl2-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/aidl/aidl2_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      AIDL2 源码分析
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2021-11-14T00:00:00Z">
+        
+  十一月 14, 2021
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/aidl">AIDL</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2021">2021</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/november">November</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">900 Words|Read in about 4 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>aidl一种android接口描述语言，本文主要是对.aidl文件自动生成的.java文件的具体源码进行分析，描述AIDL生成的java类细节。</p>
+<h1 id="aidl实例分析">AIDL实例分析</h1>
+<h2 id="1客户端的操作">1.客户端的操作</h2>
+<ol>
+<li>
+<p>获取aidl的对象</p>
+</li>
+<li>
+<p>通过获取的对象调用方法（1,2，3&hellip;）</p>
+</li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="ln"> 1</span><span class="n">mContext</span><span class="o">?.</span><span class="n">bindService</span><span class="p">(</span><span class="n">aidlIntent</span><span class="p">,</span> <span class="n">mAidlConnect</span><span class="p">,</span> <span class="n">Context</span><span class="p">.</span><span class="n">BIND_AUTO_CREATE</span><span class="p">)</span>
+<span class="ln"> 2</span>
+<span class="ln"> 3</span><span class="k">private</span> <span class="k">var</span> <span class="py">mAidlConnect</span><span class="p">:</span> <span class="n">ServiceConnection</span> <span class="p">=</span> <span class="k">object</span><span class="p">:</span><span class="n">ServiceConnection</span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="k">override</span> <span class="k">fun</span> <span class="nf">onServiceConnected</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="n">ComponentName</span><span class="p">?,</span> <span class="n">service</span><span class="p">:</span> <span class="n">IBinder</span><span class="p">?)</span> <span class="p">{</span>
+<span class="ln"> 5</span>        <span class="c1">//1.获取aidl的对象
+</span><span class="ln"> 6</span><span class="c1"></span>        <span class="n">mAidlClient</span> <span class="p">=</span> <span class="n">IDataUpdate</span><span class="p">.</span><span class="n">Stub</span><span class="p">.</span><span class="n">asInterface</span><span class="p">(</span><span class="n">service</span><span class="p">)</span>
+<span class="ln"> 7</span>        <span class="n">initView</span><span class="p">()</span>
+<span class="ln"> 8</span>    <span class="p">}</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span>    <span class="k">override</span> <span class="k">fun</span> <span class="nf">onServiceDisconnected</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="n">ComponentName</span><span class="p">?)</span> <span class="p">{</span>
+<span class="ln">11</span>        <span class="n">Log</span><span class="p">.</span><span class="n">d</span><span class="p">(</span><span class="n">TAG</span><span class="p">,</span> <span class="s2">&#34;-&gt;&gt;&gt;mAidl disConnect&#34;</span><span class="p">)</span>
+<span class="ln">12</span>        <span class="n">mAidlClient</span> <span class="p">=</span> <span class="k">null</span>
+<span class="ln">13</span>    <span class="p">}</span>
+<span class="ln">14</span><span class="p">}</span>
+<span class="ln">15</span>
+<span class="ln">16</span><span class="k">private</span> <span class="k">fun</span> <span class="nf">initView</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">17</span>    <span class="c1">//2.通过获取的对象调用方法（1,2，3...）
+</span><span class="ln">18</span><span class="c1"></span>    <span class="k">var</span> <span class="py">ret</span> <span class="p">=</span> <span class="n">mAidlClient</span><span class="o">?.</span><span class="n">StartUp</span><span class="p">()</span>
+<span class="ln">19</span>    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="k">in</span> <span class="m">0</span>  <span class="o">..</span> <span class="m">100</span><span class="p">)</span>
+<span class="ln">20</span>    <span class="p">{</span>
+<span class="ln">21</span>        <span class="n">mAidlClient</span><span class="o">?.</span><span class="n">DialogUpdate</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+<span class="ln">22</span>    <span class="p">}</span>
+<span class="ln">23</span><span class="p">}</span>
+</code></pre></div><h2 id="2服务端的操作">2.服务端的操作</h2>
+<ol start="3">
+<li>
+<p>实现aidl.stub类（继承或者内部匿名的方式）</p>
+</li>
+<li>
+<p>回调中实现方法（1,2,3&hellip;）</p>
+</li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="ln"> 1</span><span class="c1">//1.实现aidl.stub类（继承或者内部匿名的方式）
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">private</span> <span class="k">val</span> <span class="py">dataUpdateBinder</span><span class="p">:</span> <span class="n">IDataUpdate</span><span class="p">.</span><span class="n">Stub</span>  <span class="p">=</span> <span class="k">object</span> <span class="err">: </span><span class="nc">IDataUpdate</span><span class="p">.</span><span class="n">Stub</span><span class="p">(){</span>
+<span class="ln"> 3</span>    <span class="c1">//2.回调中实现方法（1,2,3...）
+</span><span class="ln"> 4</span><span class="c1"></span>    <span class="k">override</span> <span class="k">fun</span> <span class="nf">StartUp</span><span class="p">():</span> <span class="n">Int</span> <span class="p">{</span>
+<span class="ln"> 5</span>        <span class="k">return</span> <span class="m">0</span>
+<span class="ln"> 6</span>    <span class="p">}</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span>    <span class="k">override</span> <span class="k">fun</span> <span class="nf">DialogUpdate</span><span class="p">(</span><span class="n">progress</span><span class="p">:</span> <span class="n">Int</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 9</span>        <span class="k">if</span> <span class="p">(!</span><span class="n">DialogFlag</span><span class="p">)</span> <span class="k">return</span>
+<span class="ln">10</span>        <span class="n">dataUpdate</span><span class="p">(</span><span class="n">progress</span><span class="p">)</span>
+<span class="ln">11</span>    <span class="p">}</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="p">}</span>
+</code></pre></div><p>服务端和客户端之间是通过IDataUpdate.java来做到通信的</p>
+<h1 id="aidl生成的java文件">AIDL生成的java文件</h1>
+<p>首先列出这个java文件的组成，如下图所示，可以看到IDateUpdate.java中除了需要实现的两个方法DialogUpdate和StartUp之外，还有两个类，都实现了IDateUpdate.java的接口。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/aidl/aidl2_3.png" title="IDateUpdate.java组成" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/aidl/aidl2_3.png"  alt="IDateUpdate.java组成">
+  
+    </a>
+  
+   
+    <span class="caption">IDateUpdate.java组成</span>
+  
+</div>
+
+<h2 id="1default类">1.Default类</h2>
+<p>Default类里面就是一个空操作，这里不展开描述</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="cm">/** Default implementation for IDataUpdate. */</span>
+<span class="ln">2</span><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Default</span> <span class="kd">implements</span> <span class="n">com</span><span class="o">.</span><span class="na">example</span><span class="o">.</span><span class="na">aidl</span><span class="o">.</span><span class="na">IDataUpdate</span>
+<span class="ln">3</span><span class="o">{</span>
+<span class="ln">4</span>    <span class="nd">@Override</span> <span class="kd">public</span> <span class="kt">int</span> <span class="nf">StartUp</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">RemoteException</span><span class="o">{</span><span class="k">return</span> <span class="n">0</span><span class="o">;}</span>
+<span class="ln">5</span>    <span class="nd">@Override</span> <span class="kd">public</span> <span class="kt">void</span> <span class="nf">DialogUpdate</span><span class="o">(</span><span class="kt">int</span> <span class="n">progress</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">RemoteException</span><span class="o">{}</span>
+<span class="ln">6</span>    <span class="nd">@Override</span> <span class="kd">public</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">IBinder</span> <span class="nf">asBinder</span><span class="o">()</span> <span class="o">{</span><span class="k">return</span> <span class="kc">null</span><span class="o">;}</span>
+<span class="ln">7</span><span class="o">}</span>
+</code></pre></div><h2 id="2stub类">2.Stub类</h2>
+<p>这里最重要的是Stub类，实现了IDateUpdate.java的接口之外，还继承了Binder，并且可以从IDateUpdate.java整体的结构中看到内部还有一个Proxy.java，同样也实现了IDateUpdate.java的接口。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="kd">public</span> <span class="kd">static</span> <span class="kd">abstract</span> <span class="kd">class</span> <span class="nc">Stub</span> <span class="kd">extends</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Binder</span> <span class="kd">implements</span> <span class="n">com</span><span class="o">.</span><span class="na">example</span><span class="o">.</span><span class="na">aidl</span><span class="o">.</span><span class="na">IDataUpdate</span>
+<span class="ln"> 2</span><span class="o">{</span>
+<span class="ln"> 3</span>    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">String</span> <span class="n">DESCRIPTOR</span> <span class="o">=</span> <span class="s">&#34;com.example.aidl.IDataUpdate&#34;</span><span class="o">;</span>
+<span class="ln"> 4</span>    <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">TRANSACTION_StartUp</span> <span class="o">=</span> <span class="o">(</span><span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">IBinder</span><span class="o">.</span><span class="na">FIRST_CALL_TRANSACTION</span> <span class="o">+</span> <span class="n">0</span><span class="o">);</span>
+<span class="ln"> 5</span>    <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">TRANSACTION_DialogUpdate</span> <span class="o">=</span> <span class="o">(</span><span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">IBinder</span><span class="o">.</span><span class="na">FIRST_CALL_TRANSACTION</span> <span class="o">+</span> <span class="n">1</span><span class="o">);</span>
+<span class="ln"> 6</span>    <span class="kd">public</span> <span class="nf">Stub</span><span class="o">(){</span><span class="k">this</span><span class="o">.</span><span class="na">attachInterface</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="n">DESCRIPTOR</span><span class="o">);}</span>
+<span class="ln"> 7</span>    <span class="kd">public</span> <span class="kd">static</span> <span class="n">com</span><span class="o">.</span><span class="na">example</span><span class="o">.</span><span class="na">aidl</span><span class="o">.</span><span class="na">IDataUpdate</span> <span class="nf">asInterface</span><span class="o">(</span><span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">IBinder</span> <span class="n">obj</span><span class="o">){...}</span>
+<span class="ln"> 8</span>    <span class="nd">@Override</span> <span class="kd">public</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">IBinder</span> <span class="nf">asBinder</span><span class="o">(){</span><span class="k">return</span> <span class="k">this</span><span class="o">;}</span>
+<span class="ln"> 9</span>    <span class="nd">@Override</span> <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">onTransact</span><span class="o">(</span><span class="kt">int</span> <span class="n">code</span><span class="o">,</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Parcel</span> <span class="n">data</span><span class="o">,</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Parcel</span> <span class="n">reply</span><span class="o">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">RemoteException</span><span class="o">{...}</span>
+<span class="ln">10</span>    <span class="c1">//内部类，实现了IDataUpdate接口
+</span><span class="ln">11</span><span class="c1"></span>    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Proxy</span> <span class="kd">implements</span> <span class="n">com</span><span class="o">.</span><span class="na">example</span><span class="o">.</span><span class="na">aidl</span><span class="o">.</span><span class="na">IDataUpdate</span><span class="o">{...}</span>
+<span class="ln">12</span>    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">boolean</span> <span class="nf">setDefaultImpl</span><span class="o">(</span><span class="n">com</span><span class="o">.</span><span class="na">example</span><span class="o">.</span><span class="na">aidl</span><span class="o">.</span><span class="na">IDataUpdate</span> <span class="n">impl</span><span class="o">)</span> <span class="o">{...}</span>
+<span class="ln">13</span>    <span class="kd">public</span> <span class="kd">static</span> <span class="n">com</span><span class="o">.</span><span class="na">example</span><span class="o">.</span><span class="na">aidl</span><span class="o">.</span><span class="na">IDataUpdate</span> <span class="nf">getDefaultImpl</span><span class="o">()</span> <span class="o">{</span><span class="k">return</span> <span class="n">Stub</span><span class="o">.</span><span class="na">Proxy</span><span class="o">.</span><span class="na">sDefaultImpl</span><span class="o">;}</span>
+<span class="ln">14</span><span class="o">}</span>
+</code></pre></div><h1 id="aidl源码流程">AIDL源码流程</h1>
+<h2 id="1从客户端开始首先获取aidl的对象">1.从客户端开始，首先获取aidl的对象</h2>
+<h3 id="1判断是否是跨进程">1）判断是否是跨进程</h3>
+<p>如果是就通过Proxy代理类处理，不然的话就无须Binder。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//获取aidl对象，这里的obj是从onServiceConnected传过来的IBinder对象
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">static</span> <span class="n">com</span><span class="o">.</span><span class="na">example</span><span class="o">.</span><span class="na">aidl</span><span class="o">.</span><span class="na">IDataUpdate</span> <span class="nf">asInterface</span><span class="o">(</span><span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">IBinder</span> <span class="n">obj</span><span class="o">)</span>
+<span class="ln"> 3</span><span class="o">{</span>
+<span class="ln"> 4</span>    <span class="k">if</span> <span class="o">((</span><span class="n">obj</span><span class="o">==</span><span class="kc">null</span><span class="o">))</span> <span class="o">{</span>
+<span class="ln"> 5</span>        <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln"> 6</span>    <span class="o">}</span>
+<span class="ln"> 7</span>    <span class="c1">//查看是否是跨进程,如果是本地就无须进行Binder
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">IInterface</span> <span class="n">iin</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="na">queryLocalInterface</span><span class="o">(</span><span class="n">DESCRIPTOR</span><span class="o">);</span>
+<span class="ln"> 9</span>    <span class="k">if</span> <span class="o">(((</span><span class="n">iin</span><span class="o">!=</span><span class="kc">null</span><span class="o">)&amp;&amp;(</span><span class="n">iin</span> <span class="k">instanceof</span> <span class="n">com</span><span class="o">.</span><span class="na">example</span><span class="o">.</span><span class="na">aidl</span><span class="o">.</span><span class="na">IDataUpdate</span><span class="o">)))</span> <span class="o">{</span>
+<span class="ln">10</span>        <span class="k">return</span> <span class="o">((</span><span class="n">com</span><span class="o">.</span><span class="na">example</span><span class="o">.</span><span class="na">aidl</span><span class="o">.</span><span class="na">IDataUpdate</span><span class="o">)</span><span class="n">iin</span><span class="o">);</span>
+<span class="ln">11</span>    <span class="o">}</span>
+<span class="ln">12</span>    <span class="c1">//属于跨进程，就需要通过Proxy类代理
+</span><span class="ln">13</span><span class="c1"></span>    <span class="k">return</span> <span class="k">new</span> <span class="n">com</span><span class="o">.</span><span class="na">example</span><span class="o">.</span><span class="na">aidl</span><span class="o">.</span><span class="na">IDataUpdate</span><span class="o">.</span><span class="na">Stub</span><span class="o">.</span><span class="na">Proxy</span><span class="o">(</span><span class="n">obj</span><span class="o">);</span>
+<span class="ln">14</span><span class="o">}</span>
+</code></pre></div><h3 id="2querylocalinterface">2）queryLocalInterface</h3>
+<p>这里主要用来检查是否为跨进程，<strong>注意两点</strong>1.传入值descriptor 2.mOwner，这个是Binder的私有属性，后面服务端会阐述作用。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//Binder.java#queryLocalInterface
+</span><span class="ln">2</span><span class="c1">//这里注意两点1。传入值descriptor 2.mOwner，这个是Binder的私有属性
+</span><span class="ln">3</span><span class="c1"></span><span class="kd">public</span> <span class="nd">@Nullable</span> <span class="n">IInterface</span> <span class="nf">queryLocalInterface</span><span class="o">(</span><span class="nd">@NonNull</span> <span class="n">String</span> <span class="n">descriptor</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">4</span>    <span class="k">if</span> <span class="o">(</span><span class="n">mDescriptor</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">mDescriptor</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">descriptor</span><span class="o">))</span> <span class="o">{</span>
+<span class="ln">5</span>        <span class="k">return</span> <span class="n">mOwner</span><span class="o">;</span>
+<span class="ln">6</span>    <span class="o">}</span>
+<span class="ln">7</span>    <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">8</span><span class="o">}</span>
+</code></pre></div><h3 id="3完成检查之后调用proxy的构造">3）完成检查之后，调用Proxy的构造</h3>
+<p>这个构造实际上相当于是Stub对象在内部Proxy类进行<strong>注入</strong>操作。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="kd">private</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">IBinder</span> <span class="n">mRemote</span><span class="o">;</span>
+<span class="ln">2</span><span class="n">Proxy</span><span class="o">(</span><span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">IBinder</span> <span class="n">remote</span><span class="o">)</span>
+<span class="ln">3</span><span class="o">{</span>
+<span class="ln">4</span>    <span class="n">mRemote</span> <span class="o">=</span> <span class="n">remote</span><span class="o">;</span>
+<span class="ln">5</span><span class="o">}</span>
+</code></pre></div><p>最终返回的aidl的对象是Proxy中的mRemote</p>
+<h2 id="2通过获取的对象调用方法123">2.通过获取的对象调用方法（1,2，3&hellip;）</h2>
+<h3 id="1客户端用ibinder调用方法">1）客户端用IBinder调用方法</h3>
+<p>因为实际上的对象就是Proxy类的IBinder，即跨进程的调用方法事件交给代理类。（即客户端调用，在Proxy实现）</p>
+<p>代理类中有两个包，_data和  _reply。可以分别看做是行李包和纪念品包。行李包的特点是从客户端发起向服务端发送的数据，纪念品包是从服务端发起向客户端发送的数据。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="nd">@Override</span> <span class="kd">public</span> <span class="kt">int</span> <span class="nf">StartUp</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">RemoteException</span>
+<span class="ln"> 2</span><span class="o">{</span>
+<span class="ln"> 3</span>    <span class="c1">//android.os.Parcel.obtain这个用到了线程池的操作，跟Message的获取类似，属于享元模式
+</span><span class="ln"> 4</span><span class="c1"></span>    <span class="c1">//行李包
+</span><span class="ln"> 5</span><span class="c1"></span>    <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Parcel</span> <span class="n">_data</span> <span class="o">=</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Parcel</span><span class="o">.</span><span class="na">obtain</span><span class="o">();</span>
+<span class="ln"> 6</span>    <span class="c1">//纪念品包
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Parcel</span> <span class="n">_reply</span> <span class="o">=</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Parcel</span><span class="o">.</span><span class="na">obtain</span><span class="o">();</span>
+<span class="ln"> 8</span>    <span class="kt">int</span> <span class="n">_result</span><span class="o">;</span>
+<span class="ln"> 9</span>    <span class="k">try</span> <span class="o">{</span>
+<span class="ln">10</span>        <span class="n">_data</span><span class="o">.</span><span class="na">writeInterfaceToken</span><span class="o">(</span><span class="n">DESCRIPTOR</span><span class="o">);</span>
+<span class="ln">11</span>        <span class="kt">boolean</span> <span class="n">_status</span> <span class="o">=</span> <span class="n">mRemote</span><span class="o">.</span><span class="na">transact</span><span class="o">(</span><span class="n">Stub</span><span class="o">.</span><span class="na">TRANSACTION_StartUp</span><span class="o">,</span> <span class="n">_data</span><span class="o">,</span> <span class="n">_reply</span><span class="o">,</span> <span class="n">0</span><span class="o">);</span>
+<span class="ln">12</span>        <span class="k">if</span> <span class="o">(!</span><span class="n">_status</span> <span class="o">&amp;&amp;</span> <span class="n">getDefaultImpl</span><span class="o">()</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">13</span>            <span class="k">return</span> <span class="n">getDefaultImpl</span><span class="o">().</span><span class="na">StartUp</span><span class="o">();</span>
+<span class="ln">14</span>        <span class="o">}</span>
+<span class="ln">15</span>        <span class="n">_reply</span><span class="o">.</span><span class="na">readException</span><span class="o">();</span>
+<span class="ln">16</span>        <span class="n">_result</span> <span class="o">=</span> <span class="n">_reply</span><span class="o">.</span><span class="na">readInt</span><span class="o">();</span>
+<span class="ln">17</span>    <span class="o">}</span>
+<span class="ln">18</span>    <span class="k">finally</span> <span class="o">{</span>
+<span class="ln">19</span>        <span class="c1">//清空、回收parcel对象的内存
+</span><span class="ln">20</span><span class="c1"></span>        <span class="n">_reply</span><span class="o">.</span><span class="na">recycle</span><span class="o">();</span>
+<span class="ln">21</span>        <span class="n">_data</span><span class="o">.</span><span class="na">recycle</span><span class="o">();</span>
+<span class="ln">22</span>    <span class="o">}</span>
+<span class="ln">23</span>    <span class="k">return</span> <span class="n">_result</span><span class="o">;</span>
+<span class="ln">24</span><span class="o">}</span>
+<span class="ln">25</span><span class="nd">@Override</span> <span class="kd">public</span> <span class="kt">void</span> <span class="nf">DialogUpdate</span><span class="o">(</span><span class="kt">int</span> <span class="n">progress</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">RemoteException</span>
+<span class="ln">26</span><span class="o">{</span>
+<span class="ln">27</span>    <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Parcel</span> <span class="n">_data</span> <span class="o">=</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Parcel</span><span class="o">.</span><span class="na">obtain</span><span class="o">();</span>
+<span class="ln">28</span>    <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Parcel</span> <span class="n">_reply</span> <span class="o">=</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Parcel</span><span class="o">.</span><span class="na">obtain</span><span class="o">();</span>
+<span class="ln">29</span>    <span class="k">try</span> <span class="o">{</span>
+<span class="ln">30</span>        <span class="n">_data</span><span class="o">.</span><span class="na">writeInterfaceToken</span><span class="o">(</span><span class="n">DESCRIPTOR</span><span class="o">);</span>
+<span class="ln">31</span>        <span class="n">_data</span><span class="o">.</span><span class="na">writeInt</span><span class="o">(</span><span class="n">progress</span><span class="o">);</span>
+<span class="ln">32</span>        <span class="kt">boolean</span> <span class="n">_status</span> <span class="o">=</span> <span class="n">mRemote</span><span class="o">.</span><span class="na">transact</span><span class="o">(</span><span class="n">Stub</span><span class="o">.</span><span class="na">TRANSACTION_DialogUpdate</span><span class="o">,</span> <span class="n">_data</span><span class="o">,</span> <span class="n">_reply</span><span class="o">,</span> <span class="n">0</span><span class="o">);</span>
+<span class="ln">33</span>        <span class="k">if</span> <span class="o">(!</span><span class="n">_status</span> <span class="o">&amp;&amp;</span> <span class="n">getDefaultImpl</span><span class="o">()</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">34</span>            <span class="n">getDefaultImpl</span><span class="o">().</span><span class="na">DialogUpdate</span><span class="o">(</span><span class="n">progress</span><span class="o">);</span>
+<span class="ln">35</span>            <span class="k">return</span><span class="o">;</span>
+<span class="ln">36</span>        <span class="o">}</span>
+<span class="ln">37</span>        <span class="n">_reply</span><span class="o">.</span><span class="na">readException</span><span class="o">();</span>
+<span class="ln">38</span>    <span class="o">}</span>
+<span class="ln">39</span>    <span class="k">finally</span> <span class="o">{</span>
+<span class="ln">40</span>        <span class="n">_reply</span><span class="o">.</span><span class="na">recycle</span><span class="o">();</span>
+<span class="ln">41</span>        <span class="n">_data</span><span class="o">.</span><span class="na">recycle</span><span class="o">();</span>
+<span class="ln">42</span>    <span class="o">}</span>
+<span class="ln">43</span><span class="o">}</span>
+</code></pre></div><p>然后调用到transact会挂起客户端线程，0是同步，1是异步，也可以用android.os.IBinder.FLAG_ONEWAY表示。默认AIDL为同步操作，需要等待_result的返回值，但是异步操作是不需要 _reply的。调用结束之后，每次都会清空、回收parcel对象的内存。</p>
+<blockquote>
+<p><strong>不要在服务端oneway接口中处理耗时操作</strong>，一旦用于高频调用，服务端又处理耗时，再偶尔碰上cpu负荷高，很可能会发生其他关键调用<strong>偶现失败的隐蔽问题，而且很难复现</strong>，隐患就一直在那儿了。具体原因分析<a href="https://www.jianshu.com/p/4c8d346185cb">请点击</a>。</p>
+</blockquote>
+<h3 id="2transact方法">2）transact方法</h3>
+<p>通过Proxy中的transact方法调用，最终调用到Binder.java里面的transact方法，具体的类似Parcel中data操作的setDataPosition的方法含义详见下表，不具体展开说明。</p>
+<p>表1 Parcel一些常用的方法</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">方法名称</th>
+<th style="text-align:left">作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">obtain</td>
+<td style="text-align:left">获得一个新的parcel ，相当于new一个对象</td>
+</tr>
+<tr>
+<td style="text-align:center">dataSize</td>
+<td style="text-align:left">得到当前parcel对象的实际存储空间</td>
+</tr>
+<tr>
+<td style="text-align:center">dataCapacity</td>
+<td style="text-align:left">得到当前parcel对象的已分配的存储空间, &gt;=dataSize()值 (以空间换时间)</td>
+</tr>
+<tr>
+<td style="text-align:center">dataPostion</td>
+<td style="text-align:left">获得当前parcel对象的偏移量(类似于文件流指针的偏移量)</td>
+</tr>
+<tr>
+<td style="text-align:center">setDataPosition</td>
+<td style="text-align:left">设置偏移量</td>
+</tr>
+<tr>
+<td style="text-align:center">recyle</td>
+<td style="text-align:left">清空、回收parcel对象的内存</td>
+</tr>
+<tr>
+<td style="text-align:center">writeInt</td>
+<td style="text-align:left">写入一个整数</td>
+</tr>
+<tr>
+<td style="text-align:center">writeFloat</td>
+<td style="text-align:left">写入一个浮点数</td>
+</tr>
+<tr>
+<td style="text-align:center">writeDouble</td>
+<td style="text-align:left">写入一个双精度数</td>
+</tr>
+<tr>
+<td style="text-align:center">writeString</td>
+<td style="text-align:left">写入一个字符串</td>
+</tr>
+<tr>
+<td style="text-align:center">writeException</td>
+<td style="text-align:left">Parcel队头写入“无异常“</td>
+</tr>
+<tr>
+<td style="text-align:center">readException</td>
+<td style="text-align:left">在Parcel队头读取，若读取值为异常，则抛出该异常；否则，程序正常运行</td>
+</tr>
+</tbody>
+</table>
+<p>可以看到transact方法会调用到onTransact方法，因为这个this是从Proxy传过来，而Proxy的操作的IBinder对象实际是Stub中的IBinder对象，即最终调用到的onTransact，实际上是在Stub中回调的onTransact的方法。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//Binder.java#transact
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">final</span> <span class="kt">boolean</span> <span class="nf">transact</span><span class="o">(</span><span class="kt">int</span> <span class="n">code</span><span class="o">,</span> <span class="nd">@NonNull</span> <span class="n">Parcel</span> <span class="n">data</span><span class="o">,</span> <span class="nd">@Nullable</span> <span class="n">Parcel</span> <span class="n">reply</span><span class="o">,</span>
+<span class="ln"> 3</span>                              <span class="kt">int</span> <span class="n">flags</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">RemoteException</span> <span class="o">{</span>
+<span class="ln"> 4</span>    <span class="k">if</span> <span class="o">(</span><span class="kc">false</span><span class="o">)</span> <span class="n">Log</span><span class="o">.</span><span class="na">v</span><span class="o">(</span><span class="s">&#34;Binder&#34;</span><span class="o">,</span> <span class="s">&#34;Transact: &#34;</span> <span class="o">+</span> <span class="n">code</span> <span class="o">+</span> <span class="s">&#34; to &#34;</span> <span class="o">+</span> <span class="k">this</span><span class="o">);</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span>    <span class="k">if</span> <span class="o">(</span><span class="n">data</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 7</span>        <span class="n">data</span><span class="o">.</span><span class="na">setDataPosition</span><span class="o">(</span><span class="n">0</span><span class="o">);</span>
+<span class="ln"> 8</span>    <span class="o">}</span>
+<span class="ln"> 9</span>    <span class="kt">boolean</span> <span class="n">r</span> <span class="o">=</span> <span class="n">onTransact</span><span class="o">(</span><span class="n">code</span><span class="o">,</span> <span class="n">data</span><span class="o">,</span> <span class="n">reply</span><span class="o">,</span> <span class="n">flags</span><span class="o">);</span>
+<span class="ln">10</span>    <span class="k">if</span> <span class="o">(</span><span class="n">reply</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">11</span>        <span class="n">reply</span><span class="o">.</span><span class="na">setDataPosition</span><span class="o">(</span><span class="n">0</span><span class="o">);</span>
+<span class="ln">12</span>    <span class="o">}</span>
+<span class="ln">13</span>    <span class="k">return</span> <span class="n">r</span><span class="o">;</span>
+<span class="ln">14</span><span class="o">}</span>
+</code></pre></div><h3 id="3ontransact">3）onTransact</h3>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//IDataUpdate.java中的Stub类#onTransact
+</span><span class="ln"> 2</span><span class="c1"></span><span class="nd">@Override</span> <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">onTransact</span><span class="o">(</span><span class="kt">int</span> <span class="n">code</span><span class="o">,</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Parcel</span> <span class="n">data</span><span class="o">,</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Parcel</span> <span class="n">reply</span><span class="o">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">RemoteException</span>
+<span class="ln"> 3</span><span class="o">{</span>
+<span class="ln"> 4</span>    <span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">String</span> <span class="n">descriptor</span> <span class="o">=</span> <span class="n">DESCRIPTOR</span><span class="o">;</span>
+<span class="ln"> 5</span>    <span class="k">switch</span> <span class="o">(</span><span class="n">code</span><span class="o">)</span>
+<span class="ln"> 6</span>    <span class="o">{</span>
+<span class="ln"> 7</span>        <span class="k">case</span> <span class="n">INTERFACE_TRANSACTION</span><span class="o">:</span>
+<span class="ln"> 8</span>            <span class="o">{</span>
+<span class="ln"> 9</span>                <span class="n">reply</span><span class="o">.</span><span class="na">writeString</span><span class="o">(</span><span class="n">descriptor</span><span class="o">);</span>
+<span class="ln">10</span>                <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+<span class="ln">11</span>            <span class="o">}</span>
+<span class="ln">12</span>        <span class="k">case</span> <span class="n">TRANSACTION_StartUp</span><span class="o">:</span>
+<span class="ln">13</span>            <span class="o">{</span>
+<span class="ln">14</span>                <span class="n">data</span><span class="o">.</span><span class="na">enforceInterface</span><span class="o">(</span><span class="n">descriptor</span><span class="o">);</span>
+<span class="ln">15</span>                <span class="kt">int</span> <span class="n">_result</span> <span class="o">=</span> <span class="k">this</span><span class="o">.</span><span class="na">StartUp</span><span class="o">();</span>
+<span class="ln">16</span>                <span class="n">reply</span><span class="o">.</span><span class="na">writeNoException</span><span class="o">();</span>
+<span class="ln">17</span>                <span class="n">reply</span><span class="o">.</span><span class="na">writeInt</span><span class="o">(</span><span class="n">_result</span><span class="o">);</span>
+<span class="ln">18</span>                <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+<span class="ln">19</span>            <span class="o">}</span>
+<span class="ln">20</span>        <span class="k">case</span> <span class="n">TRANSACTION_DialogUpdate</span><span class="o">:</span>
+<span class="ln">21</span>            <span class="o">{</span>
+<span class="ln">22</span>                <span class="n">data</span><span class="o">.</span><span class="na">enforceInterface</span><span class="o">(</span><span class="n">descriptor</span><span class="o">);</span>
+<span class="ln">23</span>                <span class="kt">int</span> <span class="n">_arg0</span><span class="o">;</span>
+<span class="ln">24</span>                <span class="n">_arg0</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="na">readInt</span><span class="o">();</span>
+<span class="ln">25</span>                <span class="k">this</span><span class="o">.</span><span class="na">DialogUpdate</span><span class="o">(</span><span class="n">_arg0</span><span class="o">);</span>
+<span class="ln">26</span>                <span class="n">reply</span><span class="o">.</span><span class="na">writeNoException</span><span class="o">();</span>
+<span class="ln">27</span>                <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+<span class="ln">28</span>            <span class="o">}</span>
+<span class="ln">29</span>        <span class="k">default</span><span class="o">:</span>
+<span class="ln">30</span>            <span class="o">{</span>
+<span class="ln">31</span>                <span class="k">return</span> <span class="kd">super</span><span class="o">.</span><span class="na">onTransact</span><span class="o">(</span><span class="n">code</span><span class="o">,</span> <span class="n">data</span><span class="o">,</span> <span class="n">reply</span><span class="o">,</span> <span class="n">flags</span><span class="o">);</span>
+<span class="ln">32</span>            <span class="o">}</span>
+<span class="ln">33</span>    <span class="o">}</span>
+<span class="ln">34</span><span class="o">}</span>
+</code></pre></div><p>可以看到通过Proxy对IBinder操作，传过来的是一系列的code，对应的code进行处理，通常会返回true，在Stub类里面找不到对应的code，就回到Binder.java中onTransact去查找对应的code。</p>
+<p>而code里边的处理是和服务端紧密联系的，并且如果客户端需要有返回值这里就会会返回。</p>
+<p>通过上面的代码可以得知实际上调用到了int _result = this.StartUp()和this.DialogUpdate(arg0)，<strong>其中这里面的this就是Stub对象</strong></p>
+<h2 id="3服务端的操作">3.服务端的操作</h2>
+<p>实现aidl.stub类 &mdash;-继承或者内部匿名的方式</p>
+<p>这里的例子是服务端通过内部匿名类的形式实现，具体看上面的服务端实现操作。</p>
+<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="ln">1</span><span class="k">private</span> <span class="k">val</span> <span class="py">dataUpdateBinder</span><span class="p">:</span> <span class="n">IDataUpdate</span><span class="p">.</span><span class="n">Stub</span>  <span class="p">=</span> <span class="k">object</span> <span class="err">: </span><span class="nc">IDataUpdate</span><span class="p">.</span><span class="n">Stub</span><span class="p">(){}</span>
+</code></pre></div><p>这个实际上做了两件事创建了一个匿名内部类，并且调用了IDataUpdate.Stub()的构造方法</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//IDataUpdate.java中的Stub类#Stub
+</span><span class="ln">2</span><span class="c1"></span><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">String</span> <span class="n">DESCRIPTOR</span> <span class="o">=</span> <span class="s">&#34;com.example.aidl.IDataUpdate&#34;</span><span class="o">;</span>
+<span class="ln">3</span><span class="cm">/** Construct the stub at attach it to the interface. */</span>
+<span class="ln">4</span><span class="kd">public</span> <span class="nf">Stub</span><span class="o">()</span>
+<span class="ln">5</span><span class="o">{</span>
+<span class="ln">6</span>    <span class="k">this</span><span class="o">.</span><span class="na">attachInterface</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="n">DESCRIPTOR</span><span class="o">);</span>
+<span class="ln">7</span><span class="o">}</span>
+</code></pre></div><p>可以看到实际上构造方法，传入了两个参数到attachInterface方法中，一个是Stub对象本身，另一个定义的AIDL类名。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//Binder.java#attachInterface
+</span><span class="ln">2</span><span class="c1"></span><span class="kd">public</span> <span class="kt">void</span> <span class="nf">attachInterface</span><span class="o">(</span><span class="nd">@Nullable</span> <span class="n">IInterface</span> <span class="n">owner</span><span class="o">,</span> <span class="nd">@Nullable</span> <span class="n">String</span> <span class="n">descriptor</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">3</span>    <span class="n">mOwner</span> <span class="o">=</span> <span class="n">owner</span><span class="o">;</span>
+<span class="ln">4</span>    <span class="n">mDescriptor</span> <span class="o">=</span> <span class="n">descriptor</span><span class="o">;</span>
+<span class="ln">5</span><span class="o">}</span>
+</code></pre></div><p>可以看到实际上这里传入的mOwner是Stub对象，mDescriptor是定义的AIDL类名。</p>
+<p>结合上述queryLocalInterface中遗留下来的1.传入值descriptor 2.mOwner，</p>
+<p>现在可以知道其实queryLocalInterface查询做了两件事：</p>
+<p>1.优先得知mOwner是否为空，如果为空，则不是两个进程</p>
+<p>2.比对AIDL类名是否相同（因此AIDL文件需要对应<strong>放在相同目录</strong>）</p>
+<h2 id="4回调中实现方法123">4.回调中实现方法（1,2,3&hellip;）</h2>
+<p>这个对象正好是IDataUpdate.Stub对象，跟上面在Stub类中onTransact的处理为Stub对象吻合，即可以知道从Stub类中调用的onTransact方法，真正的实现是服务端。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="kd">private</span> <span class="n">val</span> <span class="n">dataUpdateBinder</span><span class="o">:</span> <span class="n">IDataUpdate</span><span class="o">.</span><span class="na">Stub</span>  <span class="o">=</span> <span class="n">object</span> <span class="o">:</span> <span class="n">IDataUpdate</span><span class="o">.</span><span class="na">Stub</span><span class="o">(){</span>
+<span class="ln"> 2</span>    <span class="n">override</span> <span class="n">fun</span> <span class="nf">StartUp</span><span class="o">():</span> <span class="n">Int</span> <span class="o">{</span>
+<span class="ln"> 3</span>        <span class="c1">//真正实现的方法1
+</span><span class="ln"> 4</span><span class="c1"></span>        <span class="k">return</span> <span class="n">0</span>
+<span class="ln"> 5</span>    <span class="o">}</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span>    <span class="n">override</span> <span class="n">fun</span> <span class="nf">DialogUpdate</span><span class="o">(</span><span class="n">progress</span><span class="o">:</span> <span class="n">Int</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 8</span>        <span class="c1">//真正实现的方法2
+</span><span class="ln"> 9</span><span class="c1"></span>        <span class="k">return</span>
+<span class="ln">10</span>
+<span class="ln">11</span>    <span class="o">}</span>
+<span class="ln">12</span><span class="o">}</span>
+</code></pre></div><h1 id="总结">总结</h1>
+<p>1.UML调用关系，下图所示</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/aidl/aidl2_2.png" title="AIDL UML图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/aidl/aidl2_2.png"  alt="AIDL UML图">
+  
+    </a>
+  
+   
+    <span class="caption">AIDL UML图</span>
+  
+</div>
+
+<p>2.根据客户端和服务端的调用，如下图所示。</p>
+<p>客户端和服务端之间为AIDL，AIDL的内部调用在红色边框内部，也是简洁明了。</p>
+<p>实际上客户端和服务端的调用就是操作Parcel数据，这个是一种<strong>共享内存</strong>，即客户端和服务端可以抽象成虚线所示的调用关系。绿色部分为客户端进程，蓝色部分为服务端进程，红色部分为AIDL的流程部分。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/aidl/aidl2_4.png" title="AIDL客户端和服务端的调用图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/aidl/aidl2_4.png"  alt="AIDL客户端和服务端的调用图">
+  
+    </a>
+  
+   
+    <span class="caption">AIDL客户端和服务端的调用图</span>
+  
+</div>
+
+<p>3.ConnectService调用</p>
+<p>另外，这里没有过多阐述连接Service的过程，这里简单通过时序图来表示了调用关系，具体深入详解ConnectService后续更新</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/aidl/aidl2_1.png" title="ConnectService调用时序图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/aidl/aidl2_1.png"  alt="ConnectService调用时序图">
+  
+    </a>
+  
+   
+    <span class="caption">ConnectService调用时序图</span>
+  
+</div>
+
+<h1 id="猜你喜欢">猜你喜欢</h1>
+<p><a href="https://yangyang48.github.io/2021/08/aidl%E4%BD%BF%E7%94%A8/">AIDL的使用</a></p>
+<h1 id="参考">参考</h1>
+<p><a href="https://blog.csdn.net/qinjuning/article/details/6785517">[1] qinjuning, Android中Parcel的分析以及使用, 2011.</a></p>
+<p><a href="https://www.jianshu.com/p/4c8d346185cb">[2] 杰杰_88, AIDL oneway 方法的隐患, 2020.</a></p>
+<p><a href="https://blog.csdn.net/kururunga/article/details/61418959">[3] kururunga, Android AIDL源码分析, 2017.</a></p>
+<p><a href="https://blog.csdn.net/kururunga/article/details/61418959">[4] 不会写代码的丝丽, AIDL源码分析, 2017.</a></p>
+<p><a href="https://blog.csdn.net/anlian523/article/details/98476033">[5] anlian523, AIDL oneway 以及in、out、inout参数的理解, 2019.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/android/">Android</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/ipc/">IPC</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/binder/">Binder</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%BA%90%E7%A0%81/">源码</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/11/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F/" data-tooltip="设计模式之代理模式">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/11/android%E6%B3%A8%E8%A7%A3/" data-tooltip="Android注解">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2022 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/11/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F/" data-tooltip="设计模式之代理模式">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/11/android%E6%B3%A8%E8%A7%A3/" data-tooltip="Android注解">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2021%2F11%2Faidl2-%25E6%25BA%2590%25E7%25A0%2581%25E5%2588%2586%25E6%259E%2590%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2021%2F11%2Faidl2-%25E6%25BA%2590%25E7%25A0%2581%25E5%2588%2586%25E6%259E%2590%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2021%2F11%2Faidl2-%25E6%25BA%2590%25E7%25A0%2581%25E5%2588%2586%25E6%259E%2590%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2021\/11\/aidl2-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90\/';
+          
+            this.page.identifier = '\/2021\/11\/aidl2-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
