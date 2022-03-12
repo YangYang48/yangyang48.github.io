@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="Linux是一个操作系统。它有正则表达式、网络协议、系统管理、版本控制、运维、交叉编译，烧录等等功能。所以一名Android开发人员熟练掌握Linux是基本功。">
+
+
+<meta property="og:description" content="Linux是一个操作系统。它有正则表达式、网络协议、系统管理、版本控制、运维、交叉编译，烧录等等功能。所以一名Android开发人员熟练掌握Linux是基本功。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="linux1 基础学习">
+<meta name="twitter:title" content="linux1 基础学习">
+<meta property="og:url" content="https://yangyang48.github.io/2022/03/linux1-%E5%9F%BA%E7%A1%80%E5%AD%A6%E4%B9%A0/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2022/03/linux1-%E5%9F%BA%E7%A1%80%E5%AD%A6%E4%B9%A0/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="Linux是一个操作系统。它有正则表达式、网络协议、系统管理、版本控制、运维、交叉编译，烧录等等功能。所以一名Android开发人员熟练掌握Linux是基本功。">
+<meta name="twitter:description" content="Linux是一个操作系统。它有正则表达式、网络协议、系统管理、版本控制、运维、交叉编译，烧录等等功能。所以一名Android开发人员熟练掌握Linux是基本功。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2022-03-12T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2022-03-12T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="2022">
+    
+      <meta property="article:section" content="March">
+    
+  
+  
+    
+      <meta property="article:tag" content="linux">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/linux/linux1_thumb.jpeg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/linux/linux1_thumb.jpeg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/linux/linux1_cover.jpeg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/linux/linux1_cover.jpeg">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>linux1 基础学习</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2022/03/linux1-%E5%9F%BA%E7%A1%80%E5%AD%A6%E4%B9%A0/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/linux/linux1_cover.jpeg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      linux1 基础学习
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2022-03-12T00:00:00Z">
+        
+  三月 12, 2022
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2022">2022</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/march">March</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">600 Words|Read in about 3 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>Linux是一个操作系统。它有正则表达式、网络协议、系统管理、版本控制、运维、交叉编译，烧录等等功能。所以一名Android开发人员熟练掌握Linux是基本功。</p>
+<h1 id="linux常用指令">Linux常用指令</h1>
+<h2 id="基本指令">基本指令</h2>
+<p>ls</p>
+<p><strong>Ctrl + R ： 用于查找使用过的命令</strong></p>
+<p>history 命令可以方便我们了解自己之前输入过那些命令。</p>
+<blockquote>
+<p>而且，history 列出的使用过的命令，是有编号的，如上图所示。如果要重新运行对应编号的命令，可以用 <code>!编号</code> 这样的格式。
+例如在我的情况下，<code>!30</code> 就会再次运行 date 命令，因为在上面的截图中，我们可以看到编号 30 的那个命令是 date。</p>
+</blockquote>
+<p>下面的快捷键在你编辑一条比较长的命令时很有用：</p>
+<ul>
+<li>Ctrl + A 光标跳到一行命令的开头。一般来说，Home 键有相同的效果；</li>
+<li>Ctrl + E 光标跳到一行命令的结尾。一般来说，End 键有相同的效果；。</li>
+<li>Ctrl + U 删除所有在光标左侧的命令字符；</li>
+<li>Ctrl + K 删除所有在光标右侧的命令字符；</li>
+<li>Ctrl + W 删除光标左侧的一个“单词”，这里的“单词”指的是用空格隔开的一个字符串。例如 -a 就是一个“单词”；</li>
+<li>Ctrl + Y 粘贴用 Ctrl + U、 Ctrl + K 或 Ctrl + W “删除”的字符串，有点像“剪切-粘贴”。</li>
+</ul>
+<h2 id="文件组织">文件组织</h2>
+<p>下面我们按这些目录的首字母的顺序来依次列出：</p>
+<ul>
+<li>bin：英语 binary 的缩写，表示“二进制文件”（我们知道可执行文件是二进制的）。包含了会被所有用户使用的可执行程序；</li>
+<li>boot：英语 boot 表示“启动”，包含与 Linux 启动密切相关的文件；</li>
+<li>dev：英语 device 的缩写，表示“设备”，包含外设。它里面的子目录，每一个对应一个外设。比如代表我们的光盘驱动器的文件就会出现在这个目录下面；</li>
+<li>etc：etc 有点不能顾名思义了。因为 etc 是法语 et cetera 的缩写，翻成英语就是“and so on”，表示“…等等”，包含系统的配置文件。至于为什么在 /etc 下面存放配置文件， 按照原始的 Unix 说法（Linux 文件结构参考 Unix 的教学实现 MINIX），这下面放的都是一堆零零碎碎的东西， 就叫 etc 好了。哈哈 ，这其实是个历史遗留；</li>
+<li>home：英语 home 表示“家”，用户的私人目录。之前我们提过一些，在这个目录中，我们放置私人的文件，有点类似 Windows 中的 Documents 这个文件夹，也叫“我的文档”。Linux 中的每个用户（除了大管家用户，也就是超级用户 root 外。root 因为太厉害，拥有所有权限，所以比较“任性”，跟普通用户不住在一起）都在 home 目录下有自己的一个私人目录。比如我的用户名是 oscar，那么我的私人目录就是 /home/oscar；如果另一个用户叫 john，那么他的私人目录就是 /home/john；</li>
+<li>lib：英语 library 的缩写，表示“库”，包含被程序所调用的库文件。例如 .so 结尾的文件，在 Windows 下这样的库文件是以 .dll 结尾的；</li>
+<li>media：英语 media 表示“媒体”。当一个可移动的外设（比如 USB 盘、SD 卡、DVD、光盘等等）插入电脑时，Linux 就可以让我们通过 media 的子目录来访问这些外设中的内容。</li>
+<li>mnt：英语 mount 的缩写，表示“挂载”。有点类似 media，但一般用于临时挂载一些装置；</li>
+<li>opt：英语 optional application software package 的缩写，表示“可选的应用软件包”，用于安装多数第三方软件和插件；</li>
+<li>root：英语“根”的意思。超级用户 root 的家目录/主目录。一般用户的家目录是位于 /home 下，不过 root 用户是个例外。之前的课程我们也提到过，root 是整个系统的超级用户，拥有一切权限，初学者请慎用此用户模式；</li>
+<li>sbin：英语 system binary 的缩写，表示“系统二进制文件”。比起 bin 目录多了一个前缀 system，所以包含的是系统级的重要可执行程序；</li>
+<li>srv：英语 service的缩写，表示“服务”。包含一些网络服务启动之后所需要取用的数据；</li>
+<li>tmp：英语 temporary 的缩写，表示“临时的”。普通用户和程序存放临时文件的地方；</li>
+<li>usr：英语 Unix Software Resource 的缩写，表示“Unix 操作系统软件资源”（也是个历史遗留的命名）。这个目录是最庞大的目录之一。有点类似 Windows 中的 C:\Windows 和 C:\Program Files 这两个文件夹的集合。在这里面安装了大部分用户要调用的程序；</li>
+<li>var：英语 variable 的缩写，表示“动态的，可变的”。通常包含程序的数据，比如一些 log（日志）文件，记录电脑中发生了什么事。</li>
+</ul>
+<h2 id="目录指令">目录指令</h2>
+<p><strong>ls，cd 和 du</strong></p>
+<h2 id="文件指令">文件指令</h2>
+<ol>
+<li>
+<p>cat 命令和 less 命令：显示文件内容</p>
+</li>
+<li>
+<p>head 命令和 tail 命令：显示文件的开头和结尾</p>
+</li>
+<li>
+<p>touch 命令和 mkdir 命令：创建文件和目录</p>
+</li>
+<li>
+<p>cp 命令和 mv 命令：拷贝文件和移动文件</p>
+</li>
+<li>
+<p>rm 命令：删除文件和目录</p>
+</li>
+<li>
+<p>ln 命令：创建链接</p>
+</li>
+<li>
+<p>查找</p>
+<p>locate 命令，快速查找</p>
+<p>find 命令，深入查找</p>
+</li>
+<li>
+<p>数据</p>
+<p>grep 命令：筛选数据</p>
+<p>sort 命令：为文件排序</p>
+<p>wc 命令：文件的统计</p>
+<p>uniq 命令：删除文件中的重复内容</p>
+<p>cut 命令：剪切文件的一部分内容</p>
+</li>
+</ol>
+<h2 id="时间指令">时间指令</h2>
+<ol>
+<li>date 命令：调节时间</li>
+<li>at 命令：延时执行一个程序</li>
+<li>sleep 命令：休息一会</li>
+<li>crontab 命令：定时执行程序</li>
+</ol>
+<h2 id="压缩指令">压缩指令</h2>
+<ol>
+<li>tar 命令：将多个文件归档</li>
+<li>gzip 和 bzip2 命令：压缩归档</li>
+<li>zip / unzip 和 rar / unrar 命令：压缩 / 解压 zip 和 rar 文件</li>
+</ol>
+<h2 id="网络指令">网络指令</h2>
+<ol>
+<li>
+<p>网络链接</p>
+<p>用 SSH 创建一个安全的通信管道</p>
+<p>用 SSH 进行连接</p>
+</li>
+<li>
+<p>网络传输</p>
+<p>wget ：下载文件</p>
+<p>scp ：网间拷贝</p>
+<p>ftp &amp; sftp ：传输文件</p>
+<p>rsync ：同步备份</p>
+</li>
+<li>
+<p>网络分析</p>
+<p>host 和 whois 命令：告诉我你是谁</p>
+<p>ifconfig 和 netstat 命令：控制和分析网络流量</p>
+<p>netstat : 网络统计</p>
+<p>iptables / nftables ：防火墙</p>
+</li>
+<li>
+<p>网络安装软件</p>
+<p>大多数 Linux 发行版的软件都可以用包管理工具 apt / apt-get 来安装（对于 Debian 一族）；</p>
+<p>有些软件不能通过 apt / apt-get 来安装，因为没有被收录到 Ubuntu 的软件仓库中。在这种情况下，我们可以试着在网上找软件的 deb 安装包；</p>
+<p>假如前两种方法都不行，我们只能选择从源代码编译安装的方法。一般通用的步骤如下：</p>
+</li>
+</ol>
+<p>A. 从网上下载程序的源代码（通常被打包压缩为 .tar.gz 的格式）；</p>
+<p>B. 解压压缩包（<code>tar zxvf xxx.tar.gz</code>）；</p>
+<p>C. 运行解压之后的文件夹里的 configure 文件： <code>./configure</code>；</p>
+<p>D. 运行 <code>make</code> 来编译；</p>
+<p>E. 运行 <code>sudo make install</code> 完成安装。</p>
+<h1 id="群组管理和文件权限">群组管理和文件权限</h1>
+<h2 id="用户管理">用户管理</h2>
+<ol>
+<li>sudo 命令：以 root 身份运行命令</li>
+<li>用户管理的命令</li>
+</ol>
+<h2 id="群组管理">群组管理</h2>
+<h2 id="文件管理">文件管理</h2>
+<h1 id="vim">VIM</h1>
+<h2 id="nano">Nano</h2>
+<p>一个自带的文本编辑器（大多数情况下不使用）</p>
+<p>配置文件/etc/nanorc</p>
+<h2 id="vim-1">VIM</h2>
+<p>文本编辑器的进阶版，比前者更加简单实用。（用得比较多）</p>
+<ol>
+<li>Vim 的各种编辑模式</li>
+<li>基本操作（移动，写入，保存，等等）</li>
+</ol>
+<h1 id="进程">进程</h1>
+<ol>
+<li>
+<p>w 命令：都有谁，在做什么？</p>
+</li>
+<li>
+<p>ps 命令和 top 命令：列出运行的进程</p>
+</li>
+<li>
+<p>top：进程的动态列表</p>
+</li>
+<li>
+<p>Ctrl + C 和 kill 命令：停止进程</p>
+</li>
+<li>
+<p>halt 命令和 reboot 命令：停止和重启系统</p>
+</li>
+<li>
+<p>前后台</p>
+<p>&amp; 符号和 nohup 命令：后台运行进程</p>
+<p>Ctrl + Z，jobs，bg 和 fg 命令：控制进程的前后台切换</p>
+</li>
+</ol>
+<h1 id="数据流">数据流</h1>
+<h2 id="重定向">重定向</h2>
+<ol>
+<li>“&gt; 和 &raquo;”：重定向到文件</li>
+<li>“2&gt;，2&raquo;，2&gt;&amp;1”：重定向错误输出</li>
+</ol>
+<h2 id="管道">管道</h2>
+<h1 id="man">man</h1>
+<ol>
+<li>可执行程序或 Shell 命令；</li>
+<li>系统调用（Linux 内核提供的函数）；</li>
+<li>库调用（程序库中的函数）；</li>
+<li>特殊文件（通常在 /dev 下）；</li>
+<li>文件（例如 /etc/passwd）；</li>
+<li>游戏；</li>
+<li>杂项（比如 man (7)，groff (7)）；</li>
+<li>系统管理命令（通常只能被 root 用户使用）；</li>
+<li>内核子程序。</li>
+</ol>
+<h1 id="shell脚本">shell脚本</h1>
+<p>几种主流的 Shell：</p>
+<ul>
+<li>Sh : Bourne Shell 的缩写。可以说是目前所有 Shell 的祖先。</li>
+<li>Bash : Bourne Again Shell 的缩写， 可以看到比 Bourne Shell 多了一个 again。again 在英语中是“又，再，此外”的意思，说明 Bash 是 Sh 的一个进阶版本，比 Sh 更优秀。Bash 是目前大多数 Linux 发行版和苹果的 macOS 操作系统的默认 Shell。</li>
+<li>Ksh : Korn Shell 的缩写。一般在收费的 Unix 版本上比较多见，但也有免费版本的。</li>
+<li>Csh : C Shell 的缩写。 此 Shell 的语法有点类似 C 语言。</li>
+<li>Tcsh : Tenex C Shell 的缩写。Csh 的优化版本。</li>
+<li>Zsh : Z Shell 的缩写。比较新近的一个 Shell，集 Bash，Ksh 和 Tcsh 各家之大成。我非常喜欢 Zsh。Github 上有一个 Zsh 的轻松配置程序叫作 <a href="https://github.com/robbyrussell/oh-my-zsh">oh-my-zsh</a> ，你值得拥有。</li>
+</ul>
+<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220312121420550.png" alt="image-20220312121420550"></p>
+<h2 id="基本运算">基本运算</h2>
+<h2 id="条件运算">条件运算</h2>
+<h2 id="循环运算">循环运算</h2>
+<h2 id="函数运算">函数运算</h2>
+<h2 id="shell进阶">Shell进阶</h2>
+<p><a href="http://www.imooc.com/read/39">[1] Oscar, Linux命令行与Shell脚本编程大全,2019.</a></p>
+<p><a href="https://blog.csdn.net/onebigday/article/details/107896918">[2] onebigday, linux 中把命令放到后台执行的方法,2020.</a></p>
+<p><a href="https://blog.csdn.net/sinat_31275315/article/details/104535192">[3] 独L无二, Vim查找全匹配字符串,2020.</a></p>
+<p><a href="https://blog.csdn.net/zhan570556752/article/details/80399154">[4] 一生只画眉, Shell if 条件判断,2018.</a></p>
+<p><a href="https://blog.csdn.net/u010479322/article/details/51347245">[5] Y_H_, linux 实时线程优先级问题——数值越大优先级越高吗？,2016.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/linux/">linux</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/03/aidl3-java%E5%92%8Cc-%E9%80%9A%E4%BF%A1/" data-tooltip="AIDL3 JAVA和C&#43;&#43;通信">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2022 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/03/aidl3-java%E5%92%8Cc-%E9%80%9A%E4%BF%A1/" data-tooltip="AIDL3 JAVA和C&#43;&#43;通信">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2022%2F03%2Flinux1-%25E5%259F%25BA%25E7%25A1%2580%25E5%25AD%25A6%25E4%25B9%25A0%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2022%2F03%2Flinux1-%25E5%259F%25BA%25E7%25A1%2580%25E5%25AD%25A6%25E4%25B9%25A0%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2022%2F03%2Flinux1-%25E5%259F%25BA%25E7%25A1%2580%25E5%25AD%25A6%25E4%25B9%25A0%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2022\/03\/linux1-%E5%9F%BA%E7%A1%80%E5%AD%A6%E4%B9%A0\/';
+          
+            this.page.identifier = '\/2022\/03\/linux1-%E5%9F%BA%E7%A1%80%E5%AD%A6%E4%B9%A0\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
