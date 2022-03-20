@@ -272,33 +272,792 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">100 Words|Read in about 1 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">1500 Words|Read in about 7 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
               <p>祝各位女神3.8快乐~最近在阅读Android源码的过程中再次遇到AIDL。和以往不同，这次是Java层和c++层的相互调用，跟以往App端的两个Java进程的IPC通信有区别。</p>
 <p>笔者在先前已经简单的分析了AIDL，但是AIDL远不止这么JAVA-JAVA通信这么简单，事实上Android系统中可以通过binder，实现双向IPC通信，可以是JAVA - JAVA 、 JAVA - C++ 、 C++ - C++ ，都可以通过Binder进行IPC双向通信。本文主要通过JAVA-C++的通信更加深入了解AIDL。</p>
-<p>1.Binder核心类介绍和原理</p>
-<p>1.1各类之间的继承</p>
-<p>1.2客户端：</p>
-<p>BpInterface</p>
-<p>BpRefBase</p>
-<p>Interface</p>
-<p>1.3客户端</p>
-<p>IBinder</p>
-<p>BBinder</p>
+<h1 id="1binder简介">1.Binder简介</h1>
+<p>Binder作为Android系统提供的一种IPC机制，这是Android系统中最重要的组成，也是最难理解的一块知识点，错综复杂。</p>
+<p>Binder是Android整个系统的核心，考虑复杂性，暂时对其具体实现过程简单提下，具体需要在Binder篇章深入研究。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/aidl/aidl3_1.png" title="Binder系统架构图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/aidl/aidl3_1.png"  alt="Binder系统架构图">
+  
+    </a>
+  
+   
+    <span class="caption">Binder系统架构图</span>
+  
+</div>
+
+<p>由于AIDL可以是C++层也可以是Java层，那么上述Binder通信的变体就会出现下面这几种。</p>
+<p>1）两个App进程通信</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/aidl/aidl3_2.png" title="两个App进程通信图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/aidl/aidl3_2.png"  alt="两个App进程通信图">
+  
+    </a>
+  
+   
+    <span class="caption">两个App进程通信图</span>
+  
+</div>
+
+<p>2）一个App进程，一个Native进程通信</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/aidl/aidl3_3.png" title="App和Native进程通信图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/aidl/aidl3_3.png"  alt="App和Native进程通信图">
+  
+    </a>
+  
+   
+    <span class="caption">App和Native进程通信图</span>
+  
+</div>
+
+<p>3）两个Native进程通信</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/aidl/aidl3_4.png" title="两个Native进程通信图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/aidl/aidl3_4.png"  alt="两个Native进程通信图">
+  
+    </a>
+  
+   
+    <span class="caption">两个Native进程通信图</span>
+  
+</div>
+
+<p>结合代表性，本文主要对第二种情况的通信展开描述。</p>
+<h1 id="2binder核心类介绍和原理">2.Binder核心类介绍和原理</h1>
+<h2 id="21binder框架">2.1Binder框架</h2>
+<h3 id="211binder由四部分组成">2.1.1Binder由四部分组成</h3>
+<p>Binder驱动：Binder的核心，实现底层操作</p>
+<p>ServiceManager：守护进程，Binder服务的管理者</p>
+<p>服务端：Binder的提供者Bn</p>
+<p>客户端：Binder的使用者Bp</p>
+<h3 id="212binder设计分层">2.1.2Binder设计分层</h3>
+<p>Binder实现通过libbinder库实现。Binder源码点击<a href="https://github.com/YangYang48/project/tree/master/libbinder/frameworks/native/libs/binder">这里</a>。</p>
+<p>/frameworks/native/libs/binder</p>
+<table>
+<thead>
+<tr>
+<th>/frameworks/native/libs/binder</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>/frameworks/native/libs/binder/Binder.cpp</td>
+</tr>
+<tr>
+<td>/frameworks/native/libs/binder/BpBinder.cpp</td>
+</tr>
+<tr>
+<td>/frameworks/native/libs/binder/IInterface.cpp</td>
+</tr>
+<tr>
+<td>/frameworks/native/libs/binder/IPCThreadState.cpp</td>
+</tr>
+<tr>
+<td>/frameworks/native/libs/binder/ProcessState.cpp</td>
+</tr>
+<tr>
+<td>/frameworks/native/libs/binder/Parcel.cpp</td>
+</tr>
+<tr>
+<td>/frameworks/native/libs/binder/include/binder/Binder.h</td>
+</tr>
+<tr>
+<td>/frameworks/native/libs/binder/include/binder/BpBinder.h</td>
+</tr>
+<tr>
+<td>/frameworks/native/libs/binder/include/binder/IBinder.h</td>
+</tr>
+<tr>
+<td>/frameworks/native/libs/binder/include/binder/IInterface.h</td>
+</tr>
+<tr>
+<td>/frameworks/native/libs/binder/include/binder/IPCThreadState.h</td>
+</tr>
+<tr>
+<td>/frameworks/native/libs/binder/include/binder/ProcessState.h</td>
+</tr>
+<tr>
+<td>/frameworks/native/libs/binder/include/binder/Parcel.h</td>
+</tr>
+</tbody>
+</table>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/aidl/aidl3_5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/aidl/aidl3_5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="22binder核心类">2.2Binder核心类</h2>
+<p>IIterface类，BpInterface类，BnInterface类，BBinder类，BpBinder类，IBinder类</p>
+<h3 id="221各类之间的继承">2.2.1各类之间的继承</h3>
+<p>各类的继承关系</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/aidl/aidl3_6.png" title="各类的继承关系图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/aidl/aidl3_6.png"  alt="各类的继承关系图">
+  
+    </a>
+  
+   
+    <span class="caption">各类的继承关系图</span>
+  
+</div>
+
+<p>简化成客户端和服务端的关系</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/aidl/aidl3_7.png" title="客户端和服务端的关系图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/aidl/aidl3_7.png"  alt="客户端和服务端的关系图">
+  
+    </a>
+  
+   
+    <span class="caption">客户端和服务端的关系图</span>
+  
+</div>
+
+<h3 id="222服务端">2.2.2服务端</h3>
+<p>以下为Android11源码分析</p>
+<p>BnInterface类，<strong>开发Binder服务必须要继承的类</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/include/binder/IInterface.h#BnInterface
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">INTERFACE</span><span class="o">&gt;</span>
+<span class="ln"> 3</span><span class="k">class</span> <span class="nc">BnInterface</span> <span class="o">:</span> <span class="k">public</span> <span class="n">INTERFACE</span><span class="p">,</span> <span class="k">public</span> <span class="n">BBinder</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 6</span>    <span class="k">virtual</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">IInterface</span><span class="o">&gt;</span>      <span class="n">queryLocalInterface</span><span class="p">(</span><span class="k">const</span> <span class="n">String16</span><span class="o">&amp;</span> <span class="n">_descriptor</span><span class="p">);</span>
+<span class="ln"> 7</span>    <span class="k">virtual</span> <span class="k">const</span> <span class="n">String16</span><span class="o">&amp;</span>     <span class="n">getInterfaceDescriptor</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span><span class="k">protected</span><span class="o">:</span>
+<span class="ln">10</span>    <span class="k">typedef</span> <span class="n">INTERFACE</span>           <span class="n">BaseInterface</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="k">virtual</span> <span class="n">IBinder</span><span class="o">*</span>            <span class="nf">onAsBinder</span><span class="p">();</span>
+<span class="ln">12</span><span class="p">};</span>
+</code></pre></div><p>BBinder类，服务类的核心。这里的IBinder类前面的clang::lto_visibility_public详见<a href="https://blog.csdn.net/superlee1125/article/details/114403368">这里</a>。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//frameworks/native/libs/binder/include/binder/IBinder.h#transact
+</span><span class="ln">2</span><span class="c1"></span><span class="k">class</span> <span class="na">[[clang::lto_visibility_public]]</span> <span class="nc">IBinder</span> <span class="o">:</span> <span class="k">public</span> <span class="k">virtual</span> <span class="n">RefBase</span><span class="p">{</span>
+<span class="ln">3</span>    <span class="k">virtual</span> <span class="n">status_t</span>        <span class="nf">transact</span><span class="p">(</span>   <span class="kt">uint32_t</span> <span class="n">code</span><span class="p">,</span>
+<span class="ln">4</span>                                 <span class="k">const</span> <span class="n">Parcel</span><span class="o">&amp;</span> <span class="n">data</span><span class="p">,</span>
+<span class="ln">5</span>                                 <span class="n">Parcel</span><span class="o">*</span> <span class="n">reply</span><span class="p">,</span>
+<span class="ln">6</span>                                 <span class="kt">uint32_t</span> <span class="n">flags</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">7</span><span class="p">};</span>
+</code></pre></div><p>最终实现是在Binder</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/Binder.cpp#transact
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">status_t</span> <span class="n">BBinder</span><span class="o">::</span><span class="n">transact</span><span class="p">(</span>
+<span class="ln"> 3</span>    <span class="kt">uint32_t</span> <span class="n">code</span><span class="p">,</span> <span class="k">const</span> <span class="n">Parcel</span><span class="o">&amp;</span> <span class="n">data</span><span class="p">,</span> <span class="n">Parcel</span><span class="o">*</span> <span class="n">reply</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">flags</span><span class="p">)</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span>    <span class="n">data</span><span class="p">.</span><span class="n">setDataPosition</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span>    <span class="n">status_t</span> <span class="n">err</span> <span class="o">=</span> <span class="n">NO_ERROR</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="k">switch</span> <span class="p">(</span><span class="n">code</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 9</span>        <span class="k">case</span> <span class="nl">PING_TRANSACTION</span><span class="p">:</span>
+<span class="ln">10</span>            <span class="n">err</span> <span class="o">=</span> <span class="n">pingBinder</span><span class="p">();</span>
+<span class="ln">11</span>            <span class="k">break</span><span class="p">;</span>
+<span class="ln">12</span>        <span class="k">case</span> <span class="nl">EXTENSION_TRANSACTION</span><span class="p">:</span>
+<span class="ln">13</span>            <span class="n">err</span> <span class="o">=</span> <span class="n">reply</span><span class="o">-&gt;</span><span class="n">writeStrongBinder</span><span class="p">(</span><span class="n">getExtension</span><span class="p">());</span>
+<span class="ln">14</span>            <span class="k">break</span><span class="p">;</span>
+<span class="ln">15</span>        <span class="k">case</span> <span class="nl">DEBUG_PID_TRANSACTION</span><span class="p">:</span>
+<span class="ln">16</span>            <span class="n">err</span> <span class="o">=</span> <span class="n">reply</span><span class="o">-&gt;</span><span class="n">writeInt32</span><span class="p">(</span><span class="n">getDebugPid</span><span class="p">());</span>
+<span class="ln">17</span>            <span class="k">break</span><span class="p">;</span>
+<span class="ln">18</span>        <span class="k">default</span><span class="o">:</span>
+<span class="ln">19</span>            <span class="n">err</span> <span class="o">=</span> <span class="n">onTransact</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">reply</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+<span class="ln">20</span>            <span class="k">break</span><span class="p">;</span>
+<span class="ln">21</span>    <span class="p">}</span>
+<span class="ln">22</span>
+<span class="ln">23</span>    <span class="c1">// In case this is being transacted on in the same process.
+</span><span class="ln">24</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">reply</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">25</span>        <span class="n">reply</span><span class="o">-&gt;</span><span class="n">setDataPosition</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="ln">26</span>    <span class="p">}</span>
+<span class="ln">27</span>
+<span class="ln">28</span>    <span class="k">return</span> <span class="n">err</span><span class="p">;</span>
+<span class="ln">29</span><span class="p">}</span>
+</code></pre></div><p>其中BBinder负责和更底层的IPCThread交互，IPCThread会调用BBinder的transact方法，transact方法会调用到继承类中的onTransact方法实现交互。</p>
+<p>因此，我们自己只需要对对BBinder的继承类重写onTransact方法，既可以实现数据与驱动交互。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/Binder.cpp#onTransact
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">status_t</span> <span class="n">BBinder</span><span class="o">::</span><span class="n">onTransact</span><span class="p">(</span>
+<span class="ln"> 3</span>    <span class="kt">uint32_t</span> <span class="n">code</span><span class="p">,</span> <span class="k">const</span> <span class="n">Parcel</span><span class="o">&amp;</span> <span class="n">data</span><span class="p">,</span> <span class="n">Parcel</span><span class="o">*</span> <span class="n">reply</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="cm">/*flags*/</span><span class="p">)</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span>    <span class="k">switch</span> <span class="p">(</span><span class="n">code</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 6</span>        <span class="k">case</span> <span class="nl">INTERFACE_TRANSACTION</span><span class="p">:</span>
+<span class="ln"> 7</span>            <span class="n">reply</span><span class="o">-&gt;</span><span class="n">writeString16</span><span class="p">(</span><span class="n">getInterfaceDescriptor</span><span class="p">());</span>
+<span class="ln"> 8</span>            <span class="k">return</span> <span class="n">NO_ERROR</span><span class="p">;</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span>        <span class="k">case</span> <span class="nl">DUMP_TRANSACTION</span><span class="p">:</span> <span class="p">{</span>
+<span class="ln">11</span>            <span class="kt">int</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">data</span><span class="p">.</span><span class="n">readFileDescriptor</span><span class="p">();</span>
+<span class="ln">12</span>            <span class="kt">int</span> <span class="n">argc</span> <span class="o">=</span> <span class="n">data</span><span class="p">.</span><span class="n">readInt32</span><span class="p">();</span>
+<span class="ln">13</span>            <span class="n">Vector</span><span class="o">&lt;</span><span class="n">String16</span><span class="o">&gt;</span> <span class="n">args</span><span class="p">;</span>
+<span class="ln">14</span>            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">argc</span> <span class="o">&amp;&amp;</span> <span class="n">data</span><span class="p">.</span><span class="n">dataAvail</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">15</span>               <span class="n">args</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">data</span><span class="p">.</span><span class="n">readString16</span><span class="p">());</span>
+<span class="ln">16</span>            <span class="p">}</span>
+<span class="ln">17</span>            <span class="k">return</span> <span class="nf">dump</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">args</span><span class="p">);</span>
+<span class="ln">18</span>        <span class="p">}</span>
+<span class="ln">19</span>
+<span class="ln">20</span>        <span class="k">case</span> <span class="nl">SHELL_COMMAND_TRANSACTION</span><span class="p">:</span> <span class="p">{</span>
+<span class="ln">21</span>            <span class="kt">int</span> <span class="n">in</span> <span class="o">=</span> <span class="n">data</span><span class="p">.</span><span class="n">readFileDescriptor</span><span class="p">();</span>
+<span class="ln">22</span>            <span class="kt">int</span> <span class="n">out</span> <span class="o">=</span> <span class="n">data</span><span class="p">.</span><span class="n">readFileDescriptor</span><span class="p">();</span>
+<span class="ln">23</span>            <span class="kt">int</span> <span class="n">err</span> <span class="o">=</span> <span class="n">data</span><span class="p">.</span><span class="n">readFileDescriptor</span><span class="p">();</span>
+<span class="ln">24</span>            <span class="kt">int</span> <span class="n">argc</span> <span class="o">=</span> <span class="n">data</span><span class="p">.</span><span class="n">readInt32</span><span class="p">();</span>
+<span class="ln">25</span>            <span class="n">Vector</span><span class="o">&lt;</span><span class="n">String16</span><span class="o">&gt;</span> <span class="n">args</span><span class="p">;</span>
+<span class="ln">26</span>            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">argc</span> <span class="o">&amp;&amp;</span> <span class="n">data</span><span class="p">.</span><span class="n">dataAvail</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">27</span>               <span class="n">args</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">data</span><span class="p">.</span><span class="n">readString16</span><span class="p">());</span>
+<span class="ln">28</span>            <span class="p">}</span>
+<span class="ln">29</span>            <span class="n">sp</span><span class="o">&lt;</span><span class="n">IShellCallback</span><span class="o">&gt;</span> <span class="n">shellCallback</span> <span class="o">=</span> <span class="n">IShellCallback</span><span class="o">::</span><span class="n">asInterface</span><span class="p">(</span>
+<span class="ln">30</span>                    <span class="n">data</span><span class="p">.</span><span class="n">readStrongBinder</span><span class="p">());</span>
+<span class="ln">31</span>            <span class="n">sp</span><span class="o">&lt;</span><span class="n">IResultReceiver</span><span class="o">&gt;</span> <span class="n">resultReceiver</span> <span class="o">=</span> <span class="n">IResultReceiver</span><span class="o">::</span><span class="n">asInterface</span><span class="p">(</span>
+<span class="ln">32</span>                    <span class="n">data</span><span class="p">.</span><span class="n">readStrongBinder</span><span class="p">());</span>
+<span class="ln">33</span>
+<span class="ln">34</span>            <span class="c1">// XXX can&#39;t add virtuals until binaries are updated.
+</span><span class="ln">35</span><span class="c1"></span>            <span class="c1">//return shellCommand(in, out, err, args, resultReceiver);
+</span><span class="ln">36</span><span class="c1"></span>            <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">in</span><span class="p">;</span>
+<span class="ln">37</span>            <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">out</span><span class="p">;</span>
+<span class="ln">38</span>            <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">err</span><span class="p">;</span>
+<span class="ln">39</span>
+<span class="ln">40</span>            <span class="k">if</span> <span class="p">(</span><span class="n">resultReceiver</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">41</span>                <span class="n">resultReceiver</span><span class="o">-&gt;</span><span class="n">send</span><span class="p">(</span><span class="n">INVALID_OPERATION</span><span class="p">);</span>
+<span class="ln">42</span>            <span class="p">}</span>
+<span class="ln">43</span>
+<span class="ln">44</span>            <span class="k">return</span> <span class="n">NO_ERROR</span><span class="p">;</span>
+<span class="ln">45</span>        <span class="p">}</span>
+<span class="ln">46</span>
+<span class="ln">47</span>        <span class="k">case</span> <span class="nl">SYSPROPS_TRANSACTION</span><span class="p">:</span> <span class="p">{</span>
+<span class="ln">48</span>            <span class="n">report_sysprop_change</span><span class="p">();</span>
+<span class="ln">49</span>            <span class="k">return</span> <span class="n">NO_ERROR</span><span class="p">;</span>
+<span class="ln">50</span>        <span class="p">}</span>
+<span class="ln">51</span>
+<span class="ln">52</span>        <span class="k">default</span><span class="o">:</span>
+<span class="ln">53</span>            <span class="k">return</span> <span class="n">UNKNOWN_TRANSACTION</span><span class="p">;</span>
+<span class="ln">54</span>    <span class="p">}</span>
+<span class="ln">55</span><span class="p">}</span>
+</code></pre></div><h3 id="223客户端">2.2.3客户端</h3>
 <p>BpBinder</p>
-<p>BnInterface</p>
-<p>2.Binder死亡通知</p>
-<p>3.AIDL实战</p>
+<p>这个是客户端的核心</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/include/binder/IInterface.h#BpInterface
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">INTERFACE</span><span class="o">&gt;</span>
+<span class="ln"> 3</span><span class="k">class</span> <span class="nc">BpInterface</span> <span class="o">:</span> <span class="k">public</span> <span class="n">INTERFACE</span><span class="p">,</span> <span class="k">public</span> <span class="n">BpRefBase</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 6</span>    <span class="k">explicit</span>                    <span class="n">BpInterface</span><span class="p">(</span><span class="k">const</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">IBinder</span><span class="o">&gt;&amp;</span> <span class="n">remote</span><span class="p">);</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span><span class="k">protected</span><span class="o">:</span>
+<span class="ln"> 9</span>    <span class="k">typedef</span> <span class="n">INTERFACE</span>           <span class="n">BaseInterface</span><span class="p">;</span>
+<span class="ln">10</span>    <span class="k">virtual</span> <span class="n">IBinder</span><span class="o">*</span>            <span class="nf">onAsBinder</span><span class="p">();</span>
+<span class="ln">11</span><span class="p">};</span>
+</code></pre></div><p>与BnBinder中BnInterface类继承BBinder不同的是，BpInterface类不是继承BpBinder的，而是继承BpRefBase类的。这个可以更加灵活地进行应用开发，BpBinder更改对客户端实现无影响。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/include/binder/Binder.h#BpRefBase
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">class</span> <span class="nc">BpRefBase</span> <span class="o">:</span> <span class="k">public</span> <span class="k">virtual</span> <span class="n">RefBase</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span><span class="k">protected</span><span class="o">:</span>
+<span class="ln"> 5</span>    <span class="k">explicit</span>                <span class="n">BpRefBase</span><span class="p">(</span><span class="k">const</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">IBinder</span><span class="o">&gt;&amp;</span> <span class="n">o</span><span class="p">);</span>
+<span class="ln"> 6</span>    <span class="k">virtual</span>                 <span class="o">~</span><span class="n">BpRefBase</span><span class="p">();</span>
+<span class="ln"> 7</span>    <span class="k">virtual</span> <span class="kt">void</span>            <span class="nf">onFirstRef</span><span class="p">();</span>
+<span class="ln"> 8</span>    <span class="k">virtual</span> <span class="kt">void</span>            <span class="nf">onLastStrongRef</span><span class="p">(</span><span class="k">const</span> <span class="kt">void</span><span class="o">*</span> <span class="n">id</span><span class="p">);</span>
+<span class="ln"> 9</span>    <span class="k">virtual</span> <span class="kt">bool</span>            <span class="nf">onIncStrongAttempted</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">flags</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span><span class="o">*</span> <span class="n">id</span><span class="p">);</span>
+<span class="ln">10</span>
+<span class="ln">11</span>    <span class="kr">inline</span>  <span class="n">IBinder</span><span class="o">*</span>        <span class="nf">remote</span><span class="p">()</span>                <span class="p">{</span> <span class="k">return</span> <span class="n">mRemote</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln">12</span>    <span class="kr">inline</span>  <span class="n">IBinder</span><span class="o">*</span>        <span class="nf">remote</span><span class="p">()</span> <span class="k">const</span>          <span class="p">{</span> <span class="k">return</span> <span class="n">mRemote</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln">13</span>
+<span class="ln">14</span><span class="k">private</span><span class="o">:</span>
+<span class="ln">15</span>                            <span class="n">BpRefBase</span><span class="p">(</span><span class="k">const</span> <span class="n">BpRefBase</span><span class="o">&amp;</span> <span class="n">o</span><span class="p">);</span>
+<span class="ln">16</span>    <span class="n">BpRefBase</span><span class="o">&amp;</span>              <span class="k">operator</span><span class="o">=</span><span class="p">(</span><span class="k">const</span> <span class="n">BpRefBase</span><span class="o">&amp;</span> <span class="n">o</span><span class="p">);</span>
+<span class="ln">17</span>
+<span class="ln">18</span>    <span class="n">IBinder</span><span class="o">*</span> <span class="k">const</span>          <span class="n">mRemote</span><span class="p">;</span>
+<span class="ln">19</span>    <span class="n">RefBase</span><span class="o">::</span><span class="n">weakref_type</span><span class="o">*</span>  <span class="n">mRefs</span><span class="p">;</span>
+<span class="ln">20</span>    <span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">int32_t</span><span class="o">&gt;</span>    <span class="n">mState</span><span class="p">;</span>
+<span class="ln">21</span><span class="p">};</span>
+</code></pre></div><p>BpBinder</p>
+<p>负责与底层IPCThread交互，<strong>代理类</strong>中的函数实现会最终调用IBinder的transact，transact调用IPCThread函数向驱动传递数据。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//frameworks/native/libs/binder/include/binder/BpBinder.h#transact
+</span><span class="ln">2</span><span class="c1"></span><span class="k">class</span> <span class="nc">BpBinder</span> <span class="o">:</span> <span class="k">public</span> <span class="n">IBinder</span><span class="p">{</span>
+<span class="ln">3</span>   <span class="k">virtual</span> <span class="n">status_t</span>    <span class="nf">transact</span><span class="p">(</span>   <span class="kt">uint32_t</span> <span class="n">code</span><span class="p">,</span>
+<span class="ln">4</span>                             <span class="k">const</span> <span class="n">Parcel</span><span class="o">&amp;</span> <span class="n">data</span><span class="p">,</span>
+<span class="ln">5</span>                             <span class="n">Parcel</span><span class="o">*</span> <span class="n">reply</span><span class="p">,</span>
+<span class="ln">6</span>                             <span class="kt">uint32_t</span> <span class="n">flags</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="k">final</span><span class="p">;</span> 
+<span class="ln">7</span><span class="p">};</span>
+</code></pre></div><p>最终实现在BpBinder.cpp</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/BpBinder.cpp#transact
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">status_t</span> <span class="n">BpBinder</span><span class="o">::</span><span class="n">transact</span><span class="p">(</span>
+<span class="ln"> 3</span>    <span class="kt">uint32_t</span> <span class="n">code</span><span class="p">,</span> <span class="k">const</span> <span class="n">Parcel</span><span class="o">&amp;</span> <span class="n">data</span><span class="p">,</span> <span class="n">Parcel</span><span class="o">*</span> <span class="n">reply</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">flags</span><span class="p">)</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span>    <span class="c1">// Once a binder has died, it will never come back to life.
+</span><span class="ln"> 6</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">mAlive</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 7</span>        <span class="p">...</span>
+<span class="ln"> 8</span>        <span class="n">status_t</span> <span class="n">status</span> <span class="o">=</span> <span class="n">IPCThreadState</span><span class="o">::</span><span class="n">self</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">transact</span><span class="p">(</span>
+<span class="ln"> 9</span>            <span class="n">mHandle</span><span class="p">,</span> <span class="n">code</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">reply</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+<span class="ln">10</span>        <span class="k">if</span> <span class="p">(</span><span class="n">status</span> <span class="o">==</span> <span class="n">DEAD_OBJECT</span><span class="p">)</span> <span class="n">mAlive</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">11</span>
+<span class="ln">12</span>        <span class="k">return</span> <span class="n">status</span><span class="p">;</span>
+<span class="ln">13</span>    <span class="p">}</span>
+<span class="ln">14</span>
+<span class="ln">15</span>    <span class="k">return</span> <span class="n">DEAD_OBJECT</span><span class="p">;</span>
+<span class="ln">16</span><span class="p">}</span>
+</code></pre></div><p>Binder代理类</p>
+<p>asInterface，实际上这个是宏定义出来的</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/include/binder/IInterface.h#DECLARE_META_INTERFACE
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#define DECLARE_META_INTERFACE(INTERFACE)                               \
+</span><span class="ln"> 3</span><span class="cp">public:                                                                 \
+</span><span class="ln"> 4</span><span class="cp">    static const ::android::String16 descriptor;                        \
+</span><span class="ln"> 5</span><span class="cp">    static ::android::sp&lt;I##INTERFACE&gt; asInterface(                     \
+</span><span class="ln"> 6</span><span class="cp">            const ::android::sp&lt;::android::IBinder&gt;&amp; obj);              \
+</span><span class="ln"> 7</span><span class="cp">    virtual const ::android::String16&amp; getInterfaceDescriptor() const;  \
+</span><span class="ln"> 8</span><span class="cp">    I##INTERFACE();                                                     \
+</span><span class="ln"> 9</span><span class="cp">    virtual ~I##INTERFACE();                                            \
+</span><span class="ln">10</span><span class="cp">    static bool setDefaultImpl(std::unique_ptr&lt;I##INTERFACE&gt; impl);     \
+</span><span class="ln">11</span><span class="cp">    static const std::unique_ptr&lt;I##INTERFACE&gt;&amp; getDefaultImpl();       \
+</span><span class="ln">12</span><span class="cp">private:                                                                \
+</span><span class="ln">13</span><span class="cp">    static std::unique_ptr&lt;I##INTERFACE&gt; default_impl;                  \
+</span><span class="ln">14</span><span class="cp">public:                                                                 \
+</span></code></pre></div><p>具体实现</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/include/binder/IInterface.h#DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_INTERFACE
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#define DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_INTERFACE(INTERFACE, NAME)\
+</span><span class="ln"> 3</span><span class="cp">    ...
+</span><span class="ln"> 4</span><span class="cp"></span>    <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">sp</span><span class="o">&lt;</span><span class="n">I</span><span class="err">##</span><span class="n">INTERFACE</span><span class="o">&gt;</span> <span class="n">I</span><span class="err">##</span><span class="n">INTERFACE</span><span class="o">::</span><span class="n">asInterface</span><span class="p">(</span>              \
+<span class="ln"> 5</span>            <span class="k">const</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">sp</span><span class="o">&lt;::</span><span class="n">android</span><span class="o">::</span><span class="n">IBinder</span><span class="o">&gt;&amp;</span> <span class="n">obj</span><span class="p">)</span>               \
+<span class="ln"> 6</span>    <span class="p">{</span>                                                                   \
+<span class="ln"> 7</span>        <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">sp</span><span class="o">&lt;</span><span class="n">I</span><span class="err">##</span><span class="n">INTERFACE</span><span class="o">&gt;</span> <span class="n">intr</span><span class="p">;</span>                               \
+<span class="ln"> 8</span>        <span class="k">if</span> <span class="p">(</span><span class="n">obj</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>                                           \
+<span class="ln"> 9</span>            <span class="n">intr</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">I</span><span class="err">##</span><span class="n">INTERFACE</span><span class="o">*&gt;</span><span class="p">(</span>                          \
+<span class="ln">10</span>                <span class="n">obj</span><span class="o">-&gt;</span><span class="n">queryLocalInterface</span><span class="p">(</span>                               \
+<span class="ln">11</span>                        <span class="n">I</span><span class="err">##</span><span class="n">INTERFACE</span><span class="o">::</span><span class="n">descriptor</span><span class="p">).</span><span class="n">get</span><span class="p">());</span>               \
+<span class="ln">12</span>            <span class="k">if</span> <span class="p">(</span><span class="n">intr</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>                                      \
+<span class="ln">13</span>                <span class="n">intr</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Bp</span><span class="err">##</span><span class="n">INTERFACE</span><span class="p">(</span><span class="n">obj</span><span class="p">);</span>                          \
+<span class="ln">14</span>            <span class="p">}</span>                                                           \
+<span class="ln">15</span>        <span class="p">}</span>                                                               \
+<span class="ln">16</span>        <span class="k">return</span> <span class="n">intr</span><span class="p">;</span>                                                    \
+<span class="ln">17</span>    <span class="p">}</span>                                                                   \
+</code></pre></div><p>考虑到上述queryLocalInterface的入参，可以是BBinder，也可以是BpBinder，那么BnInterface中的实现，返回的是BnInterface实例它本身。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//frameworks/native/libs/binder/include/binder/IInterface.h#BnInterface&lt;INTERFACE&gt;::queryLocalInterface
+</span><span class="ln">2</span><span class="c1"></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">INTERFACE</span><span class="o">&gt;</span>
+<span class="ln">3</span><span class="kr">inline</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">IInterface</span><span class="o">&gt;</span> <span class="n">BnInterface</span><span class="o">&lt;</span><span class="n">INTERFACE</span><span class="o">&gt;::</span><span class="n">queryLocalInterface</span><span class="p">(</span>
+<span class="ln">4</span>        <span class="k">const</span> <span class="n">String16</span><span class="o">&amp;</span> <span class="n">_descriptor</span><span class="p">)</span>
+<span class="ln">5</span><span class="p">{</span>
+<span class="ln">6</span>    <span class="k">if</span> <span class="p">(</span><span class="n">_descriptor</span> <span class="o">==</span> <span class="n">INTERFACE</span><span class="o">::</span><span class="n">descriptor</span><span class="p">)</span> <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+<span class="ln">7</span>    <span class="k">return</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln">8</span><span class="p">}</span>
+</code></pre></div><p>BpInterface的本身没有queryLocalInterface方法，它的构造BpInterface(const sp<!-- raw HTML omitted -->&amp; remote);中的参数是IBinder类型，最终调用到的是IBinder中的queryLocalInterface方法。也就是BpInterface间接调用BpBinder，BpBinder的实现是返回nullptr，那么一定会调用new Bp##INTERFACE(obj);这里。<strong>客户端才能生成真正的代理类，服务端生成不了</strong>。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//frameworks/native/libs/binder/Binder.cpp#IBinder::queryLocalInterface
+</span><span class="ln">2</span><span class="c1"></span><span class="n">sp</span><span class="o">&lt;</span><span class="n">IInterface</span><span class="o">&gt;</span>  <span class="n">IBinder</span><span class="o">::</span><span class="n">queryLocalInterface</span><span class="p">(</span><span class="k">const</span> <span class="n">String16</span><span class="o">&amp;</span> <span class="cm">/*descriptor*/</span><span class="p">)</span>
+<span class="ln">3</span><span class="p">{</span>
+<span class="ln">4</span>    <span class="k">return</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln">5</span><span class="p">}</span>
+</code></pre></div><h3 id="224总结">2.2.4总结</h3>
+<p>BBinder是服务端的核心，BpBinder是客户端的核心，两者都是IBinder派生出来的，其中服务端需要实现BnInterface，客户端需要实现BpInterface。</p>
+<h2 id="23binder死亡通知">2.3Binder死亡通知</h2>
+<p>检测一个服务，是不是宕机或者已经挂死，可以通过死亡通知来检测。</p>
+<h2 id="231linktodeath">2.3.1linkToDeath</h2>
+<p>IBinder提供了一个死亡通知接口linkToDeath。</p>
+<p>其有三个参数，recipient为接收对象，必须自定义实现。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//frameworks/native/libs/binder/include/binder/IBinder.h#linkToDeath
+</span><span class="ln">2</span><span class="c1"></span><span class="k">class</span> <span class="na">[[clang::lto_visibility_public]]</span> <span class="nc">IBinder</span> <span class="o">:</span> <span class="k">public</span> <span class="k">virtual</span> <span class="n">RefBase</span><span class="p">{</span>
+<span class="ln">3</span>    <span class="k">virtual</span> <span class="n">status_t</span>        <span class="nf">linkToDeath</span><span class="p">(</span><span class="k">const</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">DeathRecipient</span><span class="o">&gt;&amp;</span> <span class="n">recipient</span><span class="p">,</span>
+<span class="ln">4</span>                                        <span class="kt">void</span><span class="o">*</span> <span class="n">cookie</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">,</span>
+<span class="ln">5</span>                                        <span class="kt">uint32_t</span> <span class="n">flags</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">6</span><span class="p">};</span>
+</code></pre></div><p>这个类DeathRecipient就是接口，用于回调，需要重载binderDied</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//frameworks/native/libs/binder/include/binder/IBinder.h#DeathRecipient
+</span><span class="ln">2</span><span class="c1"></span><span class="k">class</span> <span class="nc">DeathRecipient</span> <span class="o">:</span> <span class="k">public</span> <span class="k">virtual</span> <span class="n">RefBase</span>
+<span class="ln">3</span><span class="p">{</span>
+<span class="ln">4</span>    <span class="k">public</span><span class="o">:</span>
+<span class="ln">5</span>    <span class="k">virtual</span> <span class="kt">void</span> <span class="n">binderDied</span><span class="p">(</span><span class="k">const</span> <span class="n">wp</span><span class="o">&lt;</span><span class="n">IBinder</span><span class="o">&gt;&amp;</span> <span class="n">who</span><span class="p">)</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">6</span><span class="p">};</span>
+</code></pre></div><p>考虑到IBinder，既可以是BBinder，也可以是BpBinder。他们又有分别的实现。</p>
+<p>BBinder</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//frameworks/native/libs/binder/Binder.cpp#linkToDeath
+</span><span class="ln">2</span><span class="c1"></span><span class="n">status_t</span> <span class="n">BBinder</span><span class="o">::</span><span class="n">linkToDeath</span><span class="p">(</span>
+<span class="ln">3</span>    <span class="k">const</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">DeathRecipient</span><span class="o">&gt;&amp;</span> <span class="cm">/*recipient*/</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="cm">/*cookie*/</span><span class="p">,</span>
+<span class="ln">4</span>    <span class="kt">uint32_t</span> <span class="cm">/*flags*/</span><span class="p">)</span>
+<span class="ln">5</span><span class="p">{</span>
+<span class="ln">6</span>    <span class="k">return</span> <span class="n">INVALID_OPERATION</span><span class="p">;</span>
+<span class="ln">7</span><span class="p">}</span>
+</code></pre></div><p>BpBinder</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/BpBinder.cpp#linkToDeath
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">status_t</span> <span class="n">BpBinder</span><span class="o">::</span><span class="n">linkToDeath</span><span class="p">(</span>
+<span class="ln"> 3</span>    <span class="k">const</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">DeathRecipient</span><span class="o">&gt;&amp;</span> <span class="n">recipient</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">cookie</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">flags</span><span class="p">)</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span>    <span class="n">Obituary</span> <span class="n">ob</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="n">ob</span><span class="p">.</span><span class="n">recipient</span> <span class="o">=</span> <span class="n">recipient</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="n">ob</span><span class="p">.</span><span class="n">cookie</span> <span class="o">=</span> <span class="n">cookie</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="n">ob</span><span class="p">.</span><span class="n">flags</span> <span class="o">=</span> <span class="n">flags</span><span class="p">;</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span>    <span class="n">LOG_ALWAYS_FATAL_IF</span><span class="p">(</span><span class="n">recipient</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">,</span>
+<span class="ln">11</span>                        <span class="s">&#34;linkToDeath(): recipient must be non-NULL&#34;</span><span class="p">);</span>
+<span class="ln">12</span>
+<span class="ln">13</span>    <span class="p">{</span>
+<span class="ln">14</span>        <span class="n">AutoMutex</span> <span class="nf">_l</span><span class="p">(</span><span class="n">mLock</span><span class="p">);</span>
+<span class="ln">15</span>
+<span class="ln">16</span>        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">mObitsSent</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">17</span>            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">mObituaries</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">18</span>                <span class="n">mObituaries</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Vector</span><span class="o">&lt;</span><span class="n">Obituary</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="ln">19</span>                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">mObituaries</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">20</span>                    <span class="k">return</span> <span class="n">NO_MEMORY</span><span class="p">;</span>
+<span class="ln">21</span>                <span class="p">}</span>
+<span class="ln">22</span>                <span class="n">ALOGV</span><span class="p">(</span><span class="s">&#34;Requesting death notification: %p handle %d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="k">this</span><span class="p">,</span> <span class="n">mHandle</span><span class="p">);</span>
+<span class="ln">23</span>                <span class="n">getWeakRefs</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">incWeak</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+<span class="ln">24</span>                <span class="n">IPCThreadState</span><span class="o">*</span> <span class="n">self</span> <span class="o">=</span> <span class="n">IPCThreadState</span><span class="o">::</span><span class="n">self</span><span class="p">();</span>
+<span class="ln">25</span>                <span class="n">self</span><span class="o">-&gt;</span><span class="n">requestDeathNotification</span><span class="p">(</span><span class="n">mHandle</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
+<span class="ln">26</span>                <span class="n">self</span><span class="o">-&gt;</span><span class="n">flushCommands</span><span class="p">();</span>
+<span class="ln">27</span>            <span class="p">}</span>
+<span class="ln">28</span>            <span class="n">ssize_t</span> <span class="n">res</span> <span class="o">=</span> <span class="n">mObituaries</span><span class="o">-&gt;</span><span class="n">add</span><span class="p">(</span><span class="n">ob</span><span class="p">);</span>
+<span class="ln">29</span>            <span class="k">return</span> <span class="n">res</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="n">ssize_t</span><span class="p">)</span><span class="n">NO_ERROR</span> <span class="o">?</span> <span class="p">(</span><span class="n">status_t</span><span class="p">)</span><span class="nl">NO_ERROR</span> <span class="p">:</span> <span class="n">res</span><span class="p">;</span>
+<span class="ln">30</span>        <span class="p">}</span>
+<span class="ln">31</span>    <span class="p">}</span>
+<span class="ln">32</span>
+<span class="ln">33</span>    <span class="k">return</span> <span class="n">DEAD_OBJECT</span><span class="p">;</span>
+<span class="ln">34</span><span class="p">}</span>
+</code></pre></div><p>因此，只能在客户端接收死亡通知。</p>
+<h3 id="executecommand">executeCommand</h3>
+<p>那么有了死亡通知的接口，那么谁来发送死亡通知呢？</p>
+<p>这个死亡通知实际上是由驱动推送的，驱动检测某个服务死亡，会根据设置向应用推送消息。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/IPCThreadState.cpp#executeCommand
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">status_t</span> <span class="n">IPCThreadState</span><span class="o">::</span><span class="n">executeCommand</span><span class="p">(</span><span class="kt">int32_t</span> <span class="n">cmd</span><span class="p">)</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="n">BBinder</span><span class="o">*</span> <span class="n">obj</span><span class="p">;</span>
+<span class="ln"> 5</span>    <span class="n">RefBase</span><span class="o">::</span><span class="n">weakref_type</span><span class="o">*</span> <span class="n">refs</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="n">status_t</span> <span class="n">result</span> <span class="o">=</span> <span class="n">NO_ERROR</span><span class="p">;</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span>    <span class="k">switch</span> <span class="p">((</span><span class="kt">uint32_t</span><span class="p">)</span><span class="n">cmd</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 9</span>    <span class="p">...</span>
+<span class="ln">10</span>    <span class="k">case</span> <span class="nl">BR_DEAD_BINDER</span><span class="p">:</span>
+<span class="ln">11</span>        <span class="p">{</span>
+<span class="ln">12</span>            <span class="n">BpBinder</span> <span class="o">*</span><span class="n">proxy</span> <span class="o">=</span> <span class="p">(</span><span class="n">BpBinder</span><span class="o">*</span><span class="p">)</span><span class="n">mIn</span><span class="p">.</span><span class="n">readPointer</span><span class="p">();</span>
+<span class="ln">13</span>            <span class="n">proxy</span><span class="o">-&gt;</span><span class="n">sendObituary</span><span class="p">();</span>
+<span class="ln">14</span>            <span class="n">mOut</span><span class="p">.</span><span class="n">writeInt32</span><span class="p">(</span><span class="n">BC_DEAD_BINDER_DONE</span><span class="p">);</span>
+<span class="ln">15</span>            <span class="n">mOut</span><span class="p">.</span><span class="n">writePointer</span><span class="p">((</span><span class="n">uintptr_t</span><span class="p">)</span><span class="n">proxy</span><span class="p">);</span>
+<span class="ln">16</span>        <span class="p">}</span> <span class="k">break</span><span class="p">;</span>
+<span class="ln">17</span>    <span class="p">...</span>
+<span class="ln">18</span>    <span class="k">default</span><span class="o">:</span>
+<span class="ln">19</span>        <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;*** BAD COMMAND %d received from Binder driver</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">cmd</span><span class="p">);</span>
+<span class="ln">20</span>        <span class="n">result</span> <span class="o">=</span> <span class="n">UNKNOWN_ERROR</span><span class="p">;</span>
+<span class="ln">21</span>        <span class="k">break</span><span class="p">;</span>
+<span class="ln">22</span>    <span class="p">}</span>
+<span class="ln">23</span>
+<span class="ln">24</span>    <span class="k">if</span> <span class="p">(</span><span class="n">result</span> <span class="o">!=</span> <span class="n">NO_ERROR</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">25</span>        <span class="n">mLastError</span> <span class="o">=</span> <span class="n">result</span><span class="p">;</span>
+<span class="ln">26</span>    <span class="p">}</span>
+<span class="ln">27</span>
+<span class="ln">28</span>    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="ln">29</span><span class="p">}</span>
+</code></pre></div><p>调用到BpBinder中的sendObituary方法</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/BpBinder.cpp#sendObituary
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span> <span class="n">BpBinder</span><span class="o">::</span><span class="n">sendObituary</span><span class="p">()</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="p">...</span>
+<span class="ln"> 5</span>    <span class="k">if</span> <span class="p">(</span><span class="n">obits</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 6</span>        <span class="k">const</span> <span class="n">size_t</span> <span class="n">N</span> <span class="o">=</span> <span class="n">obits</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">();</span>
+<span class="ln"> 7</span>        <span class="k">for</span> <span class="p">(</span><span class="n">size_t</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 8</span>            <span class="n">reportOneDeath</span><span class="p">(</span><span class="n">obits</span><span class="o">-&gt;</span><span class="n">itemAt</span><span class="p">(</span><span class="n">i</span><span class="p">));</span>
+<span class="ln"> 9</span>        <span class="p">}</span>
+<span class="ln">10</span>
+<span class="ln">11</span>        <span class="k">delete</span> <span class="n">obits</span><span class="p">;</span>
+<span class="ln">12</span>    <span class="p">}</span>
+<span class="ln">13</span><span class="p">}</span>
+</code></pre></div><p>而reportOneDeath最终会调用到上述死亡通知篇章中的回调函数binderDied，这也是为什么该函数必须重载。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//frameworks/native/libs/binder/BpBinder.cpp#reportOneDeath
+</span><span class="ln">2</span><span class="c1"></span><span class="kt">void</span> <span class="n">BpBinder</span><span class="o">::</span><span class="n">reportOneDeath</span><span class="p">(</span><span class="k">const</span> <span class="n">Obituary</span><span class="o">&amp;</span> <span class="n">obit</span><span class="p">)</span>
+<span class="ln">3</span><span class="p">{</span>
+<span class="ln">4</span>    <span class="n">sp</span><span class="o">&lt;</span><span class="n">DeathRecipient</span><span class="o">&gt;</span> <span class="n">recipient</span> <span class="o">=</span> <span class="n">obit</span><span class="p">.</span><span class="n">recipient</span><span class="p">.</span><span class="n">promote</span><span class="p">();</span>
+<span class="ln">5</span>    <span class="n">ALOGV</span><span class="p">(</span><span class="s">&#34;Reporting death to recipient: %p</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">recipient</span><span class="p">.</span><span class="n">get</span><span class="p">());</span>
+<span class="ln">6</span>    <span class="k">if</span> <span class="p">(</span><span class="n">recipient</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+<span class="ln">7</span>
+<span class="ln">8</span>    <span class="n">recipient</span><span class="o">-&gt;</span><span class="n">binderDied</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+<span class="ln">9</span><span class="p">}</span>
+</code></pre></div><h1 id="3aidl实战">3.AIDL实战</h1>
+<p>1.接口扩展</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//ITestService.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#include</span> <span class="cpf">&lt;IInterface.h&gt;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp">#define TEST_GET 1
+</span><span class="ln"> 4</span><span class="cp">#define TEST_SET 2
+</span><span class="ln"> 5</span><span class="cp"></span>
+<span class="ln"> 6</span><span class="k">namespace</span> <span class="n">android</span><span class="p">{</span>
+<span class="ln"> 7</span><span class="n">Class</span> <span class="nl">ITestService</span> <span class="p">:</span> <span class="k">public</span> <span class="n">IInterface</span><span class="p">{</span>
+<span class="ln"> 8</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 9</span>    <span class="n">DECLARE_META_INTERFACE</span><span class="p">(</span><span class="n">TestService</span><span class="p">);</span>
+<span class="ln">10</span>    <span class="k">virtual</span> <span class="kt">int</span> <span class="nf">get</span><span class="p">()</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="k">virtual</span> <span class="kt">void</span> <span class="nf">set</span><span class="p">(</span><span class="kt">int</span> <span class="n">value</span><span class="p">)</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">12</span><span class="p">};</span>
+<span class="ln">13</span><span class="p">}</span>
+</code></pre></div><p>2.服务端</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//BnTestService.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">namespace</span> <span class="n">android</span><span class="p">{</span>
+<span class="ln"> 3</span><span class="k">class</span> <span class="nc">BnTestService</span> <span class="o">:</span> <span class="k">public</span> <span class="n">BnInterface</span><span class="o">&lt;</span><span class="n">ITestService</span><span class="o">&gt;</span><span class="p">{</span>
+<span class="ln"> 4</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 5</span>    <span class="n">BnTestService</span><span class="p">();</span>
+<span class="ln"> 6</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 7</span>    <span class="kt">int</span> <span class="n">cnt</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="k">virtual</span> <span class="kt">int</span> <span class="nf">get</span><span class="p">();</span>
+<span class="ln"> 9</span>    <span class="k">virtual</span> <span class="kt">void</span> <span class="nf">set</span><span class="p">(</span><span class="kt">int</span> <span class="n">value</span><span class="p">);</span>
+<span class="ln">10</span>    <span class="k">virtual</span> <span class="n">status_t</span> <span class="nf">onTransact</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">code</span><span class="p">,</span>
+<span class="ln">11</span>                                <span class="k">const</span> <span class="n">Parcel</span><span class="o">&amp;</span> <span class="n">data</span><span class="p">,</span>
+<span class="ln">12</span>                                <span class="n">Parcel</span><span class="o">*</span> <span class="n">reply</span><span class="p">,</span>
+<span class="ln">13</span>                                <span class="kt">uint32_t</span> <span class="n">flags</span> <span class="o">=</span> <span class="mi">0</span><span class="p">);</span>
+<span class="ln">14</span><span class="p">};</span>
+<span class="ln">15</span><span class="p">}</span>
+</code></pre></div><p>3.客户端</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="cp">#BpTestService.h
+</span><span class="ln"> 2</span><span class="cp"></span><span class="k">namespace</span> <span class="n">android</span><span class="p">{</span>
+<span class="ln"> 3</span><span class="k">class</span> <span class="nc">BpTestService</span> <span class="o">:</span> <span class="k">public</span> <span class="n">BpInterface</span><span class="o">&lt;</span><span class="n">ITestService</span><span class="o">&gt;</span><span class="p">{</span>
+<span class="ln"> 4</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 5</span>    <span class="n">BpTestService</span><span class="o">::</span><span class="n">BpTestService</span><span class="p">(</span><span class="k">const</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">IBinder</span><span class="o">&gt;&amp;</span> <span class="n">impl</span><span class="p">)</span> <span class="o">:</span> <span class="n">BpInterface</span><span class="o">&lt;</span><span class="n">ITestService</span><span class="o">&gt;</span><span class="p">(</span><span class="n">impl</span><span class="p">);</span>
+<span class="ln"> 6</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 7</span>    <span class="k">virtual</span> <span class="kt">int</span> <span class="n">get</span><span class="p">();</span>
+<span class="ln"> 8</span>    <span class="k">virtual</span> <span class="kt">void</span> <span class="nf">set</span><span class="p">(</span><span class="kt">int</span> <span class="n">value</span><span class="p">);</span>
+<span class="ln"> 9</span><span class="p">};</span>
+<span class="ln">10</span><span class="p">}</span>
+</code></pre></div><p>3.Bn端的代码实现</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//BnTestService.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#include</span> <span class="cpf">&#34;BnTestService.h&#34;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp"></span><span class="n">BnTestService</span><span class="o">::</span><span class="n">BnTestService</span><span class="p">()</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span><span class="p">}</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span><span class="n">status_t</span> <span class="n">BnTestService</span><span class="o">::</span><span class="n">onTransact</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">code</span><span class="p">,</span>
+<span class="ln"> 8</span>                                <span class="k">const</span> <span class="n">Parcel</span><span class="o">&amp;</span> <span class="n">data</span><span class="p">,</span>
+<span class="ln"> 9</span>                                <span class="n">Parcel</span><span class="o">*</span> <span class="n">reply</span><span class="p">,</span>
+<span class="ln">10</span>                                <span class="kt">uint32_t</span> <span class="n">flags</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+<span class="ln">11</span><span class="p">{</span>
+<span class="ln">12</span>    <span class="k">switch</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">13</span>        <span class="k">case</span> <span class="nl">TEST_GET</span><span class="p">:</span> <span class="p">{</span>
+<span class="ln">14</span>           <span class="c1">//数据有效性检测 
+</span><span class="ln">15</span><span class="c1"></span>           <span class="n">CHECK_INTERFACE</span><span class="p">(</span><span class="n">ITestService</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">reply</span><span class="p">);</span>
+<span class="ln">16</span>           <span class="n">set</span><span class="p">(</span><span class="n">data</span><span class="o">-&gt;</span><span class="n">readInt</span><span class="p">());</span>
+<span class="ln">17</span>           <span class="k">return</span> <span class="n">NO_ERROR</span><span class="p">;</span>
+<span class="ln">18</span>        <span class="p">}</span> <span class="k">break</span><span class="p">;</span>
+<span class="ln">19</span>        <span class="k">case</span> <span class="nl">TEST_SET</span><span class="p">:</span> <span class="p">{</span>
+<span class="ln">20</span>           <span class="c1">//数据有效性检测 
+</span><span class="ln">21</span><span class="c1"></span>           <span class="n">CHECK_INTERFACE</span><span class="p">(</span><span class="n">ITestService</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">reply</span><span class="p">);</span>
+<span class="ln">22</span>           <span class="n">reply</span><span class="o">-&gt;</span><span class="n">writeInt</span><span class="p">(</span><span class="n">get</span><span class="p">());</span>
+<span class="ln">23</span>           <span class="k">return</span> <span class="n">NO_ERROR</span><span class="p">;</span>
+<span class="ln">24</span>        <span class="p">}</span> <span class="k">break</span><span class="p">;</span>
+<span class="ln">25</span>        <span class="k">default</span><span class="o">:</span>
+<span class="ln">26</span>            <span class="k">return</span> <span class="n">IBinder</span><span class="o">::</span><span class="n">onTransact</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">reply</span><span class="p">,</span> <span class="n">flag</span><span class="p">);</span>
+<span class="ln">27</span>    <span class="p">}</span>
+<span class="ln">28</span><span class="p">}</span>
+<span class="ln">29</span>
+<span class="ln">30</span><span class="kt">int</span> <span class="n">BnTestService</span><span class="o">::</span><span class="n">get</span><span class="p">()</span>
+<span class="ln">31</span><span class="p">{</span>
+<span class="ln">32</span>    <span class="k">return</span> <span class="n">cnt</span><span class="p">;</span>
+<span class="ln">33</span><span class="p">}</span>
+<span class="ln">34</span>
+<span class="ln">35</span><span class="kt">void</span> <span class="n">BnTestService</span><span class="o">::</span><span class="n">set</span><span class="p">(</span><span class="kt">int</span> <span class="n">cnt</span><span class="p">)</span>
+<span class="ln">36</span><span class="p">{</span>
+<span class="ln">37</span>    <span class="k">this</span><span class="o">-&gt;</span><span class="n">cnt</span> <span class="o">=</span> <span class="n">cnt</span><span class="p">;</span>
+<span class="ln">38</span><span class="p">}</span>
+</code></pre></div><p>4.Bp端的代码实现</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="k">namespace</span> <span class="n">android</span><span class="p">{</span>
+<span class="ln"> 2</span><span class="n">IMPLEMENT_META_INTERFACE</span><span class="p">(</span><span class="n">ITestService</span><span class="p">,</span> <span class="s">&#34;android.test.ITestService&#34;</span><span class="p">);</span>
+<span class="ln"> 3</span>
+<span class="ln"> 4</span><span class="n">BpTestService</span><span class="o">::</span><span class="n">BpTestService</span><span class="p">(</span><span class="k">const</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">IBinder</span><span class="o">&gt;&amp;</span> <span class="n">impl</span><span class="p">)</span> <span class="o">:</span> <span class="n">BpInterface</span><span class="o">&lt;</span><span class="n">ITestService</span><span class="o">&gt;</span><span class="p">(</span><span class="n">impl</span><span class="p">)</span>
+<span class="ln"> 5</span><span class="p">{</span>
+<span class="ln"> 6</span><span class="p">}</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span><span class="kt">int</span> <span class="n">BpTestService</span><span class="o">::</span><span class="n">get</span><span class="p">()</span>
+<span class="ln"> 9</span><span class="p">{</span>
+<span class="ln">10</span>    <span class="n">Parcel</span> <span class="n">data</span><span class="p">,</span> <span class="n">reply</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="n">remote</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">transact</span><span class="p">(</span><span class="n">TEST_GET</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">reply</span><span class="p">);</span>
+<span class="ln">12</span>    <span class="k">return</span> <span class="n">reply</span><span class="p">.</span><span class="n">readInt</span><span class="p">();</span>
+<span class="ln">13</span><span class="p">}</span>
+<span class="ln">14</span>
+<span class="ln">15</span><span class="kt">void</span> <span class="n">BpTestService</span><span class="o">::</span><span class="n">set</span><span class="p">(</span><span class="kt">int</span> <span class="n">cnt</span><span class="p">)</span>
+<span class="ln">16</span><span class="p">{</span>
+<span class="ln">17</span>    <span class="n">Parcel</span> <span class="n">data</span><span class="p">,</span> <span class="n">reply</span><span class="p">;</span>
+<span class="ln">18</span>    <span class="n">data</span><span class="p">.</span><span class="n">writeInt</span><span class="p">(</span><span class="n">cnt</span><span class="p">);</span>
+<span class="ln">19</span>    <span class="n">remote</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">transact</span><span class="p">(</span><span class="n">TEST_SET</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">reply</span><span class="p">);</span>
+<span class="ln">20</span><span class="p">}</span>     
+<span class="ln">21</span><span class="p">}</span>
+</code></pre></div><p>Bp中的remote()，就是mRemote，而mRemote是在Bp构造的时候传入的impl，即为BpBinder的一个实例。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//frameworks/native/libs/binder/include/binder/Binder.h#BpRefBase::remote
+</span><span class="ln">2</span><span class="c1"></span><span class="kr">inline</span>  <span class="n">IBinder</span><span class="o">*</span>        <span class="nf">remote</span><span class="p">()</span>                <span class="p">{</span> <span class="k">return</span> <span class="n">mRemote</span><span class="p">;</span> <span class="p">}</span>
+</code></pre></div><h1 id="4系统源码实例分析">4.系统源码实例分析</h1>
+<p>事实上，源码中有大量的使用这类AIDL的方式。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/aidl/aidl3_8.png" title="Android Camera AIDL图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/aidl/aidl3_8.png"  alt="Android Camera AIDL图">
+  
+    </a>
+  
+   
+    <span class="caption">Android Camera AIDL图</span>
+  
+</div>
+
+<p>举一个比较常见的代码，Camera源码中Camera App调用到CameraService里面的功能，这个时候用得就是AIDL。</p>
+<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220320163805584.png" alt="image-20220320163805584"></p>
 <h1 id="参考">参考</h1>
-<p><a href="https://blog.csdn.net/gcwl2016/article/details/88691049">[2] gcwl2016, Android系统中通过binder(AIDL)进行跨层IPC通信, 2019.</a></p>
+<p><a href="https://blog.csdn.net/gcwl2016/article/details/88691049">[1] gcwl2016, Android系统中通过binder(AIDL)进行跨层IPC通信, 2019.</a></p>
 <p><a href="https://jiatai.blog.csdn.net/article/details/80945447">[2] i加加, （五十七）Android O WiFi的扫描流程梳理续——梳理java与c++之间的aidl-cpp通信, 2018.</a></p>
-<p><a href="https://blog.csdn.net/po__oq/article/details/80985658">[2] 飞同小可,android系统开发binder调用（C++和java相互调用), 2018.</a></p>
-<p><a href="https://blog.csdn.net/aaajj/article/details/87924692">[2] aaajj, c++层使用和编译aidl文件例子, 2019.</a></p>
-<p><a href="https://blog.csdn.net/u013928208/article/details/81190552">[2] SherlockCharlie, Android8.0 Binder之面向系统服务(二), 2018.</a></p>
-<p><a href="">[2] 躬行之, Android进阶之AIDL的使用详解, 2018.</a></p>
-<p><a href="https://www.bilibili.com/video/BV1dN411d7V7">https://www.bilibili.com/video/BV1dN411d7V7</a></p>
+<p><a href="https://blog.csdn.net/po__oq/article/details/80985658">[3] 飞同小可,android系统开发binder调用（C++和java相互调用), 2018.</a></p>
+<p><a href="https://blog.csdn.net/aaajj/article/details/87924692">[4] aaajj, c++层使用和编译aidl文件例子, 2019.</a></p>
+<p><a href="https://blog.csdn.net/u013928208/article/details/81190552">[5] SherlockCharlie, Android8.0 Binder之面向系统服务(二), 2018.</a></p>
+<p><a href="">[6] 躬行之, Android进阶之AIDL的使用详解, 2018.</a></p>
+<p><a href="http://gityuan.com/2015/10/31/binder-prepare/">[7] 袁辉辉, Binder系列—开篇, 2015.</a></p>
+<p><a href="https://blog.csdn.net/superlee1125/article/details/114403368">[8] rockmanlc, IBinder类前面的clang::lto_visibility_public, 2021.</a></p>
+<p><a href="https://www.bilibili.com/video/BV1dN411d7V7">[9] syfchao, Android基础框架Binder应用开发（一)-BnBp服务实现, 2021.</a></p>
+<p><a href="https://blog.csdn.net/wjky2014/article/details/108722509">[10] 程序员Android, Camera2 / HAL3 架构了解下,2020</a></p>
               
             </div>
           </div>
