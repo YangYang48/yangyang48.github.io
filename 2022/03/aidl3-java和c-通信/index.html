@@ -272,7 +272,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">1500 Words|Read in about 7 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">2000 Words|Read in about 10 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -1046,7 +1046,307 @@
 </div>
 
 <p>举一个比较常见的代码，Camera源码中Camera App调用到CameraService里面的功能，这个时候用得就是AIDL。</p>
-<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220320163805584.png" alt="image-20220320163805584"></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/aidl/aidl3_12.png" title="Camera架构图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/aidl/aidl3_12.png"  alt="Camera架构图">
+  
+    </a>
+  
+   
+    <span class="caption">Camera架构图</span>
+  
+</div>
+
+<h2 id="41-addlistener">4.1 addListener</h2>
+<p>这里调用了cameraService中的addListener方法，但实际上最终实现是在CameraService.cpp中的addListener函数。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//base/core/java/android/hardware/camera2/CameraManager.java#connectCameraServiceLocked
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">private</span> <span class="kt">void</span> <span class="nf">connectCameraServiceLocked</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 3</span>    <span class="k">if</span> <span class="o">(</span><span class="n">mCameraService</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">||</span> <span class="n">sCameraServiceDisabled</span><span class="o">)</span> <span class="k">return</span><span class="o">;</span>
+<span class="ln"> 4</span>    <span class="n">Log</span><span class="o">.</span><span class="na">i</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;Connecting to camera service&#34;</span><span class="o">);</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span>    <span class="n">IBinder</span> <span class="n">cameraServiceBinder</span> <span class="o">=</span> <span class="n">ServiceManager</span><span class="o">.</span><span class="na">getService</span><span class="o">(</span><span class="n">CAMERA_SERVICE_BINDER_NAME</span><span class="o">);</span>
+<span class="ln"> 7</span>    <span class="n">ICameraService</span> <span class="n">cameraService</span> <span class="o">=</span> <span class="n">ICameraService</span><span class="o">.</span><span class="na">Stub</span><span class="o">.</span><span class="na">asInterface</span><span class="o">(</span><span class="n">cameraServiceBinder</span><span class="o">);</span>
+<span class="ln"> 8</span>    <span class="o">...</span>
+<span class="ln"> 9</span>    <span class="k">try</span> <span class="o">{</span>
+<span class="ln">10</span>        <span class="n">CameraStatus</span><span class="o">[]</span> <span class="n">cameraStatuses</span> <span class="o">=</span> <span class="n">cameraService</span><span class="o">.</span><span class="na">addListener</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+<span class="ln">11</span>        <span class="k">for</span> <span class="o">(</span><span class="n">CameraStatus</span> <span class="n">c</span> <span class="o">:</span> <span class="n">cameraStatuses</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">12</span>            <span class="n">onStatusChangedLocked</span><span class="o">(</span><span class="n">c</span><span class="o">.</span><span class="na">status</span><span class="o">,</span> <span class="n">c</span><span class="o">.</span><span class="na">cameraId</span><span class="o">);</span>
+<span class="ln">13</span>
+<span class="ln">14</span>            <span class="k">if</span> <span class="o">(</span><span class="n">c</span><span class="o">.</span><span class="na">unavailablePhysicalCameras</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">15</span>                <span class="k">for</span> <span class="o">(</span><span class="n">String</span> <span class="n">unavailPhysicalCamera</span> <span class="o">:</span> <span class="n">c</span><span class="o">.</span><span class="na">unavailablePhysicalCameras</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">16</span>                    <span class="n">onPhysicalCameraStatusChangedLocked</span><span class="o">(</span>
+<span class="ln">17</span>                        <span class="n">ICameraServiceListener</span><span class="o">.</span><span class="na">STATUS_NOT_PRESENT</span><span class="o">,</span>
+<span class="ln">18</span>                        <span class="n">c</span><span class="o">.</span><span class="na">cameraId</span><span class="o">,</span> <span class="n">unavailPhysicalCamera</span><span class="o">);</span>
+<span class="ln">19</span>                <span class="o">}</span>
+<span class="ln">20</span>            <span class="o">}</span>
+<span class="ln">21</span>        <span class="o">}</span>
+<span class="ln">22</span>        <span class="n">mCameraService</span> <span class="o">=</span> <span class="n">cameraService</span><span class="o">;</span>
+<span class="ln">23</span>    <span class="o">}</span>
+<span class="ln">24</span>    <span class="o">...</span>
+<span class="ln">25</span><span class="o">}</span>
+</code></pre></div><h2 id="42-系统aidl组成结构">4.2 系统AIDL组成结构</h2>
+<h3 id="421-aidl定义">4.2.1 AIDL定义</h3>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln"> 1</span>//frameworks/av/camera/aidl/android/hardware/ICameraService.aidl
+<span class="ln"> 2</span>interface ICameraService {
+<span class="ln"> 3</span>    /**
+<span class="ln"> 4</span>     * Add listener for changes to camera device and flashlight state.
+<span class="ln"> 5</span>     *
+<span class="ln"> 6</span>     * Also returns the set of currently-known camera IDs and state of each device.
+<span class="ln"> 7</span>     * Adding a listener will trigger the torch status listener to fire for all
+<span class="ln"> 8</span>     * devices that have a flash unit.
+<span class="ln"> 9</span>     */
+<span class="ln">10</span>    CameraStatus[] addListener(ICameraServiceListener listener);
+<span class="ln">11</span>    ...
+<span class="ln">12</span>}
+</code></pre></div><h3 id="422-生成的aidl的java接口">4.2.2 生成的AIDL的java接口</h3>
+<p>这部分需要编译frameworks之后才能在/out目录下生成对应的java文件。这个java文件跟在as定义之后生成的java文件类似。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">///out/target/common/obj/JAVA_LIBRARIES/framework_intermediates/dotdot/av/camera.aidl/amdroid/hardware/ICameraService.java#ICmaeraService
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">ICmaeraService</span> <span class="kd">extends</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">IInterface</span>
+<span class="ln"> 3</span><span class="o">{</span>
+<span class="ln"> 4</span>    <span class="o">...</span>
+<span class="ln"> 5</span>    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Proxy</span> <span class="kd">implements</span> <span class="n">android</span><span class="o">.</span><span class="na">hardware</span><span class="o">.</span><span class="na">ICameraService</span>
+<span class="ln"> 6</span>    <span class="o">{</span>
+<span class="ln"> 7</span>        <span class="kd">private</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">IBinder</span> <span class="n">mRemote</span><span class="o">;</span>
+<span class="ln"> 8</span>        <span class="n">Proxy</span><span class="o">(</span><span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">IBinder</span> <span class="n">remote</span><span class="o">)</span>
+<span class="ln"> 9</span>        <span class="o">{</span>
+<span class="ln">10</span>            <span class="n">mRemote</span> <span class="o">=</span> <span class="n">remote</span><span class="o">;</span>
+<span class="ln">11</span>        <span class="o">}</span>
+<span class="ln">12</span>        
+<span class="ln">13</span>        <span class="nd">@override</span>
+<span class="ln">14</span>        <span class="kd">public</span> <span class="n">android</span><span class="o">.</span><span class="na">hardware</span><span class="o">.</span><span class="na">CameraStatus</span><span class="o">[]</span> <span class="nf">addListener</span><span class="o">(</span><span class="n">android</span><span class="o">.</span><span class="na">hardware</span><span class="o">.</span><span class="na">ICameraServiceListener</span> <span class="n">listener</span><span class="o">)</span>
+<span class="ln">15</span>            <span class="kd">throws</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">RemoteException</span>
+<span class="ln">16</span>        <span class="o">{</span>
+<span class="ln">17</span>            <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Parcel</span> <span class="n">_data</span> <span class="o">=</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Parcel</span><span class="o">.</span><span class="na">obtain</span><span class="o">();</span>
+<span class="ln">18</span>            <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Parcel</span> <span class="n">_reply</span> <span class="o">=</span> <span class="n">android</span><span class="o">.</span><span class="na">os</span><span class="o">.</span><span class="na">Parcel</span><span class="o">.</span><span class="na">obtain</span><span class="o">();</span>
+<span class="ln">19</span>            <span class="n">android</span><span class="o">.</span><span class="na">hardware</span><span class="o">.</span><span class="na">CameraStatus</span><span class="o">[]</span> <span class="n">_result</span><span class="o">;</span>
+<span class="ln">20</span>            <span class="k">try</span>
+<span class="ln">21</span>            <span class="o">{</span>
+<span class="ln">22</span>                <span class="n">_data</span><span class="o">.</span><span class="na">writeInterfaceToken</span><span class="o">(</span><span class="n">DESCRIPTOR</span><span class="o">);</span>
+<span class="ln">23</span>                <span class="n">_data</span><span class="o">.</span><span class="na">writeStrongBinder</span><span class="o">((((</span><span class="n">listener</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">))</span> <span class="o">?</span> <span class="o">(</span><span class="n">listener</span><span class="o">.</span><span class="na">asBinder</span><span class="o">())</span> <span class="o">:</span> <span class="o">(</span><span class="kc">null</span><span class="o">)));</span>
+<span class="ln">24</span>                <span class="n">mRemote</span><span class="o">.</span><span class="na">transact</span><span class="o">(</span><span class="n">Stub</span><span class="o">.</span><span class="na">TRANSACTION_addListener</span><span class="o">,</span> <span class="n">_data</span><span class="o">,</span> <span class="n">_reply</span><span class="o">,</span> <span class="n">0</span><span class="o">);</span>
+<span class="ln">25</span>                <span class="n">_reply</span><span class="o">.</span><span class="na">readException</span><span class="o">();</span>
+<span class="ln">26</span>                <span class="n">_result</span> <span class="o">=</span> <span class="n">_reply</span><span class="o">.</span><span class="na">createTypedArray</span><span class="o">(</span><span class="n">android</span><span class="o">.</span><span class="na">hardware</span><span class="o">.</span><span class="na">CameraStatus</span><span class="o">.</span><span class="na">CREATOR</span><span class="o">);</span>
+<span class="ln">27</span>            <span class="o">}</span>
+<span class="ln">28</span>            <span class="k">finally</span>
+<span class="ln">29</span>            <span class="o">{</span>
+<span class="ln">30</span>                <span class="n">_reply</span><span class="o">.</span><span class="na">recycle</span><span class="o">();</span>
+<span class="ln">31</span>                <span class="n">_data</span><span class="o">.</span><span class="na">recycle</span><span class="o">();</span>
+<span class="ln">32</span>            <span class="o">}</span>
+<span class="ln">33</span>            <span class="k">return</span> <span class="n">_result</span><span class="o">;</span>
+<span class="ln">34</span>        <span class="o">}</span>
+<span class="ln">35</span>    <span class="o">}</span>
+<span class="ln">36</span>    <span class="o">...</span>
+<span class="ln">37</span><span class="o">}</span>
+</code></pre></div><h3 id="423-生成的aidl的c接口">4.2.3 生成的AIDL的c++接口</h3>
+<p>这里的接口主要有三个，分别是Bp，Bn和I(BpCameraService.h，BnCameraService.h，ICameraService.h)。</p>
+<p>这里有两种对应的路径，分别对应32位(android_arm_armv7-a)和64位(android_arm64_armv8-a)，笔者这里以64位举例说明。</p>
+<p>ICameraService.h</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">///out/soong/.intermediates/frameworks/av/camera/libcamera_client/android_arm64_armv8_xxx/gen/aidl/android/hardware/ICameraService.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">Class</span> <span class="nl">ICameraService</span> <span class="p">:</span> <span class="k">public</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">IInterface</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 5</span>    <span class="n">DECLARE_META_INTERFACE</span><span class="p">(</span><span class="n">CameraService</span><span class="p">);</span>
+<span class="ln"> 6</span>    <span class="k">virtual</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">binder</span><span class="o">::</span><span class="n">Status</span> <span class="n">addListener</span><span class="p">(</span><span class="k">const</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">sp</span><span class="o">&lt;::</span><span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">ICameraServiceListener</span><span class="o">&gt;&amp;</span> <span class="n">listener</span><span class="p">,</span> <span class="o">::</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;::</span><span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">CameraStatus</span><span class="o">&gt;*</span> <span class="n">_aidl_return</span><span class="p">)</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="k">enum</span> <span class="nc">Call</span><span class="p">{</span>
+<span class="ln"> 8</span>        <span class="n">ADDLISTENER</span> <span class="o">=</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">IBinder</span><span class="o">::</span><span class="n">FIRST_CALL_TRANSACTION</span> <span class="o">+</span> <span class="mi">5</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="p">};</span>
+<span class="ln">10</span>    <span class="p">...</span>
+<span class="ln">11</span><span class="p">};</span>
+</code></pre></div><p>BpCameraService.h</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">///out/soong/.intermediates/frameworks/av/camera/libcamera_client/android_arm64_armv8_xxx/gen/aidl/android/hardware/BpCameraService.h
+</span><span class="ln">2</span><span class="c1"></span><span class="k">class</span> <span class="nc">BpCameraService</span> <span class="o">:</span> <span class="k">public</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">BnInterface</span><span class="o">&lt;</span><span class="n">ICameraService</span><span class="o">&gt;</span>
+<span class="ln">3</span><span class="p">{</span>
+<span class="ln">4</span><span class="k">public</span><span class="o">:</span>
+<span class="ln">5</span>    <span class="k">explicit</span> <span class="n">BpCameraService</span><span class="p">(</span><span class="k">const</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">sp</span><span class="o">&lt;::</span><span class="n">android</span><span class="o">::</span><span class="n">IBinder</span><span class="o">&gt;&amp;</span> <span class="n">_aidl_impl</span><span class="p">;</span>
+<span class="ln">6</span>    <span class="k">virtual</span> <span class="o">~</span><span class="n">BpCameraService</span><span class="p">()</span> <span class="o">=</span> <span class="k">default</span><span class="p">;</span>
+<span class="ln">7</span>    <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">binder</span><span class="o">::</span><span class="n">Status</span> <span class="n">addListener</span><span class="p">(</span><span class="k">const</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">sp</span><span class="o">&lt;::</span><span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">ICameraServiceListener</span><span class="o">&gt;&amp;</span> <span class="n">listener</span><span class="p">,</span> <span class="o">::</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;::</span><span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">CameraStatus</span><span class="o">&gt;*</span> <span class="n">_aidl_return</span><span class="p">)</span> <span class="k">override</span><span class="p">;</span>
+<span class="ln">8</span>    <span class="p">...</span>
+<span class="ln">9</span><span class="p">};</span>
+</code></pre></div><p>BnCameraService.h</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">///out/soong/.intermediates/frameworks/av/camera/libcamera_client/android_arm64_armv8_xxx/gen/aidl/android/hardware/BnCameraService.h
+</span><span class="ln">2</span><span class="c1"></span><span class="k">class</span> <span class="nc">BnCameraService</span> <span class="o">:</span> <span class="k">public</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">BnInterface</span><span class="o">&lt;</span><span class="n">ICameraService</span><span class="o">&gt;</span>
+<span class="ln">3</span><span class="p">{</span>
+<span class="ln">4</span><span class="k">public</span><span class="o">:</span>
+<span class="ln">5</span>    <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">status_t</span> <span class="n">BnCameraService</span><span class="o">::</span><span class="n">onTransact</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">_aidl_code</span><span class="p">,</span> 
+<span class="ln">6</span>                                                    <span class="k">const</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">Parcel</span><span class="o">&amp;</span> <span class="n">_aidl_data</span><span class="p">,</span>
+<span class="ln">7</span>                                                    <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">Parcel</span><span class="o">*</span> <span class="n">_aidl_reply</span><span class="p">,</span>
+<span class="ln">8</span>                                                    <span class="kt">uint32_t</span> <span class="n">_aidl_flags</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="k">override</span><span class="p">;</span>
+<span class="ln">9</span><span class="p">};</span>
+</code></pre></div><h3 id="424生成的aidl的c实现">4.2.4生成的AIDL的c++实现</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">///out/soong/.intermediates/frameworks/av/camera/libcamera_client/android_arm64_armv8_xxx/gen/aidl/frameworks/av/camera/aidl/android/hardware/ICameraService.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">status_t</span> <span class="n">BnCameraService</span><span class="o">::</span><span class="n">onTransact</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">_aidl_code</span><span class="p">,</span> 
+<span class="ln"> 3</span>                                                <span class="k">const</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">Parcel</span><span class="o">&amp;</span> <span class="n">_aidl_data</span><span class="p">,</span>
+<span class="ln"> 4</span>                                                <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">Parcel</span><span class="o">*</span> <span class="n">_aidl_reply</span><span class="p">,</span>
+<span class="ln"> 5</span>                                                <span class="kt">uint32_t</span> <span class="n">_aidl_flags</span><span class="p">){</span>
+<span class="ln"> 6</span>    <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">status_t</span> <span class="n">_aidl_ret_status</span> <span class="o">=</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">OK</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="k">switch</span> <span class="p">(</span><span class="n">_aidl_code</span><span class="p">){</span>
+<span class="ln"> 8</span>        <span class="k">case</span> <span class="n">Call</span><span class="o">::</span><span class="nl">ADDLISTENER</span><span class="p">:</span>
+<span class="ln"> 9</span>            <span class="p">{</span>
+<span class="ln">10</span>                <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">sp</span><span class="o">&lt;::</span><span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">ICameraServiceListener</span><span class="o">&gt;</span> <span class="n">in_listener</span><span class="p">;</span>
+<span class="ln">11</span>                <span class="o">::</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;::</span><span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">CameraStatus</span><span class="o">&gt;</span> <span class="n">_aidl_return</span><span class="p">;</span>
+<span class="ln">12</span>                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="n">_aidl_data</span><span class="p">.</span><span class="n">checkInterface</span><span class="p">(</span><span class="k">this</span><span class="p">))){</span>
+<span class="ln">13</span>                    <span class="n">_aidl_ret_status</span> <span class="o">=</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">BAD_TYPE</span><span class="p">;</span>
+<span class="ln">14</span>                    <span class="k">break</span><span class="p">;</span>
+<span class="ln">15</span>                <span class="p">}</span>
+<span class="ln">16</span>                <span class="n">_aidl_ret_status</span> <span class="o">=</span> <span class="n">_aidl_data</span><span class="p">.</span><span class="n">readStrongBinder</span><span class="p">(</span><span class="o">&amp;</span><span class="n">in_listener</span><span class="p">);</span>
+<span class="ln">17</span>                <span class="k">if</span> <span class="p">(((</span><span class="n">_aidl_ret_status</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">OK</span><span class="p">))){</span>
+<span class="ln">18</span>                    <span class="k">break</span><span class="p">;</span>
+<span class="ln">19</span>                <span class="p">}</span>
+<span class="ln">20</span>
+<span class="ln">21</span>                <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">Binder</span><span class="o">::</span><span class="n">Status</span> <span class="n">_aidl_status</span><span class="p">(</span><span class="n">addListener</span><span class="p">(</span><span class="n">in_listener</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">_aidl_return</span><span class="p">));</span>
+<span class="ln">22</span>                <span class="n">_aidl_ret_status</span> <span class="o">=</span> <span class="n">_aidl_status</span><span class="p">.</span><span class="n">writeToParcel</span><span class="p">(</span><span class="n">_aidl_reply</span><span class="p">);</span>
+<span class="ln">23</span>
+<span class="ln">24</span>                <span class="k">if</span> <span class="p">(((</span><span class="n">_aidl_ret_status</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">OK</span><span class="p">))){</span>
+<span class="ln">25</span>                    <span class="k">break</span><span class="p">;</span>
+<span class="ln">26</span>                <span class="p">}</span>
+<span class="ln">27</span>                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">_aidl_status</span><span class="p">.</span><span class="n">isOk</span><span class="p">()){</span>
+<span class="ln">28</span>                    <span class="k">break</span><span class="p">;</span>
+<span class="ln">29</span>                <span class="p">}</span>
+<span class="ln">30</span>                <span class="n">_aidl_ret_status</span> <span class="o">=</span> <span class="n">_aidl_reply</span><span class="o">-&gt;</span><span class="n">writeParcelableVector</span><span class="p">(</span><span class="n">_aidl_return</span>
+<span class="ln">31</span>                                                                     <span class="p">);</span>
+<span class="ln">32</span>                <span class="k">if</span> <span class="p">(((</span><span class="n">_aidl_ret_status</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">OK</span><span class="p">))){</span>
+<span class="ln">33</span>                    <span class="k">break</span><span class="p">;</span>
+<span class="ln">34</span>                <span class="p">}</span>
+<span class="ln">35</span>            <span class="p">}</span><span class="k">break</span><span class="p">;</span> 
+<span class="ln">36</span>    <span class="p">}</span>
+<span class="ln">37</span><span class="p">}</span>
+</code></pre></div><h3 id="425最终的服务实现">4.2.5最终的服务实现</h3>
+<p>最终会调用到cpp继承的库libcameraservice，这里的libcameraservice中有很多目录。这里面会分别对应api接口和device接口，而调用这些借口的正是CameraService，所以我们这个libcameraservice这个库可以看做成由CameraService作为外观者模式，其余函数用于真正实现的库。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/aidl/aidl3_9.png" title="libcameraservice树状结构图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/aidl/aidl3_9.png"  alt="libcameraservice树状结构图">
+  
+    </a>
+  
+   
+    <span class="caption">libcameraservice树状结构图</span>
+  
+</div>
+
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/av/services/camera/libcameraservice/CameraService.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">class</span> <span class="nc">CameraService</span> <span class="o">:</span>
+<span class="ln"> 3</span>    <span class="k">public</span> <span class="n">BinderService</span><span class="o">&lt;</span><span class="n">CameraService</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="ln"> 4</span>    <span class="k">public</span> <span class="k">virtual</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">BnCameraService</span><span class="p">,</span>
+<span class="ln"> 5</span>    <span class="k">public</span> <span class="k">virtual</span> <span class="n">IBinder</span><span class="o">::</span><span class="n">DeathRecipient</span><span class="p">,</span>
+<span class="ln"> 6</span>    <span class="k">public</span> <span class="k">virtual</span> <span class="n">CameraProviderManager</span><span class="o">::</span><span class="n">StatusListener</span>
+<span class="ln"> 7</span>    <span class="p">{</span>
+<span class="ln"> 8</span>        <span class="k">virtual</span> <span class="n">binder</span><span class="o">::</span><span class="n">Status</span>    <span class="n">addListener</span><span class="p">(</span><span class="k">const</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">hardware</span><span class="o">::</span><span class="n">ICameraServiceListener</span><span class="o">&gt;&amp;</span> <span class="n">listener</span><span class="p">,</span>
+<span class="ln"> 9</span>                                              <span class="cm">/*out*/</span>
+<span class="ln">10</span>                                              <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">hardware</span><span class="o">::</span><span class="n">CameraStatus</span><span class="o">&gt;*</span> <span class="n">cameraStatuses</span><span class="p">);</span>
+<span class="ln">11</span>        <span class="p">...</span>
+<span class="ln">12</span><span class="p">};</span>
+</code></pre></div><p>最终实现是在这里CameraService.cpp，具体里面的实现内容就不展开描述，主要是梳理aidl的流程。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//frameworks/av/services/camera/libcameraservice/CameraService.cpp
+</span><span class="ln">2</span><span class="c1"></span><span class="n">Status</span> <span class="n">CameraService</span><span class="o">::</span><span class="n">addListener</span><span class="p">(</span><span class="k">const</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">ICameraServiceListener</span><span class="o">&gt;&amp;</span> <span class="n">listener</span><span class="p">,</span>
+<span class="ln">3</span>        <span class="cm">/*out*/</span>
+<span class="ln">4</span>        <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">hardware</span><span class="o">::</span><span class="n">CameraStatus</span><span class="o">&gt;</span> <span class="o">*</span><span class="n">cameraStatuses</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">5</span>    <span class="k">return</span> <span class="nf">addListenerHelper</span><span class="p">(</span><span class="n">listener</span><span class="p">,</span> <span class="n">cameraStatuses</span><span class="p">);</span>
+<span class="ln">6</span><span class="p">}</span>
+</code></pre></div><h2 id="43总结">4.3总结</h2>
+<p>系统源码Camrea Frameworks中的框架的调用，是从上层的app应用调用到sdk jar包中，这个jar包调用到CameraManager，而CameraManager内部去通过aidl方式获取CameraService的实例，并通过这个实例调用addListener方法，最终这个方法调用到libcameraservice中的CameraService.cpp。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/aidl/aidl3_10.png" title="Camera aidl继承关系图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/aidl/aidl3_10.png"  alt="Camera aidl继承关系图">
+  
+    </a>
+  
+   
+    <span class="caption">Camera aidl继承关系图</span>
+  
+</div>
+
+<p>除此之外，更加细节的调用如下图所示。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/aidl/aidl3_11.png" title="Camera aidl调用关系" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/aidl/aidl3_11.png"  alt="Camera aidl调用关系">
+  
+    </a>
+  
+   
+    <span class="caption">Camera aidl调用关系</span>
+  
+</div>
+
 <h1 id="参考">参考</h1>
 <p><a href="https://blog.csdn.net/gcwl2016/article/details/88691049">[1] gcwl2016, Android系统中通过binder(AIDL)进行跨层IPC通信, 2019.</a></p>
 <p><a href="https://jiatai.blog.csdn.net/article/details/80945447">[2] i加加, （五十七）Android O WiFi的扫描流程梳理续——梳理java与c++之间的aidl-cpp通信, 2018.</a></p>
@@ -1058,6 +1358,7 @@
 <p><a href="https://blog.csdn.net/superlee1125/article/details/114403368">[8] rockmanlc, IBinder类前面的clang::lto_visibility_public, 2021.</a></p>
 <p><a href="https://www.bilibili.com/video/BV1dN411d7V7">[9] syfchao, Android基础框架Binder应用开发（一)-BnBp服务实现, 2021.</a></p>
 <p><a href="https://blog.csdn.net/wjky2014/article/details/108722509">[10] 程序员Android, Camera2 / HAL3 架构了解下,2020</a></p>
+<p><a href="https://blog.csdn.net/zhuyong006/article/details/102519200">[11] zhuyong006, Camera 初始化(Open)一（FrameWork -&gt; Hal）,2019</a></p>
               
             </div>
           </div>
