@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="Linux中万物皆可文件，但是文件的管理，用户的管理，文件的权限，用户的权限如果没有搞清楚的话，那么就不是一名合格的程序员了。">
+
+
+<meta property="og:description" content="Linux中万物皆可文件，但是文件的管理，用户的管理，文件的权限，用户的权限如果没有搞清楚的话，那么就不是一名合格的程序员了。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="linux2 权限和管理">
+<meta name="twitter:title" content="linux2 权限和管理">
+<meta property="og:url" content="https://yangyang48.github.io/2022/04/linux2-%E6%9D%83%E9%99%90%E5%92%8C%E7%AE%A1%E7%90%86/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2022/04/linux2-%E6%9D%83%E9%99%90%E5%92%8C%E7%AE%A1%E7%90%86/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="Linux中万物皆可文件，但是文件的管理，用户的管理，文件的权限，用户的权限如果没有搞清楚的话，那么就不是一名合格的程序员了。">
+<meta name="twitter:description" content="Linux中万物皆可文件，但是文件的管理，用户的管理，文件的权限，用户的权限如果没有搞清楚的话，那么就不是一名合格的程序员了。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2022-04-05T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2022-04-05T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="2022">
+    
+      <meta property="article:section" content="April">
+    
+  
+  
+    
+      <meta property="article:tag" content="linux">
+    
+      <meta property="article:tag" content="手册">
+    
+      <meta property="article:tag" content="系统">
+    
+      <meta property="article:tag" content="权限和管理">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/linux/linux2_thumb.jpeg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/linux/linux2_thumb.jpeg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/linux/linux2_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/linux/linux2_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>linux2 权限和管理</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2022/04/linux2-%E6%9D%83%E9%99%90%E5%92%8C%E7%AE%A1%E7%90%86/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/linux/linux2_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      linux2 权限和管理
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2022-04-05T00:00:00Z">
+        
+  四月 5, 2022
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2022">2022</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/april">April</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">500 Words|Read in about 3 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>Linux中万物皆可文件，但是文件的管理，用户的管理，文件的权限，用户的权限如果没有搞清楚的话，那么就不是一名合格的程序员了。</p>
+<h1 id="群组管理和文件权限">群组管理和文件权限</h1>
+<h2 id="用户管理">用户管理</h2>
+<p>默认状态下只有root，普通用户都在/home目录下，可以创建普通用户，然后就可以登录普通用户账号。</p>
+<p>普通用户切回root用户方式</p>
+<h3 id="sudo">sudo</h3>
+<p>暂时成为 root</p>
+<h3 id="sudo-su">sudo su</h3>
+<p>一直成为 root</p>
+<h3 id="sudo-su--sudo--i">sudo su -/sudo -i</h3>
+<p>切换为 root，并且直接定位到 root 的目录</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_44.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_44.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="adduser">adduser</h3>
+<p>添加新用户，需要root权限</p>
+<p><strong>adduser -d -m产生一个主目录/home/newuser，并选择为登录用户</strong></p>
+<p><strong>adduser -s /bin/bash 指定用户所使用的shell</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>sudo useradd -d /home/newuser -m -s /bin/bash newuser
+</code></pre></div><blockquote>
+<p>useradd &ndash;help</p>
+<table>
+<thead>
+<tr>
+<th>符号标识</th>
+<th>说明</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-b</td>
+<td>base directory for the home directory of the new account</td>
+<td>设置基本路径作为用户的登录目录</td>
+</tr>
+<tr>
+<td>-c</td>
+<td>GECOS field of the new account</td>
+<td>对用户的注释</td>
+</tr>
+<tr>
+<td>-d</td>
+<td>home directory of the new account</td>
+<td>设置用户的登录目录</td>
+</tr>
+<tr>
+<td>-D</td>
+<td>print or change default useradd configuration</td>
+<td>改变设置</td>
+</tr>
+<tr>
+<td>-e</td>
+<td>expiration date of the new account</td>
+<td>设置用户的有效期</td>
+</tr>
+<tr>
+<td>-f</td>
+<td>password inactivity period of the new account</td>
+<td>用户过期后，让密码无效</td>
+</tr>
+<tr>
+<td>-g</td>
+<td>name or ID of the primary group of the new account</td>
+<td>使用户只属于某个组</td>
+</tr>
+<tr>
+<td>-G</td>
+<td>list of supplementary groups of the new account</td>
+<td>使用户加入某个组</td>
+</tr>
+<tr>
+<td>-h</td>
+<td>display this help message and exit</td>
+<td>帮助</td>
+</tr>
+<tr>
+<td>-k</td>
+<td>use this alternative skeleton directory</td>
+<td>指定其他的skel目录</td>
+</tr>
+<tr>
+<td>-K</td>
+<td>override /etc/login.defs defaults</td>
+<td>覆盖 /etc/login.defs 配置文件</td>
+</tr>
+<tr>
+<td>-m</td>
+<td>create the user&rsquo;s home directory</td>
+<td>自动创建登录目录</td>
+</tr>
+<tr>
+<td>-M</td>
+<td>do not create the user&rsquo;s home directory</td>
+<td>不自动创建登录目录</td>
+</tr>
+<tr>
+<td>-l</td>
+<td>do not add the user to the lastlog and faillog databases</td>
+<td>不把用户加入到lastlog文件中</td>
+</tr>
+<tr>
+<td>-r</td>
+<td>create a system account</td>
+<td>建立系统账号</td>
+</tr>
+<tr>
+<td>-o</td>
+<td>allow to create users with duplicate (non-unique) UID</td>
+<td>允许用户拥有相同的UID</td>
+</tr>
+<tr>
+<td>-p</td>
+<td>encrypted password of the new account</td>
+<td>为新用户使用加密密码</td>
+</tr>
+<tr>
+<td>-s</td>
+<td>login shell of the new account</td>
+<td>指定登录时候的shell</td>
+</tr>
+<tr>
+<td>-u</td>
+<td>user ID of the new account</td>
+<td>为新用户指定一个UID</td>
+</tr>
+<tr>
+<td>-Z</td>
+<td>use a specific SEUSER for the SELinux user mapping</td>
+<td>为 SELinux 用户映射使用特定的 SEUSER</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_45.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_45.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="passwd">passwd</h3>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>sudo passwd newuser
+</code></pre></div><p>修改密码，会输入两次密码，需要管理员权限</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_46.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_46.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="赋予root权限">赋予root权限</h3>
+<p>修改 /etc/sudoers 文件，找到下面一行，在root下面添加一行，可以使得yangyang账号可以sudo的时候获取root权限</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1">## Allow root to run any commands anywhere</span>
+<span class="ln">2</span>root       <span class="nv">ALL</span><span class="o">=(</span>ALL<span class="o">)</span>     ALL
+<span class="ln">3</span>yangyang   <span class="nv">ALL</span><span class="o">=(</span>ALL<span class="o">)</span>     ALL
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_47.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_47.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>查看/etc/passwd的登录权限，属于1001的用户和同名的群组</p>
+<p>具体解释：</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1">#登录的用户名:密码:用户id:群组id::主目录:指定用户所使用的shell</span>
+<span class="ln">2</span>newuser:x:1001:1001::/home/newuser:bin/bash
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_48.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_48.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="su-username">su username</h3>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>su newuser
+</code></pre></div><p>切换用户</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_49.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_49.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="userdel">userdel</h3>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>userdel newuser
+</code></pre></div><p>删除用户，需要root权限</p>
+<p><strong>sudo deluser &ndash;remove-home newuser</strong></p>
+<p>删除用户并且删除用户所在的目录</p>
+<p>到这一步，仅仅删除了目录，newuser用户依然存在</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_64.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_64.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>这里继续查看14090进程，可以发现是shell没结束，需要手动删除/etc/passwd和/etc/sudoers里面关于newuser信息。<strong>最后还需要删除newuser群组</strong>，才算真正删除用户。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_65.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_65.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="群组管理">群组管理</h2>
+<h4 id="addgroup">addgroup</h4>
+<p>创建群组，需要root权限</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_50.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_50.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="usermod">usermod</h3>
+<p>修改用户账户，需要root权限</p>
+<ul>
+<li>-l：对用户重命名，但是 /home 目录中的用户家目录名不会改变，需要手动修改；</li>
+<li>-g：修改用户所在群组。此用户的家目录里的所有文件的所在群组会相应改变。</li>
+<li>-G：修改用户添加到多个群组中。</li>
+</ul>
+<blockquote>
+<p>-g 或 -G 参数时，它会把用户从原先的群组里剔除，加入到新的群组。如果需要不想离开原先的群组，又想加入新的群组，可以增加-a参数</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>usermod -aG good thomas
+</code></pre></div></blockquote>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>sudo usermod -g happy newuser
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_54.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_54.png" >
+  
+    </a>
+  
+  
+</div>
+
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>sudo usermod -aG linux,android newuser
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_55.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_55.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="gpasswd">gpasswd</h3>
+<p>群组中添加/删除用户，需要root权限</p>
+<p>gpasswd -a user groups</p>
+<p>将用户user加入到groups组</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_56.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_56.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>gpasswd -d user groups</p>
+<p>将用户test从test2组中移出</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_57.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_57.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="groups">groups</h3>
+<p>查询一个用户在哪些群组中，这里用户可以被添加到多个群组中</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_53.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_53.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="delgroup">delgroup</h3>
+<p>删除群组，需要root权限，如果删除的是用户第一个添加的群组是无法删除，必须先移除用户</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>delgroup happy
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_58.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_58.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="chown">chown</h3>
+<p>改变文件的所有者，需要root权限</p>
+<p><strong>chown newuser file.txt</strong></p>
+<p>将文件的所有者移交给newuser</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_59.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_59.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><strong>chown newuser:newgroup file.txt</strong></p>
+<p>同时修改文件所有者和群组。将文件的所有者移交给newuser，将文件所有者归到newgroup中</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_60.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_60.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="chgrp">chgrp</h3>
+<p>改变文件的群组，需要root权限</p>
+<p>chgrp newgroup file.txt</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_61.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_61.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="访问权限">访问权限</h2>
+<h3 id="ls--l">ls -l</h3>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1"># 文件/文件夹访问权限</span>
+<span class="ln">2</span>newuser@iZbp1788g5aoi5p9z8e0ugZ:~$ ls -al file.txt
+<span class="ln">3</span>-rw-r--r-- <span class="m">1</span> newuser newuser <span class="m">0</span> Mar <span class="m">13</span> 20:27 file.txt
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_62.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_62.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>具体含义说明：</p>
+<ul>
+<li>
+<p>d：英语 directory 的缩写，表示“目录”。就是说这是一个目录</p>
+</li>
+<li>
+<p>l：英语 link 的缩写，表示“链接”。就是说这是一个链接</p>
+</li>
+<li>
+<p>r：英语 read 的缩写，表示“读”。就是说可以读这个文件</p>
+</li>
+<li>
+<p>w：英语 write 的缩写，表示“写”。就是说可以写这个文件，也就是可以修改</p>
+</li>
+<li>
+<p>x：英语 execute 的缩写，表示“执行，运行”。就是说可以运行这个文件</p>
+</li>
+<li>
+<p>第一组 rwx 表示文件的<strong>所有者</strong>对于此文件的访问权限</p>
+</li>
+<li>
+<p>第二组 rwx 表示文件所属<strong>群组</strong>的其他用户对于此文件的访问权限</p>
+</li>
+<li>
+<p>第三组 rwx 表示除前两组之外的<strong>其他用户</strong>对于此文件的访问权限</p>
+</li>
+</ul>
+<h3 id="chmod">chmod</h3>
+<p>权限说明表</p>
+<table>
+<thead>
+<tr>
+<th>权限</th>
+<th>数字</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>r</td>
+<td>4</td>
+</tr>
+<tr>
+<td>w</td>
+<td>2</td>
+</tr>
+<tr>
+<td>x</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<p>权限所有计算表</p>
+<table>
+<thead>
+<tr>
+<th>权限</th>
+<th>数字</th>
+<th>计算</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>rwx</td>
+<td>7</td>
+<td>4+2+1</td>
+</tr>
+<tr>
+<td>rw-</td>
+<td>6</td>
+<td>4+2+0</td>
+</tr>
+<tr>
+<td>r-x</td>
+<td>5</td>
+<td>4+0+1</td>
+</tr>
+<tr>
+<td>r–</td>
+<td>4</td>
+<td>4+0+0</td>
+</tr>
+<tr>
+<td>-wx</td>
+<td>3</td>
+<td>0+2+1</td>
+</tr>
+<tr>
+<td>-w-</td>
+<td>2</td>
+<td>0+2+0</td>
+</tr>
+<tr>
+<td>–x</td>
+<td>1</td>
+<td>0+0+1</td>
+</tr>
+<tr>
+<td>—</td>
+<td>0</td>
+<td>0+0+0</td>
+</tr>
+</tbody>
+</table>
+<h3 id="字母分配权限">字母分配权限</h3>
+<p>字母符号含义</p>
+<blockquote>
+<ul>
+<li>
+<p>u：user 的缩写，是英语“用户”的意思。表示所有者</p>
+</li>
+<li>
+<p>g：group 的缩写，是英语“群组”的意思。表示群组用户</p>
+</li>
+<li>
+<p>o：other 的缩写，是英语“其他”的意思。表示其他用户</p>
+</li>
+<li>
+<p>a：all 的缩写，是英语“所有”的意思。表示所有用户</p>
+</li>
+<li>
+<p>+：加号，表示添加权限</p>
+</li>
+<li>
+<p>-：减号，表示去除权限</p>
+</li>
+<li>
+<p>=：等号，表示分配权限</p>
+</li>
+</ul>
+</blockquote>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span><span class="c1">#文件 file.txt 的所有者增加读和运行的权限。</span>
+<span class="ln"> 2</span>chmod u+rx file.txt
+<span class="ln"> 3</span>
+<span class="ln"> 4</span><span class="c1">#文件 file.txt 的群组其他用户增加读的权限。</span>
+<span class="ln"> 5</span>chmod g+r file.txt 
+<span class="ln"> 6</span>
+<span class="ln"> 7</span><span class="c1">#文件 file.txt 的其他用户移除读的权限。</span>
+<span class="ln"> 8</span>chmod o-r file.txt 
+<span class="ln"> 9</span>
+<span class="ln">10</span><span class="c1">#文件 file.txt 的群组其他用户增加读的权限，其他用户移除读的权限。</span>
+<span class="ln">11</span>chmod g+r,o-r file.txt 
+<span class="ln">12</span>
+<span class="ln">13</span><span class="c1">#文件 file.txt 的群组其他用户和其他用户均移除读的权限。</span>
+<span class="ln">14</span>chmod go-r file.txt 
+<span class="ln">15</span>
+<span class="ln">16</span><span class="c1">#文件 file.txt 的所有用户增加运行的权限。</span>
+<span class="ln">17</span>chmod +x file.txt 
+<span class="ln">18</span>
+<span class="ln">19</span><span class="c1">#文件 file.txt 的所有者分配读，写和执行的权限；</span>
+<span class="ln">20</span><span class="c1">#群组其他用户分配读的权限，不能写或执行；</span>
+<span class="ln">21</span><span class="c1">#其他用户没有任何权限。</span>
+<span class="ln">22</span>chmod <span class="nv">u</span><span class="o">=</span>rwx,g<span class="o">=</span>r,o<span class="o">=</span>- file.txt
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_63.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_63.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><a href="https://blog.csdn.net/yuanyuan214365/article/details/75153928">[1] 伏特加的滋味, linux下创建用户和添加用户权限,2017.</a></p>
+<p><a href="https://blog.csdn.net/panqidong95/article/details/95517278">[2]panqidong95, Linux添加用户及用户权限管理,2019.</a></p>
+<p><a href="https://blog.csdn.net/gaoqiao1988">[3]panqidong95, linux adduser,2016.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/linux/">linux</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%89%8B%E5%86%8C/">手册</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E7%B3%BB%E7%BB%9F/">系统</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%9D%83%E9%99%90%E5%92%8C%E7%AE%A1%E7%90%86/">权限和管理</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/04/linux3-vim%E5%92%8Cshell%E8%84%9A%E6%9C%AC/" data-tooltip="linux3 Vim和shell脚本">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2022 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/04/linux3-vim%E5%92%8Cshell%E8%84%9A%E6%9C%AC/" data-tooltip="linux3 Vim和shell脚本">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2022%2F04%2Flinux2-%25E6%259D%2583%25E9%2599%2590%25E5%2592%258C%25E7%25AE%25A1%25E7%2590%2586%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2022%2F04%2Flinux2-%25E6%259D%2583%25E9%2599%2590%25E5%2592%258C%25E7%25AE%25A1%25E7%2590%2586%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2022%2F04%2Flinux2-%25E6%259D%2583%25E9%2599%2590%25E5%2592%258C%25E7%25AE%25A1%25E7%2590%2586%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2022\/04\/linux2-%E6%9D%83%E9%99%90%E5%92%8C%E7%AE%A1%E7%90%86\/';
+          
+            this.page.identifier = '\/2022\/04\/linux2-%E6%9D%83%E9%99%90%E5%92%8C%E7%AE%A1%E7%90%86\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+

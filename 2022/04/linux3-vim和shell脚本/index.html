@@ -1,0 +1,2970 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="在Linux文本编辑器的江湖中一直有一个神器Vim，这个神奇可以满足日常编辑的所有需求。通过Vim可以进一步的学习关于Shell的脚本，提升操作Linux效率。">
+
+
+<meta property="og:description" content="在Linux文本编辑器的江湖中一直有一个神器Vim，这个神奇可以满足日常编辑的所有需求。通过Vim可以进一步的学习关于Shell的脚本，提升操作Linux效率。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="linux3 Vim和shell脚本">
+<meta name="twitter:title" content="linux3 Vim和shell脚本">
+<meta property="og:url" content="https://yangyang48.github.io/2022/04/linux3-vim%E5%92%8Cshell%E8%84%9A%E6%9C%AC/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2022/04/linux3-vim%E5%92%8Cshell%E8%84%9A%E6%9C%AC/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="在Linux文本编辑器的江湖中一直有一个神器Vim，这个神奇可以满足日常编辑的所有需求。通过Vim可以进一步的学习关于Shell的脚本，提升操作Linux效率。">
+<meta name="twitter:description" content="在Linux文本编辑器的江湖中一直有一个神器Vim，这个神奇可以满足日常编辑的所有需求。通过Vim可以进一步的学习关于Shell的脚本，提升操作Linux效率。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2022-04-05T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2022-04-05T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="2022">
+    
+      <meta property="article:section" content="April">
+    
+  
+  
+    
+      <meta property="article:tag" content="linux">
+    
+      <meta property="article:tag" content="手册">
+    
+      <meta property="article:tag" content="系统">
+    
+      <meta property="article:tag" content="Vim">
+    
+      <meta property="article:tag" content="Shell脚本">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/linux/linux3_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/linux/linux3_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/linux/linux3_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/linux/linux3_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>linux3 Vim和shell脚本</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2022/04/linux3-vim%E5%92%8Cshell%E8%84%9A%E6%9C%AC/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/linux/linux3_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      linux3 Vim和shell脚本
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2022-04-05T00:00:00Z">
+        
+  四月 5, 2022
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2022">2022</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/april">April</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">2700 Words|Read in about 13 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>在Linux文本编辑器的江湖中一直有一个神器Vim，这个神奇可以满足日常编辑的所有需求。通过Vim可以进一步的学习关于Shell的脚本，提升操作Linux效率。</p>
+<h1 id="1文本编辑器">1文本编辑器</h1>
+<h2 id="11nano">1.1Nano</h2>
+<p>一个自带的文本编辑器（大多数情况下不使用）</p>
+<p>快捷键在编辑器的底部</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_66.png" title="Nano界面图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_66.png"  alt="Nano界面图">
+  
+    </a>
+  
+   
+    <span class="caption">Nano界面图</span>
+  
+</div>
+
+<h2 id="12配置文件etcnanorc">1.2配置文件/etc/nanorc</h2>
+<blockquote>
+<p>Linux 或 Unix 的许多程序在启动时，都需要 rc 后缀的初始文件或配置文件。rc，它是<code>runcomm</code>的缩写，即<code> run command</code>（运行命令）的简写。熟悉Android架构的小伙伴会比较熟悉，系统各种服务都是靠着rc文件启动的。</p>
+</blockquote>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1">#/etc/nanorc</span>
+<span class="ln">2</span><span class="nb">set</span> historylog#激活历史日志
+<span class="ln">3</span><span class="nb">set</span> locking#激活锁定
+<span class="ln">4</span><span class="nb">set</span> nowrap#激活不隐藏输入
+<span class="ln">5</span><span class="nb">set</span> suspend#激活拼接模式
+<span class="ln">6</span>include <span class="s2">&#34;/usr/share/nano/*.nanorc&#34;</span>
+</code></pre></div><p>一共五条语句，每一行一句配置语句，配置语句是以 set（用于激活。set 是英语“放置，设置”的意思）或 unset（用于关闭）开头，后接你要配置的项目。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1">#激活鼠标</span>
+<span class="ln">2</span><span class="nb">set</span> mouse
+<span class="ln">3</span><span class="c1">#激活首行缩进</span>
+<span class="ln">4</span><span class="nb">set</span> autoindent
+</code></pre></div><blockquote>
+<p>对于每个用户来说，家目录下的 .bashrc 文件的优先级比系统的 /etc/bash.bashrc 文件高。例如同样的配置选项，如果 .bashrc 和 /etc/bash.bashrc 不同，那么以 .bashrc 的为准。同样的原则也适用于其它配置文件，例如 .nanorc 和 /etc/nanorc。</p>
+<p>如果我们修改了 .bashrc 和 profile 文件后，默认是在用户下次登录系统时才能生效。但是我们可以用 source 命令来使改动立即生效</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="nb">source</span> .bashrc
+<span class="ln">2</span><span class="nb">source</span> .profile
+</code></pre></div></blockquote>
+<h2 id="12vim">1.2Vim</h2>
+<p>文本编辑器的进阶版，比前者更加简单实用。（实际用得比较多）</p>
+<h3 id="121vim的界面">1.2.1Vim的界面</h3>
+<p>打开vim之后的界面如下图所示，可以看到有光标，界面，还有尾行说明。</p>
+<p>光标指向的地方，会在尾行说明中体现出来，前面1,1代表第一行第一列，后面会显示百分比或者是Top(文本的头部)或者是Bot(文本的尾部)。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_2.png" title="Vim界面图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_2.png"  alt="Vim界面图">
+  
+    </a>
+  
+   
+    <span class="caption">Vim界面图</span>
+  
+</div>
+
+<h3 id="122vim的相关配置">1.2.2Vim的相关配置</h3>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span><span class="c1">#定义自己的vim</span>
+<span class="ln"> 2</span>cp /etc/vim/vimrc ~/.vimrc
+<span class="ln"> 3</span><span class="c1">#./vimrc</span>
+<span class="ln"> 4</span><span class="c1">#配置语法高亮</span>
+<span class="ln"> 5</span>syntax on
+<span class="ln"> 6</span><span class="c1">#背景着色为黑色</span>
+<span class="ln"> 7</span><span class="nb">set</span> <span class="nv">background</span><span class="o">=</span>dark
+<span class="ln"> 8</span><span class="c1">#显示行号</span>
+<span class="ln"> 9</span><span class="nb">set</span> number
+<span class="ln">10</span><span class="c1">#显示当前命令</span>
+<span class="ln">11</span><span class="nb">set</span> showcmd
+<span class="ln">12</span><span class="c1">#忽略大小写搜索</span>
+<span class="ln">13</span><span class="nb">set</span> ignorecase
+<span class="ln">14</span><span class="c1">#设置鼠标使用</span>
+<span class="ln">15</span><span class="nb">set</span> <span class="nv">mouse</span><span class="o">=</span>a
+</code></pre></div><p>以下对Vim的特性和shell脚本展开说明。</p>
+<h1 id="2vim">2Vim</h1>
+<h2 id="21vim的三种工作模式">2.1Vim的三种工作模式</h2>
+<ol>
+<li>
+<p>交互模式：Interactive Mode。这是 Vim 的默认模式，每次我们运行 Vim 程序的时候，就会进入这个模式。复制粘贴文本，跳转到指定行，撤销操作等等</p>
+</li>
+<li>
+<p>插入模式：Insert Mode。这就是我们熟悉的文本编辑器的“一贯作风”。我们输入文本，文本就被插入到光标所在之处。为了进入这个模式，有几种方法，最常用的方法是按字母键 i（i 是 insert 的首字母，是英语“插入”的意思，除了i之外，还有五种a，A，s，S，I）。为了退出这种模式，只需要按下 Esc 键（一般在键盘左上角）。Esc 是 escape 的缩写，是英语“脱离，逃脱”的意思。左下角有一个 <code>-- INSERT --</code>，说明我们就处在 Insert Mode（插入模式）中。</p>
+<blockquote>
+<p>关于插入的i，I，a，A，s和S的区别</p>
+<p>1.<strong>i是当前插入</strong></p>
+<p>2.<strong>I是当前行首插入</strong></p>
+<p>3.<strong>a会往后移动一个字符插入</strong></p>
+<p>4.<strong>A是当前行尾插入</strong></p>
+<p>5.<strong>s是删除当前字符插入</strong></p>
+<p>6.<strong>S是删除当前行插入</strong></p>
+</blockquote>
+</li>
+<li>
+<p>命令模式：Command Mode。也有称之为底线命令模式（Last line mode）的。这个模式下，我们可以运行一些命令，例如“退出”、“保存”等等。也可以用这个模式来激活一些 Vim 的配置（例如语法高亮、显示行号等等）。</p>
+</li>
+</ol>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_67.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_67.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="211命令模式">2.1.1命令模式</h3>
+<p>表2.1命令模式输入</p>
+<table>
+<thead>
+<tr>
+<th>命令模式输入</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>:0</td>
+<td>移动到行首</td>
+</tr>
+<tr>
+<td>:$</td>
+<td>移动到行末</td>
+</tr>
+<tr>
+<td>:w</td>
+<td>保存文件</td>
+</tr>
+<tr>
+<td>:q</td>
+<td>直接退出</td>
+</tr>
+<tr>
+<td>:q!</td>
+<td>强制退出，不保存修改</td>
+</tr>
+<tr>
+<td>:wq/:x</td>
+<td>保存然后退出</td>
+</tr>
+<tr>
+<td>:行号</td>
+<td>跳转到指定行</td>
+</tr>
+<tr>
+<td>/</td>
+<td>查找。<!-- raw HTML omitted -->n 键，查找下一个匹配项<!-- raw HTML omitted -->Shift + n，查找上一个匹配</td>
+</tr>
+<tr>
+<td><code>/\&lt;string_to_exact_match\&gt;</code></td>
+<td>查找全匹配字符串</td>
+</tr>
+<tr>
+<td>:s</td>
+<td>查找并替换</td>
+</tr>
+<tr>
+<td>:s/旧字符串/新字符串</td>
+<td>替换光标所在行的第一个匹配的字符串</td>
+</tr>
+<tr>
+<td>:s/旧字符串/新字符串/g</td>
+<td>替换光标所在行的所有匹配的旧字符串为新字符串</td>
+</tr>
+<tr>
+<td>:%s/旧字符串/新字符串/g</td>
+<td>替换文件中所有匹配的字符串</td>
+</tr>
+<tr>
+<td>:sp</td>
+<td>split，横向分屏</td>
+</tr>
+<tr>
+<td>:vsp</td>
+<td>垂直分屏</td>
+</tr>
+<tr>
+<td>:!命令</td>
+<td>运行外部命令</td>
+</tr>
+</tbody>
+</table>
+<p>除了上面常用之外，还有以命令模式激活选项参数，可以参考1.2.2的Vim的相关配置。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span><span class="c1"># “短暂性”配置选项参数</span>
+<span class="ln"> 2</span>:set 选项名
+<span class="ln"> 3</span><span class="c1"># 而不激活（取消）一个选项参数</span>
+<span class="ln"> 4</span>:set no 选项名
+<span class="ln"> 5</span><span class="c1"># 查询选项的参数</span>
+<span class="ln"> 6</span>:set 选项名?
+<span class="ln"> 7</span><span class="c1"># 输出结果为background=light</span>
+<span class="ln"> 8</span>:set background?
+<span class="ln"> 9</span>
+<span class="ln">10</span><span class="c1"># 几个常见的设置命令</span>
+<span class="ln">11</span><span class="c1"># 显示当前命令</span>
+<span class="ln">12</span>:set showcmd
+<span class="ln">13</span><span class="c1"># 显示行号</span>
+<span class="ln">14</span>:set number
+<span class="ln">15</span><span class="c1"># 在查找时忽略大小写</span>
+<span class="ln">16</span>:set ignorecase
+<span class="ln">17</span><span class="c1"># 鼠标支持</span>
+<span class="ln">18</span>:set <span class="nv">mouse</span><span class="o">=</span>a
+</code></pre></div><h3 id="212交互模式">2.1.2交互模式</h3>
+<p>表2.2交互模式控制方向的按键</p>
+<table>
+<thead>
+<tr>
+<th>按键</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>h/左键</td>
+<td>向左移动一个字符</td>
+</tr>
+<tr>
+<td>j/下键</td>
+<td>向下移动一个字符</td>
+</tr>
+<tr>
+<td>k/上键</td>
+<td>向上移动一个字符</td>
+</tr>
+<tr>
+<td>l/右键</td>
+<td>向右移动一个字符</td>
+</tr>
+</tbody>
+</table>
+<p>表2.3交互模式输入</p>
+<table>
+<thead>
+<tr>
+<th>交互模式命令</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>w</td>
+<td>一个单词一个单词地移动</td>
+</tr>
+<tr>
+<td>x</td>
+<td>删除字符</td>
+</tr>
+<tr>
+<td>dd</td>
+<td>删除行，可以结合p粘贴一起使用</td>
+</tr>
+<tr>
+<td>dw</td>
+<td>删除一个单词</td>
+</tr>
+<tr>
+<td>d0</td>
+<td>删除从光标处到行首的所有字符</td>
+</tr>
+<tr>
+<td>d$</td>
+<td>删除从光标处到行末的所有字符</td>
+</tr>
+<tr>
+<td>yy</td>
+<td>yank，复制行到内存中。和 <code>dd</code> 类似，<code>dd</code> 用于“剪切”光标所在行到内存中，而 <code>yy</code> 是“复制”。可以结合p粘贴一起使用</td>
+</tr>
+<tr>
+<td>yw</td>
+<td>复制一个单词</td>
+</tr>
+<tr>
+<td>y$</td>
+<td>复制从光标所在处到行末的所有字符</td>
+</tr>
+<tr>
+<td>y0</td>
+<td>复制从光标所在处到行首的所有字符</td>
+</tr>
+<tr>
+<td>p</td>
+<td>粘贴，可以配合dd或者yy</td>
+</tr>
+<tr>
+<td>r</td>
+<td>替换一个字符</td>
+</tr>
+<tr>
+<td>u</td>
+<td>撤销操作</td>
+</tr>
+<tr>
+<td>Ctrl + r</td>
+<td>取消撤销，也就是重做之前的修改，redo</td>
+</tr>
+<tr>
+<td>Shift + g</td>
+<td>要跳转到最后一行</td>
+</tr>
+<tr>
+<td>gg</td>
+<td>要跳转到第一行</td>
+</tr>
+<tr>
+<td>行号 + Shift + g</td>
+<td>跳转到指定行(间隔时间短，不好控制，可以直接进入命令模式:行号跳转)</td>
+</tr>
+<tr>
+<td>行号 +gg</td>
+<td>跳转到指定行(间隔时间短，不好控制，可以直接进入命令模式:行号跳转)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="213交互模式">2.1.3交互模式</h3>
+<p>考虑到插入模式里面可以多用来输入，所以本文不具体展开。</p>
+<h3 id="214-其他">2.1.4 其他</h3>
+<p>除了上述模式用到的常用命令之外，还可以通过按F1，获取更多的信息。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_21.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_21.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="3shell">3shell</h1>
+<p>shell 是英语“壳，外壳”的意思。你可以把它想象成嵌入在 Linux 这样的操作系统中的一个“微型编程语言”。</p>
+<p>Shell 不像 C 语言，C++，Java 等编程语言那么完整，不需要安装，不需要编译，但是 Shell 这门语言可以帮我们完成很多自动化任务，例如：保存数据，监测系统的负载等等。</p>
+<h2 id="31主流的shell">3.1主流的shell</h2>
+<p>几种主流的 Shell：</p>
+<ul>
+<li>Sh : Bourne Shell 的缩写。可以说是目前所有 Shell 的祖先。</li>
+<li>Bash : Bourne Again Shell 的缩写， 可以看到比 Bourne Shell 多了一个 again。again 在英语中是“又，再，此外”的意思，说明 Bash 是 Sh 的一个进阶版本，比 Sh 更优秀。Bash 是目前大多数 Linux 发行版和苹果的 macOS 操作系统的默认 Shell。</li>
+<li>Ksh : Korn Shell 的缩写。一般在收费的 Unix 版本上比较多见，但也有免费版本的。</li>
+<li>Csh : C Shell 的缩写。 此 Shell 的语法有点类似 C 语言。</li>
+<li>Tcsh : Tenex C Shell 的缩写。Csh 的优化版本。</li>
+<li>Zsh : Z Shell 的缩写。比较新近的一个 Shell，集 Bash，Ksh 和 Tcsh 各家之大成。</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_68.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_68.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>可以看到，箭头的源头就是来自Sh，所有的shell都是源于Sh，目前主流用的最多的就是Bash。</p>
+<h2 id="32shell的用途">3.2shell的用途</h2>
+<p>事实上，Shell 提供了所有可以让你运行命令的基础功能。通过Shell 这个桥梁，去<strong>操控作用系统内核</strong>（内核的英语是 kernel）。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_69.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_69.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>为了切换Shell，需要用到以下命令：</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>chsh
+</code></pre></div><h1 id="4shell脚本">4shell脚本</h1>
+<p>我们之前用得到所有命令，都是依赖于shell的。有时候我们需要去批量，自动化的处理一些交互事务，每次手动去敲命令显得有点突兀，这个时候需要用到的是shell脚本。</p>
+<h2 id="41创建脚本文件">4.1创建脚本文件</h2>
+<p>我们用 Vim 这个文本编辑器来创建一个 Shell 脚本文件，这里可以命名sh的后缀，强调这是一个 Shell 脚本文件。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>vim test.sh
+</code></pre></div><p>脚本有特定的语法</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1"># 指定运行脚本用得shell</span>
+<span class="ln">2</span><span class="c1">#!/bin/bash</span>
+<span class="ln">3</span><span class="c1">#输入最简单的指令</span>
+<span class="ln">4</span>ls
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_70.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_70.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="42运行脚本">4.2运行脚本</h2>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1"># 添加脚本可执行权限</span>
+<span class="ln">2</span>chmod +x test.sh
+<span class="ln">3</span><span class="c1">#运行脚本</span>
+<span class="ln">4</span>./test.sh
+</code></pre></div><p>结果</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_71.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_71.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="43调试模式运行">4.3调试模式运行</h2>
+<p>会对shell脚本里的每条指令<strong>单独分析</strong>。其中每一条命令前面都会有一个标识符<code>+</code>，然后对应会有命令的结果。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>bash -x test.sh
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux1_72.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux1_72.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="44基本运算">4.4基本运算</h2>
+<h3 id="441定义变量">4.4.1定义变量</h3>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1">#特别注意，在等号两边不要加空格。</span>
+<span class="ln">2</span><span class="c1">#错误 a = &#34;Hello world&#34;</span>
+<span class="ln">3</span><span class="nv">a</span><span class="o">=</span><span class="s2">&#34;Hello world&#34;</span>
+</code></pre></div><h3 id="442显示内容">4.4.2显示内容</h3>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="nb">echo</span> <span class="s2">&#34;Hello World&#34;</span>
+<span class="ln">2</span><span class="c1">#-e 参数，为了使“转义字符”发生作用</span>
+<span class="ln">3</span><span class="nb">echo</span> -e <span class="s2">&#34;First line\nSecond line&#34;</span>
+</code></pre></div><h3 id="443显示变量">4.4.3显示变量</h3>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="nb">echo</span> <span class="nv">$a</span>
+<span class="ln">2</span><span class="c1">#下面显示变量的方式有点类似kotlin的用法</span>
+<span class="ln">3</span><span class="nb">echo</span> <span class="s2">&#34;The message is </span><span class="nv">$a</span><span class="s2">&#34;</span>
+</code></pre></div><h3 id="444引号">4.4.4引号</h3>
+<p>分成三种，单引号，双引号和反引号。</p>
+<ol>
+<li>
+<p>单引号：忽略被它括起来的所有特殊字符</p>
+</li>
+<li>
+<p>双引号：忽略大多数特殊字符，除了<code>$</code>，<code>\</code> ，`(美元符号，反斜杠，反引号)</p>
+</li>
+<li>
+<p>反引号：要求 Shell 执行被它括起来的内容</p>
+</li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1"># 单引号</span>
+<span class="ln">2</span><span class="nv">a</span><span class="o">=</span><span class="s1">&#39;Hello World&#39;</span>
+<span class="ln">3</span><span class="nb">echo</span> <span class="s1">&#39;The message is $a&#39;</span>
+<span class="ln">4</span><span class="nb">echo</span> <span class="s2">&#34;The message is </span><span class="nv">$a</span><span class="s2">&#34;</span>
+<span class="ln">5</span><span class="nv">dir</span><span class="o">=</span><span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>
+<span class="ln">6</span><span class="nb">echo</span> <span class="s2">&#34;The dir is </span><span class="nv">$dir</span><span class="s2">&#34;</span>
+</code></pre></div><h3 id="445请求输入">4.4.5请求输入</h3>
+<p>类似c++中的cin</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span><span class="nb">read</span> msg
+<span class="ln"> 2</span><span class="nb">echo</span> <span class="s2">&#34;Hello, </span><span class="nv">$msg</span><span class="s2">&#34;</span>
+<span class="ln"> 3</span><span class="nb">read</span> Date Time
+<span class="ln"> 4</span><span class="nb">echo</span> <span class="s2">&#34;today is </span><span class="nv">$a</span><span class="s2">, </span><span class="nv">$b</span><span class="s2">&#34;</span>
+<span class="ln"> 5</span><span class="c1"># 显示输入提示</span>
+<span class="ln"> 6</span><span class="nb">read</span> -p <span class="s1">&#39;This is a shell learn&#39;</span> action
+<span class="ln"> 7</span><span class="nb">echo</span> <span class="s2">&#34;my shell echo :</span><span class="nv">$action</span><span class="s2">&#34;</span>
+<span class="ln"> 8</span><span class="c1"># 限制字符数</span>
+<span class="ln"> 9</span><span class="nb">read</span> -p <span class="s1">&#39;name limit is 8&#39;</span> -n <span class="m">8</span> limit_length
+<span class="ln">10</span><span class="nb">echo</span> <span class="s2">&#34;\nmy shell echo :</span><span class="nv">$limit_length</span><span class="s2">&#34;</span>
+<span class="ln">11</span><span class="c1"># 限制输入事件</span>
+<span class="ln">12</span><span class="nb">read</span> -p <span class="s1">&#39;time is limit 10 second, you must hurry up&#39;</span> -t <span class="m">10</span> limit_time
+<span class="ln">13</span><span class="nb">echo</span> -e <span class="s2">&#34;\nBoom !&#34;</span>
+<span class="ln">14</span><span class="nb">echo</span> <span class="s2">&#34;\nmy shell echo :</span><span class="nv">$limit_time</span><span class="s2">&#34;</span>
+<span class="ln">15</span><span class="c1"># 隐藏输入内容</span>
+<span class="ln">16</span><span class="nb">read</span> -p <span class="s1">&#39;you input secret :&#39;</span> -s password
+<span class="ln">17</span><span class="nb">echo</span> <span class="s2">&#34;\nOk, passwd is </span><span class="nv">$password</span><span class="s2">&#34;</span>
+</code></pre></div><h3 id="446数学运算">4.4.6数学运算</h3>
+<p>在 Bash 中，<strong>所有的变量都是字符串</strong>，需要特定字符让其运算。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1"># let 命令可以用于赋值</span>
+<span class="ln">2</span><span class="nb">let</span> <span class="s2">&#34;num1 = 1&#34;</span>
+<span class="ln">3</span><span class="nb">let</span> <span class="s2">&#34;num2 = 1&#34;</span>
+<span class="ln">4</span><span class="nb">let</span> <span class="s2">&#34;num3 = num1 + num2&#34;</span>
+<span class="ln">5</span><span class="nb">echo</span> <span class="s2">&#34;num3 = </span><span class="nv">$num3</span><span class="s2">&#34;</span>
+</code></pre></div><p>具体数学运算如下表所示</p>
+<table>
+<thead>
+<tr>
+<th>运算</th>
+<th>符号</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>加</td>
+<td>+</td>
+</tr>
+<tr>
+<td>减</td>
+<td>-</td>
+</tr>
+<tr>
+<td>乘</td>
+<td>*</td>
+</tr>
+<tr>
+<td>除</td>
+<td>/</td>
+</tr>
+<tr>
+<td>幂</td>
+<td>**</td>
+</tr>
+<tr>
+<td>余</td>
+<td>%</td>
+</tr>
+</tbody>
+</table>
+<p>这些跟基本的编程符号相似，所以不展开描述。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1"># 下面两种方式是一样的</span>
+<span class="ln">2</span><span class="nv">a</span><span class="o">=</span><span class="m">1</span>
+<span class="ln">3</span><span class="nb">let</span> <span class="s2">&#34;a = a * 3&#34;</span>
+<span class="ln">4</span><span class="nb">let</span> <span class="s2">&#34;a *= 3&#34;</span>
+</code></pre></div><h3 id="447任意精度计算">4.4.7任意精度计算</h3>
+<p>bc 命令是任意精度计算器语言，通常在linux下当计算器用</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span><span class="c1"># 方式1，直接输入bc，在bc模式下运算，一般根据你的输入精度来对应输出精度，通过输入quit回车后退出</span>
+<span class="ln"> 2</span>bc
+<span class="ln"> 3</span>sqrt<span class="o">(</span>3.0000000000*10^0<span class="o">)</span>
+<span class="ln"> 4</span>1.7320508075
+<span class="ln"> 5</span><span class="c1"># 方式2，通过管道</span>
+<span class="ln"> 6</span><span class="c1"># scale=2，代表保留2位</span>
+<span class="ln"> 7</span><span class="nb">echo</span> <span class="s1">&#39;scale=2; (2.777 - 1.4744)/1&#39;</span> <span class="p">|</span> bc
+<span class="ln"> 8</span><span class="c1"># 通过ibase和Obase来进制转化，原始进制位ibase，目标进制位Obase</span>
+<span class="ln"> 9</span><span class="nb">echo</span> <span class="s2">&#34;ibase=2;111&#34;</span> <span class="p">|</span>bc
+<span class="ln">10</span><span class="nv">abc</span><span class="o">=</span><span class="m">192</span> 
+<span class="ln">11</span><span class="nb">echo</span> <span class="s2">&#34;obase=2;</span><span class="nv">$abc</span><span class="s2">&#34;</span> <span class="p">|</span> bc
+<span class="ln">12</span><span class="nv">abc</span><span class="o">=</span><span class="m">11000000</span> 
+<span class="ln">13</span><span class="nb">echo</span> <span class="s2">&#34;obase=10;ibase=2;</span><span class="nv">$abc</span><span class="s2">&#34;</span> <span class="p">|</span> bc
+</code></pre></div><h3 id="448环境变量">4.4.8环境变量</h3>
+<p>几个常见的环境变量，默认环境变量都是大写的</p>
+<blockquote>
+<p>SHELL：指明目前你使用的是哪种 Shell。我目前用的是 Bash（因为 <code>SHELL=/bin/bash</code>）。</p>
+<p>PATH：是一系列路径的集合。只要有可执行程序位于任意一个存在于 PATH 中的路径，那我们就可以直接输入可执行程序的名字来执行。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="nb">echo</span> <span class="nv">$PATH</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_22.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_22.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>HOME：你的家目录所在的路径。</p>
+<p>PWD：目前所在的目录。</p>
+</blockquote>
+<h4 id="4481环境变量的分类">4.4.8.1环境变量的分类</h4>
+<p>环境变量可以简单的分成用户自定义的环境变量以及系统级别的环境变量。</p>
+<ul>
+<li>用户级别环境变量定义文件：<code>~/.bashrc</code>、<code>~/.profile</code>（部分系统为：<code>~/.bash_profile</code>）</li>
+<li>系统级别环境变量定义文件：<code>/etc/bashrc</code>、<code>/etc/profile</code>(部分系统为：<code>/etc/bash_profile</code>）、<code>/etc/environment</code></li>
+</ul>
+<p>另外在用户环境变量中，系统会首先读取<code>~/.bash_profile</code>（或者<code>~/.profile</code>）文件，如果没有该文件则读取<code>~/.bash_login</code>，根据这些文件中内容再去读取<code>~/.bashrc</code>。</p>
+<h4 id="4482环境变量加载顺序">4.4.8.2环境变量加载顺序</h4>
+<p>具体顺序如下图所示，其中红色代表系统环境变量文件，绿色是当前用户文件</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_23.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_23.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>目前开始的时候或从/etc/envirnment开始加载，然后加载/etc/profile和~/.profile。</p>
+<p>其中/etc/profile获取加载/etc/bash.bashrc和/etc/profile.d/*.sh</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span><span class="c1"># /etc/profile,系统的环境变量</span>
+<span class="ln"> 2</span><span class="c1"># 这里先后加载了/etc/bash.bashrc和/etc/profile.d/*.sh</span>
+<span class="ln"> 3</span><span class="k">if</span> <span class="o">[</span> <span class="s2">&#34;</span><span class="nv">$PS1</span><span class="s2">&#34;</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+<span class="ln"> 4</span>  <span class="k">if</span> <span class="o">[</span> <span class="s2">&#34;</span><span class="nv">$BASH</span><span class="s2">&#34;</span> <span class="o">]</span> <span class="o">&amp;&amp;</span> <span class="o">[</span> <span class="s2">&#34;</span><span class="nv">$BASH</span><span class="s2">&#34;</span> !<span class="o">=</span> <span class="s2">&#34;/bin/sh&#34;</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+<span class="ln"> 5</span>    <span class="c1"># The file bash.bashrc already sets the default PS1.</span>
+<span class="ln"> 6</span>    <span class="c1"># PS1=&#39;\h:\w\$ &#39;</span>
+<span class="ln"> 7</span>    <span class="k">if</span> <span class="o">[</span> -f /etc/bash.bashrc <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+<span class="ln"> 8</span>      . /etc/bash.bashrc
+<span class="ln"> 9</span>    <span class="k">fi</span>
+<span class="ln">10</span>    ...
+<span class="ln">11</span><span class="k">fi</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="k">if</span> <span class="o">[</span> -d /etc/profile.d <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+<span class="ln">14</span>  <span class="k">for</span> i in /etc/profile.d/*.sh<span class="p">;</span> <span class="k">do</span>
+<span class="ln">15</span>    <span class="k">if</span> <span class="o">[</span> -r <span class="nv">$i</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+<span class="ln">16</span>      . <span class="nv">$i</span>
+<span class="ln">17</span>    <span class="k">fi</span>
+<span class="ln">18</span>  <span class="k">done</span>
+<span class="ln">19</span>  <span class="nb">unset</span> i
+<span class="ln">20</span><span class="k">fi</span>
+</code></pre></div><p>然后~/.profile会加载~/.bashrc，可以知道每次运行shell的时候都会去加载一次~/.bashrc。从<code>~/.profile</code>文件中代码不难发现，<code>~/.profile</code>文件<strong>只在用户登录的时候读取一次</strong>，而<code>~/.bashrc</code>会在每次运行<code>Shell</code>脚本的时候读取一次</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1"># if running bash</span>
+<span class="ln">2</span><span class="k">if</span> <span class="o">[</span> -n <span class="s2">&#34;</span><span class="nv">$BASH_VERSION</span><span class="s2">&#34;</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+<span class="ln">3</span>    <span class="c1"># include .bashrc if it exists</span>
+<span class="ln">4</span>    <span class="k">if</span> <span class="o">[</span> -f <span class="s2">&#34;</span><span class="nv">$HOME</span><span class="s2">/.bashrc&#34;</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+<span class="ln">5</span>        . <span class="s2">&#34;</span><span class="nv">$HOME</span><span class="s2">/.bashrc&#34;</span>
+<span class="ln">6</span>    <span class="k">fi</span>
+<span class="ln">7</span><span class="k">fi</span>
+<span class="ln">8</span>
+<span class="ln">9</span><span class="nv">PATH</span><span class="o">=</span><span class="s2">&#34;</span><span class="nv">$HOME</span><span class="s2">/bin:</span><span class="nv">$HOME</span><span class="s2">/.local/bin:</span><span class="nv">$PATH</span><span class="s2">&#34;</span>
+</code></pre></div><h4 id="4483环境变量配置">4.4.8.3环境变量配置</h4>
+<p>在配置之前，需要确定原先有哪些环境配置</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="nb">export</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_24.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_24.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>这里罗列6种方式，有命令方式和修改配置文件方式，通常设置配置文件为永久性的修改</p>
+<ol>
+<li>
+<p><code>export PATH</code></p>
+<p>使用<code>export</code>命令直接修改<code>PATH</code>的值，例如配置jdk的路径。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span>/home/yangyang/jdk1.8.0_311/bin:<span class="nv">$PATH</span>
+<span class="ln">2</span><span class="c1"># 或者另外一种写法</span>
+<span class="ln">3</span><span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/home/yangyang/jdk1.8.0_311/bin
+</code></pre></div><blockquote>
+<ul>
+<li>生效时间：立即生效</li>
+<li>生效期限：当前终端有效，窗口关闭后无效</li>
+<li>生效范围：仅对当前用户有效</li>
+<li>配置的环境变量中不要忘了加上原来的配置，即<code>$PATH</code>部分，避免覆盖原来配置</li>
+</ul>
+</blockquote>
+</li>
+<li>
+<p><code>vim ~/.bashrc</code></p>
+<p>通过修改用户目录下的<code>~/.bashrc</code>文件进行配置</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1"># 在最后一行加上</span>
+<span class="ln">2</span><span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/home/yangyang/jdk1.8.0_311/bin
+</code></pre></div><blockquote>
+<ul>
+<li>生效时间：使用相同的用户打开新的终端时生效，或者手动<code>source ~/.bashrc</code>生效</li>
+<li>生效期限：永久有效</li>
+<li>生效范围：<strong>仅对当前用户有效</strong></li>
+<li>如果有后续的环境变量加载文件覆盖了<code>PATH</code>定义，则可能不生效</li>
+</ul>
+</blockquote>
+</li>
+<li>
+<p><code>vim ~/.profile</code></p>
+<p>和修改<code>~/.bashrc</code>文件类似，也是要在文件最后加上新的路径</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1"># 在最后一行加上</span>
+<span class="ln">2</span><span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/home/yangyang/jdk1.8.0_311/bin
+</code></pre></div><blockquote>
+<ul>
+<li>生效时间：使用相同的用户打开新的终端时生效，或者手动<code>source ~/.profile</code>生效</li>
+<li>生效期限：永久有效</li>
+<li>生效范围：<strong>仅对当前用户有效</strong></li>
+<li>如果没有<code>~/.profile</code>文件，则可以编辑<code>~/.profile</code>文件或者新建一个</li>
+</ul>
+</blockquote>
+</li>
+<li>
+<p><code>vim /etc/bashrc</code></p>
+<p>该方法是修改系统配置，需要管理员权限（如root）或者对该文件的写入权限，笔者没有这个文件，所以这一步修改不了</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1"># 在最后一行加上</span>
+<span class="ln">2</span><span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/home/yangyang/jdk1.8.0_311/bin
+</code></pre></div><blockquote>
+<ul>
+<li>生效时间：新开终端生效，或者手动<code>source /etc/bashrc</code>生效</li>
+<li>生效期限：永久有效</li>
+<li>生效范围：对所有用户有效</li>
+</ul>
+</blockquote>
+</li>
+<li>
+<p><code>vim /etc/profile</code></p>
+<p>该方法修改系统配置，需要管理员权限或者对该文件的写入权限，通常笔者配置环境变量都选择用该方式</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1"># 在最后一行加上</span>
+<span class="ln">2</span><span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/home/yangyang/jdk1.8.0_311/bin
+</code></pre></div><blockquote>
+<ul>
+<li>生效时间：新开终端生效，或者手动<code>source /etc/profile</code>生效</li>
+<li>生效期限：永久有效</li>
+<li>生效范围：对所有用户有效</li>
+</ul>
+</blockquote>
+</li>
+<li>
+<p><code>vim /etc/environment</code></p>
+<p>该方法是修改系统环境配置文件，需要管理员权限或者对该文件的写入权限</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1"># 在最后一行加上</span>
+<span class="ln">2</span><span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/home/yangyang/jdk1.8.0_311/bin
+</code></pre></div><blockquote>
+<ul>
+<li>生效时间：新开终端生效，或者手动<code>source /etc/environment</code>生效</li>
+<li>生效期限：永久有效</li>
+<li>生效范围：对所有用户有效</li>
+</ul>
+</blockquote>
+</li>
+</ol>
+<h3 id="449参数变量">4.4.9参数变量</h3>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>./variable.sh 参数1 参数2 参数3 ...
+</code></pre></div><blockquote>
+<p>$# ：<strong>包含参数的数目</strong>。
+$0 ：包含被运行的脚本的名称 （我们的示例中就是 variable.sh ）。
+$1：<strong>包含第一个参数</strong>。
+$2：包含第二个参数。
+…
+$8 ：包含第八个参数。</p>
+</blockquote>
+<p>shift参数移位</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="cp">#!/bin/bash
+</span><span class="ln">2</span><span class="cp"></span>
+<span class="ln">3</span><span class="nb">echo</span> <span class="s2">&#34;The first parameter is </span><span class="nv">$1</span><span class="s2">&#34;</span>
+<span class="ln">4</span><span class="nb">shift</span>
+<span class="ln">5</span><span class="nb">echo</span> <span class="s2">&#34;The first parameter is now </span><span class="nv">$1</span><span class="s2">&#34;</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_25.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_25.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="4410数值变量">4.4.10数值变量</h3>
+<p>shell中默认把变量值当作字符串，例如：</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="nv">age</span><span class="o">=</span><span class="m">22</span>
+<span class="ln">2</span><span class="nv">age</span><span class="o">=</span><span class="si">${</span><span class="nv">age</span><span class="si">}</span>+1
+<span class="ln">3</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">age</span><span class="si">}</span>
+</code></pre></div><p>输出结果为22+1，而不是23。</p>
+<p>原因是shell将其解释为字符串，而不是数学运算。</p>
+<p>有两种方式使其进行数学运算。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1"># 用let命令使其进行数学运算</span>
+<span class="ln">2</span><span class="nb">let</span> <span class="nv">age</span><span class="o">=</span><span class="si">${</span><span class="nv">age</span><span class="si">}</span>+1
+<span class="ln">3</span><span class="c1"># 用declare把变量定义为整型</span>
+<span class="ln">4</span><span class="nb">declare</span> -i <span class="nv">age</span><span class="o">=</span><span class="m">22</span>
+</code></pre></div><p>此后每次运算，都把age的右值识别为算术表达式或数字。</p>
+<h3 id="4411数组">4.4.11数组</h3>
+<p>定义数组</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="nv">array</span><span class="o">=(</span><span class="s1">&#39;value0&#39;</span> <span class="s1">&#39;value1&#39;</span> <span class="s1">&#39;value2&#39;</span><span class="o">)</span>
+</code></pre></div><p>访问数组元素</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="si">${</span><span class="nv">array</span><span class="p">[2]</span><span class="si">}</span>
+</code></pre></div><p>对数组元素赋值</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>array<span class="o">[</span>3<span class="o">]=</span><span class="s1">&#39;value3&#39;</span>
+</code></pre></div><blockquote>
+<p>Shell 中的数组的下标（index）也基本是从 0 开始的，而不是从 1 开始。因此，第一个元素的编号（下标）就是 0，第二个元素的下标就是 1，以此类推。
+不过，也不是所有 Shell 语言的数组下标都是从 0 开始，不少 Shell 语言（例如 Csh，Tcsh，Zsh，等等）的数组下标是从 1 开始的。</p>
+</blockquote>
+<p>可以一次性显示数组中所有的元素值，需要用到通配符 <code>*</code>（星号）</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="cp">#!/bin/bash
+</span><span class="ln">2</span><span class="cp"></span>
+<span class="ln">3</span><span class="nv">array</span><span class="o">=(</span><span class="s1">&#39;value0&#39;</span> <span class="s1">&#39;value1&#39;</span> <span class="s1">&#39;value2&#39;</span><span class="o">)</span>
+<span class="ln">4</span>array<span class="o">[</span>5<span class="o">]=</span><span class="s1">&#39;value5&#39;</span>
+<span class="ln">5</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">array</span><span class="p">[*]</span><span class="si">}</span>
+<span class="ln">6</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">array</span><span class="p">[@]</span><span class="si">}</span>
+<span class="ln">7</span><span class="c1"># 获取数组元素个数为: ${#array[@]}或者${#array[*]}</span>
+<span class="ln">8</span><span class="nb">echo</span> <span class="si">${#</span><span class="nv">array</span><span class="p">[@]</span><span class="si">}</span>
+<span class="ln">9</span><span class="nb">echo</span> <span class="si">${#</span><span class="nv">array</span><span class="p">[*]</span><span class="si">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_26.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_26.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>关于shell数组的进阶，包括二维数组，详见<a href="https://blog.csdn.net/ee230/article/details/48316317?_t_t_t=0.856576693346367">这里</a>，本文不展开描述。</p>
+<blockquote>
+<p>特别注意：</p>
+<p>${array[@]}和${array[<em>]} 一般情况下都能显示全部的数组元素，但是要实现二维数组的效果，不能使用${array[</em>]}。</p>
+</blockquote>
+<h3 id="4412特殊变量">4.4.12特殊变量</h3>
+<p>表4.4.1特殊变量</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">特殊变量</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">$0</td>
+<td>当前脚本的文件名</td>
+</tr>
+<tr>
+<td style="text-align:center">$num</td>
+<td>num为从1开始的数字<!-- raw HTML omitted -->$1是第一个参数，$2是第二个参数，${10}是第十个参数</td>
+</tr>
+<tr>
+<td style="text-align:center">$#</td>
+<td>传入脚本的参数的个数</td>
+</tr>
+<tr>
+<td style="text-align:center">$*</td>
+<td>所有的位置参数(作为单个字符串)</td>
+</tr>
+<tr>
+<td style="text-align:center">$@</td>
+<td>所有的位置参数(每个都作为独立的字符串)</td>
+</tr>
+<tr>
+<td style="text-align:center">$?</td>
+<td>当前shell进程中，上一个命令的返回值<!-- raw HTML omitted -->如果上一个命令成功执行则$?的值为0，否则为其他非零值，常用做if语句条件</td>
+</tr>
+<tr>
+<td style="text-align:center">$$</td>
+<td>当前shell进程的pid</td>
+</tr>
+<tr>
+<td style="text-align:center">$!</td>
+<td>后台运行的最后一个进程的pid</td>
+</tr>
+<tr>
+<td style="text-align:center">$-</td>
+<td>显示shell使用的当前选项</td>
+</tr>
+<tr>
+<td style="text-align:center">$_</td>
+<td>之前命令的最后一个参数</td>
+</tr>
+</tbody>
+</table>
+<h2 id="45条件运算">4.5条件运算</h2>
+<h3 id="451if-条件语句">4.5.1if 条件语句</h3>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="k">if</span> <span class="o">[</span> condition <span class="o">]</span>
+<span class="ln">2</span><span class="k">then</span> 
+<span class="ln">3</span>    dosomething
+<span class="ln">4</span><span class="k">fi</span>
+</code></pre></div><p>可以看到condition这个条件为真的时候，就可以dosomething了。</p>
+<blockquote>
+<p>注意：方括号 <code>[]</code> 中的 <code>条件测试</code> 两边必须要空一格。不能写成 <code>[condition]</code>，而要写成 <code>[ condition ]</code>。</p>
+</blockquote>
+<p>除了上述的写法之外，还有另外一种常见的写法</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="k">if</span> <span class="o">[</span> condition <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+<span class="ln">2</span>    dosomething
+<span class="ln">3</span><span class="k">fi</span>
+</code></pre></div><p>如果存在多个if else判断的话，那就是下面的写法方式</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="k">if</span> <span class="o">[</span> condition1 <span class="o">]</span><span class="p">;</span><span class="k">then</span>
+<span class="ln">2</span>    dosomething1
+<span class="ln">3</span><span class="k">elif</span> <span class="o">[</span> condition2 <span class="o">]</span><span class="p">;</span><span class="k">then</span>
+<span class="ln">4</span>    dosomething2
+<span class="ln">5</span><span class="k">else</span>
+<span class="ln">6</span>    dosomething3
+<span class="ln">7</span><span class="k">fi</span>
+</code></pre></div><p>表4.5.1数值的判断</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">数值判断语句</th>
+<th>判断说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">NUM1 -eq NUM2</td>
+<td>NUM1和NUM2两数相等为真 ,=</td>
+</tr>
+<tr>
+<td style="text-align:center">NUM1 -ne NUM2</td>
+<td>NUM1和NUM2两数不相等为真 ,&lt;&gt;</td>
+</tr>
+<tr>
+<td style="text-align:center">NUM1 -gt NUM2</td>
+<td>NUM1大于NUM1为真 ,&gt;</td>
+</tr>
+<tr>
+<td style="text-align:center">NUM1 -ge NUM2</td>
+<td>NUM1大于等于NUM1为真,&gt;=</td>
+</tr>
+<tr>
+<td style="text-align:center">NUM1 -lt NUM2</td>
+<td>NUM1小于NUM1为真 ,&lt;</td>
+</tr>
+<tr>
+<td style="text-align:center">NUM1 -le NUM2</td>
+<td>NUM1小于等于NUM1为真,&lt;=</td>
+</tr>
+</tbody>
+</table>
+<p>表4.5.2逻辑判断</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">逻辑判断语句</th>
+<th style="text-align:center">判断说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">-a</td>
+<td style="text-align:center">与</td>
+</tr>
+<tr>
+<td style="text-align:center">-o</td>
+<td style="text-align:center">或</td>
+</tr>
+<tr>
+<td style="text-align:center">!</td>
+<td style="text-align:center">非</td>
+</tr>
+</tbody>
+</table>
+<p>表4.5.3字符串的判断</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">字符串判断语句</th>
+<th>判断说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">[ -z STRING ]</td>
+<td>如果STRING的长度为零则为真,len=0</td>
+</tr>
+<tr>
+<td style="text-align:center">[ -n STRING ]/[ STRING ]</td>
+<td>如果STRING的长度非零则为真,len&gt;0</td>
+</tr>
+<tr>
+<td style="text-align:center">[ STRING1 = STRING2 ]</td>
+<td>如果两个字符串相同则为真</td>
+</tr>
+<tr>
+<td style="text-align:center">[ STRING1 != STRING2 ]</td>
+<td>如果字符串不相同则为真</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>“等于”是用一个等号（ = ）来表示的</strong>，C 语言中“等于”是用两个等号（ == ）来表示的。但 Shell 中用两个等号来表示“等于”的判断也是可以的。</p>
+</blockquote>
+<p>表4.5.4文件/文件夹的判断</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">文件/文件夹判断</th>
+<th>判断说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">[ -e FILE ]</td>
+<td>如果 FILE 存在则为真</td>
+</tr>
+<tr>
+<td style="text-align:center">[ -f FILE ]</td>
+<td>如果 FILE 存在且是一个普通文件则为真</td>
+</tr>
+<tr>
+<td style="text-align:center">[ -s FILE ]</td>
+<td>如果 FILE 存在且大小不为0则为真</td>
+</tr>
+<tr>
+<td style="text-align:center">[ -r FILE ]</td>
+<td>如果 FILE 存在且是可读的则为真</td>
+</tr>
+<tr>
+<td style="text-align:center">[ -w FILE ]</td>
+<td>如果 FILE存在且是可写的则为真</td>
+</tr>
+<tr>
+<td style="text-align:center">[ -x FILE ]</td>
+<td>如果 FILE 存在且是可执行的则为真</td>
+</tr>
+<tr>
+<td style="text-align:center">[ -b FILE ]</td>
+<td>如果 FILE 存在且是一个块特殊文件则为真</td>
+</tr>
+<tr>
+<td style="text-align:center">[ -c FILE ]</td>
+<td>如果 FILE 存在且是一个字特殊文件则为真</td>
+</tr>
+<tr>
+<td style="text-align:center">[ FILE1 -nt FILE2 ]</td>
+<td>如果 FILE1的最近修改时间比FILE新<!-- raw HTML omitted -->或者如果 FILE1存在，FILE2不存在则为真。</td>
+</tr>
+<tr>
+<td style="text-align:center">[ FILE1 -ot FILE2 ]</td>
+<td>如果 FILE1的最近修改时间比 FILE2 老<!-- raw HTML omitted -->或者 FILE2 存在且，FILE1 不存在则为真。</td>
+</tr>
+<tr>
+<td style="text-align:center">[ FILE1 -ef FILE2 ]</td>
+<td>如果 FILE1 和 FILE2 指向相同的设备和节点号则为真</td>
+</tr>
+<tr>
+<td style="text-align:center">[ -d DIR ]</td>
+<td>如果 FILE 存在且是一个目录则为真</td>
+</tr>
+</tbody>
+</table>
+<p>上面的表知识列举了比较常见的判断，如果遇到非常见的判断，还是需要手册查询。</p>
+<blockquote>
+<ul>
+<li>
+<p>一.[] 和 test</p>
+<p>两者是一样的。<code>test expr</code>和 <code>[ expr ]</code> 的效果相同。</p>
+<p>一般常用于<strong>判断文件</strong>、<strong>判断字符串</strong>、<strong>判断整数</strong>。</p>
+<p>字符串比较还是整数比较都千万不要使用 <code>&lt;</code>, <code>&gt;</code></p>
+</li>
+</ul>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span><span class="cp">#!/bin/bash
+</span><span class="ln"> 2</span><span class="cp"></span><span class="nv">var1</span><span class="o">=</span><span class="s2">&#34;1&#34;</span>
+<span class="ln"> 3</span><span class="nv">var2</span><span class="o">=</span><span class="s2">&#34;2&#34;</span>
+<span class="ln"> 4</span>
+<span class="ln"> 5</span><span class="c1"># 下面是并且的运算符-a，另外注意，用一个test命令就可以了，还有if条件后面的分号</span>
+<span class="ln"> 6</span><span class="k">if</span> <span class="nb">test</span> <span class="nv">$var1</span> <span class="o">=</span> <span class="s2">&#34;1&#34;</span> -a <span class="nv">$var2</span> <span class="o">=</span> <span class="s2">&#34;2&#34;</span> <span class="p">;</span> <span class="k">then</span>
+<span class="ln"> 7</span>  <span class="nb">echo</span> <span class="s2">&#34;equal&#34;</span>
+<span class="ln"> 8</span><span class="k">fi</span>
+<span class="ln"> 9</span><span class="c1"># 下面是或运算符 -o，有一个为真就可以</span>
+<span class="ln">10</span><span class="k">if</span> <span class="nb">test</span> <span class="nv">$var1</span> !<span class="o">=</span> <span class="s2">&#34;1&#34;</span> -o <span class="nv">$var2</span> !<span class="o">=</span> <span class="s2">&#34;3&#34;</span> <span class="p">;</span> <span class="k">then</span>
+<span class="ln">11</span>  <span class="nb">echo</span> <span class="s2">&#34;not equal&#34;</span>
+<span class="ln">12</span><span class="k">fi</span>
+<span class="ln">13</span><span class="c1"># 下面是非运算符 ！,if条件是为真的时候执行，如果使用！运算符，那么原表达式必须为false</span>
+<span class="ln">14</span><span class="k">if</span> ! <span class="nb">test</span> <span class="nv">$var1</span> !<span class="o">=</span> <span class="s2">&#34;1&#34;</span><span class="p">;</span> <span class="k">then</span>
+<span class="ln">15</span>  <span class="nb">echo</span> <span class="s2">&#34;not 1&#34;</span>
+<span class="ln">16</span><span class="k">fi</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<ul>
+<li>
+<p>二.[<input disabled="" type="checkbox"> ]</p>
+<p>支持字符串的模式匹配（使用 <code>=~</code> 操作符时甚至支持shell的正则表达式）。逻辑组合可以不使用<code>test</code> 的 <code>-a</code> , <code>-o</code> 而使用 <code>&amp;&amp;</code>, <code>||</code> 。</p>
+<p>字符串比较时可以把右边的作为一个模式字符串，不仅仅是一个字符串，比如 <code>[[ hello == hell? ]]</code>，结果为真。如果右边的字符串加了双引号，则认为是一个文本字符串。</p>
+</li>
+<li>
+<p>三.(()) 和 let</p>
+<p>两者是一样的(<code>双括号</code> 比 <code>let</code>稍弱一些)。都是一种结构拓展，用于计算算术表达式的值。</p>
+<p>1.直接使用熟悉的 <code>&lt;</code> , <code>&gt;</code> 等比较运算符。</p>
+<p>2.可以直接使用变量名如 <code>var</code> 而不需要 <code>$var</code> 这样的形式</p>
+<p>3.支持分号隔开的多个表达式</p>
+<p>4.如果表达式值为0，会返回1；如果是非零值的表达式，返回一个0</p>
+</li>
+<li>
+<p>四.if中[<input disabled="" type="checkbox"> ]和<input disabled="" type="checkbox"> 区别</p>
+<p>1.<code>[[]]</code>是关键字，许多 shell (如 ash bsh)并不支持这种方式。</p>
+<p><code>[]</code> 是一条shell命令， 与 <code>test</code> 等价，大多数 shell 都支持。</p>
+<p>2.<code>[[]]</code> 结构比 Bash 版本的 <code>[]</code> 更通用。<code>&amp;&amp;</code>, <code>||</code> , <code>&lt;</code> 和 <code>&gt;</code> 操作符能在一个 <code>[[]]</code> 测试里通过，但在 <code>[]</code> 结构会发生错误。</p>
+<p>3.<code>[[ ... &amp;&amp; ... &amp;&amp; ... ]]</code> 和 <code>[ ... -a ... -a ...]</code> 不一样，<code>[[ ]]</code> 是逻辑短路操作，而 <code>[ ]</code> 不会进行逻辑短路</p>
+<p>4.一般比较两个字符串相等，推荐方式，避免出现<code>&quot;[: =: unary operator expected&quot;</code>，原因是可能出现未定义的字符串，字符串为空。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1"># 不推荐的方式[ $STATUS = &#34;OK&#34; ]</span>
+<span class="ln">2</span><span class="c1"># 推荐方式</span>
+<span class="ln">3</span><span class="o">[[</span> <span class="s2">&#34;</span><span class="nv">$STATUS</span><span class="s2">&#34;</span><span class="nv">x</span> <span class="o">==</span> <span class="s2">&#34;OK&#34;</span>x <span class="o">]]</span>
+</code></pre></div></li>
+</ul>
+<p>举例说明运算</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1"># example1 a&gt;b且a&lt;c，下面三种方式等价</span>
+<span class="ln">2</span><span class="k">if</span> <span class="o">((</span> a &gt; b <span class="o">))</span> <span class="o">&amp;&amp;</span> <span class="o">((</span> a &lt; c <span class="o">))</span>
+<span class="ln">3</span><span class="k">if</span> <span class="o">[[</span> <span class="nv">$a</span> &gt; <span class="nv">$b</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="o">[[</span> <span class="nv">$a</span> &lt; <span class="nv">$c</span> <span class="o">]]</span>
+<span class="ln">4</span><span class="k">if</span> <span class="o">[</span> <span class="nv">$a</span> -gt <span class="nv">$b</span> -a <span class="nv">$a</span> -lt <span class="nv">$c</span> <span class="o">]</span>
+<span class="ln">5</span><span class="c1"># example2 a&gt;b或a&lt;c，下面三种方式等价</span>
+<span class="ln">6</span><span class="k">if</span> <span class="o">((</span> a &gt; b <span class="o">))</span> <span class="o">||</span> <span class="o">((</span> a &lt; c <span class="o">))</span>
+<span class="ln">7</span><span class="k">if</span> <span class="o">[[</span> <span class="nv">$a</span> &gt; <span class="nv">$b</span> <span class="o">]]</span> <span class="o">||</span> <span class="o">[[</span> <span class="nv">$a</span> &lt; <span class="nv">$c</span> <span class="o">]]</span>
+<span class="ln">8</span><span class="k">if</span> <span class="o">[</span> <span class="nv">$a</span> -gt <span class="nv">$b</span> -o <span class="nv">$a</span> -lt <span class="nv">$c</span> <span class="o">]</span>
+</code></pre></div></blockquote>
+<h3 id="452case条件语句">4.5.2case条件语句</h3>
+<p>linux编程语言中的 switch 语句</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span><span class="cp">#!/bin/bash
+</span><span class="ln"> 2</span><span class="cp"></span>
+<span class="ln"> 3</span><span class="k">case</span> <span class="nv">$1</span> in
+<span class="ln"> 4</span>    <span class="s2">&#34;Cupcake&#34;</span><span class="o">)</span>
+<span class="ln"> 5</span>        <span class="nb">echo</span> <span class="s2">&#34;Hello Cupcake !&#34;</span>
+<span class="ln"> 6</span>        <span class="p">;;</span>
+<span class="ln"> 7</span>    <span class="s2">&#34;Donut&#34;</span><span class="o">)</span>
+<span class="ln"> 8</span>        <span class="nb">echo</span> <span class="s2">&#34;Hello Donut !&#34;</span>
+<span class="ln"> 9</span>        <span class="p">;;</span>
+<span class="ln">10</span>    <span class="s2">&#34;Éclair&#34;</span><span class="o">)</span>
+<span class="ln">11</span>        <span class="nb">echo</span> <span class="s2">&#34;Hello Éclair !&#34;</span>
+<span class="ln">12</span>        <span class="p">;;</span>
+<span class="ln">13</span>    <span class="s2">&#34;Froyo&#34;</span><span class="o">)</span>
+<span class="ln">14</span>        <span class="nb">echo</span> <span class="s2">&#34;Hello Froyo !&#34;</span>
+<span class="ln">15</span>        <span class="p">;;</span>
+<span class="ln">16</span>    *<span class="o">)</span>
+<span class="ln">17</span>        <span class="nb">echo</span> <span class="s2">&#34;Sorry, I do not know which version.Maybe Oreo&#34;</span>
+<span class="ln">18</span>        <span class="p">;;</span>
+<span class="ln">19</span><span class="k">esac</span>
+</code></pre></div><blockquote>
+<ul>
+<li>
+<p>case $1 in ：$1 表示我们要测试的变量是输入的第一个参数。in 是英语“在…之中”的意思。</p>
+</li>
+<li>
+<p>&ldquo;Cupcake&rdquo;) ：测试其中一个 case，也就是 $1 是否等于 &ldquo;Cupcake&rdquo;。也可以用<strong>星号来做通配符来匹配多个字符</strong>，例如 &ldquo;M*&quot;) 可以匹配所有以 M 开头的字符串。</p>
+</li>
+<li>
+<p>;; ：类似于主流编程语言中的 break;，表示结束 case 的读取，程序跳转到 esac 后面执行。</p>
+</li>
+<li>
+<p>*) ：相当于 if 条件语句的 else，表示“否则”，就是“假如不等于上面任何一种情况”。</p>
+</li>
+<li>
+<p>esac ：是 case 的反写，表示 case 语句的结束。</p>
+</li>
+</ul>
+</blockquote>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span><span class="cp">#!/bin/bash
+</span><span class="ln"> 2</span><span class="cp"></span><span class="k">case</span> <span class="nv">$1</span> in
+<span class="ln"> 3</span>    <span class="s2">&#34;dog&#34;</span> <span class="p">|</span> <span class="s2">&#34;cat&#34;</span> <span class="p">|</span> <span class="s2">&#34;pig&#34;</span><span class="o">)</span>
+<span class="ln"> 4</span>        <span class="nb">echo</span> <span class="s2">&#34;It is a mammal&#34;</span>
+<span class="ln"> 5</span>        <span class="p">;;</span>
+<span class="ln"> 6</span>    <span class="s2">&#34;pigeon&#34;</span> <span class="p">|</span> <span class="s2">&#34;swallow&#34;</span><span class="o">)</span>
+<span class="ln"> 7</span>        <span class="nb">echo</span> <span class="s2">&#34;It is a bird&#34;</span>
+<span class="ln"> 8</span>        <span class="p">;;</span>
+<span class="ln"> 9</span>    *<span class="o">)</span>
+<span class="ln">10</span>        <span class="nb">echo</span> <span class="s2">&#34;I do not know what it is&#34;</span>
+<span class="ln">11</span>        <span class="p">;;</span>
+<span class="ln">12</span><span class="k">esac</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>上面判断变量的分类是dog，cat，pig是一类，pigeon和swallow是另外一类，只要输入的参数是其中之一即可满足这一类别的判断。</p>
+<p>出上面之外，还支持正则表达式，判断一个字符</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span><span class="cp">#!/bin/bash
+</span><span class="ln"> 2</span><span class="cp"></span><span class="c1"># 输入一个字符，用于后续判断是字母，数字还是其他类型</span>
+<span class="ln"> 3</span><span class="nb">read</span> -p <span class="s2">&#34;press some key ,then press return :&#34;</span> KEY
+<span class="ln"> 4</span><span class="k">case</span> <span class="nv">$KEY</span> in
+<span class="ln"> 5</span>    <span class="o">[</span>a-z<span class="o">]</span><span class="p">|</span><span class="o">[</span>A-Z<span class="o">])</span>
+<span class="ln"> 6</span>        <span class="nb">echo</span> <span class="s2">&#34;It&#39;s a letter.&#34;</span>
+<span class="ln"> 7</span>        <span class="p">;;</span>
+<span class="ln"> 8</span>    <span class="o">[</span>0-9<span class="o">])</span> 
+<span class="ln"> 9</span>        <span class="nb">echo</span> <span class="s2">&#34;It&#39;s a digit.&#34;</span>
+<span class="ln">10</span>        <span class="p">;;</span>
+<span class="ln">11</span>    *<span class="o">)</span>
+<span class="ln">12</span>        <span class="nb">echo</span> <span class="s2">&#34;It&#39;s function keys、Spacebar or other ksys.&#34;</span>
+<span class="ln">13</span>        <span class="p">;;</span>
+<span class="ln">14</span><span class="k">esac</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="453条件变量替换">4.5.3条件变量替换</h3>
+<p>表4.5.5条件变量替换</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">引用格式</th>
+<th>返回值及用法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">$var</td>
+<td>返回变量值，例如var=&ldquo;Barry&rdquo;，则$var即为Barry，这里的&quot;&ldquo;是界定符号，不是字符串中的字符</td>
+</tr>
+<tr>
+<td style="text-align:center">${var}</td>
+<td>返回变量值，推荐写法。</td>
+</tr>
+<tr>
+<td style="text-align:center">${#var}</td>
+<td>返回该变量字符串的长度，例如var=&ldquo;Barry&rdquo;，则${#var}返回5</td>
+</tr>
+<tr>
+<td style="text-align:center">${var:start_index}</td>
+<td>默认返回从start_index开始到末尾的字符串。例如var=&ldquo;Barry&rdquo;，则${var:0}返回Barry,${var:2-4}返回Bar，这里的2-4，需要从字符串的尾部开始计算</td>
+</tr>
+<tr>
+<td style="text-align:center">${var:start_index:length}</td>
+<td>默认返回从start_index开始的length个字符，可以为负数。例如var=&ldquo;0123456789&rdquo;,${var:2:5}返回23456，${var:5:-2}返回567，这里的-2代表剩余两个字符不要，${var:0-3:-1}返回567</td>
+</tr>
+<tr>
+<td style="text-align:center">${var:-newstring}</td>
+<td>返回值分两种情况。<!-- raw HTML omitted -->1.如果var为空或者未定义，则返回newstring<!-- raw HTML omitted -->2.如果var不为空，则返回变量值</td>
+</tr>
+<tr>
+<td style="text-align:center">${var:=newstring}</td>
+<td>返回值分两种情况。<!-- raw HTML omitted -->1.如果var为空或者未定义，则返回newstring，并把newstring赋值给var<!-- raw HTML omitted -->2.如果var不为空，则返回变量值</td>
+</tr>
+<tr>
+<td style="text-align:center">${var:?newstring}</td>
+<td>返回值分两种情况。<!-- raw HTML omitted -->1.如果var为空或者未定义，则返回newstring写入标准错误流，本语句失败<!-- raw HTML omitted -->2.如果var不为空，则返回变量值</td>
+</tr>
+<tr>
+<td style="text-align:center">${var:+newstring}</td>
+<td>返回值分两种情况。<!-- raw HTML omitted -->1.如果var不为空，则返回newstring<!-- raw HTML omitted -->2.如果var为空，则返回空值</td>
+</tr>
+<tr>
+<td style="text-align:center">${var#string}</td>
+<td>返回从左边删除string后的字符串，尽可能短的去匹配。例如var=&ldquo;http://127.0.0.1/index.php&rdquo;,则${var#*/},返回&rdquo;/127.0.0.1/index.php&rdquo;</td>
+</tr>
+<tr>
+<td style="text-align:center">${var##string}</td>
+<td>返回从左边删除string后的字符串，尽可能长的去匹配。例如var=&ldquo;http://127.0.0.1/index.php&rdquo;,则${var##*/},返回&quot;index.php&quot;</td>
+</tr>
+<tr>
+<td style="text-align:center">${var%string}</td>
+<td>返回从右边删除string后的字符串，尽可能短的去匹配。例如var=&ldquo;http://127.0.0.1/index.php&rdquo;,则${var%/*},返回&quot;http://127.0.0.1&quot;</td>
+</tr>
+<tr>
+<td style="text-align:center">${var%%string}</td>
+<td>返回从右边删除string后的字符串，尽可能长的去匹配。例如var=&ldquo;http://127.0.0.1/index.php&rdquo;,则${var%%/*},返回&quot;http:&quot;</td>
+</tr>
+<tr>
+<td style="text-align:center">${var/substring/string}</td>
+<td>返回var中第一个substring被替换成newstring后的字符串。例如var=&ldquo;08880&rdquo;,则${var/0/Barry},返回Barry88880</td>
+</tr>
+<tr>
+<td style="text-align:center">${var//substring/string}</td>
+<td>返回var中中所有substring被替换成newstring后的字符串。例如var=&ldquo;08880&rdquo;,则${var//0/Barry},返回Barry8888Barry</td>
+</tr>
+<tr>
+<td style="text-align:center">$(command)</td>
+<td>返回command命令指令后所输出的结果，例如$(date)返回就是date命令执行后的输出，相当于反引号下的date</td>
+</tr>
+<tr>
+<td style="text-align:center">$((算术表达式))</td>
+<td>返回双括号内的运算结果，例如$((500+5*4))返回520，<strong>可以不需要两边加空格</strong></td>
+</tr>
+</tbody>
+</table>
+<p>这里举一个简单的例子</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span><span class="cp">#!/bin/bash
+</span><span class="ln"> 2</span><span class="cp"></span><span class="nv">var</span><span class="o">=</span><span class="s2">&#34;Barry&#34;</span>
+<span class="ln"> 3</span><span class="nb">echo</span> <span class="nv">$var</span>
+<span class="ln"> 4</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">var</span><span class="si">}</span>
+<span class="ln"> 5</span><span class="nb">echo</span> <span class="si">${#</span><span class="nv">var</span><span class="si">}</span>
+<span class="ln"> 6</span><span class="nv">var1</span><span class="o">=</span><span class="s2">&#34;0123456789abcdef&#34;</span>
+<span class="ln"> 7</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">var1</span><span class="p">:</span><span class="nv">0</span><span class="si">}</span>
+<span class="ln"> 8</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">var1</span><span class="p">:</span><span class="nv">0</span><span class="p">-5</span><span class="si">}</span>
+<span class="ln"> 9</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">var1</span><span class="p">:</span><span class="nv">2</span><span class="p">:</span><span class="nv">5</span><span class="si">}</span>
+<span class="ln">10</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">var1</span><span class="p">:</span><span class="nv">5</span><span class="k">:-</span><span class="nv">2</span><span class="si">}</span>
+<span class="ln">11</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">var1</span><span class="p">:</span><span class="nv">0</span><span class="p">-3</span><span class="k">:-</span><span class="nv">1</span><span class="si">}</span>
+<span class="ln">12</span><span class="nb">echo</span> <span class="s2">&#34;================&#34;</span>
+<span class="ln">13</span><span class="nv">var6</span><span class="o">=</span><span class="s2">&#34;http://127.0.0.1/index.php&#34;</span>
+<span class="ln">14</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">var6</span><span class="p">#*/</span><span class="si">}</span>
+<span class="ln">15</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">var6</span><span class="p">##*/</span><span class="si">}</span>
+<span class="ln">16</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">var6</span><span class="p">%/*</span><span class="si">}</span>
+<span class="ln">17</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">var6</span><span class="p">%%/*</span><span class="si">}</span>
+<span class="ln">18</span><span class="nb">echo</span> <span class="s2">&#34;================&#34;</span>
+<span class="ln">19</span><span class="nb">echo</span> <span class="k">$(</span>date<span class="k">)</span>
+<span class="ln">20</span><span class="nb">echo</span> <span class="k">$((</span><span class="m">500</span><span class="o">+</span><span class="m">5</span><span class="o">*</span><span class="m">4</span><span class="k">))</span>
+<span class="ln">21</span><span class="nb">echo</span> <span class="s2">&#34;================&#34;</span>
+<span class="ln">22</span><span class="nv">var7</span><span class="o">=</span><span class="s2">&#34;08880&#34;</span>
+<span class="ln">23</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">var7</span><span class="p">/0/Barry</span><span class="si">}</span>
+<span class="ln">24</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">var7</span><span class="p">//0/Barry</span><span class="si">}</span>
+<span class="ln">25</span><span class="nb">echo</span> <span class="s2">&#34;================&#34;</span>
+<span class="ln">26</span><span class="nv">newstring</span><span class="o">=</span><span class="s2">&#34;new&#34;</span>
+<span class="ln">27</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">var2</span><span class="k">:-</span><span class="nv">newstring</span><span class="si">}</span>
+<span class="ln">28</span><span class="nb">echo</span> <span class="nv">$var2</span>
+<span class="ln">29</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">var</span><span class="k">:-</span><span class="nv">newstring</span><span class="si">}</span>
+<span class="ln">30</span><span class="nb">echo</span> <span class="nv">$var</span>
+<span class="ln">31</span><span class="nb">echo</span> <span class="s2">&#34;================&#34;</span>
+<span class="ln">32</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">var3</span><span class="p">:=newstring</span><span class="si">}</span>
+<span class="ln">33</span><span class="nb">echo</span> <span class="nv">$var3</span>
+<span class="ln">34</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">var</span><span class="p">:=newstring</span><span class="si">}</span>
+<span class="ln">35</span><span class="nb">echo</span> <span class="nv">$var</span>
+<span class="ln">36</span><span class="nb">echo</span> <span class="s2">&#34;================&#34;</span>
+<span class="ln">37</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">var4</span><span class="p">:+newstring</span><span class="si">}</span>
+<span class="ln">38</span><span class="nb">echo</span> <span class="nv">$var4</span>
+<span class="ln">39</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">var</span><span class="p">:+newstring</span><span class="si">}</span>
+<span class="ln">40</span><span class="nb">echo</span> <span class="nv">$var</span>
+<span class="ln">41</span><span class="nb">echo</span> <span class="s2">&#34;================&#34;</span>
+<span class="ln">42</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">var</span><span class="p">:?newstring</span><span class="si">}</span>
+<span class="ln">43</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">var5</span><span class="p">:?newstring</span><span class="si">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="46循环运算">4.6循环运算</h2>
+<p>Shell 中，主要的循环语句有三种：while 循环，until 循环和for 循环。除了上述的循环关键字，还有三个关键字。</p>
+<ul>
+<li>break：跳出整个循环</li>
+<li>exit：跳出脚本</li>
+<li>continue：跳出本次循环，接着执行下一次循环</li>
+</ul>
+<h3 id="461-while循环">4.6.1 while循环</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_9.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_9.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>while循环的逻辑</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="k">while</span> <span class="o">[</span> condition <span class="o">]</span>
+<span class="ln">2</span><span class="k">do</span>
+<span class="ln">3</span>    dosomething
+<span class="ln">4</span><span class="k">done</span>
+</code></pre></div><p>或者是下面的写法</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="k">while</span> <span class="o">[</span> condition <span class="o">]</span><span class="p">;</span> <span class="k">do</span>
+<span class="ln">2</span>    dosomething
+<span class="ln">3</span><span class="k">done</span>
+</code></pre></div><p>举例说明</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span><span class="cp">#!/bin/bash
+</span><span class="ln"> 2</span><span class="cp"></span>
+<span class="ln"> 3</span><span class="k">while</span> <span class="o">[</span> -z <span class="nv">$response</span> <span class="o">]</span> <span class="o">||</span> <span class="o">[</span> <span class="nv">$response</span> !<span class="o">=</span> <span class="s1">&#39;yes&#39;</span> <span class="o">]</span>
+<span class="ln"> 4</span><span class="k">do</span>
+<span class="ln"> 5</span>    <span class="nb">read</span> -p <span class="s1">&#39;Say yes : &#39;</span> response
+<span class="ln"> 6</span>    <span class="k">if</span> <span class="o">[[</span> <span class="nv">$response</span> <span class="o">==</span> <span class="m">0</span> <span class="o">]]</span><span class="p">;</span> <span class="k">then</span>
+<span class="ln"> 7</span>        <span class="nb">echo</span> <span class="s2">&#34;shell exit&#34;</span>
+<span class="ln"> 8</span>        <span class="c1"># 退出此shell脚本</span>
+<span class="ln"> 9</span>        <span class="nb">exit</span> <span class="m">0</span>
+<span class="ln">10</span>    <span class="k">fi</span>
+<span class="ln">11</span><span class="k">done</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="nv">n</span><span class="o">=</span><span class="m">0</span>
+<span class="ln">14</span><span class="c1"># 创造一个死循环</span>
+<span class="ln">15</span><span class="c1"># 这样的写法也可以while :</span>
+<span class="ln">16</span><span class="k">while</span> <span class="o">[</span> <span class="m">1</span> <span class="o">]</span>
+<span class="ln">17</span><span class="k">do</span>
+<span class="ln">18</span>  sleep <span class="m">1</span>
+<span class="ln">19</span>  <span class="c1"># 算法加法，不加双括号被认为是字符串</span>
+<span class="ln">20</span>  <span class="o">((</span>n++<span class="o">))</span>
+<span class="ln">21</span>  <span class="nb">echo</span> loop <span class="nv">$n</span> <span class="nb">time</span>
+<span class="ln">22</span>  <span class="k">if</span> <span class="o">[[</span> <span class="nv">$n</span> <span class="o">==</span> <span class="m">5</span> <span class="o">]]</span><span class="p">;</span> <span class="k">then</span>
+<span class="ln">23</span>    <span class="nb">echo</span> <span class="s2">&#34;this time need break&#34;</span>
+<span class="ln">24</span>    <span class="c1"># 跳出循环</span>
+<span class="ln">25</span>    <span class="nb">break</span>
+<span class="ln">26</span>  <span class="k">elif</span> <span class="o">[[</span> <span class="nv">$n</span> <span class="o">==</span> <span class="m">3</span> <span class="o">]]</span><span class="p">;</span> <span class="k">then</span>
+<span class="ln">27</span>    <span class="nb">echo</span> <span class="s2">&#34;need to continue&#34;</span>
+<span class="ln">28</span>    <span class="c1"># 直接跳到变量指向的下一个循环列表</span>
+<span class="ln">29</span>    <span class="k">continue</span>
+<span class="ln">30</span>  <span class="k">else</span>
+<span class="ln">31</span>    <span class="nb">echo</span> <span class="s2">&#34;just go&#34;</span>
+<span class="ln">32</span>  <span class="k">fi</span>
+<span class="ln">33</span><span class="k">done</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_11.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_11.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="462-until循环">4.6.2 until循环</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_8.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>它也可以实现循环，只不过逻辑和 while 循环正好相反。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span><span class="cp">#!/bin/bash
+</span><span class="ln"> 2</span><span class="cp"></span><span class="c1"># 推荐的一种比较相等的方式[[ &#34;$response&#34;x == &#34;yes&#34;x ]]</span>
+<span class="ln"> 3</span><span class="k">until</span> <span class="o">[[</span> <span class="s2">&#34;</span><span class="nv">$response</span><span class="s2">&#34;</span><span class="nv">x</span> <span class="o">==</span> <span class="s2">&#34;yes&#34;</span>x <span class="o">]]</span>
+<span class="ln"> 4</span><span class="k">do</span>
+<span class="ln"> 5</span>    <span class="nb">read</span> -p <span class="s1">&#39;Say yes : &#39;</span> response
+<span class="ln"> 6</span>    <span class="k">if</span> <span class="o">[[</span> <span class="nv">$response</span> <span class="o">=</span> <span class="m">0</span> <span class="o">]]</span><span class="p">;</span> <span class="k">then</span>
+<span class="ln"> 7</span>        <span class="nb">echo</span> <span class="s2">&#34;shell exit&#34;</span>
+<span class="ln"> 8</span>        <span class="c1"># 退出此shell脚本</span>
+<span class="ln"> 9</span>        <span class="nb">exit</span> <span class="m">0</span>
+<span class="ln">10</span>    <span class="k">fi</span>
+<span class="ln">11</span><span class="k">done</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="nv">n</span><span class="o">=</span><span class="m">0</span>
+<span class="ln">14</span><span class="c1"># 创造一个死循环until [ ]</span>
+<span class="ln">15</span><span class="k">until</span> <span class="o">[</span> <span class="o">]</span>
+<span class="ln">16</span><span class="k">do</span>
+<span class="ln">17</span>  sleep <span class="m">1</span>
+<span class="ln">18</span>  <span class="c1"># 算法加法，不加双括号被认为是字符串</span>
+<span class="ln">19</span>  <span class="o">((</span>n++<span class="o">))</span>
+<span class="ln">20</span>  <span class="nb">echo</span> loop <span class="nv">$n</span> <span class="nb">time</span>
+<span class="ln">21</span>  <span class="k">if</span> <span class="o">[[</span> <span class="nv">$n</span> <span class="o">==</span> <span class="m">5</span> <span class="o">]]</span><span class="p">;</span> <span class="k">then</span>
+<span class="ln">22</span>    <span class="nb">echo</span> <span class="s2">&#34;this time need break&#34;</span>
+<span class="ln">23</span>    <span class="c1"># 跳出循环</span>
+<span class="ln">24</span>    <span class="nb">break</span>
+<span class="ln">25</span>  <span class="k">elif</span> <span class="o">[[</span> <span class="nv">$n</span> <span class="o">==</span> <span class="m">3</span> <span class="o">]]</span><span class="p">;</span> <span class="k">then</span>
+<span class="ln">26</span>    <span class="nb">echo</span> <span class="s2">&#34;need to continue&#34;</span>
+<span class="ln">27</span>    <span class="c1"># 直接跳到变量指向的下一个循环列表</span>
+<span class="ln">28</span>    <span class="k">continue</span>
+<span class="ln">29</span>  <span class="k">else</span>
+<span class="ln">30</span>    <span class="nb">echo</span> <span class="s2">&#34;just go&#34;</span>
+<span class="ln">31</span>  <span class="k">fi</span>
+<span class="ln">32</span><span class="k">done</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_12.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_12.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="463-for循环">4.6.3 for循环</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_10.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_10.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>for 循环可以遍历一个“取值列表”，基本的逻辑如下</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="k">for</span> var in <span class="s1">&#39;var1&#39;</span> <span class="s1">&#39;var2&#39;</span> <span class="s1">&#39;var3&#39;</span> ... <span class="s1">&#39;varn&#39;</span>
+<span class="ln">2</span><span class="k">do</span>
+<span class="ln">3</span>    dosomething
+<span class="ln">4</span><span class="k">done</span>
+</code></pre></div><blockquote>
+<p>Shell 中的 for 循环和习惯的 for 循环方式略有不同。shell中的for循环更倾向于，遍历列表的形式，当然也是兼容我们的习惯写法。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="cp">#!/bin/bash
+</span><span class="ln">2</span><span class="cp"></span><span class="c1"># $1 为shell脚本传入的第一个参数</span>
+<span class="ln">3</span><span class="nv">j</span><span class="o">=</span><span class="nv">$1</span>
+<span class="ln">4</span><span class="k">for</span> <span class="o">((</span><span class="nv">i</span><span class="o">=</span>1<span class="p">;</span> i&lt;<span class="o">=</span>j<span class="p">;</span> i++<span class="o">))</span>
+<span class="ln">5</span><span class="k">do</span>
+<span class="ln">6</span>    touch file<span class="nv">$i</span> <span class="o">&amp;&amp;</span> <span class="nb">echo</span> file <span class="nv">$i</span> is ok
+<span class="ln">7</span><span class="k">done</span>
+</code></pre></div></blockquote>
+<p>这里遍历的列表可以是自定义，也可以是变量</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span><span class="cp">#!/bin/bash
+</span><span class="ln"> 2</span><span class="cp"></span>
+<span class="ln"> 3</span><span class="c1"># 列表可以是自定义</span>
+<span class="ln"> 4</span><span class="k">for</span> animal in <span class="s1">&#39;dog&#39;</span> <span class="s1">&#39;cat&#39;</span> <span class="s1">&#39;pig&#39;</span>
+<span class="ln"> 5</span><span class="k">do</span>
+<span class="ln"> 6</span>    <span class="nb">echo</span> <span class="s2">&#34;Animal being analyzed : </span><span class="nv">$animal</span><span class="s2">&#34;</span>
+<span class="ln"> 7</span><span class="k">done</span>
+<span class="ln"> 8</span><span class="nb">echo</span> <span class="s2">&#34;===================&#34;</span>
+<span class="ln"> 9</span><span class="c1"># 列表可以是变量</span>
+<span class="ln">10</span><span class="nv">listfile</span><span class="o">=</span><span class="sb">`</span>ls<span class="sb">`</span>
+<span class="ln">11</span><span class="k">for</span> file in <span class="nv">$listfile</span>
+<span class="ln">12</span><span class="k">do</span>
+<span class="ln">13</span>    <span class="nb">echo</span> <span class="s2">&#34;File found : </span><span class="nv">$file</span><span class="s2">&#34;</span>
+<span class="ln">14</span><span class="k">done</span>
+<span class="ln">15</span><span class="nb">echo</span> <span class="s2">&#34;===================&#34;</span>
+<span class="ln">16</span>
+<span class="ln">17</span><span class="c1"># 列表可以是变量，可以直接省略直接通过反引号的方式写入</span>
+<span class="ln">18</span><span class="k">for</span> file1 in <span class="sb">`</span>ls<span class="sb">`</span>
+<span class="ln">19</span><span class="k">do</span>
+<span class="ln">20</span>    <span class="nb">echo</span> <span class="s2">&#34;File found : </span><span class="nv">$file1</span><span class="s2">&#34;</span>
+<span class="ln">21</span><span class="k">done</span>
+<span class="ln">22</span><span class="nb">echo</span> <span class="s2">&#34;===================&#34;</span>
+<span class="ln">23</span>
+<span class="ln">24</span><span class="c1"># 列表可以是文件的集合</span>
+<span class="ln">25</span><span class="k">for</span> i in /boot/*
+<span class="ln">26</span><span class="k">do</span>
+<span class="ln">27</span>    <span class="nb">echo</span> <span class="s2">&#34;/boot/ dir list : </span><span class="nv">$i</span><span class="s2">&#34;</span>
+<span class="ln">28</span><span class="k">done</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_13.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_13.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>通常我们会用到一些数字，通过seq来获取循环列表</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span><span class="cp">#!/bin/bash
+</span><span class="ln"> 2</span><span class="cp"></span><span class="c1"># 如果是从1开始，可以简写成for i in `seq n`</span>
+<span class="ln"> 3</span><span class="k">for</span> i in <span class="sb">`</span>seq <span class="m">1</span> 5<span class="sb">`</span>
+<span class="ln"> 4</span><span class="k">do</span>
+<span class="ln"> 5</span>    <span class="nb">echo</span> <span class="nv">$i</span>
+<span class="ln"> 6</span><span class="k">done</span>
+<span class="ln"> 7</span><span class="nb">echo</span> <span class="s2">&#34;===================&#34;</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span><span class="k">for</span> i in <span class="sb">`</span>seq 8<span class="sb">`</span>
+<span class="ln">10</span><span class="k">do</span>
+<span class="ln">11</span>    <span class="nb">echo</span> <span class="nv">$i</span>
+<span class="ln">12</span><span class="k">done</span>
+<span class="ln">13</span><span class="nb">echo</span> <span class="s2">&#34;===================&#34;</span>
+<span class="ln">14</span>
+<span class="ln">15</span><span class="c1"># 从1开始，间隔为2</span>
+<span class="ln">16</span><span class="k">for</span> i in <span class="sb">`</span>seq <span class="m">1</span> <span class="m">2</span> 10<span class="sb">`</span>
+<span class="ln">17</span><span class="k">do</span>
+<span class="ln">18</span>    <span class="nb">echo</span> <span class="nv">$i</span>
+<span class="ln">19</span><span class="k">done</span>
+<span class="ln">20</span><span class="nb">echo</span> <span class="s2">&#34;===================&#34;</span>
+<span class="ln">21</span>
+<span class="ln">22</span><span class="c1"># 从5开始，间隔为-1，倒着数数</span>
+<span class="ln">23</span><span class="k">for</span> i in <span class="k">$(</span>seq <span class="m">5</span> -1 1<span class="k">)</span>
+<span class="ln">24</span><span class="k">do</span>
+<span class="ln">25</span>    <span class="nb">echo</span>  <span class="s2">&#34;</span><span class="nv">$i</span><span class="s2">&#34;</span><span class="p">;</span>sleep <span class="m">1</span>
+<span class="ln">26</span><span class="k">done</span>
+<span class="ln">27</span><span class="nb">echo</span> <span class="s2">&#34;===================&#34;</span>
+<span class="ln">28</span>
+<span class="ln">29</span><span class="c1"># 从0开始到10的集合</span>
+<span class="ln">30</span><span class="k">for</span> i in <span class="o">{</span>0..10<span class="o">}</span><span class="p">;</span> <span class="k">do</span>
+<span class="ln">31</span>    <span class="nb">echo</span> <span class="nv">$i</span>
+<span class="ln">32</span><span class="k">done</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_14.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_14.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>或者通过外部传入的参数当做循环的列表</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="cp">#!/bin/bash
+</span><span class="ln">2</span><span class="cp"></span><span class="nb">echo</span> <span class="s2">&#34;there are </span><span class="nv">$#</span><span class="s2"> arguments in this scripts&#34;</span>
+<span class="ln">3</span><span class="c1"># 通过变量N用来计数</span>
+<span class="ln">4</span><span class="nv">N</span><span class="o">=</span><span class="m">1</span>    
+<span class="ln">5</span><span class="k">for</span> i in <span class="nv">$@</span>
+<span class="ln">6</span><span class="k">do</span>
+<span class="ln">7</span>    <span class="nb">echo</span> <span class="s2">&#34;\$</span><span class="nv">$N</span><span class="s2"> is </span><span class="nv">$i</span><span class="s2">&#34;</span>
+<span class="ln">8</span>    <span class="o">((</span>N++<span class="o">))</span>
+<span class="ln">9</span><span class="k">done</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_15.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_15.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="47函数运算">4.7函数运算</h2>
+<p>我们可以把函数比作一个香肠制造机，在输入那一头你把猪装进去，输出那一头就出来香肠了。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_16.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_16.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>函数的定义</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>funname <span class="o">()</span> <span class="o">{</span>
+<span class="ln">2</span>    action
+<span class="ln">3</span>    <span class="o">[</span><span class="k">return</span> int<span class="o">]</span>
+<span class="ln">4</span><span class="o">}</span>
+</code></pre></div><p>或者是</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="k">function</span> funname <span class="o">{</span>
+<span class="ln">2</span>    action
+<span class="ln">3</span>    <span class="o">[</span><span class="k">return</span> int<span class="o">]</span>
+<span class="ln">4</span><span class="o">}</span>
+</code></pre></div><blockquote>
+<p>注意事项：</p>
+<ol>
+<li>如果选择第一种，函数名后面跟着的圆括号里不加任何参数。</li>
+<li>可以带function fun() 定义，也可以直接fun() 定义,不带任何参数。</li>
+<li>参数返回，可以显示加：return 返回，如果不加，将以最后一条命令运行结果，作为返回值。 return后跟数值n**(0-255)**</li>
+<li>函数的完整定义必须置于函数的调用之前。</li>
+</ol>
+</blockquote>
+<h3 id="471传递参数">4.7.1传递参数</h3>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span><span class="cp">#!/bin/bash
+</span><span class="ln"> 2</span><span class="cp"></span>print_func_1 <span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 3</span>    <span class="nb">echo</span> <span class="s2">&#34;Hello, I am a function&#34;</span>
+<span class="ln"> 4</span><span class="o">}</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span>print_func_2 <span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 7</span>    <span class="nb">echo</span> Hello <span class="nv">$1</span>
+<span class="ln"> 8</span><span class="o">}</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span>print_func_1
+<span class="ln">11</span><span class="c1"># print_func_1是无参，所以加参数也是没有意义的</span>
+<span class="ln">12</span>print_func_1 Matthew
+<span class="ln">13</span>print_func_2 Matthew
+<span class="ln">14</span>print_func_2 Mark
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_17.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_17.png" >
+  
+    </a>
+  
+  
+</div>
+
+<blockquote>
+<p>它传递参数的方式其实很像给 Shell 脚本传递命令行参数。我们把参数直接置于函数名字后面，然后就像我们之前 Shell 脚本的参数那样：<code>$1</code>，<code>$2</code>，<code>$3</code>等等。</p>
+</blockquote>
+<h3 id="472返回值">4.7.2返回值</h3>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span><span class="cp">#!/bin/bash
+</span><span class="ln"> 2</span><span class="cp"></span><span class="c1"># 显示返回</span>
+<span class="ln"> 3</span>print_func_3 <span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 4</span>    <span class="nb">echo</span> Hello <span class="nv">$1</span>
+<span class="ln"> 5</span>    <span class="k">return</span> <span class="m">1</span>
+<span class="ln"> 6</span><span class="o">}</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span><span class="c1"># 显示返回</span>
+<span class="ln"> 9</span>print_func_3_1 <span class="o">()</span> <span class="o">{</span>
+<span class="ln">10</span>    <span class="nb">echo</span> Hello <span class="nv">$1</span>
+<span class="ln">11</span>    <span class="k">return</span> <span class="m">255</span>
+<span class="ln">12</span><span class="o">}</span>
+<span class="ln">13</span>
+<span class="ln">14</span><span class="c1"># 显示返回，这个超过255之后，就会对返回的值取余(N-1)%255</span>
+<span class="ln">15</span>print_func_3_2 <span class="o">()</span> <span class="o">{</span>
+<span class="ln">16</span>    <span class="nb">echo</span> Hello <span class="nv">$1</span>
+<span class="ln">17</span>    <span class="k">return</span> <span class="m">258</span>
+<span class="ln">18</span><span class="o">}</span>
+<span class="ln">19</span>
+<span class="ln">20</span>
+<span class="ln">21</span><span class="c1">#隐式返回</span>
+<span class="ln">22</span>print_func_4 <span class="o">()</span> <span class="o">{</span>
+<span class="ln">23</span>    cat <span class="nv">$1</span> <span class="p">|</span> wc -l
+<span class="ln">24</span><span class="o">}</span>
+<span class="ln">25</span>
+<span class="ln">26</span>print_func_3 <span class="nv">$1</span>
+<span class="ln">27</span><span class="nb">echo</span> <span class="nv">res</span> <span class="o">=</span> <span class="nv">$?</span>
+<span class="ln">28</span><span class="nb">echo</span> <span class="s2">&#34;================&#34;</span>
+<span class="ln">29</span>
+<span class="ln">30</span>print_func_3_1 <span class="nv">$1</span>
+<span class="ln">31</span><span class="nb">echo</span> <span class="nv">res</span> <span class="o">=</span> <span class="nv">$?</span>
+<span class="ln">32</span><span class="nb">echo</span> <span class="s2">&#34;================&#34;</span>
+<span class="ln">33</span>
+<span class="ln">34</span>print_func_3_2 <span class="nv">$1</span>
+<span class="ln">35</span><span class="nb">echo</span> <span class="nv">res</span> <span class="o">=</span> <span class="nv">$?</span>
+<span class="ln">36</span><span class="nb">echo</span> <span class="s2">&#34;================&#34;</span>
+<span class="ln">37</span>
+<span class="ln">38</span><span class="nv">line_num</span><span class="o">=</span><span class="k">$(</span>print_func_4 <span class="nv">$1</span><span class="k">)</span>
+<span class="ln">39</span><span class="nb">echo</span> The file <span class="nv">$1</span> has <span class="nv">$line_num</span> lines
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_18.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_18.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="473全局变量和局部变量">4.7.3全局变量和局部变量</h3>
+<p>要定义一个局部变量，我们只要在第一次给这个变量赋值时在变量名前加上关键字 local 即可。定义在函数体里面，可不加local关键字。</p>
+<p>在函数中，如果全局变量和局部变量相等，会优先使用局部变量的赋值，也就是说局部变量会被改变。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span><span class="cp">#!/bin/bash
+</span><span class="ln"> 2</span><span class="cp"></span>
+<span class="ln"> 3</span>local_global_func <span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 4</span>    <span class="nb">local</span> <span class="nv">var1</span><span class="o">=</span><span class="s1">&#39;local&#39;</span>
+<span class="ln"> 5</span>    <span class="nb">echo</span> Inside <span class="k">function</span>: var1 is <span class="nv">$var1</span> : var2 is <span class="nv">$var2</span>
+<span class="ln"> 6</span>    <span class="c1"># 这里的 var1 是函数中定义的局部变量</span>
+<span class="ln"> 7</span>    <span class="c1"># 这里的 var2 是函数外定义的全局变量</span>
+<span class="ln"> 8</span>    <span class="nv">var1</span><span class="o">=</span><span class="s1">&#39;local_var1&#39;</span>   
+<span class="ln"> 9</span>    <span class="nv">var2</span><span class="o">=</span><span class="s1">&#39;local_var2&#39;</span>
+<span class="ln">10</span>    <span class="nb">echo</span> <span class="k">function</span> call: var1 is <span class="nv">$var1</span> : var2 is <span class="nv">$var2</span>
+<span class="ln">11</span><span class="o">}</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="nv">var1</span><span class="o">=</span><span class="s1">&#39;global_var1&#39;</span>
+<span class="ln">14</span><span class="nv">var2</span><span class="o">=</span><span class="s1">&#39;global_var2&#39;</span>
+<span class="ln">15</span>
+<span class="ln">16</span><span class="nb">echo</span> Before <span class="k">function</span> call: var1 is <span class="nv">$var1</span> : var2 is <span class="nv">$var2</span>
+<span class="ln">17</span>
+<span class="ln">18</span>local_global_func
+<span class="ln">19</span>
+<span class="ln">20</span><span class="nb">echo</span> After <span class="k">function</span> call: var1 is <span class="nv">$var1</span> : var2 is <span class="nv">$var2</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_19.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_19.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="474-函数重载">4.7.4 函数重载</h3>
+<p>把函数的名字取成与我们通常在<strong>命令行用的命令相同</strong>的名字。函数重载的作用会起到一种包装的作用，比如命令前的前处理和命令后的后处理等等</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="cp">#!/bin/bash
+</span><span class="ln">2</span><span class="cp"></span>ls <span class="o">()</span> <span class="o">{</span>
+<span class="ln">3</span>    <span class="nb">echo</span> <span class="nv">$1</span>
+<span class="ln">4</span>    <span class="nb">command</span> ls -lh
+<span class="ln">5</span><span class="o">}</span>
+<span class="ln">6</span>
+<span class="ln">7</span>ls <span class="nv">$1</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_27.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_27.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="48shell进阶">4.8Shell进阶</h2>
+<p>通过一个简单的统计来对shell进行一个回顾和总结</p>
+<p>首先把需要的素材，放到和脚本同目录的地方，脚本地址<a href="https://github.com/frogoscar/english-dictionary">如下所示</a>。</p>
+<p>下载完成后，开始做一个英语字典做统计，对各个字母出现进行排序。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span><span class="cp">#!/bin/bash
+</span><span class="ln"> 2</span><span class="cp"></span>
+<span class="ln"> 3</span><span class="c1"># Verification of parameter</span>
+<span class="ln"> 4</span><span class="c1"># 确认参数</span>
+<span class="ln"> 5</span><span class="k">if</span> <span class="o">[</span> -z <span class="nv">$1</span> <span class="o">]</span>
+<span class="ln"> 6</span><span class="k">then</span>
+<span class="ln"> 7</span>    <span class="nb">echo</span> <span class="s2">&#34;Please enter the file of dictionary !&#34;</span>
+<span class="ln"> 8</span>    <span class="nb">exit</span> <span class="m">0</span>
+<span class="ln"> 9</span><span class="k">fi</span>
+<span class="ln">10</span>
+<span class="ln">11</span><span class="c1"># Verification of file existence</span>
+<span class="ln">12</span><span class="c1"># 确认文件存在</span>
+<span class="ln">13</span><span class="k">if</span> <span class="o">[</span> ! -e <span class="nv">$1</span> <span class="o">]</span>
+<span class="ln">14</span><span class="k">then</span>
+<span class="ln">15</span>    <span class="nb">echo</span> <span class="s2">&#34;Please make sure that the file of dictionary exists !&#34;</span>
+<span class="ln">16</span>    <span class="nb">exit</span> <span class="m">0</span>
+<span class="ln">17</span><span class="k">fi</span>
+<span class="ln">18</span>
+<span class="ln">19</span><span class="c1"># Definition of function</span>
+<span class="ln">20</span><span class="c1"># 函数定义</span>
+<span class="ln">21</span>count_charactor <span class="o">()</span> <span class="o">{</span>
+<span class="ln">22</span>    <span class="k">for</span> char in <span class="o">{</span>a..z<span class="o">}</span>
+<span class="ln">23</span>    <span class="k">do</span>
+<span class="ln">24</span>        <span class="c1"># 这里的加o代表一个单词可能出现多个同一字母，一个字符匹配到一个算一个，匹配到多个算多个</span>
+<span class="ln">25</span>        <span class="c1"># tr含义是字符串替换，前面的a-z变为A-Z，代表的是小写转换为大写</span>
+<span class="ln">26</span>        <span class="nb">echo</span> <span class="s2">&#34;</span><span class="nv">$char</span><span class="s2"> - `grep -io &#34;</span><span class="nv">$char</span><span class="s2">&#34; </span><span class="nv">$1</span><span class="s2"> | wc -l`&#34;</span> <span class="p">|</span> tr /a-z/ /A-Z/ &gt;&gt; tmp.txt
+<span class="ln">27</span>    <span class="k">done</span>
+<span class="ln">28</span>    <span class="c1"># sort是排序，r为从大到小，n为数字排序，k指定根据哪几列进行排序，这里为第2列，t为指定分割符，这里是-</span>
+<span class="ln">29</span>    sort -rn -k <span class="m">2</span> -t - tmp.txt
+<span class="ln">30</span>    rm tmp.txt
+<span class="ln">31</span><span class="o">}</span>
+<span class="ln">32</span>
+<span class="ln">33</span><span class="c1"># Use of function</span>
+<span class="ln">34</span><span class="c1"># 函数使用</span>
+<span class="ln">35</span>count_charactor <span class="nv">$1</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/linux3_20.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/linux3_20.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="总结">总结</h1>
+<p>总的来说，本文主要是介绍了关于文本编辑器Nano和Vim，并且Vim有三个模式，各个模式可以互相切换。通过Vim可以去自己写shell的脚本，通过基本的概念，最后通过一个例子对条件，循环，函数等进行一个回顾和总结。</p>
+<h1 id="参考">参考</h1>
+<p><a href="https://blog.csdn.net/zhan570556752/article/details/80399154">[1] 一生只画眉, Shell if 条件判断, 2018.</a></p>
+<p><a href="https://www.cnblogs.com/aaron-agu/p/5700650.html">[2] aaron_agu, shell if [[ ]]和[ ]区别 || &amp;&amp;, 2016.</a></p>
+<p><a href="https://blog.csdn.net/dreamtdp/article/details/8048720">[3] dreamtdp, Linux Shell编程case语句, 2012.</a></p>
+<p><a href="https://www.cnblogs.com/alex-13/p/4295012.html">[4] 也许明天, shell变量的替换, 2015.</a></p>
+<p><a href="https://blog.csdn.net/h106140873/article/details/78383467">[5] 运维自动化&amp;云计算, shell脚本报错：&quot;: =: unary operator expected&quot;, 2017.</a></p>
+<p><a href="https://blog.csdn.net/qq_18312025/article/details/78278989">[6] 斯言甚善, shell中的for循环用法详解, 2017.</a></p>
+<p><a href="https://blog.csdn.net/laobai1015/article/details/91455406">[7] 小白的进阶, shell脚本去重的几种方法, 2019.</a></p>
+<p><a href="https://www.cnblogs.com/faberbeta/p/linux-shell003.html">[8] 嘉年华, Linux shell tr 命令详解, 2019.</a></p>
+<p><a href="https://www.cnblogs.com/youyoui/p/10680329.html">[9] 悠悠i, Linux环境变量配置全攻略, 2019.</a></p>
+<p><a href="https://blog.csdn.net/ee230/article/details/48316317?_t_t_t=0.856576693346367">[10] ee230, shell 二维数组, 2015.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/linux/">linux</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%89%8B%E5%86%8C/">手册</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E7%B3%BB%E7%BB%9F/">系统</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/vim/">Vim</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/shell%E8%84%9A%E6%9C%AC/">Shell脚本</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/04/linux2-%E6%9D%83%E9%99%90%E5%92%8C%E7%AE%A1%E7%90%86/" data-tooltip="linux2 权限和管理">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/03/hidl%E4%BB%8B%E7%BB%8D%E5%92%8C%E4%BD%BF%E7%94%A8/" data-tooltip="HIDL介绍和使用">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2022 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/04/linux2-%E6%9D%83%E9%99%90%E5%92%8C%E7%AE%A1%E7%90%86/" data-tooltip="linux2 权限和管理">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/03/hidl%E4%BB%8B%E7%BB%8D%E5%92%8C%E4%BD%BF%E7%94%A8/" data-tooltip="HIDL介绍和使用">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2022%2F04%2Flinux3-vim%25E5%2592%258Cshell%25E8%2584%259A%25E6%259C%25AC%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2022%2F04%2Flinux3-vim%25E5%2592%258Cshell%25E8%2584%259A%25E6%259C%25AC%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2022%2F04%2Flinux3-vim%25E5%2592%258Cshell%25E8%2584%259A%25E6%259C%25AC%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2022\/04\/linux3-vim%E5%92%8Cshell%E8%84%9A%E6%9C%AC\/';
+          
+            this.page.identifier = '\/2022\/04\/linux3-vim%E5%92%8Cshell%E8%84%9A%E6%9C%AC\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
