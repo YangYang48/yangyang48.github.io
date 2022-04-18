@@ -278,7 +278,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">5700 Words|Read in about 27 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">6100 Words|Read in about 29 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -1635,7 +1635,7 @@
 
 </blockquote>
 <p>关于如何获取ServiceManager和Service这个后续会在Binder篇章中详细解析，这个先按下不表。</p>
-<p>由前面的原理可知， 先要查询sm-&gt;checkService(“activity”)，这里得到的是ActivityManagerService，那么也就意味着上述命令等价于调用ActivityManagerService.dump()。 同理其他的命令也是类似的方式。</p>
+<p>由前面的原理可知， 先要查询sm-&gt;checkService(“media.camera”)，这里得到的是CameraService，那么也就意味着上述命令等价于调用CameraService.dump()。 同理其他的命令也是类似的方式。</p>
 <h3 id="232writedump">2.3.2writeDump</h3>
 <p>这个函数比较复杂，涉及到linux的poll机制，作用统计dump时间，当超过指定的时间，去中断这次操作。</p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/cmds/dumpsys/dumpsys.cpp#Dumpsys::writeDump
@@ -2180,39 +2180,106 @@
 <span class="ln">2</span>  No camera traces collected.
 </code></pre></div><p>通常来说，这里没有systrace，也没有出现异常，所以不会出现trace，是正常现象。</p>
 <h2 id="32从dumpsys到cameraservice">3.2从dumpsys到CameraService</h2>
-<p>这里主要分成几步，从mediaServer启动，CameraService启动，CameraService添加到system_server，CameraService的使用。其实说白了，也是一种Binder通信的实例，关于CameraService的AIDL通信，可以点击<a href="https://yangyang48.github.io/2022/03/aidl3-java%E5%92%8Cc-%E9%80%9A%E4%BF%A1/">这里</a>。</p>
-<h3 id="321mediaserver启动">3.2.1mediaServer启动</h3>
-<p>media.camera是一个纯C/C++服务，所以它是通过写到init.rc脚本文件、由脚本解析进程启动的</p>
-<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln"> 1</span>//mediaserver.rc
-<span class="ln"> 2</span>on property:init.svc.media=*
-<span class="ln"> 3</span>    setprop init.svc.mediadrm ${init.svc.media}
+<p>这里主要分成几步，从CameraSever启动，CameraService添加到system_server，启动CameraService服务和CameraService的使用。其实说白了，也是一种Binder通信的实例，关于CameraService的AIDL通信，可以点击<a href="https://yangyang48.github.io/2022/03/aidl3-java%E5%92%8Cc-%E9%80%9A%E4%BF%A1/">这里</a>。</p>
+<h3 id="321camerasever启动">3.2.1CameraSever启动</h3>
+<p>关于CameraService启动流程，这里展开描述一下。</p>
+<p>首先分成几个过程，涉及到android系统的开机流程，这里只描述CameraService部分。</p>
+<h4 id="3211init进程会初始化属性服务并且解析rc文件">3.2.1.1init进程会初始化属性服务，并且解析.rc文件</h4>
+<p>开机之后，Linux内核启动1号进程，对应的源文件是system/core/init/main.cpp。而这个文件源文件，会调用到system/core/init/init.cpp。这个init.cpp非常关键，会去解析<strong>init.rc</strong>配置文件和其他文件。我们这边只看解析部分。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/init/init.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">LoadBootScripts</span><span class="p">(</span><span class="n">ActionManager</span><span class="o">&amp;</span> <span class="n">action_manager</span><span class="p">,</span> <span class="n">ServiceList</span><span class="o">&amp;</span> <span class="n">service_list</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="n">Parser</span> <span class="n">parser</span> <span class="o">=</span> <span class="n">CreateParser</span><span class="p">(</span><span class="n">action_manager</span><span class="p">,</span> <span class="n">service_list</span><span class="p">);</span>
 <span class="ln"> 4</span>
-<span class="ln"> 5</span>service media /system/bin/mediaserver
-<span class="ln"> 6</span>    class main
-<span class="ln"> 7</span>    user media
-<span class="ln"> 8</span>    group audio camera inet net_bt net_bt_admin net_bw_acct drmrpc mediadrm
-<span class="ln"> 9</span>    ioprio rt 4
-<span class="ln">10</span>    task_profiles ProcessCapacityHigh HighPerformance
-</code></pre></div><p>随着android的init.rc的启动，会将mediaserver进程启动，这个进程位于/system/bin/mediaserver，进程源码在main_mediaserver.cpp中。二进制mediaserver文件对应的实现文件为main_mediaserver.cpp，它里面启动了很多media相关的服务，</p>
-<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/av/media/mediaserver/main_mediaserver.cpp
+<span class="ln"> 5</span>    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">bootscript</span> <span class="o">=</span> <span class="n">GetProperty</span><span class="p">(</span><span class="s">&#34;ro.boot.init_rc&#34;</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">);</span>
+<span class="ln"> 6</span>    <span class="k">if</span> <span class="p">(</span><span class="n">bootscript</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln"> 7</span>        <span class="n">parser</span><span class="p">.</span><span class="n">ParseConfig</span><span class="p">(</span><span class="s">&#34;/system/etc/init/hw/init.rc&#34;</span><span class="p">);</span>
+<span class="ln"> 8</span>        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">parser</span><span class="p">.</span><span class="n">ParseConfig</span><span class="p">(</span><span class="s">&#34;/system/etc/init&#34;</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln"> 9</span>            <span class="n">late_import_paths</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">(</span><span class="s">&#34;/system/etc/init&#34;</span><span class="p">);</span>
+<span class="ln">10</span>        <span class="p">}</span>
+<span class="ln">11</span>        <span class="n">parser</span><span class="p">.</span><span class="n">ParseConfig</span><span class="p">(</span><span class="s">&#34;/system_ext/etc/init&#34;</span><span class="p">);</span>
+<span class="ln">12</span>        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">parser</span><span class="p">.</span><span class="n">ParseConfig</span><span class="p">(</span><span class="s">&#34;/product/etc/init&#34;</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">13</span>            <span class="n">late_import_paths</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">(</span><span class="s">&#34;/product/etc/init&#34;</span><span class="p">);</span>
+<span class="ln">14</span>        <span class="p">}</span>
+<span class="ln">15</span>        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">parser</span><span class="p">.</span><span class="n">ParseConfig</span><span class="p">(</span><span class="s">&#34;/odm/etc/init&#34;</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">16</span>            <span class="n">late_import_paths</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">(</span><span class="s">&#34;/odm/etc/init&#34;</span><span class="p">);</span>
+<span class="ln">17</span>        <span class="p">}</span>
+<span class="ln">18</span>        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">parser</span><span class="p">.</span><span class="n">ParseConfig</span><span class="p">(</span><span class="s">&#34;/vendor/etc/init&#34;</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">19</span>            <span class="n">late_import_paths</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">(</span><span class="s">&#34;/vendor/etc/init&#34;</span><span class="p">);</span>
+<span class="ln">20</span>        <span class="p">}</span>
+<span class="ln">21</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">22</span>        <span class="n">parser</span><span class="p">.</span><span class="n">ParseConfig</span><span class="p">(</span><span class="n">bootscript</span><span class="p">);</span>
+<span class="ln">23</span>    <span class="p">}</span>
+<span class="ln">24</span><span class="p">}</span>
+</code></pre></div><p>可以看到这里有4个目录&quot;/system/etc/init&quot;,&quot;/product/etc/init&quot;,&quot;/odm/etc/init&quot;,&quot;/vendor/etc/init&quot;。等init.rc解析完成后，会来解析4个目录中的rc文件，用来执行相关的动作。</p>
+<h4 id="3212解析cameraserverrc文件并启动cameraserver">3.2.1.2解析cameraserver.rc文件，并启动cameraserver</h4>
+<p>下面的Android.bp可以看到init_rc: [&ldquo;cameraserver.rc&rdquo;]，说明rc文件编译到/system/etc/init中。而上面的开机流程的init.cpp中会去解析这个目录，那么这个cameraserver.rc这个目录就会被解析出来。那么实际上，解析完成之后，就会启动&quot;cameraserver.rc&quot;。</p>
+<div class="highlight"><pre class="chroma"><code class="language-makefile" data-lang="makefile"><span class="ln"> 1</span><span class="c">#frameworks/av/camera/cameraserver/Android.bp
+</span><span class="ln"> 2</span><span class="c"></span><span class="err">cc_binary</span> <span class="err">{</span>
+<span class="ln"> 3</span>    <span class="nf">name</span><span class="o">:</span> &#34;<span class="n">cameraserver</span>&#34;<span class="p">,</span>
+<span class="ln"> 4</span>
+<span class="ln"> 5</span>    srcs: <span class="o">[</span><span class="s2">&#34;main_cameraserver.cpp&#34;</span><span class="o">]</span>,
+<span class="ln"> 6</span>
+<span class="ln"> 7</span>    header_libs: <span class="o">[</span>
+<span class="ln"> 8</span>        <span class="s2">&#34;libmedia_headers&#34;</span>,
+<span class="ln"> 9</span>    <span class="o">]</span>,
+<span class="ln">10</span>
+<span class="ln">11</span>    shared_libs: <span class="o">[</span>
+<span class="ln">12</span>        <span class="s2">&#34;libcameraservice&#34;</span>,
+<span class="ln">13</span>        <span class="s2">&#34;liblog&#34;</span>,
+<span class="ln">14</span>        <span class="s2">&#34;libutils&#34;</span>,
+<span class="ln">15</span>        <span class="s2">&#34;libui&#34;</span>,
+<span class="ln">16</span>        <span class="s2">&#34;libgui&#34;</span>,
+<span class="ln">17</span>        <span class="s2">&#34;libbinder&#34;</span>,
+<span class="ln">18</span>        <span class="s2">&#34;libhidlbase&#34;</span>,
+<span class="ln">19</span>        <span class="s2">&#34;android.hardware.camera.common@1.0&#34;</span>,
+<span class="ln">20</span>        <span class="s2">&#34;android.hardware.camera.provider@2.4&#34;</span>,
+<span class="ln">21</span>        <span class="s2">&#34;android.hardware.camera.provider@2.5&#34;</span>,
+<span class="ln">22</span>        <span class="s2">&#34;android.hardware.camera.provider@2.6&#34;</span>,
+<span class="ln">23</span>        <span class="s2">&#34;android.hardware.camera.device@1.0&#34;</span>,
+<span class="ln">24</span>        <span class="s2">&#34;android.hardware.camera.device@3.2&#34;</span>,
+<span class="ln">25</span>        <span class="s2">&#34;android.hardware.camera.device@3.4&#34;</span>,
+<span class="ln">26</span>    <span class="o">]</span>,
+<span class="ln">27</span>    compile_multilib: <span class="s2">&#34;32&#34;</span>,
+<span class="ln">28</span>    cflags: <span class="o">[</span>
+<span class="ln">29</span>        <span class="s2">&#34;-Wall&#34;</span>,
+<span class="ln">30</span>        <span class="s2">&#34;-Wextra&#34;</span>,
+<span class="ln">31</span>        <span class="s2">&#34;-Werror&#34;</span>,
+<span class="ln">32</span>        <span class="s2">&#34;-Wno-unused-parameter&#34;</span>,
+<span class="ln">33</span>    <span class="o">]</span>,
+<span class="ln">34</span>
+<span class="ln">35</span>    init_rc: <span class="o">[</span><span class="s2">&#34;cameraserver.rc&#34;</span><span class="o">]</span>,
+<span class="ln">36</span>
+<span class="ln">37</span>    vintf_fragments: <span class="o">[</span>
+<span class="ln">38</span>        <span class="s2">&#34;manifest_android.frameworks.cameraservice.service@2.1.xml&#34;</span>,
+<span class="ln">39</span>    <span class="o">]</span>,
+<span class="ln">40</span><span class="err">}</span>
+</code></pre></div><p>可以看到这个rc文件解析之后，被开启cameraserver，这个cameraserver实际上是一个进程，位于/system/bin/cameraserver</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>#frameworks/av/camera/cameraserver/cameraserver.rc 
+<span class="ln">2</span>service cameraserver /system/bin/cameraserver
+<span class="ln">3</span>    class main
+<span class="ln">4</span>     user cameraserver
+<span class="ln">5</span>     group audio camera input drmrpc
+<span class="ln">6</span>     ioprio rt 4
+<span class="ln">7</span>     task_profiles CameraServiceCapacity MaxPerformance
+<span class="ln">8</span>     rlimit rtprio 10 10
+</code></pre></div><h4 id="3213cameraserviceinstantiate">3.2.1.3CameraService::instantiate</h4>
+<p>最终会进入到进程的的main函数中，这个main_cameraserver.cpp中有CameraService::instantiate()，这个是后续添加服务到ServiceManager中。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/av/camera/cameraserver/main_cameraserver.cpp
 </span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span> <span class="n">__unused</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span> <span class="n">__unused</span><span class="p">)</span>
 <span class="ln"> 3</span><span class="p">{</span>
 <span class="ln"> 4</span>    <span class="n">signal</span><span class="p">(</span><span class="n">SIGPIPE</span><span class="p">,</span> <span class="n">SIG_IGN</span><span class="p">);</span>
 <span class="ln"> 5</span>
-<span class="ln"> 6</span>    <span class="n">sp</span><span class="o">&lt;</span><span class="n">ProcessState</span><span class="o">&gt;</span> <span class="n">proc</span><span class="p">(</span><span class="n">ProcessState</span><span class="o">::</span><span class="n">self</span><span class="p">());</span>
-<span class="ln"> 7</span>    <span class="n">sp</span><span class="o">&lt;</span><span class="n">IServiceManager</span><span class="o">&gt;</span> <span class="n">sm</span><span class="p">(</span><span class="n">defaultServiceManager</span><span class="p">());</span>
-<span class="ln"> 8</span>    <span class="n">ALOGI</span><span class="p">(</span><span class="s">&#34;ServiceManager: %p&#34;</span><span class="p">,</span> <span class="n">sm</span><span class="p">.</span><span class="n">get</span><span class="p">());</span>
-<span class="ln"> 9</span>    <span class="n">AIcu_initializeIcuOrDie</span><span class="p">();</span>
-<span class="ln">10</span>    <span class="n">MediaPlayerService</span><span class="o">::</span><span class="n">instantiate</span><span class="p">();</span>
-<span class="ln">11</span>    <span class="n">ResourceManagerService</span><span class="o">::</span><span class="n">instantiate</span><span class="p">();</span>
-<span class="ln">12</span>    <span class="n">registerExtensions</span><span class="p">();</span>
-<span class="ln">13</span>    <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">configureRpcThreadpool</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="nb">false</span><span class="p">);</span>
-<span class="ln">14</span>    <span class="n">ProcessState</span><span class="o">::</span><span class="n">self</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">startThreadPool</span><span class="p">();</span>
-<span class="ln">15</span>    <span class="n">IPCThreadState</span><span class="o">::</span><span class="n">self</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">joinThreadPool</span><span class="p">();</span>
-<span class="ln">16</span>    <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">joinRpcThreadpool</span><span class="p">();</span>
-<span class="ln">17</span><span class="p">}</span>
-</code></pre></div><h3 id="322cameraservice启动">3.2.2CameraService启动</h3>
-<p>来看CameraService类的定义(截取部分)：</p>
+<span class="ln"> 6</span>    <span class="n">hardware</span><span class="o">::</span><span class="n">configureRpcThreadpool</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="cm">/*willjoin*/</span> <span class="nb">false</span><span class="p">);</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span>    <span class="n">sp</span><span class="o">&lt;</span><span class="n">ProcessState</span><span class="o">&gt;</span> <span class="n">proc</span><span class="p">(</span><span class="n">ProcessState</span><span class="o">::</span><span class="n">self</span><span class="p">());</span>
+<span class="ln"> 9</span>    <span class="n">sp</span><span class="o">&lt;</span><span class="n">IServiceManager</span><span class="o">&gt;</span> <span class="n">sm</span> <span class="o">=</span> <span class="n">defaultServiceManager</span><span class="p">();</span>
+<span class="ln">10</span>    <span class="n">ALOGI</span><span class="p">(</span><span class="s">&#34;ServiceManager: %p&#34;</span><span class="p">,</span> <span class="n">sm</span><span class="p">.</span><span class="n">get</span><span class="p">());</span>
+<span class="ln">11</span>    <span class="n">CameraService</span><span class="o">::</span><span class="n">instantiate</span><span class="p">();</span>
+<span class="ln">12</span>    <span class="n">ALOGI</span><span class="p">(</span><span class="s">&#34;ServiceManager: %p done instantiate&#34;</span><span class="p">,</span> <span class="n">sm</span><span class="p">.</span><span class="n">get</span><span class="p">());</span>
+<span class="ln">13</span>    <span class="n">ProcessState</span><span class="o">::</span><span class="n">self</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">startThreadPool</span><span class="p">();</span>
+<span class="ln">14</span>    <span class="n">IPCThreadState</span><span class="o">::</span><span class="n">self</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">joinThreadPool</span><span class="p">();</span>
+<span class="ln">15</span><span class="p">}</span>
+</code></pre></div><p>来看CameraService类的定义(截取部分)：</p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/av/services/camera/libcameraservice/CameraService.h
 </span><span class="ln"> 2</span><span class="c1"></span><span class="k">class</span> <span class="nc">CameraService</span> <span class="o">:</span>
 <span class="ln"> 3</span>    <span class="k">public</span> <span class="n">BinderService</span><span class="o">&lt;</span><span class="n">CameraService</span><span class="o">&gt;</span><span class="p">,</span>
@@ -2238,7 +2305,87 @@
 <span class="ln">23</span>    <span class="p">...</span>
 <span class="ln">24</span><span class="p">}</span>
 </code></pre></div><p>可以看到主要是getService和dump这两个类成员函数会用到，其他的函数暂时先不管。</p>
-<h3 id="323cameraservice添加到system_server">3.2.3CameraService添加到system_server</h3>
+<h3 id="322cameraservice添加到system_server">3.2.2CameraService添加到system_server</h3>
+<h4 id="3221启动system_server进程">3.2.2.1启动system_server进程</h4>
+<p>在上述解析init.rc配置文件和其他.rc文件之后，会启动zygote进程，而这个zygote进程会启动system_server</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="kd">private</span> <span class="kd">static</span> <span class="n">Runnable</span> <span class="nf">forkSystemServer</span><span class="o">(</span><span class="n">String</span> <span class="n">abiList</span><span class="o">,</span> <span class="n">String</span> <span class="n">socketName</span><span class="o">,</span>
+<span class="ln"> 2</span>        <span class="n">ZygoteServer</span> <span class="n">zygoteServer</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 3</span>   
+<span class="ln"> 4</span>    <span class="c1">//启动system_server的命令行参数
+</span><span class="ln"> 5</span><span class="c1"></span>    <span class="n">String</span> <span class="n">args</span><span class="o">[]</span> <span class="o">=</span> <span class="o">{</span>
+<span class="ln"> 6</span>            <span class="s">&#34;--setuid=1000&#34;</span><span class="o">,</span>
+<span class="ln"> 7</span>            <span class="s">&#34;--setgid=1000&#34;</span><span class="o">,</span>
+<span class="ln"> 8</span>            <span class="s">&#34;--setgroups=1001,1002,1003,1004,1005,1006,1007,1008,1009,1010,1018,1021,1023,&#34;</span>
+<span class="ln"> 9</span>                    <span class="o">+</span> <span class="s">&#34;1024,1032,1065,3001,3002,3003,3006,3007,3009,3010,3011&#34;</span><span class="o">,</span>
+<span class="ln">10</span>            <span class="s">&#34;--capabilities=&#34;</span> <span class="o">+</span> <span class="n">capabilities</span> <span class="o">+</span> <span class="s">&#34;,&#34;</span> <span class="o">+</span> <span class="n">capabilities</span><span class="o">,</span>
+<span class="ln">11</span>            <span class="s">&#34;--nice-name=system_server&#34;</span><span class="o">,</span>
+<span class="ln">12</span>            <span class="s">&#34;--runtime-args&#34;</span><span class="o">,</span>
+<span class="ln">13</span>            <span class="s">&#34;--target-sdk-version=&#34;</span> <span class="o">+</span> <span class="n">VMRuntime</span><span class="o">.</span><span class="na">SDK_VERSION_CUR_DEVELOPMENT</span><span class="o">,</span>
+<span class="ln">14</span>            <span class="s">&#34;com.android.server.SystemServer&#34;</span><span class="o">,</span>
+<span class="ln">15</span>    <span class="o">};</span>
+<span class="ln">16</span>    <span class="n">ZygoteArguments</span> <span class="n">parsedArgs</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">17</span>
+<span class="ln">18</span>    <span class="kt">int</span> <span class="n">pid</span><span class="o">;</span>
+<span class="ln">19</span>
+<span class="ln">20</span>        <span class="n">pid</span> <span class="o">=</span> <span class="n">Zygote</span><span class="o">.</span><span class="na">forkSystemServer</span><span class="o">(</span>
+<span class="ln">21</span>                <span class="n">parsedArgs</span><span class="o">.</span><span class="na">mUid</span><span class="o">,</span> <span class="n">parsedArgs</span><span class="o">.</span><span class="na">mGid</span><span class="o">,</span>
+<span class="ln">22</span>                <span class="n">parsedArgs</span><span class="o">.</span><span class="na">mGids</span><span class="o">,</span>
+<span class="ln">23</span>                <span class="n">parsedArgs</span><span class="o">.</span><span class="na">mRuntimeFlags</span><span class="o">,</span>
+<span class="ln">24</span>                <span class="kc">null</span><span class="o">,</span>
+<span class="ln">25</span>                <span class="n">parsedArgs</span><span class="o">.</span><span class="na">mPermittedCapabilities</span><span class="o">,</span>
+<span class="ln">26</span>                <span class="n">parsedArgs</span><span class="o">.</span><span class="na">mEffectiveCapabilities</span><span class="o">);</span>
+<span class="ln">27</span>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IllegalArgumentException</span> <span class="n">ex</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">28</span>        <span class="k">throw</span> <span class="k">new</span> <span class="n">RuntimeException</span><span class="o">(</span><span class="n">ex</span><span class="o">);</span>
+<span class="ln">29</span>    <span class="o">}</span>
+<span class="ln">30</span>
+<span class="ln">31</span>    <span class="cm">/* For child process */</span>
+<span class="ln">32</span>    <span class="k">if</span> <span class="o">(</span><span class="n">pid</span> <span class="o">==</span> <span class="n">0</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">33</span>        <span class="k">if</span> <span class="o">(</span><span class="n">hasSecondZygote</span><span class="o">(</span><span class="n">abiList</span><span class="o">))</span> <span class="o">{</span>
+<span class="ln">34</span>            <span class="n">waitForSecondaryZygote</span><span class="o">(</span><span class="n">socketName</span><span class="o">);</span>
+<span class="ln">35</span>        <span class="o">}</span>
+<span class="ln">36</span>
+<span class="ln">37</span>        <span class="n">zygoteServer</span><span class="o">.</span><span class="na">closeServerSocket</span><span class="o">();</span>
+<span class="ln">38</span>        <span class="c1">//这里真正启动SystemServer
+</span><span class="ln">39</span><span class="c1"></span>        <span class="k">return</span> <span class="n">handleSystemServerProcess</span><span class="o">(</span><span class="n">parsedArgs</span><span class="o">);</span>
+<span class="ln">40</span>    <span class="o">}</span>
+<span class="ln">41</span>
+<span class="ln">42</span>    <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">43</span><span class="o">}</span>
+</code></pre></div><p>system_server进程的执行过程，回调用到run方法</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//frameworks/base/services/java/com/android/server/SystemServer.java#run
+</span><span class="ln">2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">3</span>    <span class="k">new</span> <span class="n">SystemServer</span><span class="o">().</span><span class="na">run</span><span class="o">();</span>
+<span class="ln">4</span><span class="o">}</span>
+</code></pre></div><p>这个run方法有几个功能。创建 SystemServiceManager、启动引导服务、启动核心服、启动其他服务等</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="kd">private</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 2</span>    <span class="o">...</span>
+<span class="ln"> 3</span>    <span class="c1">// 加载libandroid_servers.so
+</span><span class="ln"> 4</span><span class="c1"></span>    <span class="n">System</span><span class="o">.</span><span class="na">loadLibrary</span><span class="o">(</span><span class="s">&#34;android_servers&#34;</span><span class="o">);</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span>    <span class="c1">// 创建 SystemContext
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="n">createSystemContext</span><span class="o">();</span>
+<span class="ln"> 8</span>        
+<span class="ln"> 9</span>    <span class="c1">// 创建 SystemServiceManager
+</span><span class="ln">10</span><span class="c1"></span>    <span class="n">mSystemServiceManager</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SystemServiceManager</span><span class="o">(</span><span class="n">mSystemContext</span><span class="o">);</span>
+<span class="ln">11</span>    <span class="n">LocalServices</span><span class="o">.</span><span class="na">addService</span><span class="o">(</span><span class="n">SystemServiceManager</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">mSystemServiceManager</span><span class="o">);</span>       <span class="n">SystemServerInitThreadPool</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+<span class="ln">12</span>    <span class="o">...</span> 
+<span class="ln">13</span>    <span class="c1">// Start services.
+</span><span class="ln">14</span><span class="c1"></span>    <span class="k">try</span> <span class="o">{</span>
+<span class="ln">15</span>        <span class="n">t</span><span class="o">.</span><span class="na">traceBegin</span><span class="o">(</span><span class="s">&#34;StartServices&#34;</span><span class="o">);</span>
+<span class="ln">16</span>        <span class="c1">//启动引导服务
+</span><span class="ln">17</span><span class="c1"></span>        <span class="n">startBootstrapServices</span><span class="o">(</span><span class="n">t</span><span class="o">);</span>
+<span class="ln">18</span>        <span class="c1">//启动核心服务
+</span><span class="ln">19</span><span class="c1"></span>        <span class="n">startCoreServices</span><span class="o">(</span><span class="n">t</span><span class="o">);</span>
+<span class="ln">20</span>        <span class="c1">//启动其他服务
+</span><span class="ln">21</span><span class="c1"></span>        <span class="n">startOtherServices</span><span class="o">(</span><span class="n">t</span><span class="o">);</span>
+<span class="ln">22</span>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Throwable</span> <span class="n">ex</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">23</span>        <span class="o">...</span>
+<span class="ln">24</span>    <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+<span class="ln">25</span>        <span class="n">t</span><span class="o">.</span><span class="na">traceEnd</span><span class="o">();</span> <span class="c1">// StartServices
+</span><span class="ln">26</span><span class="c1"></span>    <span class="o">}</span>
+<span class="ln">27</span>    <span class="o">...</span> 
+<span class="ln">28</span><span class="o">}</span>
+</code></pre></div><h4 id="3222binderservice添加到system_server">3.2.2.2BinderService添加到system_server</h4>
 <p>dumpsys那些信息的打印就是上述的dump函数负责实现的。</p>
 <p>instantiate()来自 CameraService的父类BinderService，BinderService是一个模版类：</p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/include/binder/BinderService.h
@@ -2286,7 +2433,15 @@
 <span class="ln">11</span>    <span class="k">static</span> <span class="kt">void</span> <span class="nf">instantiate</span><span class="p">()</span> <span class="p">{</span> <span class="n">publish</span><span class="p">();</span> <span class="p">}</span>
 <span class="ln">12</span><span class="p">};</span>
 </code></pre></div><p>这样，通过IServiceManager#addService()服务 “media.camera”就被添加到了系统中。</p>
-<h3 id="324camera服务的使用">3.2.4Camera服务的使用</h3>
+<h3 id="323启动cameraservice服务">3.2.3启动CameraService服务</h3>
+<p>因为上述system_server会创建其他服务，而这个CameraService就在其他服务中。这里截取小段，可知会真实启动CameraService。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//framworks/base/services/java/com/android/server/SystemServer.java#
+</span><span class="ln">2</span><span class="c1"></span><span class="k">if</span> <span class="o">(!</span><span class="n">disableCameraService</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">3</span>    <span class="n">t</span><span class="o">.</span><span class="na">traceBegin</span><span class="o">(</span><span class="s">&#34;StartCameraServiceProxy&#34;</span><span class="o">);</span>
+<span class="ln">4</span>    <span class="n">mSystemServiceManager</span><span class="o">.</span><span class="na">startService</span><span class="o">(</span><span class="n">CameraServiceProxy</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+<span class="ln">5</span>    <span class="n">t</span><span class="o">.</span><span class="na">traceEnd</span><span class="o">();</span>
+<span class="ln">6</span><span class="o">}</span>
+</code></pre></div><h3 id="324camera服务的使用">3.2.4Camera服务的使用</h3>
 <p>CameraManager类获取“media.camera”服务，通过它和摄像头打交道，通过AIDL将App的相机进程和CameraService进程互相通信。</p>
 <div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//以camera2为例
 </span><span class="ln"> 2</span><span class="c1">//frameworks/base/core/java/android/hardware/camera2/CameraManager.java
@@ -2495,6 +2650,9 @@ vdprintf, vsprintf, vsnprintf - formatted output conversion</p>
 <p><a href="https://www.jianshu.com/p/1cc7615f030f?utm_campaign=maleskine&amp;utm_content=note&amp;utm_medium=seo_notes&amp;utm_source=recommendation">[7] Little丶Jerry, Android 解析 Protocol Buffers 格式数据, 2018.</a></p>
 <p><a href="https://blog.csdn.net/ChaoY1116/article/details/109669865">[8] 猿氏悟语, Android Dumpsys命令使用以及实现原理详解, 2020.</a></p>
 <p><a href="https://blog.csdn.net/qq_33850438/article/details/80172275">[9] andy cong, 浅谈linux的命令行解析参数之getopt_long函数, 2018.</a></p>
+<p><a href="https://blog.csdn.net/qq_26498311/article/details/117128520">[10] 伟子时代, Android系统启动流程, 2021.</a></p>
+<p><a href="https://blog.csdn.net/weixin_42463482/article/details/118880978">[11] 菜鸡UP, Android Camera之CameraServer的启动过程, 2022.</a></p>
+<p><a href="https://blog.csdn.net/qq_37858386/article/details/121416871">[12] 海月汐辰, Android mk文件 LOCAL_INIT_RC 将RC文件编译到/system/etc/init或vendor/etc/init，system\core\init\init.cpp解析这些rc, 2022.</a></p>
               
             </div>
           </div>
