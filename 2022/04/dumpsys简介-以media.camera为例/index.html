@@ -278,7 +278,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">6100 Words|Read in about 29 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">6200 Words|Read in about 29 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -1633,11 +1633,61 @@
   
 </div>
 
-</blockquote>
+<p>特别如下：</p>
+<ul>
+<li><strong>数据只能从管道的一端写入，从另一端读出</strong></li>
+<li>写入管道的数据遵循先入先从出的规则</li>
+<li><strong>管道不是普通的文件，不属于某个文件系统，其只存在于内存中</strong></li>
+<li>管道在内存中对应一个缓冲区，不同的系统其大小不一定相同</li>
+<li><strong>从管道读数据是一次性操作，数据一旦被读走，它就从管道中丢弃，释放空间以便写更多的数据</strong></li>
+</ul>
+<p>而本文中的通过新启动一个线程，将fd数组的fd[0]去做读的操作，fd[1]去做write操作，如下unique_fd参数中的读写操作。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//system/core/base/include/android-base/unique_fd.h
+</span><span class="ln">2</span><span class="c1"></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">Closer</span><span class="o">&gt;</span>
+<span class="ln">3</span><span class="kr">inline</span> <span class="kt">bool</span> <span class="n">Pipe</span><span class="p">(</span><span class="n">unique_fd_impl</span><span class="o">&lt;</span><span class="n">Closer</span><span class="o">&gt;*</span> <span class="n">read</span><span class="p">,</span> <span class="n">unique_fd_impl</span><span class="o">&lt;</span><span class="n">Closer</span><span class="o">&gt;*</span> <span class="n">write</span><span class="p">,</span>
+<span class="ln">4</span>                 <span class="kt">int</span> <span class="n">flags</span> <span class="o">=</span> <span class="n">O_CLOEXEC</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">5</span>    <span class="p">...</span>
+<span class="ln">6</span>    <span class="n">read</span><span class="o">-&gt;</span><span class="n">reset</span><span class="p">(</span><span class="n">pipefd</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+<span class="ln">7</span>    <span class="n">write</span><span class="o">-&gt;</span><span class="n">reset</span><span class="p">(</span><span class="n">pipefd</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+<span class="ln">8</span>    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">9</span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/dumpsys/dumpsys_18.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/dumpsys/dumpsys_18.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>写入操作的fd[1]就是remote_end，会传入到对应service::dump中去，把dump的数据写入到管道中。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//这里是默认的dump
+</span><span class="ln">2</span><span class="c1"></span><span class="n">err</span> <span class="o">=</span> <span class="n">service</span><span class="o">-&gt;</span><span class="n">dump</span><span class="p">(</span><span class="n">remote_end</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">args</span><span class="p">);</span>
+</code></pre></div></blockquote>
 <p>关于如何获取ServiceManager和Service这个后续会在Binder篇章中详细解析，这个先按下不表。</p>
 <p>由前面的原理可知， 先要查询sm-&gt;checkService(“media.camera”)，这里得到的是CameraService，那么也就意味着上述命令等价于调用CameraService.dump()。 同理其他的命令也是类似的方式。</p>
 <h3 id="232writedump">2.3.2writeDump</h3>
-<p>这个函数比较复杂，涉及到linux的poll机制，作用统计dump时间，当超过指定的时间，去中断这次操作。</p>
+<p>这个函数比较复杂，涉及到linux的poll机制。跟上面的写入管道操作对应，这里是从管道中读出，<code>redirectFd_</code>对应是fd[0]，这里的<code>redirectFd_</code>是全局变量，所以在startDumpThread的异步操作写入到管道中，这里的writeDump可以从管道中读出数据。</p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/cmds/dumpsys/dumpsys.cpp#Dumpsys::writeDump
 </span><span class="ln"> 2</span><span class="c1"></span><span class="n">status_t</span> <span class="n">Dumpsys</span><span class="o">::</span><span class="n">writeDump</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="k">const</span> <span class="n">String16</span><span class="o">&amp;</span> <span class="n">serviceName</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">milliseconds</span> <span class="n">timeout</span><span class="p">,</span>
 <span class="ln"> 3</span>                            <span class="kt">bool</span> <span class="n">asProto</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">duration</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&amp;</span> <span class="n">elapsedDuration</span><span class="p">,</span>
@@ -1674,36 +1724,37 @@
 <span class="ln">34</span>        <span class="p">}</span>
 <span class="ln">35</span>
 <span class="ln">36</span>        <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">4096</span><span class="p">];</span>
-<span class="ln">37</span>        <span class="n">rc</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">read</span><span class="p">(</span><span class="n">redirectFd_</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">buf</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">)));</span>
-<span class="ln">38</span>        <span class="k">if</span> <span class="p">(</span><span class="n">rc</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln">39</span>            <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Failed to read while dumping service &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">serviceName</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;: &#34;</span>
-<span class="ln">40</span>                 <span class="o">&lt;&lt;</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<span class="ln">41</span>            <span class="n">status</span> <span class="o">=</span> <span class="o">-</span><span class="n">errno</span><span class="p">;</span>
-<span class="ln">42</span>            <span class="k">break</span><span class="p">;</span>
-<span class="ln">43</span>        <span class="p">}</span> <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">rc</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln">44</span>            <span class="c1">// EOF.
-</span><span class="ln">45</span><span class="c1"></span>            <span class="k">break</span><span class="p">;</span>
-<span class="ln">46</span>        <span class="p">}</span>
-<span class="ln">47</span>
-<span class="ln">48</span>        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">WriteFully</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">rc</span><span class="p">))</span> <span class="p">{</span>
-<span class="ln">49</span>            <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Failed to write while dumping service &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">serviceName</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;: &#34;</span>
-<span class="ln">50</span>                 <span class="o">&lt;&lt;</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<span class="ln">51</span>            <span class="n">status</span> <span class="o">=</span> <span class="o">-</span><span class="n">errno</span><span class="p">;</span>
-<span class="ln">52</span>            <span class="k">break</span><span class="p">;</span>
-<span class="ln">53</span>        <span class="p">}</span>
-<span class="ln">54</span>        <span class="n">totalBytes</span> <span class="o">+=</span> <span class="n">rc</span><span class="p">;</span>
-<span class="ln">55</span>    <span class="p">}</span>
-<span class="ln">56</span>
-<span class="ln">57</span>    <span class="k">if</span> <span class="p">((</span><span class="n">status</span> <span class="o">==</span> <span class="n">TIMED_OUT</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="o">!</span><span class="n">asProto</span><span class="p">))</span> <span class="p">{</span>
-<span class="ln">58</span>        <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">StringPrintf</span><span class="p">(</span><span class="s">&#34;</span><span class="se">\n</span><span class="s">*** SERVICE &#39;%s&#39; DUMP TIMEOUT (%llums) EXPIRED ***</span><span class="se">\n\n</span><span class="s">&#34;</span><span class="p">,</span>
-<span class="ln">59</span>                                       <span class="n">String8</span><span class="p">(</span><span class="n">serviceName</span><span class="p">).</span><span class="n">string</span><span class="p">(),</span> <span class="n">timeout</span><span class="p">.</span><span class="n">count</span><span class="p">());</span>
-<span class="ln">60</span>        <span class="n">WriteStringToFd</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">fd</span><span class="p">);</span>
-<span class="ln">61</span>    <span class="p">}</span>
-<span class="ln">62</span>
-<span class="ln">63</span>    <span class="n">elapsedDuration</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">steady_clock</span><span class="o">::</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">;</span>
-<span class="ln">64</span>    <span class="n">bytesWritten</span> <span class="o">=</span> <span class="n">totalBytes</span><span class="p">;</span>
-<span class="ln">65</span>    <span class="k">return</span> <span class="n">status</span><span class="p">;</span>
-<span class="ln">66</span><span class="p">}</span>
+<span class="ln">37</span>        <span class="c1">//从管道中读出数据，每次管道输出4096个字节大小
+</span><span class="ln">38</span><span class="c1"></span>        <span class="n">rc</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">read</span><span class="p">(</span><span class="n">redirectFd_</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">buf</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">)));</span>
+<span class="ln">39</span>        <span class="k">if</span> <span class="p">(</span><span class="n">rc</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">40</span>            <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Failed to read while dumping service &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">serviceName</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;: &#34;</span>
+<span class="ln">41</span>                 <span class="o">&lt;&lt;</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="ln">42</span>            <span class="n">status</span> <span class="o">=</span> <span class="o">-</span><span class="n">errno</span><span class="p">;</span>
+<span class="ln">43</span>            <span class="k">break</span><span class="p">;</span>
+<span class="ln">44</span>        <span class="p">}</span> <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">rc</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">45</span>            <span class="c1">// EOF.
+</span><span class="ln">46</span><span class="c1"></span>            <span class="k">break</span><span class="p">;</span>
+<span class="ln">47</span>        <span class="p">}</span>
+<span class="ln">48</span>
+<span class="ln">49</span>        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">WriteFully</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">rc</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">50</span>            <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Failed to write while dumping service &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">serviceName</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;: &#34;</span>
+<span class="ln">51</span>                 <span class="o">&lt;&lt;</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="ln">52</span>            <span class="n">status</span> <span class="o">=</span> <span class="o">-</span><span class="n">errno</span><span class="p">;</span>
+<span class="ln">53</span>            <span class="k">break</span><span class="p">;</span>
+<span class="ln">54</span>        <span class="p">}</span>
+<span class="ln">55</span>        <span class="n">totalBytes</span> <span class="o">+=</span> <span class="n">rc</span><span class="p">;</span>
+<span class="ln">56</span>    <span class="p">}</span>
+<span class="ln">57</span>
+<span class="ln">58</span>    <span class="k">if</span> <span class="p">((</span><span class="n">status</span> <span class="o">==</span> <span class="n">TIMED_OUT</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="o">!</span><span class="n">asProto</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">59</span>        <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">StringPrintf</span><span class="p">(</span><span class="s">&#34;</span><span class="se">\n</span><span class="s">*** SERVICE &#39;%s&#39; DUMP TIMEOUT (%llums) EXPIRED ***</span><span class="se">\n\n</span><span class="s">&#34;</span><span class="p">,</span>
+<span class="ln">60</span>                                       <span class="n">String8</span><span class="p">(</span><span class="n">serviceName</span><span class="p">).</span><span class="n">string</span><span class="p">(),</span> <span class="n">timeout</span><span class="p">.</span><span class="n">count</span><span class="p">());</span>
+<span class="ln">61</span>        <span class="n">WriteStringToFd</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">fd</span><span class="p">);</span>
+<span class="ln">62</span>    <span class="p">}</span>
+<span class="ln">63</span>
+<span class="ln">64</span>    <span class="n">elapsedDuration</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">steady_clock</span><span class="o">::</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">;</span>
+<span class="ln">65</span>    <span class="n">bytesWritten</span> <span class="o">=</span> <span class="n">totalBytes</span><span class="p">;</span>
+<span class="ln">66</span>    <span class="k">return</span> <span class="n">status</span><span class="p">;</span>
+<span class="ln">67</span><span class="p">}</span>
 </code></pre></div><h1 id="3dumpsys-mediacamera">3dumpsys media.camera</h1>
 <h2 id="31打印结果">3.1打印结果</h2>
 <p>这里开始解释一下名词，和详细的信息，因为笔者没有高通对接的Camera源码，也只能通过例子结合网上说明去解释。</p>
@@ -2180,7 +2231,37 @@
 <span class="ln">2</span>  No camera traces collected.
 </code></pre></div><p>通常来说，这里没有systrace，也没有出现异常，所以不会出现trace，是正常现象。</p>
 <h2 id="32从dumpsys到cameraservice">3.2从dumpsys到CameraService</h2>
-<p>这里主要分成几步，从CameraSever启动，CameraService添加到system_server，启动CameraService服务和CameraService的使用。其实说白了，也是一种Binder通信的实例，关于CameraService的AIDL通信，可以点击<a href="https://yangyang48.github.io/2022/03/aidl3-java%E5%92%8Cc-%E9%80%9A%E4%BF%A1/">这里</a>。</p>
+<p>这里主要分成几步，从CameraSever启动，启动CameraService服务并添加到servicemanager，启动CameraServiceProxy服务和CameraService服务的AIDL使用。其实说白了，也是一种Binder通信的实例，关于CameraService的AIDL通信，可以点击<a href="https://yangyang48.github.io/2022/03/aidl3-java%E5%92%8Cc-%E9%80%9A%E4%BF%A1/">这里</a>。</p>
+<p>总的顺序图如下所示，其中进程后面的括号是实际开发板中的进程号，进程号越小越早启动。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/dumpsys/dumpsys_17.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/dumpsys/dumpsys_17.png" >
+  
+    </a>
+  
+  
+</div>
+
 <h3 id="321camerasever启动">3.2.1CameraSever启动</h3>
 <p>关于CameraService启动流程，这里展开描述一下。</p>
 <p>首先分成几个过程，涉及到android系统的开机流程，这里只描述CameraService部分。</p>
@@ -2246,14 +2327,14 @@
 <span class="ln">31</span>        <span class="s2">&#34;-Werror&#34;</span>,
 <span class="ln">32</span>        <span class="s2">&#34;-Wno-unused-parameter&#34;</span>,
 <span class="ln">33</span>    <span class="o">]</span>,
-<span class="ln">34</span>
+<span class="ln">34</span>    <span class="c1">#rc文件编译到/system/etc/init中</span>
 <span class="ln">35</span>    init_rc: <span class="o">[</span><span class="s2">&#34;cameraserver.rc&#34;</span><span class="o">]</span>,
 <span class="ln">36</span>
 <span class="ln">37</span>    vintf_fragments: <span class="o">[</span>
 <span class="ln">38</span>        <span class="s2">&#34;manifest_android.frameworks.cameraservice.service@2.1.xml&#34;</span>,
 <span class="ln">39</span>    <span class="o">]</span>,
 <span class="ln">40</span><span class="err">}</span>
-</code></pre></div><p>可以看到这个rc文件解析之后，被开启cameraserver，这个cameraserver实际上是一个进程，位于/system/bin/cameraserver</p>
+</code></pre></div><p>可以看到这个rc文件解析之后，被开启cameraserver，这个cameraserver实际上是一个进程，位于/system/bin/cameraserver。这里的cameraserver的rc文件，<strong>里面没有设置oneshot，说明会自重启</strong>，没有设置disable，说明不需要其他应用显示启动它，具体rc语法点击<a href="https://blog.csdn.net/feigebangni/article/details/50300063">这里</a>。</p>
 <div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>#frameworks/av/camera/cameraserver/cameraserver.rc 
 <span class="ln">2</span>service cameraserver /system/bin/cameraserver
 <span class="ln">3</span>    class main
@@ -2305,8 +2386,59 @@
 <span class="ln">23</span>    <span class="p">...</span>
 <span class="ln">24</span><span class="p">}</span>
 </code></pre></div><p>可以看到主要是getService和dump这两个类成员函数会用到，其他的函数暂时先不管。</p>
-<h3 id="322cameraservice添加到system_server">3.2.2CameraService添加到system_server</h3>
-<h4 id="3221启动system_server进程">3.2.2.1启动system_server进程</h4>
+<h3 id="322启动cameraservice服务并添加到servicemanager">3.2.2启动CameraService服务并添加到servicemanager</h3>
+<p>dumpsys那些信息的打印就是上述的dump函数负责实现的。</p>
+<p>instantiate()来自 CameraService的父类BinderService，BinderService是一个模版类。最终这个会真正启动CameraService，对应的对应的binder是&quot;media.camera&quot;。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/include/binder/BinderService.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">SERVICE</span><span class="o">&gt;</span>
+<span class="ln"> 3</span><span class="k">class</span> <span class="nc">BinderService</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 6</span>    <span class="k">static</span> <span class="n">status_t</span> <span class="n">publish</span><span class="p">(</span><span class="kt">bool</span> <span class="n">allowIsolated</span> <span class="o">=</span> <span class="nb">false</span><span class="p">,</span>
+<span class="ln"> 7</span>                            <span class="kt">int</span> <span class="n">dumpFlags</span> <span class="o">=</span> <span class="n">IServiceManager</span><span class="o">::</span><span class="n">DUMP_FLAG_PRIORITY_DEFAULT</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 8</span>        <span class="n">sp</span><span class="o">&lt;</span><span class="n">IServiceManager</span><span class="o">&gt;</span> <span class="n">sm</span><span class="p">(</span><span class="n">defaultServiceManager</span><span class="p">());</span>
+<span class="ln"> 9</span>        <span class="k">return</span> <span class="n">sm</span><span class="o">-&gt;</span><span class="n">addService</span><span class="p">(</span><span class="n">String16</span><span class="p">(</span><span class="n">SERVICE</span><span class="o">::</span><span class="n">getServiceName</span><span class="p">()),</span> <span class="k">new</span> <span class="n">SERVICE</span><span class="p">(),</span> <span class="n">allowIsolated</span><span class="p">,</span>
+<span class="ln">10</span>                              <span class="n">dumpFlags</span><span class="p">);</span>
+<span class="ln">11</span>    <span class="p">}</span>
+<span class="ln">12</span>
+<span class="ln">13</span>    <span class="k">static</span> <span class="kt">void</span> <span class="nf">publishAndJoinThreadPool</span><span class="p">(</span>
+<span class="ln">14</span>            <span class="kt">bool</span> <span class="n">allowIsolated</span> <span class="o">=</span> <span class="nb">false</span><span class="p">,</span>
+<span class="ln">15</span>            <span class="kt">int</span> <span class="n">dumpFlags</span> <span class="o">=</span> <span class="n">IServiceManager</span><span class="o">::</span><span class="n">DUMP_FLAG_PRIORITY_DEFAULT</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">16</span>        <span class="n">publish</span><span class="p">(</span><span class="n">allowIsolated</span><span class="p">,</span> <span class="n">dumpFlags</span><span class="p">);</span>
+<span class="ln">17</span>        <span class="n">joinThreadPool</span><span class="p">();</span>
+<span class="ln">18</span>    <span class="p">}</span>
+<span class="ln">19</span>
+<span class="ln">20</span>    <span class="k">static</span> <span class="kt">void</span> <span class="nf">instantiate</span><span class="p">()</span> <span class="p">{</span> <span class="n">publish</span><span class="p">();</span> <span class="p">}</span>
+<span class="ln">21</span>
+<span class="ln">22</span>    <span class="k">static</span> <span class="n">status_t</span> <span class="nf">shutdown</span><span class="p">()</span> <span class="p">{</span> <span class="k">return</span> <span class="n">NO_ERROR</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln">23</span>
+<span class="ln">24</span><span class="k">private</span><span class="o">:</span>
+<span class="ln">25</span>    <span class="k">static</span> <span class="kt">void</span> <span class="n">joinThreadPool</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">26</span>        <span class="n">sp</span><span class="o">&lt;</span><span class="n">ProcessState</span><span class="o">&gt;</span> <span class="n">ps</span><span class="p">(</span><span class="n">ProcessState</span><span class="o">::</span><span class="n">self</span><span class="p">());</span>
+<span class="ln">27</span>        <span class="n">ps</span><span class="o">-&gt;</span><span class="n">startThreadPool</span><span class="p">();</span>
+<span class="ln">28</span>        <span class="n">ps</span><span class="o">-&gt;</span><span class="n">giveThreadPoolName</span><span class="p">();</span>
+<span class="ln">29</span>        <span class="n">IPCThreadState</span><span class="o">::</span><span class="n">self</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">joinThreadPool</span><span class="p">();</span>
+<span class="ln">30</span>    <span class="p">}</span>
+<span class="ln">31</span><span class="p">};</span>
+</code></pre></div><p>用 CameraService替换模版之后：</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="k">class</span> <span class="nc">BinderService</span>
+<span class="ln"> 2</span><span class="p">{</span>
+<span class="ln"> 3</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 4</span>    <span class="k">static</span> <span class="n">status_t</span> <span class="n">publish</span><span class="p">(</span><span class="kt">bool</span> <span class="n">allowIsolated</span> <span class="o">=</span> <span class="nb">false</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 5</span>        <span class="n">sp</span><span class="o">&lt;</span><span class="n">IServiceManager</span><span class="o">&gt;</span> <span class="n">sm</span><span class="p">(</span><span class="n">defaultServiceManager</span><span class="p">());</span>
+<span class="ln"> 6</span>        <span class="c1">//这里面涉及到两个过程：
+</span><span class="ln"> 7</span><span class="c1"></span>        <span class="c1">//1.new CameraService会去真正启动CameraService
+</span><span class="ln"> 8</span><span class="c1"></span>        <span class="c1">//2.sm-&gt;addService将实例化的CameraService添加到servicemanager中，标记binder为&#34;media.camera&#34;,其他进程可以在sm中唱过这个&#34;media.camera&#34;来获取这个服务，从而可以实现跨进程的Binder通信
+</span><span class="ln"> 9</span><span class="c1"></span>        <span class="k">return</span> <span class="n">sm</span><span class="o">-&gt;</span><span class="n">addService</span><span class="p">(</span>
+<span class="ln">10</span>                <span class="n">String16</span><span class="p">(</span><span class="n">CameraService</span><span class="o">::</span><span class="n">getServiceName</span><span class="p">()),</span>
+<span class="ln">11</span>                <span class="k">new</span> <span class="n">CameraService</span><span class="p">(),</span> <span class="n">allowIsolated</span><span class="p">);</span>
+<span class="ln">12</span>    <span class="p">}</span>
+<span class="ln">13</span> 
+<span class="ln">14</span>    <span class="k">static</span> <span class="kt">void</span> <span class="nf">instantiate</span><span class="p">()</span> <span class="p">{</span> <span class="n">publish</span><span class="p">();</span> <span class="p">}</span>
+<span class="ln">15</span><span class="p">};</span>
+</code></pre></div><p>这样，通过IServiceManager#addService()服务 “media.camera”就被添加到了系统中。</p>
+<h3 id="323启动cameraserviceproxy服务">3.2.3启动CameraServiceProxy服务</h3>
+<h4 id="3231启动system_server进程">3.2.3.1启动system_server进程</h4>
 <p>在上述解析init.rc配置文件和其他.rc文件之后，会启动zygote进程，而这个zygote进程会启动system_server</p>
 <div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="kd">private</span> <span class="kd">static</span> <span class="n">Runnable</span> <span class="nf">forkSystemServer</span><span class="o">(</span><span class="n">String</span> <span class="n">abiList</span><span class="o">,</span> <span class="n">String</span> <span class="n">socketName</span><span class="o">,</span>
 <span class="ln"> 2</span>        <span class="n">ZygoteServer</span> <span class="n">zygoteServer</span><span class="o">)</span> <span class="o">{</span>
@@ -2356,7 +2488,7 @@
 </span><span class="ln">2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
 <span class="ln">3</span>    <span class="k">new</span> <span class="n">SystemServer</span><span class="o">().</span><span class="na">run</span><span class="o">();</span>
 <span class="ln">4</span><span class="o">}</span>
-</code></pre></div><p>这个run方法有几个功能。创建 SystemServiceManager、启动引导服务、启动核心服、启动其他服务等</p>
+</code></pre></div><p>这个run方法有几个功能。创建 SystemServiceManager(用于管理后面服务的生命周期)、<strong>启动引导服务、启动核心服、启动其他服务</strong>等</p>
 <div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="kd">private</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
 <span class="ln"> 2</span>    <span class="o">...</span>
 <span class="ln"> 3</span>    <span class="c1">// 加载libandroid_servers.so
@@ -2385,64 +2517,16 @@
 </span><span class="ln">26</span><span class="c1"></span>    <span class="o">}</span>
 <span class="ln">27</span>    <span class="o">...</span> 
 <span class="ln">28</span><span class="o">}</span>
-</code></pre></div><h4 id="3222binderservice添加到system_server">3.2.2.2BinderService添加到system_server</h4>
-<p>dumpsys那些信息的打印就是上述的dump函数负责实现的。</p>
-<p>instantiate()来自 CameraService的父类BinderService，BinderService是一个模版类：</p>
-<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/include/binder/BinderService.h
-</span><span class="ln"> 2</span><span class="c1"></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">SERVICE</span><span class="o">&gt;</span>
-<span class="ln"> 3</span><span class="k">class</span> <span class="nc">BinderService</span>
-<span class="ln"> 4</span><span class="p">{</span>
-<span class="ln"> 5</span><span class="k">public</span><span class="o">:</span>
-<span class="ln"> 6</span>    <span class="k">static</span> <span class="n">status_t</span> <span class="n">publish</span><span class="p">(</span><span class="kt">bool</span> <span class="n">allowIsolated</span> <span class="o">=</span> <span class="nb">false</span><span class="p">,</span>
-<span class="ln"> 7</span>                            <span class="kt">int</span> <span class="n">dumpFlags</span> <span class="o">=</span> <span class="n">IServiceManager</span><span class="o">::</span><span class="n">DUMP_FLAG_PRIORITY_DEFAULT</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln"> 8</span>        <span class="n">sp</span><span class="o">&lt;</span><span class="n">IServiceManager</span><span class="o">&gt;</span> <span class="n">sm</span><span class="p">(</span><span class="n">defaultServiceManager</span><span class="p">());</span>
-<span class="ln"> 9</span>        <span class="k">return</span> <span class="n">sm</span><span class="o">-&gt;</span><span class="n">addService</span><span class="p">(</span><span class="n">String16</span><span class="p">(</span><span class="n">SERVICE</span><span class="o">::</span><span class="n">getServiceName</span><span class="p">()),</span> <span class="k">new</span> <span class="n">SERVICE</span><span class="p">(),</span> <span class="n">allowIsolated</span><span class="p">,</span>
-<span class="ln">10</span>                              <span class="n">dumpFlags</span><span class="p">);</span>
-<span class="ln">11</span>    <span class="p">}</span>
-<span class="ln">12</span>
-<span class="ln">13</span>    <span class="k">static</span> <span class="kt">void</span> <span class="nf">publishAndJoinThreadPool</span><span class="p">(</span>
-<span class="ln">14</span>            <span class="kt">bool</span> <span class="n">allowIsolated</span> <span class="o">=</span> <span class="nb">false</span><span class="p">,</span>
-<span class="ln">15</span>            <span class="kt">int</span> <span class="n">dumpFlags</span> <span class="o">=</span> <span class="n">IServiceManager</span><span class="o">::</span><span class="n">DUMP_FLAG_PRIORITY_DEFAULT</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln">16</span>        <span class="n">publish</span><span class="p">(</span><span class="n">allowIsolated</span><span class="p">,</span> <span class="n">dumpFlags</span><span class="p">);</span>
-<span class="ln">17</span>        <span class="n">joinThreadPool</span><span class="p">();</span>
-<span class="ln">18</span>    <span class="p">}</span>
-<span class="ln">19</span>
-<span class="ln">20</span>    <span class="k">static</span> <span class="kt">void</span> <span class="nf">instantiate</span><span class="p">()</span> <span class="p">{</span> <span class="n">publish</span><span class="p">();</span> <span class="p">}</span>
-<span class="ln">21</span>
-<span class="ln">22</span>    <span class="k">static</span> <span class="n">status_t</span> <span class="nf">shutdown</span><span class="p">()</span> <span class="p">{</span> <span class="k">return</span> <span class="n">NO_ERROR</span><span class="p">;</span> <span class="p">}</span>
-<span class="ln">23</span>
-<span class="ln">24</span><span class="k">private</span><span class="o">:</span>
-<span class="ln">25</span>    <span class="k">static</span> <span class="kt">void</span> <span class="n">joinThreadPool</span><span class="p">()</span> <span class="p">{</span>
-<span class="ln">26</span>        <span class="n">sp</span><span class="o">&lt;</span><span class="n">ProcessState</span><span class="o">&gt;</span> <span class="n">ps</span><span class="p">(</span><span class="n">ProcessState</span><span class="o">::</span><span class="n">self</span><span class="p">());</span>
-<span class="ln">27</span>        <span class="n">ps</span><span class="o">-&gt;</span><span class="n">startThreadPool</span><span class="p">();</span>
-<span class="ln">28</span>        <span class="n">ps</span><span class="o">-&gt;</span><span class="n">giveThreadPoolName</span><span class="p">();</span>
-<span class="ln">29</span>        <span class="n">IPCThreadState</span><span class="o">::</span><span class="n">self</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">joinThreadPool</span><span class="p">();</span>
-<span class="ln">30</span>    <span class="p">}</span>
-<span class="ln">31</span><span class="p">};</span>
-</code></pre></div><p>用 CameraService替换模版之后：</p>
-<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="k">class</span> <span class="nc">BinderService</span>
-<span class="ln"> 2</span><span class="p">{</span>
-<span class="ln"> 3</span><span class="k">public</span><span class="o">:</span>
-<span class="ln"> 4</span>    <span class="k">static</span> <span class="n">status_t</span> <span class="n">publish</span><span class="p">(</span><span class="kt">bool</span> <span class="n">allowIsolated</span> <span class="o">=</span> <span class="nb">false</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln"> 5</span>        <span class="n">sp</span><span class="o">&lt;</span><span class="n">IServiceManager</span><span class="o">&gt;</span> <span class="n">sm</span><span class="p">(</span><span class="n">defaultServiceManager</span><span class="p">());</span>
-<span class="ln"> 6</span>        <span class="k">return</span> <span class="n">sm</span><span class="o">-&gt;</span><span class="n">addService</span><span class="p">(</span>
-<span class="ln"> 7</span>                <span class="n">String16</span><span class="p">(</span><span class="n">CameraService</span><span class="o">::</span><span class="n">getServiceName</span><span class="p">()),</span>
-<span class="ln"> 8</span>                <span class="k">new</span> <span class="n">CameraService</span><span class="p">(),</span> <span class="n">allowIsolated</span><span class="p">);</span>
-<span class="ln"> 9</span>    <span class="p">}</span>
-<span class="ln">10</span> 
-<span class="ln">11</span>    <span class="k">static</span> <span class="kt">void</span> <span class="nf">instantiate</span><span class="p">()</span> <span class="p">{</span> <span class="n">publish</span><span class="p">();</span> <span class="p">}</span>
-<span class="ln">12</span><span class="p">};</span>
-</code></pre></div><p>这样，通过IServiceManager#addService()服务 “media.camera”就被添加到了系统中。</p>
-<h3 id="323启动cameraservice服务">3.2.3启动CameraService服务</h3>
-<p>因为上述system_server会创建其他服务，而这个CameraService就在其他服务中。这里截取小段，可知会真实启动CameraService。</p>
+</code></pre></div><h4 id="3232启动cameraserviceproxy服务">3.2.3.2启动CameraServiceProxy服务</h4>
+<p>因为上述system_server会创建其他服务，而这个CameraService就在其他服务中。这里截取小段，可知会真实启动CameraServiceProxy，对应的binder是&quot;media.camera.proxy&quot;</p>
 <div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//framworks/base/services/java/com/android/server/SystemServer.java#
 </span><span class="ln">2</span><span class="c1"></span><span class="k">if</span> <span class="o">(!</span><span class="n">disableCameraService</span><span class="o">)</span> <span class="o">{</span>
 <span class="ln">3</span>    <span class="n">t</span><span class="o">.</span><span class="na">traceBegin</span><span class="o">(</span><span class="s">&#34;StartCameraServiceProxy&#34;</span><span class="o">);</span>
 <span class="ln">4</span>    <span class="n">mSystemServiceManager</span><span class="o">.</span><span class="na">startService</span><span class="o">(</span><span class="n">CameraServiceProxy</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
 <span class="ln">5</span>    <span class="n">t</span><span class="o">.</span><span class="na">traceEnd</span><span class="o">();</span>
 <span class="ln">6</span><span class="o">}</span>
-</code></pre></div><h3 id="324camera服务的使用">3.2.4Camera服务的使用</h3>
-<p>CameraManager类获取“media.camera”服务，通过它和摄像头打交道，通过AIDL将App的相机进程和CameraService进程互相通信。</p>
+</code></pre></div><h3 id="324cameraservice服务的aidl使用">3.2.4CameraService服务的AIDL使用</h3>
+<p>CameraManager类获取“media.camera”服务，通过它和摄像头打交道，通过AIDL将App的相机进程和CameraService进程互相通信。这里的getService，就是获取CameraService进程，因为之前的getname已经将&quot;media.camera&quot;和CameraService绑定，那么这里就可以直接调用到CameraService。App相机进程在servicemanager中查询&quot;media.camera&quot;这个标记binder的服务，查询之后和CameraService建立Binder通信，通过App进程中jar包Api，对应调用到CameraService中相应的实现。</p>
 <div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//以camera2为例
 </span><span class="ln"> 2</span><span class="c1">//frameworks/base/core/java/android/hardware/camera2/CameraManager.java
 </span><span class="ln"> 3</span><span class="c1"></span><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">CAMERA_SERVICE_BINDER_NAME</span> <span class="o">=</span> <span class="s">&#34;media.camera&#34;</span><span class="o">;</span>
@@ -2476,11 +2560,10 @@
 <span class="ln">31</span>        <span class="c1">// Camera service is now down, leave mCameraService as null
 </span><span class="ln">32</span><span class="c1"></span>    <span class="o">}</span>
 <span class="ln">33</span><span class="o">}</span>
-</code></pre></div><p>这里的getService，就是获取CameraService进程，因为之前的getname已经将&quot;media.camera&quot;和CameraService绑定，那么这里就可以直接调用到CameraService。</p>
-<h2 id="33cameraservicedump">3.3CameraService::dump</h2>
+</code></pre></div><h2 id="33cameraservicedump">3.3CameraService::dump</h2>
 <p>最终调用到CameraService这个动态库中，实际上是调用到CameraService.cpp</p>
 <p>这里主要dump几点Service global info、EventLog、Camera device dynamic info、CameraProviderManager、GlobalVendorTagDescriptor、CameraTraces，这里的6项跟上述3.1的打印信息一一对应。</p>
-<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">  1</span><span class="c1">//framework/av/services/camera/libcameraservice/CameraService.cpp
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">  1</span><span class="c1">//frameworks/av/services/camera/libcameraservice/CameraService.cpp
 </span><span class="ln">  2</span><span class="c1"></span><span class="n">status_t</span> <span class="n">CameraService</span><span class="o">::</span><span class="n">dump</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="k">const</span> <span class="n">Vector</span><span class="o">&lt;</span><span class="n">String16</span><span class="o">&gt;&amp;</span> <span class="n">args</span><span class="p">)</span> <span class="p">{</span>
 <span class="ln">  3</span>    <span class="n">ATRACE_CALL</span><span class="p">();</span>
 <span class="ln">  4</span>
@@ -2637,7 +2720,8 @@ vdprintf, vsprintf, vsnprintf - formatted output conversion</p>
 <h1 id="总结">总结</h1>
 <p>总的来说，就是通过简单的dumpsys进程的api调用，深入查看dumpsys media.camera背后做的事，里面其实涉及到Binder通信，管道，poll机制，主要的流程比较能够理解。本文是笔者用api和源码的角度去熟悉media.camera的过程，因为dumpsys里面的服务比较多，这里只是以一个Camera为例子，来说明整个dumpsys过程。</p>
 <h1 id="下载">下载</h1>
-<p>本文源码<a href="https://github.com/YangYang48/project/tree/master/dumpsys">点击这里</a></p>
+<p>本文dumpsys的源码<a href="https://github.com/YangYang48/project/tree/master/dumpsys">点击这里</a></p>
+<p>本文CameraService启动的源码<a href="https://github.com/YangYang48/project/tree/master/CameraService">点击这里</a></p>
 <p>本文以手机红米K30为例的dumpsys的数据<a href="https://github.com/YangYang48/project/tree/master/cameradump_redmiK30">点击这里</a></p>
 <p>本文以手机空米K30为例的dumpsys的proto数据<a href="https://github.com/YangYang48/project/tree/master/activity_dump_proto">点击这里</a></p>
 <h1 id="参考">参考</h1>
@@ -2653,6 +2737,8 @@ vdprintf, vsprintf, vsnprintf - formatted output conversion</p>
 <p><a href="https://blog.csdn.net/qq_26498311/article/details/117128520">[10] 伟子时代, Android系统启动流程, 2021.</a></p>
 <p><a href="https://blog.csdn.net/weixin_42463482/article/details/118880978">[11] 菜鸡UP, Android Camera之CameraServer的启动过程, 2022.</a></p>
 <p><a href="https://blog.csdn.net/qq_37858386/article/details/121416871">[12] 海月汐辰, Android mk文件 LOCAL_INIT_RC 将RC文件编译到/system/etc/init或vendor/etc/init，system\core\init\init.cpp解析这些rc, 2022.</a></p>
+<p><a href="https://blog.csdn.net/feigebangni/article/details/50300063">[13] astro-yang, init.rc语法详解, 2015.</a></p>
+<p><a href="https://blog.csdn.net/weixin_44471948/article/details/120846877">[14] BBOrange丶, pipe()函数详解, 2021.</a></p>
               
             </div>
           </div>
