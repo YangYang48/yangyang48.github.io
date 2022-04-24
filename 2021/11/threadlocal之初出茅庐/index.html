@@ -274,7 +274,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">1600 Words|Read in about 8 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">1800 Words|Read in about 9 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -1720,6 +1720,123 @@
 </div>
 
 <p>这边的逻辑其实只有在k == key的时候才做清理，其他k != key，k == null的时候继续下移一个，直到遇到null Entry退出。</p>
+<h1 id="补充">补充</h1>
+<p>关于ThreadLocal匿名方式获取value</p>
+<p>通常来说，如果没有初始化一个ThreadLocal的时候没有set过类型，直接获取，返回的是一个空的value，如下图所示。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_31.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_31.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><strong>但是通过匿名函数的写法，复写initialValue方法，可以使得value不为null。</strong></p>
+<p>以Choreographer.java源码中的实例说明</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/base/core/java/android/view/Choreographer.java#getInstance
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">static</span> <span class="n">Choreographer</span> <span class="nf">getInstance</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 3</span>    <span class="k">return</span> <span class="n">sThreadInstance</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+<span class="ln"> 4</span><span class="o">}</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span><span class="c1">// Thread local storage for the choreographer.
+</span><span class="ln"> 7</span><span class="c1"></span><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">ThreadLocal</span><span class="o">&lt;</span><span class="n">Choreographer</span><span class="o">&gt;</span> <span class="n">sThreadInstance</span> <span class="o">=</span>
+<span class="ln"> 8</span>    <span class="k">new</span> <span class="n">ThreadLocal</span><span class="o">&lt;</span><span class="n">Choreographer</span><span class="o">&gt;()</span> <span class="o">{</span>
+<span class="ln"> 9</span>    <span class="nd">@Override</span>
+<span class="ln">10</span>    <span class="kd">protected</span> <span class="n">Choreographer</span> <span class="nf">initialValue</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln">11</span>        <span class="n">Looper</span> <span class="n">looper</span> <span class="o">=</span> <span class="n">Looper</span><span class="o">.</span><span class="na">myLooper</span><span class="o">();</span>
+<span class="ln">12</span>        <span class="k">if</span> <span class="o">(</span><span class="n">looper</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">13</span>            <span class="k">throw</span> <span class="k">new</span> <span class="n">IllegalStateException</span><span class="o">(</span><span class="s">&#34;The current thread must have a looper!&#34;</span><span class="o">);</span>
+<span class="ln">14</span>        <span class="o">}</span>
+<span class="ln">15</span>        <span class="n">Choreographer</span> <span class="n">choreographer</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Choreographer</span><span class="o">(</span><span class="n">looper</span><span class="o">,</span> <span class="n">VSYNC_SOURCE_APP</span><span class="o">);</span>
+<span class="ln">16</span>        <span class="k">if</span> <span class="o">(</span><span class="n">looper</span> <span class="o">==</span> <span class="n">Looper</span><span class="o">.</span><span class="na">getMainLooper</span><span class="o">())</span> <span class="o">{</span>
+<span class="ln">17</span>            <span class="n">mMainInstance</span> <span class="o">=</span> <span class="n">choreographer</span><span class="o">;</span>
+<span class="ln">18</span>        <span class="o">}</span>
+<span class="ln">19</span>        <span class="k">return</span> <span class="n">choreographer</span><span class="o">;</span>
+<span class="ln">20</span>    <span class="o">}</span>
+<span class="ln">21</span><span class="o">};</span>
+</code></pre></div><p>其中在get过程中，通过上文的分析可知，匿名内部类复写setInitialValue。在匿名内部类中定义一个value，那么实际的value就不为null，如下图所示。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//返回当前线程的 this 局部变量map保存的线程副本值
+</span><span class="ln"> 2</span><span class="c1">//如果没有找到该线程副本，返回线程本地的当前线程值
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kd">public</span> <span class="n">T</span> <span class="nf">get</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 4</span>    <span class="n">Thread</span> <span class="n">t</span> <span class="o">=</span> <span class="n">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">();</span>
+<span class="ln"> 5</span>    <span class="n">ThreadLocalMap</span> <span class="n">map</span> <span class="o">=</span> <span class="n">getMap</span><span class="o">(</span><span class="n">t</span><span class="o">);</span>
+<span class="ln"> 6</span>    <span class="k">if</span> <span class="o">(</span><span class="n">map</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 7</span>        <span class="n">ThreadLocalMap</span><span class="o">.</span><span class="na">Entry</span> <span class="n">e</span> <span class="o">=</span> <span class="n">map</span><span class="o">.</span><span class="na">getEntry</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+<span class="ln"> 8</span>        <span class="k">if</span> <span class="o">(</span><span class="n">e</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 9</span>            <span class="nd">@SuppressWarnings</span><span class="o">(</span><span class="s">&#34;unchecked&#34;</span><span class="o">)</span>
+<span class="ln">10</span>            <span class="n">T</span> <span class="n">result</span> <span class="o">=</span> <span class="o">(</span><span class="n">T</span><span class="o">)</span><span class="n">e</span><span class="o">.</span><span class="na">value</span><span class="o">;</span>
+<span class="ln">11</span>            <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
+<span class="ln">12</span>        <span class="o">}</span>
+<span class="ln">13</span>    <span class="o">}</span>
+<span class="ln">14</span>    <span class="k">return</span> <span class="n">setInitialValue</span><span class="o">();</span>
+<span class="ln">15</span><span class="o">}</span>
+<span class="ln">16</span>
+<span class="ln">17</span><span class="c1">//初始化，这个方法会覆写原来的set
+</span><span class="ln">18</span><span class="c1"></span><span class="kd">private</span> <span class="n">T</span> <span class="nf">setInitialValue</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln">19</span>    <span class="n">T</span> <span class="n">value</span> <span class="o">=</span> <span class="n">initialValue</span><span class="o">();</span>
+<span class="ln">20</span>    <span class="n">Thread</span> <span class="n">t</span> <span class="o">=</span> <span class="n">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">();</span>
+<span class="ln">21</span>    <span class="n">ThreadLocalMap</span> <span class="n">map</span> <span class="o">=</span> <span class="n">getMap</span><span class="o">(</span><span class="n">t</span><span class="o">);</span>
+<span class="ln">22</span>    <span class="k">if</span> <span class="o">(</span><span class="n">map</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
+<span class="ln">23</span>        <span class="n">map</span><span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="n">value</span><span class="o">);</span>
+<span class="ln">24</span>    <span class="k">else</span>
+<span class="ln">25</span>        <span class="n">createMap</span><span class="o">(</span><span class="n">t</span><span class="o">,</span> <span class="n">value</span><span class="o">);</span>
+<span class="ln">26</span>    <span class="k">return</span> <span class="n">value</span><span class="o">;</span>
+<span class="ln">27</span><span class="o">}</span>
+<span class="ln">28</span>
+<span class="ln">29</span><span class="c1">//每个线程只有一次，跟remove配套使用，可供子类覆写，这里的匿名内部类复写了
+</span><span class="ln">30</span><span class="c1"></span><span class="kd">protected</span> <span class="n">T</span> <span class="nf">initialValue</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln">31</span>    <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">32</span><span class="o">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ThreadLocal/threadlocal_32.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ThreadLocal/threadlocal_32.png" >
+  
+    </a>
+  
+  
+</div>
+
 <h1 id="总结">总结</h1>
 <p>整体的Threadlocal源码解析分析完了，主要是更加直观清晰的了解到ThreadLocal的组成部分和数据结构。接下来，会有Threadlocal的具体用途，尽请期待。</p>
 <h1 id="猜你喜欢">猜你喜欢</h1>
