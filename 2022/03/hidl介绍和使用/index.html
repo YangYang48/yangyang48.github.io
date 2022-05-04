@@ -274,561 +274,964 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">900 Words|Read in about 4 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">1600 Words|Read in about 8 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
               <p>AIDL并不是唯一的Binder的应用，除了AIDL还有一个经常在HAL层代码中出现的HIDL。本文就是通过HIDL展开描述，主要对于AIDL的介绍和使用。</p>
 <p>一个同样基于Binder通信的一个架构</p>
-<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220320113753024.png" alt="image-20220320113753024"></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/hidl/hidl_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/hidl/hidl_1.png" >
+  
+    </a>
+  
+  
+</div>
+
 <h1 id="1hidl">1HIDL</h1>
 <h2 id="11hidl介绍">1.1HIDL介绍</h2>
-<h2 id="12hidl讲解">1.2HIDL讲解</h2>
-<h2 id="13aidl和hidl区别">1.3AIDL和HIDL区别</h2>
-<h1 id="3-三种binder介绍以及之间的联系">3 三种Binder介绍以及之间的联系</h1>
-<h3 id="31-devbinder">3.1 dev/binder</h3>
-<p>这个是我们最熟悉的Binder，App开发中，ActivityManagerService用的都是这个，Java继承Binder，C++中继承Bbbinder，然后通过servicemanager进程注册实名Binder，然后通过已经创建好的Binder接口传递匿名Binder对象，拿到BinderProxy或者BpBinder以后，就可以Binder通信了。</p>
-<h3 id="32-devvndbinder">3.2 dev/vndbinder</h3>
-<p>其实dev/vndbinde和dev/binder使用方式基本一样而且是共用一套Binder SDK，也是Java继承Binder，C++中继承Bbbinder，但是通过vndservicemanager进程注册实名Binder，然后通过已经创建好的Binder接口传递匿名Binder对象，拿到BinderProxy或者BpBinder以后，就可以Binder通信了。如何在使用同一套Binder SDK的代码，最后访问的设备节点变成dev/vndbinder，servicemanager变成vndservicemanager。</p>
-<p>其实和简单，只要在你这个进程初始化的时候执行下面这个代码</p>
-<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="ln">1</span><span class="nx">ProcessState</span><span class="p">::</span><span class="nf">initWithDriver</span><span class="p">(</span><span class="s">&#34;/dev/vndbinder&#34;</span><span class="p">);</span>
-</code></pre></div><h5 id="devbinder和devvndbinder无法在一个进程中同时使用">dev/binder和dev/vndbinder无法在一个进程中同时使用</h5>
-<p>细心的读者肯定发现上面的图中三类进程的任意一个进程无法同时使用dev/binder和dev/vndbinder，这一点不单是android官方约定，也是目前android binder sdk的限制，因为两者都是共用Binder SDK，所以只能指定一个设备节点，要么dev/binder，要么dev/vndbinder</p>
-<h3 id="33-devhwbinder">3.3 dev/hwbinder</h3>
+<p>HIDL 是用于指定 HAL 与其用户之间接口的一个接口描述语言（Interface Description Language），它允许将指定的类型与函数调用收集到接口（Interface）和包（Package）中。更广泛地说，HIDL 是一个可以让那些独立编译的代码库（Libraries）之间进行通信的系统。 HIDL 实际上是用于进行进程间通信（Inter-process Communication，IPC）的。进程间的通信可以称为 Binder 化（Binderized）。对于必须连接到进程的库，也可以使用 passthough 模式（但在Java中不支持）。 HIDL 将指定的数据结构与方法签名组织到接口中，这些接口又会被收集到包中以供使用。它的语法与 C++、JAVA 是类似的，不过关键字集合不尽相同。其注释风格与 JAVA 是一致的。</p>
+<h2 id="12aidl和hidl区别">1.2AIDL和HIDL区别</h2>
+<p>三种Binder介绍以及之间的联系</p>
+<p>在Android 8.0开始，Android引入了Treble的机制，为了方便Android系统的快速移植、升级，提升系统稳定性，Binder机制被拓展成了&quot;/dev/binder&quot;, &ldquo;/dev/hwbinder&rdquo;,&quot;/dev/vndbinder&quot;。最明显的就是binder库发生变化，Binder和VndBinder共同使用libbinder， HwBinder使用libhwbinder。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">libbinder</th>
+<th style="text-align:center">libhwbinder</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">前缀/frameworks/native/libs/binder</td>
+<td style="text-align:center">前缀/system/libhwbinder</td>
+</tr>
+<tr>
+<td style="text-align:center">Binder.cpp</td>
+<td style="text-align:center">Binder.cpp</td>
+</tr>
+<tr>
+<td style="text-align:center">BpBinder.cpp</td>
+<td style="text-align:center">BpHwBinder.cpp</td>
+</tr>
+<tr>
+<td style="text-align:center">IIterface.cpp</td>
+<td style="text-align:center">IIterface.cpp</td>
+</tr>
+<tr>
+<td style="text-align:center">IPCThreadState.cpp</td>
+<td style="text-align:center">IPCThreadState.cpp</td>
+</tr>
+<tr>
+<td style="text-align:center">ProcessState.cpp</td>
+<td style="text-align:center">ProcessState.cpp</td>
+</tr>
+<tr>
+<td style="text-align:center">Parcel.cpp</td>
+<td style="text-align:center">Parcel.cpp</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>前缀+=/include/binder</strong></td>
+<td style="text-align:center"><strong>前缀+=/include/hwbinder</strong></td>
+</tr>
+<tr>
+<td style="text-align:center">Binder.h</td>
+<td style="text-align:center">Binder.h</td>
+</tr>
+<tr>
+<td style="text-align:center">BpBinder.h</td>
+<td style="text-align:center">BpHwBinder.h</td>
+</tr>
+<tr>
+<td style="text-align:center">IBinder.h</td>
+<td style="text-align:center">IBinder.h</td>
+</tr>
+<tr>
+<td style="text-align:center">IIterface.h</td>
+<td style="text-align:center">IIterface.h</td>
+</tr>
+<tr>
+<td style="text-align:center">IPCThreadState.h</td>
+<td style="text-align:center">IPCThreadState.h</td>
+</tr>
+<tr>
+<td style="text-align:center">ProcessState.h</td>
+<td style="text-align:center">ProcessState.h</td>
+</tr>
+<tr>
+<td style="text-align:center">Parcel.h</td>
+<td style="text-align:center">Parcel.h</td>
+</tr>
+</tbody>
+</table>
+<p>另外servicemanager的差异如下</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">servicemanager</th>
+<th style="text-align:center">vndservicemanager</th>
+<th style="text-align:center">hwservicemanager</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">前缀/frameworks/native/cmds/servicemanager</td>
+<td style="text-align:center">见servicemanager前缀</td>
+<td style="text-align:center">前缀/system/hwservicemanager</td>
+</tr>
+<tr>
+<td style="text-align:center">servicemanager.rc</td>
+<td style="text-align:center">vndservicemanager.rc</td>
+<td style="text-align:center">hwservicemanager.rc</td>
+</tr>
+<tr>
+<td style="text-align:center">service_manager.c</td>
+<td style="text-align:center">service_manager.c</td>
+<td style="text-align:center">ServiceManager.cpp</td>
+</tr>
+<tr>
+<td style="text-align:center">binder.c</td>
+<td style="text-align:center">binder.c</td>
+<td style="text-align:center">HidlService.cpp</td>
+</tr>
+<tr>
+<td style="text-align:center">binder.h</td>
+<td style="text-align:center">binder.h</td>
+<td style="text-align:center">HidlService.h</td>
+</tr>
+</tbody>
+</table>
+<h3 id="121-devbinder">1.2.1 dev/binder</h3>
+<p>这个是我们最熟悉的Binder，App开发中，ActivityManagerService用的都是这个，Java继承BpBinder，C++中继承BBinder，然后通过servicemanager进程注册实名Binder，然后通过已经创建好的Binder接口传递匿名Binder对象，拿到BinderProxy或者BpBinder以后，就可以Binder通信了。</p>
+<h3 id="122-devvndbinder">1.2.2 dev/vndbinder</h3>
+<p>其实dev/vndbinde和dev/binder使用方式基本一样而且是共用一套Binder SDK，也是Java继承Bpinder，C++中继承BBinder，但是通过vndservicemanager进程注册实名Binder，然后通过已经创建好的Binder接口传递匿名Binder对象，拿到BinderProxy或者BpBinder以后，就可以Binder通信了。如何在使用同一套Binder SDK的代码，最后访问的设备节点变成dev/vndbinder，servicemanager变成vndservicemanager。</p>
+<p>其实和简单，知识进程初始化的时候执行下面这个代码</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="n">ProcessState</span><span class="o">::</span><span class="n">initWithDriver</span><span class="p">(</span><span class="s">&#34;/dev/vndbinder&#34;</span><span class="p">);</span>
+</code></pre></div><p>注：<strong>dev/binder和dev/vndbinder无法在一个进程中同时使用</strong></p>
+<h3 id="123-devhwbinder">1.2.3 dev/hwbinder</h3>
 <p>那么dev/hwbinder是如何解决与dev/binder或dev/vndbinder之间的共存问题？有人肯定想到了，很简单，我们把所有Binder SDK复制一套新的Hw Binder SDK，改名成dev/hwbinder，HwBinder，HwBbinder，hwservicemanager，HwProcessState，这样子不就可以和dev/binder或dev/vndbinder共存了嘛？其实android团队就会类似这样子干的。</p>
-<p>但是他们想hwbinder是为了规范hal层，毕竟hal层是操作硬件的，所以他们不应该提供这么自由，这么麻烦的接口定义。
-他们的目标有两个：
-1.不能那么自由，强制所有供应商按照android官方定义的hal接口来实现
-2.不能增加供应商开发人员的学习成本，学习一套复杂的Hw Binder SDK
-为了达成上述的两个目标，android团队想出了HIDL这个方案。</p>
-<p>AIDL在Server端串联Interface和Binder或者Bbbinder，在Client端串联Interface和BinderProxy或者Bpbinder
-HIDL则是串联Interface-&gt;Hw Binder SDK-&gt;dev/hwbinder</p>
+<p>他们的目标有两个：</p>
+<p>1.不能那么自由，强制所有供应商按照android官方定义的hal接口来实现
+2.不能增加供应商开发人员的学习成本，学习一套复杂的Hw Binder SDK</p>
+<p>为了达成上述的两个目标，android团队想出了HIDL这个方案。</p>
+<h3 id="124-总结">1.2.4 总结</h3>
+<p>Binder和VndBinder 共用一套libbinder、servicemanager的代码，使用AIDL接口，两者不能共存。</p>
+<p>HwBinder采用了单独的libhwbinder、hwservicemanager的代码，单独管理，使用HIDL接口。</p>
+<p>三者之间互不干扰，在方便系统升级的同时，又提升了系统的安全和稳定性。</p>
 <h1 id="2hidl实战">2HIDL实战</h1>
 <h2 id="21定义接口文件">2.1定义接口文件</h2>
-<p>进入<code>hardware/interfaces/</code>目录下建立新的接口文件．</p>
-<p>首先建立对应的文件夹：</p>
-<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash"><span class="ln">1</span>mkdir -p hardware/interfaces/xiaoqing/1.0/defaul
-</code></pre></div><p>接着创建接口描述文件IXiaoqing.hal：</p>
-<div class="highlight"><pre class="chroma"><code class="language-groovy" data-lang="groovy"><span class="ln">1</span><span class="n">vim</span> <span class="n">hardware</span><span class="s">/interfaces/</span><span class="n">xiaoqing</span><span class="s">/1.0/</span><span class="n">IXiaoqing</span><span class="o">.</span><span class="na">hal</span>
-</code></pre></div><p>IXiaoqing.hal内容：</p>
-<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="ln"> 1</span><span class="kn">package</span> <span class="nx">android</span><span class="p">.</span><span class="nx">hardware</span><span class="p">.</span><span class="nx">xiaoqing</span><span class="err">@</span><span class="mf">1.0</span><span class="p">;</span>
-<span class="ln"> 2</span>
-<span class="ln"> 3</span>
-<span class="ln"> 4</span>
-<span class="ln"> 5</span> 
-<span class="ln"> 6</span>
-<span class="ln"> 7</span>
-<span class="ln"> 8</span>
-<span class="ln"> 9</span><span class="kd">interface</span> <span class="nx">IXiaoqing</span> <span class="p">{</span>
-<span class="ln">10</span>
-<span class="ln">11</span>
-<span class="ln">12</span>
-<span class="ln">13</span>    <span class="nf">getHelloString</span><span class="p">(</span><span class="kt">string</span> <span class="nx">name</span><span class="p">)</span> <span class="nf">generates</span> <span class="p">(</span><span class="kt">string</span> <span class="nx">result</span><span class="p">);</span>
-<span class="ln">14</span>
-<span class="ln">15</span>
-<span class="ln">16</span>
-<span class="ln">17</span><span class="p">};</span>
-</code></pre></div><h2 id="22使用工具根据接口文件生成代码">2.2使用工具，根据接口文件生成代码</h2>
-<p>hidl-gen工具</p>
-<p>Google提供了一些工具来帮助制作HIDL的框架：</p>
-<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="ln">1</span><span class="nx">make</span> <span class="nx">hidl</span><span class="o">-</span><span class="nx">gen</span> 
-</code></pre></div><p>源码中编译生成hidl-gen.<code>注意：编译前需要执行全编译的环境变量加载</code></p>
-<p>使用hidl-gen工具生成代码</p>
-<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash"><span class="ln"> 1</span>$ <span class="nv">PACKAGE</span><span class="o">=</span>android.hardware.xiaoqing@1.0
-<span class="ln"> 2</span>
-<span class="ln"> 3</span>
-<span class="ln"> 4</span>
-<span class="ln"> 5</span>$ <span class="nv">LOC</span><span class="o">=</span>hardware/interfaces/xiaoqing/1.0/default/
-<span class="ln"> 6</span>
-<span class="ln"> 7</span>
-<span class="ln"> 8</span>
-<span class="ln"> 9</span>$ hidl-gen -o <span class="nv">$LOC</span> -Lc++-impl -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport <span class="nv">$PACKAGE</span>
-<span class="ln">10</span>
-<span class="ln">11</span>
-<span class="ln">12</span>
-<span class="ln">13</span>$ hidl-gen -o <span class="nv">$LOC</span> -Landroidbp-impl -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport <span class="nv">$PACKAGE</span>
-</code></pre></div><p>执行完后，会生成三个文件：</p>
-<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220327224653397.png" alt="image-20220327224653397"></p>
-<h2 id="23完善接口函数">2.3完善接口函数</h2>
-<p>xiaoqing.h</p>
-<div class="highlight"><pre class="chroma"><code class="language-cpp" data-lang="cpp"><span class="ln">  1</span><span class="cp">#ifndef ANDROID_HARDWARE_XIAOQING_V1_0_XIAOQING_H
-</span><span class="ln">  2</span><span class="cp"></span>
-<span class="ln">  3</span>
-<span class="ln">  4</span>
-<span class="ln">  5</span><span class="cp">#define ANDROID_HARDWARE_XIAOQING_V1_0_XIAOQING_H
-</span><span class="ln">  6</span><span class="cp"></span>
-<span class="ln">  7</span>
-<span class="ln">  8</span>
-<span class="ln">  9</span> 
-<span class="ln"> 10</span>
-<span class="ln"> 11</span>
-<span class="ln"> 12</span>
-<span class="ln"> 13</span><span class="cp">#include</span> <span class="cpf">&lt;android/hardware/xiaoqing/1.0/IXiaoqing.h&gt;</span><span class="cp">
-</span><span class="ln"> 14</span><span class="cp"></span>
-<span class="ln"> 15</span>
-<span class="ln"> 16</span>
-<span class="ln"> 17</span><span class="cp">#include</span> <span class="cpf">&lt;hidl/MQDescriptor.h&gt;</span><span class="cp">
-</span><span class="ln"> 18</span><span class="cp"></span>
-<span class="ln"> 19</span>
-<span class="ln"> 20</span>
-<span class="ln"> 21</span><span class="cp">#include</span> <span class="cpf">&lt;hidl/Status.h&gt;</span><span class="cp">
-</span><span class="ln"> 22</span><span class="cp"></span>
-<span class="ln"> 23</span>
-<span class="ln"> 24</span>
-<span class="ln"> 25</span> 
-<span class="ln"> 26</span>
-<span class="ln"> 27</span>
-<span class="ln"> 28</span>
-<span class="ln"> 29</span><span class="k">namespace</span> <span class="n">android</span> <span class="p">{</span>
-<span class="ln"> 30</span>
-<span class="ln"> 31</span>
-<span class="ln"> 32</span>
-<span class="ln"> 33</span><span class="k">namespace</span> <span class="n">hardware</span> <span class="p">{</span>
-<span class="ln"> 34</span>
-<span class="ln"> 35</span>
-<span class="ln"> 36</span>
-<span class="ln"> 37</span><span class="k">namespace</span> <span class="n">xiaoqing</span> <span class="p">{</span>
-<span class="ln"> 38</span>
-<span class="ln"> 39</span>
-<span class="ln"> 40</span>
-<span class="ln"> 41</span><span class="k">namespace</span> <span class="n">V1_0</span> <span class="p">{</span>
-<span class="ln"> 42</span>
-<span class="ln"> 43</span>
-<span class="ln"> 44</span>
-<span class="ln"> 45</span><span class="k">namespace</span> <span class="n">implementation</span> <span class="p">{</span>
-<span class="ln"> 46</span>
-<span class="ln"> 47</span>
-<span class="ln"> 48</span>
-<span class="ln"> 49</span> 
-<span class="ln"> 50</span>
-<span class="ln"> 51</span>
-<span class="ln"> 52</span>
-<span class="ln"> 53</span><span class="k">using</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">hidl_array</span><span class="p">;</span>
-<span class="ln"> 54</span>
-<span class="ln"> 55</span>
-<span class="ln"> 56</span>
-<span class="ln"> 57</span><span class="k">using</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">hidl_memory</span><span class="p">;</span>
-<span class="ln"> 58</span>
-<span class="ln"> 59</span>
-<span class="ln"> 60</span>
-<span class="ln"> 61</span><span class="k">using</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">hidl_string</span><span class="p">;</span>
-<span class="ln"> 62</span>
-<span class="ln"> 63</span>
-<span class="ln"> 64</span>
-<span class="ln"> 65</span><span class="k">using</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">hidl_vec</span><span class="p">;</span>
-<span class="ln"> 66</span>
-<span class="ln"> 67</span>
-<span class="ln"> 68</span>
-<span class="ln"> 69</span><span class="k">using</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">Return</span><span class="p">;</span>
-<span class="ln"> 70</span>
-<span class="ln"> 71</span>
-<span class="ln"> 72</span>
-<span class="ln"> 73</span><span class="k">using</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">Void</span><span class="p">;</span>
-<span class="ln"> 74</span>
-<span class="ln"> 75</span>
-<span class="ln"> 76</span>
-<span class="ln"> 77</span><span class="k">using</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">sp</span><span class="p">;</span>
-<span class="ln"> 78</span>
-<span class="ln"> 79</span>
-<span class="ln"> 80</span>
-<span class="ln"> 81</span> 
-<span class="ln"> 82</span>
-<span class="ln"> 83</span>
-<span class="ln"> 84</span>
-<span class="ln"> 85</span><span class="k">struct</span> <span class="nc">Xiaoqing</span> <span class="o">:</span> <span class="k">public</span> <span class="n">IXiaoqing</span> <span class="p">{</span>
-<span class="ln"> 86</span>
-<span class="ln"> 87</span>
-<span class="ln"> 88</span>
-<span class="ln"> 89</span>    <span class="c1">// Methods from IXiaoqing follow.
-</span><span class="ln"> 90</span><span class="c1"></span>
-<span class="ln"> 91</span>
-<span class="ln"> 92</span>
-<span class="ln"> 93</span>    <span class="n">Return</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span> <span class="n">getHelloString</span><span class="p">(</span><span class="k">const</span> <span class="n">hidl_string</span><span class="o">&amp;</span> <span class="n">name</span><span class="p">,</span> <span class="n">getHelloString_cb</span> <span class="n">_hidl_cb</span><span class="p">)</span> <span class="k">override</span><span class="p">;</span>
-<span class="ln"> 94</span>
-<span class="ln"> 95</span>
-<span class="ln"> 96</span>
-<span class="ln"> 97</span> 
-<span class="ln"> 98</span>
-<span class="ln"> 99</span>
-<span class="ln">100</span>
-<span class="ln">101</span>    <span class="c1">// Methods from ::android::hidl::base::V1_0::IBase follow.
-</span><span class="ln">102</span><span class="c1"></span>
-<span class="ln">103</span>
-<span class="ln">104</span>
-<span class="ln">105</span> 
-<span class="ln">106</span>
-<span class="ln">107</span>
-<span class="ln">108</span>
-<span class="ln">109</span><span class="p">};</span>
-<span class="ln">110</span>
-<span class="ln">111</span>
-<span class="ln">112</span>
-<span class="ln">113</span> 
-<span class="ln">114</span>
-<span class="ln">115</span>
-<span class="ln">116</span>
-<span class="ln">117</span><span class="c1">// FIXME: most likely delete, this is only for passthrough implementations
-</span><span class="ln">118</span><span class="c1"></span>
-<span class="ln">119</span>
-<span class="ln">120</span>
-<span class="ln">121</span><span class="k">extern</span> <span class="s">&#34;C&#34;</span> <span class="n">IXiaoqing</span><span class="o">*</span> <span class="n">HIDL_FETCH_IXiaoqing</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span><span class="p">);</span>
-<span class="ln">122</span>
-<span class="ln">123</span>
-<span class="ln">124</span>
-<span class="ln">125</span> 
-<span class="ln">126</span>
-<span class="ln">127</span>
-<span class="ln">128</span>
-<span class="ln">129</span><span class="p">}</span>  <span class="c1">// namespace implementation
-</span><span class="ln">130</span><span class="c1"></span>
-<span class="ln">131</span>
-<span class="ln">132</span>
-<span class="ln">133</span><span class="p">}</span>  <span class="c1">// namespace V1_0
-</span><span class="ln">134</span><span class="c1"></span>
-<span class="ln">135</span>
-<span class="ln">136</span>
-<span class="ln">137</span><span class="p">}</span>  <span class="c1">// namespace xiaoqing
-</span><span class="ln">138</span><span class="c1"></span>
-<span class="ln">139</span>
-<span class="ln">140</span>
-<span class="ln">141</span><span class="p">}</span>  <span class="c1">// namespace hardware
-</span><span class="ln">142</span><span class="c1"></span>
-<span class="ln">143</span>
-<span class="ln">144</span>
-<span class="ln">145</span><span class="p">}</span>  <span class="c1">// namespace android
-</span><span class="ln">146</span><span class="c1"></span>
-<span class="ln">147</span>
-<span class="ln">148</span>
-<span class="ln">149</span> 
-<span class="ln">150</span>
-<span class="ln">151</span>
-<span class="ln">152</span>
-<span class="ln">153</span><span class="cp">#endif  </span><span class="c1">// ANDROID_HARDWARE_XIAOQING_V1_0_XIAOQING_H
-</span></code></pre></div><p>去掉注释．采用直通模式．</p>
-<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="ln">1</span><span class="o">//</span><span class="w"> </span><span class="n">extern</span><span class="w"> </span><span class="s2">&#34;C&#34;</span><span class="w"> </span><span class="n">IXiaoqing</span><span class="o">*</span><span class="w"> </span><span class="n">HIDL_FETCH_IXiaoqing</span><span class="p">(</span><span class="n">const</span><span class="w"> </span><span class="nb">char</span><span class="o">*</span><span class="w"> </span><span class="n">name</span><span class="p">);</span><span class="w">
-</span></code></pre></div><p>xiaoqing.cpp</p>
-<div class="highlight"><pre class="chroma"><code class="language-cpp" data-lang="cpp"><span class="ln">  1</span><span class="cp">#include</span> <span class="cpf">&#34;Xiaoqing.h&#34;</span><span class="cp">
-</span><span class="ln">  2</span><span class="cp"></span>
-<span class="ln">  3</span>
-<span class="ln">  4</span>
-<span class="ln">  5</span> 
-<span class="ln">  6</span>
-<span class="ln">  7</span>
-<span class="ln">  8</span>
-<span class="ln">  9</span><span class="k">namespace</span> <span class="n">android</span> <span class="p">{</span>
-<span class="ln"> 10</span>
-<span class="ln"> 11</span>
-<span class="ln"> 12</span>
-<span class="ln"> 13</span><span class="k">namespace</span> <span class="n">hardware</span> <span class="p">{</span>
-<span class="ln"> 14</span>
-<span class="ln"> 15</span>
-<span class="ln"> 16</span>
-<span class="ln"> 17</span><span class="k">namespace</span> <span class="n">xiaoqing</span> <span class="p">{</span>
-<span class="ln"> 18</span>
-<span class="ln"> 19</span>
-<span class="ln"> 20</span>
-<span class="ln"> 21</span><span class="k">namespace</span> <span class="n">V1_0</span> <span class="p">{</span>
-<span class="ln"> 22</span>
-<span class="ln"> 23</span>
-<span class="ln"> 24</span>
-<span class="ln"> 25</span><span class="k">namespace</span> <span class="n">implementation</span> <span class="p">{</span>
-<span class="ln"> 26</span>
-<span class="ln"> 27</span>
-<span class="ln"> 28</span>
-<span class="ln"> 29</span> 
-<span class="ln"> 30</span>
-<span class="ln"> 31</span>
-<span class="ln"> 32</span>
-<span class="ln"> 33</span><span class="c1">// Methods from IXiaoqing follow.
-</span><span class="ln"> 34</span><span class="c1"></span>
-<span class="ln"> 35</span>
-<span class="ln"> 36</span>
-<span class="ln"> 37</span><span class="n">Return</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span> <span class="n">Xiaoqing</span><span class="o">::</span><span class="n">getHelloString</span><span class="p">(</span><span class="k">const</span> <span class="n">hidl_string</span><span class="o">&amp;</span> <span class="n">name</span><span class="p">,</span> <span class="n">getHelloString_cb</span> <span class="n">_hidl_cb</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln"> 38</span>
-<span class="ln"> 39</span>
-<span class="ln"> 40</span>
-<span class="ln"> 41</span>    <span class="c1">// TODO implement
-</span><span class="ln"> 42</span><span class="c1"></span>
-<span class="ln"> 43</span>
-<span class="ln"> 44</span>
-<span class="ln"> 45</span>    <span class="k">return</span> <span class="nf">Void</span><span class="p">();</span>
-<span class="ln"> 46</span>
-<span class="ln"> 47</span>
-<span class="ln"> 48</span>
-<span class="ln"> 49</span><span class="p">}</span>
-<span class="ln"> 50</span>
-<span class="ln"> 51</span>
-<span class="ln"> 52</span>
-<span class="ln"> 53</span> 
-<span class="ln"> 54</span>
-<span class="ln"> 55</span>
-<span class="ln"> 56</span>
-<span class="ln"> 57</span> 
-<span class="ln"> 58</span>
-<span class="ln"> 59</span>
-<span class="ln"> 60</span>
-<span class="ln"> 61</span><span class="c1">// Methods from ::android::hidl::base::V1_0::IBase follow.
-</span><span class="ln"> 62</span><span class="c1"></span>
-<span class="ln"> 63</span>
-<span class="ln"> 64</span>
-<span class="ln"> 65</span> 
-<span class="ln"> 66</span>
-<span class="ln"> 67</span>
-<span class="ln"> 68</span>
-<span class="ln"> 69</span><span class="n">IXiaoqing</span><span class="o">*</span> <span class="nf">HIDL_FETCH_IXiaoqing</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="cm">/* name */</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln"> 70</span>
-<span class="ln"> 71</span>
-<span class="ln"> 72</span>
-<span class="ln"> 73</span>    <span class="k">return</span> <span class="k">new</span> <span class="n">Xiaoqing</span><span class="p">();</span>
-<span class="ln"> 74</span>
-<span class="ln"> 75</span>
-<span class="ln"> 76</span>
-<span class="ln"> 77</span><span class="p">}</span>
-<span class="ln"> 78</span>
-<span class="ln"> 79</span>
-<span class="ln"> 80</span>
-<span class="ln"> 81</span> 
-<span class="ln"> 82</span>
-<span class="ln"> 83</span>
-<span class="ln"> 84</span>
-<span class="ln"> 85</span><span class="p">}</span>  <span class="c1">// namespace implementation
-</span><span class="ln"> 86</span><span class="c1"></span>
-<span class="ln"> 87</span>
-<span class="ln"> 88</span>
-<span class="ln"> 89</span><span class="p">}</span>  <span class="c1">// namespace V1_0
-</span><span class="ln"> 90</span><span class="c1"></span>
-<span class="ln"> 91</span>
-<span class="ln"> 92</span>
-<span class="ln"> 93</span><span class="p">}</span>  <span class="c1">// namespace xiaoqing
-</span><span class="ln"> 94</span><span class="c1"></span>
-<span class="ln"> 95</span>
-<span class="ln"> 96</span>
-<span class="ln"> 97</span><span class="p">}</span>  <span class="c1">// namespace hardware
-</span><span class="ln"> 98</span><span class="c1"></span>
-<span class="ln"> 99</span>
-<span class="ln">100</span>
-<span class="ln">101</span><span class="p">}</span>  <span class="c1">// namespace android
-</span><span class="ln">102</span><span class="c1"></span>
-<span class="ln">103</span>
-<span class="ln">104</span>
-<span class="ln">105</span> 
-</code></pre></div><p>去掉注释．</p>
-<div class="highlight"><pre class="chroma"><code class="language-perl" data-lang="perl"><span class="ln">1</span><span class="sr">//</span><span class="n">IXiaoqing</span><span class="o">*</span> <span class="n">HIDL_FETCH_IXiaoqing</span><span class="p">(</span><span class="n">const</span> <span class="n">char</span><span class="o">*</span> <span class="sr">/* name */</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln">2</span>
+<p>进入<code>hardware/interfaces/</code>目录下建立新的接口文件</p>
+<p>首先建立对应的文件夹</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>mkdir -p hardware/interfaces/yangyang/1.0/defaul
+</code></pre></div><p>接着创建接口描述文件IYangyang.hal：</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>vi hardware/interfaces/yangyang/1.0/IYangyang.hal
+</code></pre></div><p>IYangyang.hal内容：</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="ln">1</span><span class="c1">//hardware/interfaces/yangyang/1.0/IYangyang.hal
+</span><span class="ln">2</span><span class="c1"></span><span class="kn">package</span> <span class="nx">android</span><span class="p">.</span><span class="nx">hardware</span><span class="p">.</span><span class="nx">yangyang</span><span class="err">@</span><span class="mf">1.0</span><span class="p">;</span>
 <span class="ln">3</span>
-<span class="ln">4</span>
-<span class="ln">5</span><span class="sr">//</span>    <span class="k">return</span> <span class="k">new</span> <span class="n">Xiaoqing</span><span class="p">();</span>
-<span class="ln">6</span>
-<span class="ln">7</span>
-<span class="ln">8</span>
-<span class="ln">9</span><span class="sr">//</span><span class="p">}</span>
+<span class="ln">4</span><span class="kd">interface</span> <span class="nx">IYangyang</span><span class="p">{</span>
+<span class="ln">5</span>    <span class="nf">helloWorld</span><span class="p">(</span><span class="kt">string</span> <span class="nx">name</span><span class="p">)</span> <span class="nf">generates</span> <span class="p">(</span><span class="kt">string</span> <span class="nx">result</span><span class="p">);</span>
+<span class="ln">6</span><span class="p">};</span>
+</code></pre></div><h2 id="22使用工具根据接口文件生成代码">2.2使用工具，根据接口文件生成代码</h2>
+<p>系统定义的所有的.hal接口，都是通过hidl-gen工具转换成对应的代码。hidl-gen源码路径：system/tools/hidl，是在ubuntu上可执行的二进制文件。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/hidl/hidl_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/hidl/hidl_2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<blockquote>
+<p>aosp的部分翻译</p>
+<p>hidl-gen
+完整的文档可以在这里找到：https://source.android.com/devices/architecture/hidl/</p>
+<p>hidl-gen 是 HIDL（HAL 接口设计语言）的编译器，它为 RPC 机制生成 C++ 和 Java 端点。该编译器使用的主要用户空间库可以在 system/libhidl 中找到。</p>
+<ol>
+<li>
+<p>构建
+m hidl-gen</p>
+</li>
+<li>
+<p>运行
+请注意，预期将由构建系统调用的 hidl-gen 选项在帮助菜单中标记为“内部”。</p>
+</li>
+</ol>
+<p>hidl-gen -h</p>
+<p>hidl-gen -o output -L c++-impl -r android.hardware:hardware/interfaces -r android.hidl:system/libhidl/transport <a href="mailto:android.hardware.nfc@1.0">android.hardware.nfc@1.0</a></p>
+<p>hidl-gen -o output -L c++-impl <a href="mailto:android.hardware.nfc@1.0">android.hardware.nfc@1.0</a>
+hidl-gen -o output -L vts <a href="mailto:android.hardware.nfc@1.0">android.hardware.nfc@1.0</a>
+hidl-gen -L hash <a href="mailto:android.hardware.nfc@1.0">android.hardware.nfc@1.0</a></p>
+<p>供应商项目的示例命令</p>
+<p>hidl-gen -L c++-impl -r vendor.foo:vendor/foo/interfaces <a href="mailto:vendor.foo.nfc@1.0">vendor.foo.nfc@1.0</a>
+有关如何生成 HIDL makefile（使用 -Landroidbp 选项）的示例，请参阅 update-makefiles-helper.sh 和 update-all-google-makefiles.sh。</p>
+<p>使用方法：hidl-gen -o output-path -L language (-r interface-root) fqname</p>
+<p>例子：</p>
+<div class="highlight"><pre class="chroma"><code class="language-groovy" data-lang="groovy"><span class="ln">1</span><span class="n">hidl</span><span class="o">-</span><span class="n">gen</span> <span class="o">-</span><span class="n">o</span> <span class="n">hardware</span><span class="s">/interfaces/</span><span class="n">yangyang</span><span class="s">/1.0/</span><span class="k">default</span><span class="s">/ -Lc++-impl -randroid.hardware:hardware/</span><span class="n">interfaces</span> <span class="o">-</span><span class="n">randroid</span><span class="o">.</span><span class="na">hidl</span><span class="o">:</span><span class="n">system</span><span class="s">/libhidl/</span><span class="n">transport</span> <span class="n">android</span><span class="o">.</span><span class="na">hardware</span><span class="o">.</span><span class="na">yangyang</span><span class="err">@</span><span class="mf">1.0</span>
+</code></pre></div><p>参数说明：</p>
+<p>-L： 语言类型，包括c++, c++-headers, c++-sources, export-header, c++-impl, java, java-constants, vts, makefile, androidbp, androidbp-impl, hash等。hidl-gen可根据传入的语言类型产生不同的文件。
+fqname： 完全限定名称的输入文件。比如本例中android.hardware.yangyang@1.0，要求在源码目录下必须有hardware/interfaces/ yangyang/1.0/目录。</p>
+<p>对于单个文件来说，格式如下：package@version::fileName，比如android.hardware. <a href="mailto:yangyang@1.0">yangyang@1.0</a>::types.Feature。对于目录来说。格式如下package@version，比如android.hardware. <a href="mailto:yangyang@1.0">yangyang@1.0</a>。
+-r： 格式package:path，可选，对fqname对应的文件来说，用来指定包名和文件所在的目录到Android系统源码根目录的路径。如果没有制定，前缀默认是：android.hardware，目录是Android源码的根目录。
+-o：存放hidl-gen产生的中间文件的路径。
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/hidl/hidl_n.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/hidl/hidl_n.png" >
+  
+    </a>
+  
+  
+</div>
+</p>
+</blockquote>
+<p>Google提供了一些工具来帮助制作HIDL的框架：</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>make hidl-gen 
+</code></pre></div><p>源码中编译生成hidl-gen。</p>
+<p>注意：编译前需要执行全编译的环境变量加载（source build/envsetup.sh &amp;&amp; lunch ,具体可以点击<a href="https://blog.csdn.net/GetNextWindow/article/details/48160569?spm=1001.2101.3001.6650.12&amp;utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7Edefault-12.pc_relevant_default&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7Edefault-12.pc_relevant_default&amp;utm_relevant_index=18">这里</a>）</p>
+<p>使用hidl-gen工具生成代码</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1">## 设置两个临时变量PACKAGE和LOC</span>
+<span class="ln">2</span>$ <span class="nv">PACKAGE</span><span class="o">=</span>android.hardware.yangyang@1.0
+<span class="ln">3</span>$ <span class="nv">LOC</span><span class="o">=</span>hardware/interfaces/yangyang/1.0/default/
+<span class="ln">4</span><span class="c1"># 生成两个文件，一个c++实现文件和一个头文件</span>
+<span class="ln">5</span>$ hidl-gen -o <span class="nv">$LOC</span> -Lc++-impl -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport <span class="nv">$PACKAGE</span>
+<span class="ln">6</span><span class="c1"># 生成一个bp文件</span>
+<span class="ln">7</span>$ hidl-gen -o <span class="nv">$LOC</span> -Landroidbp-impl -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport <span class="nv">$PACKAGE</span>
+</code></pre></div><p>执行完后，会生成三个文件：</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/hidl/hidl_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/hidl/hidl_3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="23完善接口函数">2.3完善接口函数</h2>
+<p>Yangyang.h</p>
+<div class="highlight"><pre class="chroma"><code class="language-cpp" data-lang="cpp"><span class="ln"> 1</span><span class="c1">//hardware/interfaces/yangyang/1.0/default/Yangyang.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#ifndef ANDROID_HARDWARE_YANGYANG_V1_0_YANGYANG_H
+</span><span class="ln"> 3</span><span class="cp">#define ANDROID_HARDWARE_YANGYANG_V1_0_YANGYANG_H
+</span><span class="ln"> 4</span><span class="cp"></span>
+<span class="ln"> 5</span><span class="cp">#include</span> <span class="cpf">&lt;android/hardware/yangyang/1.0/IYangyang.h&gt;</span><span class="cp">
+</span><span class="ln"> 6</span><span class="cp">#include</span> <span class="cpf">&lt;hidl/MQDescriptor.h&gt;</span><span class="cp">
+</span><span class="ln"> 7</span><span class="cp">#include</span> <span class="cpf">&lt;hidl/Status.h&gt;</span><span class="cp">
+</span><span class="ln"> 8</span><span class="cp"></span>
+<span class="ln"> 9</span><span class="k">namespace</span> <span class="n">android</span> <span class="p">{</span>
+<span class="ln">10</span><span class="k">namespace</span> <span class="n">hardware</span> <span class="p">{</span>
+<span class="ln">11</span><span class="k">namespace</span> <span class="n">yangyang</span> <span class="p">{</span>
+<span class="ln">12</span><span class="k">namespace</span> <span class="n">V1_0</span> <span class="p">{</span>
+<span class="ln">13</span><span class="k">namespace</span> <span class="n">implementation</span> <span class="p">{</span>
+<span class="ln">14</span>
+<span class="ln">15</span><span class="k">using</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">hidl_array</span><span class="p">;</span>
+<span class="ln">16</span><span class="k">using</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">hidl_memory</span><span class="p">;</span>
+<span class="ln">17</span><span class="k">using</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">hidl_string</span><span class="p">;</span>
+<span class="ln">18</span><span class="k">using</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">hidl_vec</span><span class="p">;</span>
+<span class="ln">19</span><span class="k">using</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">Return</span><span class="p">;</span>
+<span class="ln">20</span><span class="k">using</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">Void</span><span class="p">;</span>
+<span class="ln">21</span><span class="k">using</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">sp</span><span class="p">;</span>
+<span class="ln">22</span>
+<span class="ln">23</span><span class="k">struct</span> <span class="nc">Yangyang</span> <span class="o">:</span> <span class="k">public</span> <span class="n">IYangyang</span> <span class="p">{</span>
+<span class="ln">24</span>    <span class="c1">// Methods from IYangyang follow.
+</span><span class="ln">25</span><span class="c1"></span>    <span class="n">Return</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span> <span class="n">helloWorld</span><span class="p">(</span><span class="k">const</span> <span class="n">hidl_string</span><span class="o">&amp;</span> <span class="n">name</span><span class="p">,</span> <span class="n">helloWorld_cb</span> <span class="n">_hidl_cb</span><span class="p">)</span> <span class="k">override</span><span class="p">;</span>
+<span class="ln">26</span>
+<span class="ln">27</span>    <span class="c1">// Methods from ::android::hidl::base::V1_0::IBase follow.
+</span><span class="ln">28</span><span class="c1"></span>
+<span class="ln">29</span><span class="p">};</span>
+<span class="ln">30</span>
+<span class="ln">31</span><span class="c1">// FIXME: most likely delete, this is only for passthrough implementations
+</span><span class="ln">32</span><span class="c1">// extern &#34;C&#34; IYangyang* HIDL_FETCH_IYangyang(const char* name);
+</span><span class="ln">33</span><span class="c1"></span>
+<span class="ln">34</span><span class="p">}</span>  <span class="c1">// namespace implementation
+</span><span class="ln">35</span><span class="c1"></span><span class="p">}</span>  <span class="c1">// namespace V1_0
+</span><span class="ln">36</span><span class="c1"></span><span class="p">}</span>  <span class="c1">// namespace yangyang
+</span><span class="ln">37</span><span class="c1"></span><span class="p">}</span>  <span class="c1">// namespace hardware
+</span><span class="ln">38</span><span class="c1"></span><span class="p">}</span>  <span class="c1">// namespace android
+</span><span class="ln">39</span><span class="c1"></span>
+<span class="ln">40</span><span class="cp">#endif  </span><span class="c1">// ANDROID_HARDWARE_YANGYANG_V1_0_YANGYANG_H
+</span></code></pre></div><p>去掉extern注释，采用直通模式。</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="ln">1</span><span class="o">//</span><span class="w"> </span><span class="n">extern</span><span class="w"> </span><span class="s2">&#34;C&#34;</span><span class="w"> </span><span class="n">IYangyang</span><span class="o">*</span><span class="w"> </span><span class="n">HIDL_FETCH_IYangyang</span><span class="p">(</span><span class="n">const</span><span class="w"> </span><span class="nb">char</span><span class="o">*</span><span class="w"> </span><span class="n">name</span><span class="p">);</span><span class="w">
+</span></code></pre></div><p>Yangyang.cpp</p>
+<div class="highlight"><pre class="chroma"><code class="language-cpp" data-lang="cpp"><span class="ln"> 1</span><span class="c1">//hardware/interfaces/yangyang/1.0/default/Yangyang.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#include</span> <span class="cpf">&#34;Yangyang.h&#34;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp"></span>
+<span class="ln"> 4</span><span class="k">namespace</span> <span class="n">android</span> <span class="p">{</span>
+<span class="ln"> 5</span><span class="k">namespace</span> <span class="n">hardware</span> <span class="p">{</span>
+<span class="ln"> 6</span><span class="k">namespace</span> <span class="n">yangyang</span> <span class="p">{</span>
+<span class="ln"> 7</span><span class="k">namespace</span> <span class="n">V1_0</span> <span class="p">{</span>
+<span class="ln"> 8</span><span class="k">namespace</span> <span class="n">implementation</span> <span class="p">{</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span><span class="c1">// Methods from IYangyang follow.
+</span><span class="ln">11</span><span class="c1"></span><span class="n">Return</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span> <span class="n">Yangyang</span><span class="o">::</span><span class="n">helloWorld</span><span class="p">(</span><span class="k">const</span> <span class="n">hidl_string</span><span class="o">&amp;</span> <span class="n">name</span><span class="p">,</span> <span class="n">helloWorld_cb</span> <span class="n">_hidl_cb</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">12</span>    <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">100</span><span class="p">];</span>
+<span class="ln">13</span>    <span class="o">::</span><span class="n">memset</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="mh">0x00</span><span class="p">,</span> <span class="mi">100</span><span class="p">);</span>
+<span class="ln">14</span>    <span class="o">::</span><span class="n">snprintf</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="s">&#34;-&gt;&gt;&gt; Yangyang::helloWorld | Hello World, %s&#34;</span><span class="p">,</span> <span class="n">name</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+<span class="ln">15</span>    <span class="n">hidl_string</span> <span class="nf">result</span><span class="p">(</span><span class="n">buf</span><span class="p">);</span>
+<span class="ln">16</span>    <span class="n">_hidl_cb</span><span class="p">(</span><span class="n">result</span><span class="p">);</span>
+<span class="ln">17</span>    <span class="k">return</span> <span class="nf">Void</span><span class="p">();</span>
+<span class="ln">18</span><span class="p">}</span>
+<span class="ln">19</span>
+<span class="ln">20</span>
+<span class="ln">21</span><span class="c1">// Methods from ::android::hidl::base::V1_0::IBase follow.
+</span><span class="ln">22</span><span class="c1"></span>
+<span class="ln">23</span><span class="c1">//IYangyang* HIDL_FETCH_IYangyang(const char* /* name */) {
+</span><span class="ln">24</span><span class="c1">//    return new Yangyang();
+</span><span class="ln">25</span><span class="c1">//}
+</span><span class="ln">26</span><span class="c1"></span>
+<span class="ln">27</span><span class="p">}</span>  <span class="c1">// namespace implementation
+</span><span class="ln">28</span><span class="c1"></span><span class="p">}</span>  <span class="c1">// namespace V1_0
+</span><span class="ln">29</span><span class="c1"></span><span class="p">}</span>  <span class="c1">// namespace yangyang
+</span><span class="ln">30</span><span class="c1"></span><span class="p">}</span>  <span class="c1">// namespace hardware
+</span><span class="ln">31</span><span class="c1"></span><span class="p">}</span>  <span class="c1">// namespace android
+</span></code></pre></div><p>去掉注释．</p>
+<div class="highlight"><pre class="chroma"><code class="language-perl" data-lang="perl"><span class="ln">1</span><span class="sr">//</span><span class="n">IYangyang</span><span class="o">*</span> <span class="n">HIDL_FETCH_IYangyang</span><span class="p">(</span><span class="n">const</span> <span class="n">char</span><span class="o">*</span> <span class="sr">/* name */</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">2</span><span class="sr">//</span>    <span class="k">return</span> <span class="k">new</span> <span class="n">Yangyang</span><span class="p">();</span>
+<span class="ln">3</span><span class="sr">//</span><span class="p">}</span>
 </code></pre></div><p>这些都是工具生成的代码，接下来我们来完善下接口．</p>
-<p>主要修改的就是xiaoqing.cpp代码<code>getHelloString</code>函数．</p>
-<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="ln"> 1</span><span class="c1">// Methods from IXiaoqing follow.
-</span><span class="ln"> 2</span><span class="c1"></span>
-<span class="ln"> 3</span>
-<span class="ln"> 4</span>
-<span class="ln"> 5</span><span class="k">Return</span><span class="o">&lt;</span><span class="nx">void</span><span class="o">&gt;</span> <span class="nx">Xiaoqing</span><span class="o">::</span><span class="na">getHelloString</span><span class="p">(</span><span class="k">const</span> <span class="no">hidl_string</span><span class="o">&amp;</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">helloWorld_cb</span> <span class="nx">_hidl_cb</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln"> 6</span>
-<span class="ln"> 7</span>
-<span class="ln"> 8</span>
-<span class="ln"> 9</span>    <span class="c1">// TODO implement
-</span><span class="ln">10</span><span class="c1"></span>
-<span class="ln">11</span>
-<span class="ln">12</span>
-<span class="ln">13</span>    <span class="nx">char</span> <span class="nx">buf</span><span class="p">[</span><span class="mi">128</span><span class="p">];</span>
-<span class="ln">14</span>
-<span class="ln">15</span>
-<span class="ln">16</span>
-<span class="ln">17</span>    <span class="o">::</span><span class="na">memset</span><span class="p">(</span><span class="nx">buf</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">128</span><span class="p">);</span>
+<p>主要修改的就是Yangyang.cpp代码<code>helloWorld</code>函数．</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="ln">1</span><span class="k">Return</span><span class="o">&lt;</span><span class="nx">void</span><span class="o">&gt;</span> <span class="nx">Yangyang</span><span class="o">::</span><span class="na">helloWorld</span><span class="p">(</span><span class="k">const</span> <span class="no">hidl_string</span><span class="o">&amp;</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">helloWorld_cb</span> <span class="nx">_hidl_cb</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">2</span>    <span class="nx">char</span> <span class="nx">buf</span><span class="p">[</span><span class="mi">100</span><span class="p">];</span>
+<span class="ln">3</span>    <span class="o">::</span><span class="na">memset</span><span class="p">(</span><span class="nx">buf</span><span class="p">,</span> <span class="mh">0x00</span><span class="p">,</span> <span class="mi">100</span><span class="p">);</span>
+<span class="ln">4</span>    <span class="o">::</span><span class="na">snprintf</span><span class="p">(</span><span class="nx">buf</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">&#34;-&gt;&gt;&gt; Yangyang::helloWorld | Hello World, %s&#34;</span><span class="p">,</span> <span class="nx">name</span><span class="o">.</span><span class="nx">c_str</span><span class="p">());</span>
+<span class="ln">5</span>    <span class="nx">hidl_string</span> <span class="nx">result</span><span class="p">(</span><span class="nx">buf</span><span class="p">);</span>
+<span class="ln">6</span>    <span class="nx">_hidl_cb</span><span class="p">(</span><span class="nx">result</span><span class="p">);</span>
+<span class="ln">7</span>    <span class="k">return</span> <span class="nx">Void</span><span class="p">();</span>
+<span class="ln">8</span><span class="p">}</span>
+</code></pre></div><p>接着使用脚本来更新Makefile，下面这个文件用于更新 HAL 和 VTS 模块的 Android 生成文件的脚本。执行完成之后，会在自定义的package目录生成Android.bp和Android.mk</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>./hardware/interfaces/update-makefiles.sh
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/hidl/hidl_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/hidl/hidl_4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="24编译">2.4编译</h2>
+<p>因为已经生成了mk和bp文件，可以通过编译来生成android.hardware.yangyang@1.0-impl.so</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>$ ./hardware/interfaces/update-makefiles.sh
+<span class="ln">2</span>$ mmm hardware/interfaces/yangyang/1.0
+</code></pre></div><p>可以通过mk和bp文件得知，实际上bp文件会生成对应的五个头文件，一个实现cpp文件和一个动态库android.hardware.yangyang@1.0.so。关于Android.bp文件语法和使用，可以点击<a href="https://blog.csdn.net/tkwxty/article/details/104395820">这里</a>。</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="ln"> 1</span><span class="c1">//hardware/interfaces/yangyang/1.0/Android.bp
+</span><span class="ln"> 2</span><span class="c1">//在本例中会生成一个实现的cpp类，android/hardware/yangyang/1.0/YangyangAll.cpp
+</span><span class="ln"> 3</span><span class="c1">//在本例中会生成五个头文件，
+</span><span class="ln"> 4</span><span class="c1">//&#34;android/hardware/yangyang/1.0/IYangyang.h&#34;,
+</span><span class="ln"> 5</span><span class="c1">//&#34;android/hardware/yangyang/1.0/IHwYangyang.h&#34;,
+</span><span class="ln"> 6</span><span class="c1">//&#34;android/hardware/yangyang/1.0/BnHwYangyang.h&#34;,
+</span><span class="ln"> 7</span><span class="c1">//&#34;android/hardware/yangyang/1.0/BpHwYangyang.h&#34;,
+</span><span class="ln"> 8</span><span class="c1">//&#34;android/hardware/yangyang/1.0/BsYangyang.h&#34;,
+</span><span class="ln"> 9</span><span class="c1">// 除此之外，还会生成一个android.hardware.yangyang@1.0.so的动态库
+</span><span class="ln">10</span><span class="c1">// This file is autogenerated by hidl-gen. Do not edit manually.
+</span><span class="ln">11</span><span class="c1"></span>
+<span class="ln">12</span><span class="nx">filegroup</span> <span class="p">{</span>
+<span class="ln">13</span>    <span class="nx">name</span><span class="p">:</span> <span class="s">&#34;android.hardware.yangyang@1.0_hal&#34;</span><span class="p">,</span>
+<span class="ln">14</span>    <span class="nx">srcs</span><span class="p">:</span> <span class="p">[</span>
+<span class="ln">15</span>        <span class="s">&#34;IYangyang.hal&#34;</span><span class="p">,</span>
+<span class="ln">16</span>    <span class="p">],</span>
+<span class="ln">17</span><span class="p">}</span>
 <span class="ln">18</span>
-<span class="ln">19</span>
-<span class="ln">20</span>
-<span class="ln">21</span>    <span class="o">::</span><span class="na">snprintf</span><span class="p">(</span><span class="nx">buf</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="s2">&#34;Hello World, %s&#34;</span><span class="p">,</span> <span class="nx">name</span><span class="o">.</span><span class="nx">c_str</span><span class="p">());</span>
-<span class="ln">22</span>
-<span class="ln">23</span>
-<span class="ln">24</span>
-<span class="ln">25</span>    <span class="nx">hidl_string</span> <span class="nx">result</span><span class="p">(</span><span class="nx">buf</span><span class="p">);</span>
-<span class="ln">26</span>
-<span class="ln">27</span>
-<span class="ln">28</span>
-<span class="ln">29</span> 
+<span class="ln">19</span><span class="nx">genrule</span> <span class="p">{</span>
+<span class="ln">20</span>    <span class="nx">name</span><span class="p">:</span> <span class="s">&#34;android.hardware.yangyang@1.0_genc++&#34;</span><span class="p">,</span>
+<span class="ln">21</span>    <span class="nx">tools</span><span class="p">:</span> <span class="p">[</span><span class="s">&#34;hidl-gen&#34;</span><span class="p">],</span>
+<span class="ln">22</span>    <span class="nx">cmd</span><span class="p">:</span> <span class="s">&#34;$(location hidl-gen) -o $(genDir) -Lc++-sources -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.yangyang@1.0&#34;</span><span class="p">,</span>
+<span class="ln">23</span>    <span class="nx">srcs</span><span class="p">:</span> <span class="p">[</span>
+<span class="ln">24</span>        <span class="s">&#34;:android.hardware.yangyang@1.0_hal&#34;</span><span class="p">,</span>
+<span class="ln">25</span>    <span class="p">],</span>
+<span class="ln">26</span>    <span class="nx">out</span><span class="p">:</span> <span class="p">[</span>
+<span class="ln">27</span>        <span class="s">&#34;android/hardware/yangyang/1.0/YangyangAll.cpp&#34;</span><span class="p">,</span>
+<span class="ln">28</span>    <span class="p">],</span>
+<span class="ln">29</span><span class="p">}</span>
 <span class="ln">30</span>
-<span class="ln">31</span>
-<span class="ln">32</span>
-<span class="ln">33</span>    <span class="nx">_hidl_cb</span><span class="p">(</span><span class="nx">result</span><span class="p">);</span>
-<span class="ln">34</span>
-<span class="ln">35</span>
-<span class="ln">36</span>
-<span class="ln">37</span>    <span class="k">return</span> <span class="nx">Void</span><span class="p">();</span>
-<span class="ln">38</span>
-<span class="ln">39</span>
-<span class="ln">40</span>
-<span class="ln">41</span><span class="p">}</span>
-</code></pre></div><h2 id="24编译">2.4编译</h2>
-<p>按照源码编译的方法：</p>
-<div class="highlight"><pre class="chroma"><code class="language-groovy" data-lang="groovy"><span class="ln">1</span><span class="n">$</span> <span class="n">mmm</span> <span class="n">hardware</span><span class="s">/interfaces/</span><span class="n">xiaoqing</span><span class="s">/1.0/</span><span class="k">default</span><span class="o">/</span>
-</code></pre></div><p>编译成功：</p>
-<p><img src="https://img-blog.csdnimg.cn/img_convert/5aafbf548097260e3a14efe3e6ee47ca.png" alt="img"></p>
-<p>构建binder service</p>
-<p>虽然有了库，但是我们还需要构建binder通信服务．</p>
-<div class="highlight"><pre class="chroma"><code class="language-groovy" data-lang="groovy"><span class="ln">1</span><span class="n">vim</span> <span class="n">hardware</span><span class="s">/interfaces/</span><span class="n">xiaoqing</span><span class="s">/1.0/</span><span class="k">default</span><span class="o">/</span><span class="n">android</span><span class="o">.</span><span class="na">hardware</span><span class="o">.</span><span class="na">naruto</span><span class="err">@</span><span class="mf">1.0</span><span class="o">-</span><span class="n">service</span><span class="o">.</span><span class="na">rc</span>
-</code></pre></div><p>创建rc文件！(rc文件是被init进程访问的)</p>
-<p><a href="mailto:android.hardware.naruto@1.0-service.rc">android.hardware.naruto@1.0-service.rc</a></p>
-<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="ln"> 1</span><span class="n">service</span><span class="w"> </span><span class="n">xiaoqing_service</span><span class="w"> </span><span class="o">/</span><span class="n">vendor</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">hw</span><span class="o">/</span><span class="n">android</span><span class="p">.</span><span class="n">hardware</span><span class="p">.</span><span class="n">xiaoqing</span><span class="o">@</span><span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="o">-</span><span class="n">service</span><span class="w">
-</span><span class="ln"> 2</span><span class="w">
-</span><span class="ln"> 3</span><span class="w">
-</span><span class="ln"> 4</span><span class="w">
-</span><span class="ln"> 5</span><span class="w">    </span><span class="k">class</span><span class="w"> </span><span class="n">hal</span><span class="w">
-</span><span class="ln"> 6</span><span class="w">
-</span><span class="ln"> 7</span><span class="w">
-</span><span class="ln"> 8</span><span class="w">
-</span><span class="ln"> 9</span><span class="w">    </span><span class="k">user</span><span class="w"> </span><span class="k">system</span><span class="w">
-</span><span class="ln">10</span><span class="w">
-</span><span class="ln">11</span><span class="w">
-</span><span class="ln">12</span><span class="w">
-</span><span class="ln">13</span><span class="w">    </span><span class="k">group</span><span class="w"> </span><span class="k">system</span><span class="w">
-</span></code></pre></div><p>设定xiaoqing_service服务．
-接下来完善服务代码：</p>
-<p>service.cpp</p>
-<div class="highlight"><pre class="chroma"><code class="language-groovy" data-lang="groovy"><span class="ln">1</span><span class="n">vim</span> <span class="n">hardware</span><span class="s">/interfaces/</span><span class="n">xiaoqing</span><span class="s">/1.0/</span><span class="k">default</span><span class="o">/</span><span class="n">service</span><span class="o">.</span><span class="na">cpp</span>
-</code></pre></div><p>服务代码：</p>
-<div class="highlight"><pre class="chroma"><code class="language-cpp" data-lang="cpp"><span class="ln"> 1</span><span class="cp">#define LOG_TAG &#34;android.hardware.xiaoqing@1.0-service&#34;
-</span><span class="ln"> 2</span><span class="cp"></span>
-<span class="ln"> 3</span>
-<span class="ln"> 4</span>
-<span class="ln"> 5</span> 
-<span class="ln"> 6</span>
-<span class="ln"> 7</span>
-<span class="ln"> 8</span>
-<span class="ln"> 9</span> 
-<span class="ln">10</span>
-<span class="ln">11</span>
-<span class="ln">12</span>
-<span class="ln">13</span><span class="cp">#include</span> <span class="cpf">&lt;android/hardware/xiaoqing/1.0/IXiaoqing.h&gt;</span><span class="cp">
-</span><span class="ln">14</span><span class="cp"></span>
-<span class="ln">15</span>
-<span class="ln">16</span>
-<span class="ln">17</span> 
-<span class="ln">18</span>
-<span class="ln">19</span>
-<span class="ln">20</span>
-<span class="ln">21</span><span class="cp">#include</span> <span class="cpf">&lt;hidl/LegacySupport.h&gt;</span><span class="cp">
-</span><span class="ln">22</span><span class="cp"></span>
-<span class="ln">23</span>
-<span class="ln">24</span>
-<span class="ln">25</span> 
-<span class="ln">26</span>
-<span class="ln">27</span>
-<span class="ln">28</span>
-<span class="ln">29</span><span class="k">using</span> <span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">xiaoqing</span><span class="o">::</span><span class="n">V1_0</span><span class="o">::</span><span class="n">IXiaoqing</span><span class="p">;</span>
-<span class="ln">30</span>
-<span class="ln">31</span>
-<span class="ln">32</span>
-<span class="ln">33</span><span class="k">using</span> <span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">defaultPassthroughServiceImplementation</span><span class="p">;</span>
-<span class="ln">34</span>
-<span class="ln">35</span>
-<span class="ln">36</span>
-<span class="ln">37</span> 
-<span class="ln">38</span>
-<span class="ln">39</span>
-<span class="ln">40</span>
-<span class="ln">41</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-<span class="ln">42</span>
-<span class="ln">43</span>
-<span class="ln">44</span>
-<span class="ln">45</span>    <span class="k">return</span> <span class="n">defaultPassthroughServiceImplementation</span><span class="o">&lt;</span><span class="n">IXiaoqing</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="ln">31</span><span class="nx">genrule</span> <span class="p">{</span>
+<span class="ln">32</span>    <span class="nx">name</span><span class="p">:</span> <span class="s">&#34;android.hardware.yangyang@1.0_genc++_headers&#34;</span><span class="p">,</span>
+<span class="ln">33</span>    <span class="nx">tools</span><span class="p">:</span> <span class="p">[</span><span class="s">&#34;hidl-gen&#34;</span><span class="p">],</span>
+<span class="ln">34</span>    <span class="nx">cmd</span><span class="p">:</span> <span class="s">&#34;$(location hidl-gen) -o $(genDir) -Lc++-headers -randroid.hardware:hardware/interfaces -randroid.hidl:system/libhidl/transport android.hardware.yangyang@1.0&#34;</span><span class="p">,</span>
+<span class="ln">35</span>    <span class="nx">srcs</span><span class="p">:</span> <span class="p">[</span>
+<span class="ln">36</span>        <span class="s">&#34;:android.hardware.yangyang@1.0_hal&#34;</span><span class="p">,</span>
+<span class="ln">37</span>    <span class="p">],</span>
+<span class="ln">38</span>    <span class="nx">out</span><span class="p">:</span> <span class="p">[</span>
+<span class="ln">39</span>        <span class="s">&#34;android/hardware/yangyang/1.0/IYangyang.h&#34;</span><span class="p">,</span>
+<span class="ln">40</span>        <span class="s">&#34;android/hardware/yangyang/1.0/IHwYangyang.h&#34;</span><span class="p">,</span>
+<span class="ln">41</span>        <span class="s">&#34;android/hardware/yangyang/1.0/BnHwYangyang.h&#34;</span><span class="p">,</span>
+<span class="ln">42</span>        <span class="s">&#34;android/hardware/yangyang/1.0/BpHwYangyang.h&#34;</span><span class="p">,</span>
+<span class="ln">43</span>        <span class="s">&#34;android/hardware/yangyang/1.0/BsYangyang.h&#34;</span><span class="p">,</span>
+<span class="ln">44</span>    <span class="p">],</span>
+<span class="ln">45</span><span class="p">}</span>
 <span class="ln">46</span>
-<span class="ln">47</span>
-<span class="ln">48</span>
-<span class="ln">49</span><span class="p">}</span>
-</code></pre></div><p>在Android.bp中添加对服务器的编译：</p>
-<div class="highlight"><pre class="chroma"><code class="language-groovy" data-lang="groovy"><span class="ln">1</span><span class="n">vim</span> <span class="n">hardware</span><span class="s">/interfaces/</span><span class="n">xiaoqing</span><span class="s">/1.0/</span><span class="k">default</span><span class="o">/</span><span class="n">Android</span><span class="o">.</span><span class="na">bp</span> 
-</code></pre></div><p>Android.bp中添加:</p>
-<div class="highlight"><pre class="chroma"><code class="language-perl" data-lang="perl"><span class="ln"> 1</span><span class="n">cc_binary</span> <span class="p">{</span>
-<span class="ln"> 2</span>
-<span class="ln"> 3</span>
-<span class="ln"> 4</span>
-<span class="ln"> 5</span>    <span class="n">name:</span> <span class="s">&#34;android.hardware.xiaoqing@1.0-service&#34;</span><span class="p">,</span>
-<span class="ln"> 6</span>
-<span class="ln"> 7</span>
-<span class="ln"> 8</span>
-<span class="ln"> 9</span>    <span class="n">defaults:</span> <span class="p">[</span><span class="s">&#34;hidl_defaults&#34;</span><span class="p">],</span>
-<span class="ln">10</span>
-<span class="ln">11</span>
-<span class="ln">12</span>
-<span class="ln">13</span>    <span class="n">proprietary:</span> <span class="n">true</span><span class="p">,</span>
-<span class="ln">14</span>
+<span class="ln">47</span><span class="nx">cc_library</span> <span class="p">{</span>
+<span class="ln">48</span>    <span class="c1">//这里的so跟下面的impl.so区别在于，这个更多的是接口，没有实现
+</span><span class="ln">49</span><span class="c1"></span>    <span class="nx">name</span><span class="p">:</span> <span class="s">&#34;android.hardware.yangyang@1.0&#34;</span><span class="p">,</span>
+<span class="ln">50</span>    <span class="nx">defaults</span><span class="p">:</span> <span class="p">[</span><span class="s">&#34;hidl-module-defaults&#34;</span><span class="p">],</span>
+<span class="ln">51</span>    <span class="nx">generated_sources</span><span class="p">:</span> <span class="p">[</span><span class="s">&#34;android.hardware.yangyang@1.0_genc++&#34;</span><span class="p">],</span>
+<span class="ln">52</span>    <span class="nx">generated_headers</span><span class="p">:</span> <span class="p">[</span><span class="s">&#34;android.hardware.yangyang@1.0_genc++_headers&#34;</span><span class="p">],</span>
+<span class="ln">53</span>    <span class="nx">export_generated_headers</span><span class="p">:</span> <span class="p">[</span><span class="s">&#34;android.hardware.yangyang@1.0_genc++_headers&#34;</span><span class="p">],</span>
+<span class="ln">54</span>    <span class="nx">vendor_available</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+<span class="ln">55</span>    <span class="nx">vndk</span><span class="p">:</span> <span class="p">{</span>
+<span class="ln">56</span>        <span class="nx">enabled</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+<span class="ln">57</span>    <span class="p">},</span>
+<span class="ln">58</span>    <span class="nx">shared_libs</span><span class="p">:</span> <span class="p">[</span>
+<span class="ln">59</span>        <span class="s">&#34;libhidlbase&#34;</span><span class="p">,</span>
+<span class="ln">60</span>        <span class="s">&#34;libhidltransport&#34;</span><span class="p">,</span>
+<span class="ln">61</span>        <span class="s">&#34;libhwbinder&#34;</span><span class="p">,</span>
+<span class="ln">62</span>        <span class="s">&#34;liblog&#34;</span><span class="p">,</span>
+<span class="ln">63</span>        <span class="s">&#34;libutils&#34;</span><span class="p">,</span>
+<span class="ln">64</span>        <span class="s">&#34;libcutils&#34;</span><span class="p">,</span>
+<span class="ln">65</span>    <span class="p">],</span>
+<span class="ln">66</span>    <span class="nx">export_shared_lib_headers</span><span class="p">:</span> <span class="p">[</span>
+<span class="ln">67</span>        <span class="s">&#34;libhidlbase&#34;</span><span class="p">,</span>
+<span class="ln">68</span>        <span class="s">&#34;libhidltransport&#34;</span><span class="p">,</span>
+<span class="ln">69</span>        <span class="s">&#34;libhwbinder&#34;</span><span class="p">,</span>
+<span class="ln">70</span>        <span class="s">&#34;libutils&#34;</span><span class="p">,</span>
+<span class="ln">71</span>    <span class="p">],</span>
+<span class="ln">72</span><span class="p">}</span>
+</code></pre></div><p>mk文件会生成对应的java文件</p>
+<div class="highlight"><pre class="chroma"><code class="language-makefile" data-lang="makefile"><span class="ln"> 1</span><span class="c">#hardware/interfaces/yangyang/1.0/Android.mk
+</span><span class="ln"> 2</span><span class="c">#在本例中会生成编译出来的jar包
+</span><span class="ln"> 3</span><span class="c"># android.hardware.yangyang-V1.0-java.jar和android.hardware.yangyang-V1.0-java-static.jar
+</span><span class="ln"> 4</span><span class="c">#在本例中会生成java的hidl接口，类似aidl的java接口类
+</span><span class="ln"> 5</span><span class="c">#  (intermediates)/android/hardware/yangyang/V1_0/IYangyang.java
+</span><span class="ln"> 6</span><span class="c"># This file is autogenerated by hidl-gen. Do not edit manually.
+</span><span class="ln"> 7</span><span class="c"></span>
+<span class="ln"> 8</span><span class="nv">LOCAL_PATH</span> <span class="o">:=</span> <span class="k">$(</span>call my-dir<span class="k">)</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span><span class="c">################################################################################
+</span><span class="ln">11</span><span class="c"></span>
+<span class="ln">12</span><span class="err">include</span> <span class="k">$(</span><span class="nv">CLEAR_VARS</span><span class="k">)</span>
+<span class="ln">13</span><span class="nv">LOCAL_MODULE</span> <span class="o">:=</span> android.hardware.yangyang-V1.0-java
+<span class="ln">14</span><span class="nv">LOCAL_MODULE_CLASS</span> <span class="o">:=</span> JAVA_LIBRARIES
 <span class="ln">15</span>
-<span class="ln">16</span>
-<span class="ln">17</span>    <span class="n">relative_install_path:</span> <span class="s">&#34;hw&#34;</span><span class="p">,</span>
-<span class="ln">18</span>
+<span class="ln">16</span><span class="nv">intermediates</span> <span class="o">:=</span> <span class="k">$(</span>call local-generated-sources-dir, COMMON<span class="k">)</span>
+<span class="ln">17</span>
+<span class="ln">18</span><span class="nv">HIDL</span> <span class="o">:=</span> <span class="k">$(</span>HOST_OUT_EXECUTABLES<span class="k">)</span>/hidl-gen<span class="k">$(</span>HOST_EXECUTABLE_SUFFIX<span class="k">)</span>
 <span class="ln">19</span>
-<span class="ln">20</span>
-<span class="ln">21</span>    <span class="n">srcs:</span> <span class="p">[</span><span class="s">&#34;service.cpp&#34;</span><span class="p">],</span>
-<span class="ln">22</span>
-<span class="ln">23</span>
-<span class="ln">24</span>
-<span class="ln">25</span>    <span class="n">init_rc:</span> <span class="p">[</span><span class="s">&#34;android.hardware.xiaoqing@1.0-service.rc&#34;</span><span class="p">],</span>
-<span class="ln">26</span>
-<span class="ln">27</span>
-<span class="ln">28</span>
-<span class="ln">29</span>    <span class="n">shared_libs:</span> <span class="p">[</span>
-<span class="ln">30</span>
-<span class="ln">31</span>
-<span class="ln">32</span>
-<span class="ln">33</span>            <span class="s">&#34;libhidlbase&#34;</span><span class="p">,</span>
-<span class="ln">34</span>
-<span class="ln">35</span>
-<span class="ln">36</span>
-<span class="ln">37</span>            <span class="s">&#34;libhidltransport&#34;</span><span class="p">,</span>
-<span class="ln">38</span>
-<span class="ln">39</span>
-<span class="ln">40</span>
-<span class="ln">41</span>            <span class="s">&#34;libutils&#34;</span><span class="p">,</span>
+<span class="ln">20</span><span class="nv">LOCAL_JAVA_LIBRARIES</span> <span class="o">:=</span> <span class="se">\
+</span><span class="ln">21</span><span class="se"></span>    android.hidl.base-V1.0-java <span class="se">\
+</span><span class="ln">22</span><span class="se"></span>
+<span class="ln">23</span><span class="c">#
+</span><span class="ln">24</span><span class="c"># Build IYangyang.hal
+</span><span class="ln">25</span><span class="c">#
+</span><span class="ln">26</span><span class="c"></span><span class="nv">GEN</span> <span class="o">:=</span> <span class="k">$(</span>intermediates<span class="k">)</span>/android/hardware/yangyang/V1_0/IYangyang.java
+<span class="ln">27</span><span class="nf">$(GEN)</span><span class="o">:</span> <span class="k">$(</span><span class="nv">HIDL</span><span class="k">)</span>
+<span class="ln">28</span><span class="nf">$(GEN)</span><span class="o">:</span> <span class="n">PRIVATE_HIDL</span> := <span class="k">$(</span><span class="nv">HIDL</span><span class="k">)</span>
+<span class="ln">29</span><span class="nf">$(GEN)</span><span class="o">:</span> <span class="n">PRIVATE_DEPS</span> := <span class="k">$(</span><span class="nv">LOCAL_PATH</span><span class="k">)</span>/<span class="n">IYangyang</span>.<span class="n">hal</span>
+<span class="ln">30</span><span class="nf">$(GEN)</span><span class="o">:</span> <span class="n">PRIVATE_OUTPUT_DIR</span> := <span class="k">$(</span><span class="nv">intermediates</span><span class="k">)</span>
+<span class="ln">31</span><span class="nf">$(GEN)</span><span class="o">:</span> <span class="n">PRIVATE_CUSTOM_TOOL</span> = \
+<span class="ln">32</span>        <span class="k">$(</span><span class="nv">PRIVATE_HIDL</span><span class="k">)</span> -<span class="n">o</span> <span class="k">$(</span><span class="nv">PRIVATE_OUTPUT_DIR</span><span class="k">)</span> \
+<span class="ln">33</span>        -<span class="n">Ljava</span> \
+<span class="ln">34</span>        -<span class="n">randroid</span>.<span class="n">hardware</span>:<span class="n">hardware</span>/<span class="n">interfaces</span> \
+<span class="ln">35</span>        -<span class="n">randroid</span>.<span class="n">hidl</span>:<span class="n">system</span>/<span class="n">libhidl</span>/<span class="n">transport</span> \
+<span class="ln">36</span>        <span class="n">android</span>.<span class="n">hardware</span>.<span class="n">yangyang</span>@1.0::<span class="n">IYangyang</span>
+<span class="ln">37</span>
+<span class="ln">38</span><span class="nf">$(GEN)</span><span class="o">:</span> <span class="k">$(</span><span class="nv">LOCAL_PATH</span><span class="k">)</span>/<span class="n">IYangyang</span>.<span class="n">hal</span>
+<span class="ln">39</span>	<span class="k">$(</span>transform-generated-source<span class="k">)</span>
+<span class="ln">40</span><span class="nv">LOCAL_GENERATED_SOURCES</span> <span class="o">+=</span> <span class="k">$(</span>GEN<span class="k">)</span>
+<span class="ln">41</span><span class="err">include</span> <span class="k">$(</span><span class="nv">BUILD_JAVA_LIBRARY</span><span class="k">)</span>
 <span class="ln">42</span>
-<span class="ln">43</span>
-<span class="ln">44</span>
-<span class="ln">45</span>            <span class="s">&#34;liblog&#34;</span><span class="p">,</span>
-<span class="ln">46</span>
-<span class="ln">47</span>
+<span class="ln">43</span><span class="c">################################################################################
+</span><span class="ln">44</span><span class="c"></span>
+<span class="ln">45</span><span class="err">include</span> <span class="k">$(</span><span class="nv">CLEAR_VARS</span><span class="k">)</span>
+<span class="ln">46</span><span class="nv">LOCAL_MODULE</span> <span class="o">:=</span> android.hardware.yangyang-V1.0-java-static
+<span class="ln">47</span><span class="nv">LOCAL_MODULE_CLASS</span> <span class="o">:=</span> JAVA_LIBRARIES
 <span class="ln">48</span>
-<span class="ln">49</span>            <span class="s">&#34;android.hardware.xiaoqing@1.0&#34;</span><span class="p">,</span>
+<span class="ln">49</span><span class="nv">intermediates</span> <span class="o">:=</span> <span class="k">$(</span>call local-generated-sources-dir, COMMON<span class="k">)</span>
 <span class="ln">50</span>
-<span class="ln">51</span>
+<span class="ln">51</span><span class="nv">HIDL</span> <span class="o">:=</span> <span class="k">$(</span>HOST_OUT_EXECUTABLES<span class="k">)</span>/hidl-gen<span class="k">$(</span>HOST_EXECUTABLE_SUFFIX<span class="k">)</span>
 <span class="ln">52</span>
-<span class="ln">53</span>            <span class="s">&#34;android.hardware.xiaoqing@1.0-impl&#34;</span><span class="p">,</span>
-<span class="ln">54</span>
-<span class="ln">55</span>
-<span class="ln">56</span>
-<span class="ln">57</span>        <span class="p">],</span>
-<span class="ln">58</span>
-<span class="ln">59</span>
-<span class="ln">60</span>
-<span class="ln">61</span><span class="p">}</span>
-</code></pre></div><p>最后的目录结构：</p>
-<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220327224932179.png" alt="image-20220327224932179"></p>
-<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220327224952578.png" alt="image-20220327224952578"></p>
-<p>然后在编译下：</p>
-<div class="highlight"><pre class="chroma"><code class="language-groovy" data-lang="groovy"><span class="ln">1</span><span class="n">$</span> <span class="n">mmm</span> <span class="n">hardware</span><span class="s">/interfaces/</span><span class="n">xiaoqing</span><span class="s">/1.0/</span><span class="k">default</span><span class="o">/</span>
-</code></pre></div><p>编译后生成的文件</p>
-<p>最后会生成出一下文件：</p>
-<div class="highlight"><pre class="chroma"><code class="language-crystal" data-lang="crystal"><span class="ln"> 1</span><span class="sr">/vendor/</span><span class="n">lib64</span><span class="o">/</span><span class="n">hw</span><span class="o">/</span><span class="n">android</span><span class="o">.</span><span class="n">hardware</span><span class="o">.</span><span class="n">xiaoqing</span><span class="err">@</span><span class="mf">1.0</span><span class="o">-</span><span class="n">impl</span><span class="o">.</span><span class="n">so</span>
-<span class="ln"> 2</span>
-<span class="ln"> 3</span>
-<span class="ln"> 4</span>
-<span class="ln"> 5</span><span class="sr">/vendor/</span><span class="n">etc</span><span class="o">/</span><span class="n">init</span><span class="o">/</span><span class="n">android</span><span class="o">.</span><span class="n">hardware</span><span class="o">.</span><span class="n">xiaoqing</span><span class="err">@</span><span class="mf">1.0</span><span class="o">-</span><span class="n">service</span><span class="o">.</span><span class="n">rc</span> 
-<span class="ln"> 6</span>
+<span class="ln">53</span><span class="nv">LOCAL_STATIC_JAVA_LIBRARIES</span> <span class="o">:=</span> <span class="se">\
+</span><span class="ln">54</span><span class="se"></span>    android.hidl.base-V1.0-java-static <span class="se">\
+</span><span class="ln">55</span><span class="se"></span>
+<span class="ln">56</span><span class="c">#
+</span><span class="ln">57</span><span class="c"># Build IYangyang.hal
+</span><span class="ln">58</span><span class="c">#
+</span><span class="ln">59</span><span class="c"></span><span class="nv">GEN</span> <span class="o">:=</span> <span class="k">$(</span>intermediates<span class="k">)</span>/android/hardware/yangyang/V1_0/IYangyang.java
+<span class="ln">60</span><span class="nf">$(GEN)</span><span class="o">:</span> <span class="k">$(</span><span class="nv">HIDL</span><span class="k">)</span>
+<span class="ln">61</span><span class="nf">$(GEN)</span><span class="o">:</span> <span class="n">PRIVATE_HIDL</span> := <span class="k">$(</span><span class="nv">HIDL</span><span class="k">)</span>
+<span class="ln">62</span><span class="nf">$(GEN)</span><span class="o">:</span> <span class="n">PRIVATE_DEPS</span> := <span class="k">$(</span><span class="nv">LOCAL_PATH</span><span class="k">)</span>/<span class="n">IYangyang</span>.<span class="n">hal</span>
+<span class="ln">63</span><span class="nf">$(GEN)</span><span class="o">:</span> <span class="n">PRIVATE_OUTPUT_DIR</span> := <span class="k">$(</span><span class="nv">intermediates</span><span class="k">)</span>
+<span class="ln">64</span><span class="nf">$(GEN)</span><span class="o">:</span> <span class="n">PRIVATE_CUSTOM_TOOL</span> = \
+<span class="ln">65</span>        <span class="k">$(</span><span class="nv">PRIVATE_HIDL</span><span class="k">)</span> -<span class="n">o</span> <span class="k">$(</span><span class="nv">PRIVATE_OUTPUT_DIR</span><span class="k">)</span> \
+<span class="ln">66</span>        -<span class="n">Ljava</span> \
+<span class="ln">67</span>        -<span class="n">randroid</span>.<span class="n">hardware</span>:<span class="n">hardware</span>/<span class="n">interfaces</span> \
+<span class="ln">68</span>        -<span class="n">randroid</span>.<span class="n">hidl</span>:<span class="n">system</span>/<span class="n">libhidl</span>/<span class="n">transport</span> \
+<span class="ln">69</span>        <span class="n">android</span>.<span class="n">hardware</span>.<span class="n">yangyang</span>@1.0::<span class="n">IYangyang</span>
+<span class="ln">70</span>
+<span class="ln">71</span><span class="nf">$(GEN)</span><span class="o">:</span> <span class="k">$(</span><span class="nv">LOCAL_PATH</span><span class="k">)</span>/<span class="n">IYangyang</span>.<span class="n">hal</span>
+<span class="ln">72</span>	<span class="k">$(</span>transform-generated-source<span class="k">)</span>
+<span class="ln">73</span><span class="nv">LOCAL_GENERATED_SOURCES</span> <span class="o">+=</span> <span class="k">$(</span>GEN<span class="k">)</span>
+<span class="ln">74</span><span class="err">include</span> <span class="k">$(</span><span class="nv">BUILD_STATIC_JAVA_LIBRARY</span><span class="k">)</span>
+<span class="ln">75</span>
+<span class="ln">76</span><span class="err">include</span> <span class="k">$(</span><span class="nv">call</span> <span class="nv">all</span>-<span class="nv">makefiles</span>-<span class="nv">under</span>,<span class="k">$(</span><span class="nv">LOCAL_PATH</span><span class="k">))</span>
+</code></pre></div><h2 id="25构建binder-service">2.5构建binder service</h2>
+<h3 id="251-添加rcservicecpp">2.5.1 添加rc，service.cpp</h3>
+<p>虽然有了库，但是我们还需要构建binder通信服务，创建一个rc文件(rc文件是被init进程访问的)</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="nv">$vim</span> hardware/interfaces/yangyang/1.0/default/android.hardware.yangyang@1.0-service.rc
+</code></pre></div><p><a href="mailto:android.hardware.yangyang@1.0-service.rc">android.hardware.yangyang@1.0-service.rc</a></p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1"># hardware/interfaces/yangyang/1.0/default/android.hardware.yangyang@1.0-service.rc</span>
+<span class="ln">2</span>service yangyang_service_hal /vendor/bin/hw/android.hardware.yangyang@1.0-service
+<span class="ln">3</span>    class hal
+<span class="ln">4</span>    user system
+<span class="ln">5</span>    group system
+</code></pre></div><p>设定yangyang_service_hal服务，让rc文件启动的时候运行yangyang_service_hal的进程。</p>
+<p>进程的入口就是下面的service.cpp文件的main函数</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>vim hardware/interfaces/yangyang/1.0/default/service.cpp
+</code></pre></div><p>具体内容</p>
+<div class="highlight"><pre class="chroma"><code class="language-cpp" data-lang="cpp"><span class="ln"> 1</span><span class="c1">//hardware/interfaces/yangyang/1.0/default/service.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#define LOG_TAG &#34;android.hardware.yangyang@1.0-service&#34;
+</span><span class="ln"> 3</span><span class="cp">#include</span> <span class="cpf">&lt;android/hardware/yangyang/1.0/IYangyang.h&gt;</span><span class="cp">
+</span><span class="ln"> 4</span><span class="cp">#include</span> <span class="cpf">&lt;hidl/LegacySupport.h&gt;</span><span class="cp">
+</span><span class="ln"> 5</span><span class="cp"></span><span class="k">using</span> <span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">yangyang</span><span class="o">::</span><span class="n">V1_0</span><span class="o">::</span><span class="n">IYangyang</span><span class="p">;</span>
+<span class="ln"> 6</span><span class="k">using</span> <span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">defaultPassthroughServiceImplementation</span><span class="p">;</span>
 <span class="ln"> 7</span>
-<span class="ln"> 8</span>
-<span class="ln"> 9</span><span class="sr">/vendor/</span><span class="n">bin</span><span class="o">/</span><span class="n">hw</span><span class="o">/</span><span class="n">android</span><span class="o">.</span><span class="n">hardware</span><span class="o">.</span><span class="n">xiaoqing</span><span class="err">@</span><span class="mf">1.0</span><span class="o">-</span><span class="n">service</span>
-<span class="ln">10</span>
+<span class="ln"> 8</span><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+<span class="ln"> 9</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;hidl yangyang service is starting</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">10</span>    <span class="k">return</span> <span class="n">defaultPassthroughServiceImplementation</span><span class="o">&lt;</span><span class="n">IYangyang</span><span class="o">&gt;</span><span class="p">();</span>
 <span class="ln">11</span>
+<span class="ln">12</span><span class="p">}</span>
+</code></pre></div><p>在Android.bp中添加yangyang_service_hal服务的编译：</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>vim hardware/interfaces/yangyang/1.0/default/Android.bp 
+</code></pre></div><p>Android.bp中添加</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="ln"> 1</span><span class="c1">//hardware/interfaces/yangyang/1.0/default/Android.bp 
+</span><span class="ln"> 2</span><span class="c1"></span><span class="nx">cc_library_shared</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="c1">//通过之前编译的android.hardware.yangyang@1.0.so，Yangyang.cpp用来生成实现的so
+</span><span class="ln"> 4</span><span class="c1"></span>    <span class="c1">//这个实现的so为android.hardware.yangyang@1.0-impl.so
+</span><span class="ln"> 5</span><span class="c1"></span>    <span class="nx">name</span><span class="p">:</span> <span class="s">&#34;android.hardware.yangyang@1.0-impl&#34;</span><span class="p">,</span>
+<span class="ln"> 6</span>    <span class="nx">relative_install_path</span><span class="p">:</span> <span class="s">&#34;hw&#34;</span><span class="p">,</span>
+<span class="ln"> 7</span>    <span class="nx">proprietary</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+<span class="ln"> 8</span>    <span class="nx">srcs</span><span class="p">:</span> <span class="p">[</span>
+<span class="ln"> 9</span>        <span class="s">&#34;Yangyang.cpp&#34;</span><span class="p">,</span>
+<span class="ln">10</span>    <span class="p">],</span>
+<span class="ln">11</span>    <span class="nx">shared_libs</span><span class="p">:</span> <span class="p">[</span>
+<span class="ln">12</span>        <span class="s">&#34;libhidlbase&#34;</span><span class="p">,</span>
+<span class="ln">13</span>        <span class="s">&#34;libhidltransport&#34;</span><span class="p">,</span>
+<span class="ln">14</span>        <span class="s">&#34;libutils&#34;</span><span class="p">,</span>
+<span class="ln">15</span>        <span class="s">&#34;android.hardware.yangyang@1.0&#34;</span><span class="p">,</span>
+<span class="ln">16</span>    <span class="p">],</span>
+<span class="ln">17</span><span class="p">}</span>
+<span class="ln">18</span>
+<span class="ln">19</span><span class="nx">cc_binary</span> <span class="p">{</span>
+<span class="ln">20</span>    <span class="c1">//这个是一个全局唯一的名称，代表编译出来的是android.hardware.yangyang@1.0-service进程
+</span><span class="ln">21</span><span class="c1"></span>    <span class="nx">name</span><span class="p">:</span> <span class="s">&#34;android.hardware.yangyang@1.0-service&#34;</span><span class="p">,</span>
+<span class="ln">22</span>    <span class="nx">relative_install_path</span><span class="p">:</span> <span class="s">&#34;hw&#34;</span><span class="p">,</span>
+<span class="ln">23</span>    <span class="nx">proprietary</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+<span class="ln">24</span>    <span class="c1">//这个是service启动的rc文件
+</span><span class="ln">25</span><span class="c1"></span>    <span class="nx">init_rc</span><span class="p">:</span> <span class="p">[</span><span class="s">&#34;android.hardware.yangyang@1.0-service.rc&#34;</span><span class="p">],</span>
+<span class="ln">26</span>    <span class="c1">//这个是service的源文件
+</span><span class="ln">27</span><span class="c1"></span>    <span class="nx">srcs</span><span class="p">:</span> <span class="p">[</span><span class="s">&#34;service.cpp&#34;</span><span class="p">],</span>
+<span class="ln">28</span>
+<span class="ln">29</span>    <span class="nx">shared_libs</span><span class="p">:</span> <span class="p">[</span>
+<span class="ln">30</span>        <span class="s">&#34;liblog&#34;</span><span class="p">,</span>
+<span class="ln">31</span>        <span class="s">&#34;libcutils&#34;</span><span class="p">,</span>
+<span class="ln">32</span>        <span class="s">&#34;libdl&#34;</span><span class="p">,</span>
+<span class="ln">33</span>        <span class="s">&#34;libbase&#34;</span><span class="p">,</span>
+<span class="ln">34</span>        <span class="s">&#34;libutils&#34;</span><span class="p">,</span>
+<span class="ln">35</span>        <span class="s">&#34;libhardware&#34;</span><span class="p">,</span>
+<span class="ln">36</span>        <span class="s">&#34;libhidlbase&#34;</span><span class="p">,</span>
+<span class="ln">37</span>        <span class="s">&#34;libhidltransport&#34;</span><span class="p">,</span>
+<span class="ln">38</span>        <span class="s">&#34;android.hardware.yangyang@1.0&#34;</span><span class="p">,</span>
+<span class="ln">39</span>    <span class="p">],</span>
+<span class="ln">40</span><span class="p">}</span>
+</code></pre></div><p>最后的目录结构</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/hidl/hidl_5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/hidl/hidl_5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="252注册hidl到manifest中">2.5.2注册hidl到manifest中</h3>
+<p>为了能够定义之后让后续测试的客服端访问到，需要把这个hidl服务注册到manifest中。这个目的是为了在init进程的时候，去自动解析rc文件，找到对应的hidl的服务</p>
+<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220327224952578.png" alt="image-20220327224952578"></p>
+<div class="highlight"><pre class="chroma"><code class="language-xml" data-lang="xml"><span class="ln"> 1</span><span class="c">&lt;!-- 增加hidl的一个服务 --&gt;</span>
+<span class="ln"> 2</span><span class="nt">&lt;hal</span> <span class="na">format=</span><span class="s">&#34;hidl&#34;</span><span class="nt">&gt;</span>
+<span class="ln"> 3</span>    <span class="nt">&lt;name&gt;</span>android.hardware.yangyang<span class="nt">&lt;/name&gt;</span>
+<span class="ln"> 4</span>    <span class="nt">&lt;transport&gt;</span>hwbinder<span class="nt">&lt;/transport&gt;</span>
+<span class="ln"> 5</span>    <span class="nt">&lt;impl</span> <span class="na">level=</span><span class="s">&#34;generic&#34;</span><span class="nt">&gt;&lt;/impl&gt;</span>
+<span class="ln"> 6</span>    <span class="nt">&lt;version&gt;</span>1.0<span class="nt">&lt;/version&gt;</span>
+<span class="ln"> 7</span>    <span class="nt">&lt;interface&gt;</span>
+<span class="ln"> 8</span>        <span class="nt">&lt;name&gt;</span>IYangyang<span class="nt">&lt;/name&gt;</span>
+<span class="ln"> 9</span>        <span class="nt">&lt;instance&gt;</span>default<span class="nt">&lt;/instance&gt;</span>
+<span class="ln">10</span>    <span class="nt">&lt;/interface&gt;</span>
+<span class="ln">11</span><span class="nt">&lt;/hal&gt;</span>    
+</code></pre></div><h2 id="26最终编译">2.6最终编译</h2>
+<p>编译如下</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>$ mmm hardware/interfaces/yangyang/1.0/default/
+</code></pre></div><p>编译后生成的文件</p>
+<div class="highlight"><pre class="chroma"><code class="language-tex" data-lang="tex"><span class="ln">1</span>/vendor/lib64/hw/android.hardware.yangyang@1.0-impl.so
+<span class="ln">2</span>/vendor/etc/init/android.hardware.yangyang@1.0-service.rc 
+<span class="ln">3</span>/vendor/bin/hw/android.hardware.yangyang@1.0-service
+<span class="ln">4</span>/system/lib64/android.hardware.yangyang@1.0.so 
+</code></pre></div><h2 id="27验证服务端代码">2.7验证服务端代码</h2>
+<p>笔者这里用到了两种方法来验证。</p>
+<p>第一种方法主要是在同目录下创造一个test目录，用这个客户端去测试这个服务端。</p>
+<p>第二种方法主要用jar包，然后用源码编译app，最终通过手动click，用toast空间显示是否获取服务端成功。</p>
+<h3 id="271c验证">2.7.1c++验证</h3>
+<h4 id="2711增加编译文件和测试源文件">2.7.1.1增加编译文件和测试源文件</h4>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/hidl/hidl_6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/hidl/hidl_6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>这个test目录增加了两个文件，一个编译文件Android.bp和测试文件yangyangTest.cpp</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="ln"> 1</span><span class="c1">//hardware/interfaces/yangyang/1.0/test/Android.bp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="nx">cc_binary</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="nx">relative_install_path</span><span class="p">:</span> <span class="s">&#34;hw&#34;</span><span class="p">,</span>
+<span class="ln"> 4</span>    <span class="nx">defaults</span><span class="p">:</span> <span class="p">[</span><span class="s">&#34;hidl_defaults&#34;</span><span class="p">],</span>
+<span class="ln"> 5</span>    <span class="c1">//生成一个yangyang_client进程，源文件为yangyangTest.cpp
+</span><span class="ln"> 6</span><span class="c1"></span>    <span class="nx">name</span><span class="p">:</span> <span class="s">&#34;yangyang_client&#34;</span><span class="p">,</span>
+<span class="ln"> 7</span>    <span class="nx">proprietary</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+<span class="ln"> 8</span>    <span class="nx">srcs</span><span class="p">:</span> <span class="p">[</span><span class="s">&#34;yangyangTest.cpp&#34;</span><span class="p">],</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span>    <span class="nx">shared_libs</span><span class="p">:</span> <span class="p">[</span>
+<span class="ln">11</span>        <span class="s">&#34;liblog&#34;</span><span class="p">,</span>
+<span class="ln">12</span>        <span class="s">&#34;libhardware&#34;</span><span class="p">,</span>
+<span class="ln">13</span>        <span class="s">&#34;libhidlbase&#34;</span><span class="p">,</span>
+<span class="ln">14</span>        <span class="s">&#34;libhidltransport&#34;</span><span class="p">,</span>
+<span class="ln">15</span>        <span class="s">&#34;libutils&#34;</span><span class="p">,</span>
+<span class="ln">16</span>        <span class="s">&#34;android.hardware.yangyang@1.0&#34;</span><span class="p">,</span>
+<span class="ln">17</span>    <span class="p">],</span>
+<span class="ln">18</span>
+<span class="ln">19</span><span class="p">}</span>
+</code></pre></div><p>测试实现文件</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//hardware/interfaces/yangyang/1.0/test/yangyangTest.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#include</span> <span class="cpf">&lt;android/hardware/yangyang/1.0/IYangyang.h&gt;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp">#include</span> <span class="cpf">&lt;hidl/Status.h&gt;</span><span class="cp">
+</span><span class="ln"> 4</span><span class="cp">#include</span> <span class="cpf">&lt;hidl/LegacySupport.h&gt;</span><span class="cp">
+</span><span class="ln"> 5</span><span class="cp">#include</span> <span class="cpf">&lt;utils/misc.h&gt;</span><span class="cp">
+</span><span class="ln"> 6</span><span class="cp">#include</span> <span class="cpf">&lt;hidl/HidlSupport.h&gt;</span><span class="cp">
+</span><span class="ln"> 7</span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="ln"> 8</span><span class="cp"></span>
+<span class="ln"> 9</span><span class="k">using</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">hidl_string</span><span class="p">;</span>
+<span class="ln">10</span><span class="k">using</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">sp</span><span class="p">;</span>
+<span class="ln">11</span><span class="k">using</span> <span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">yangyang</span><span class="o">::</span><span class="n">V1_0</span><span class="o">::</span><span class="n">IYangyang</span><span class="p">;</span>
 <span class="ln">12</span>
-<span class="ln">13</span><span class="sr">/system/</span><span class="n">lib64</span><span class="o">/</span><span class="n">android</span><span class="o">.</span><span class="n">hardware</span><span class="o">.</span><span class="n">xiaoqing</span><span class="err">@</span><span class="mf">1.0</span><span class="o">.</span><span class="n">so</span> 
-</code></pre></div><h1 id="3源码分析">3源码分析</h1>
+<span class="ln">13</span><span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+<span class="ln">14</span>    <span class="n">android</span><span class="o">::</span><span class="n">sp</span><span class="o">&lt;</span><span class="n">IYangyang</span><span class="o">&gt;</span> <span class="n">service</span> <span class="o">=</span> <span class="n">IYangyang</span><span class="o">::</span><span class="n">getService</span><span class="p">();</span>
+<span class="ln">15</span>    <span class="k">if</span> <span class="p">(</span><span class="n">service</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">){</span>
+<span class="ln">16</span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;-&gt;&gt;&gt; yangyang48 | Failed to get service</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">17</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">18</span>    <span class="p">}</span>
+<span class="ln">19</span>
+<span class="ln">20</span>    <span class="n">service</span><span class="o">-&gt;</span><span class="n">helloWorld</span><span class="p">(</span><span class="s">&#34;I am Yangyang48&#34;</span><span class="p">,</span> <span class="p">[</span><span class="o">&amp;</span><span class="p">](</span><span class="n">hidl_string</span> <span class="n">result</span><span class="p">){</span>
+<span class="ln">21</span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;%s</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">result</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+<span class="ln">22</span>    <span class="p">});</span>
+<span class="ln">23</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">24</span><span class="p">}</span>
+</code></pre></div><h4 id="2712编译">2.7.1.2编译</h4>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1"># 执行第一条命令是为了更新hardware/interfaces/yangyang/目录下的Android.bp文件，自动增加1.0/test的目录</span>
+<span class="ln">2</span>$ ./hardware/interfaces/update-makefiles.sh
+<span class="ln">3</span>$ mmm hardware/interfaces/yangyang/1.0/default/
+</code></pre></div><p>编译完成之后，将文件导入到</p>
+<div class="highlight"><pre class="chroma"><code class="language-tex" data-lang="tex"><span class="ln">1</span>/vendor/bin/hw/yangyang<span class="nb">_</span>client
+</code></pre></div><h4 id="2713测试方法">2.7.1.3测试方法</h4>
+<p>首先运行服务端进程，进程启动后会出现日志hidl yangyang service is starting</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>./android.hardware.yangyang@1.0-service
+</code></pre></div><p>然后启动测试端进程，这个时候服务端就会和客户端交互，打印成功的日志-&raquo;&gt; Yangyang::helloWorld | Hello World, I am Yangyang48。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>./yangyang_client
+</code></pre></div><h3 id="272jar包验证">2.7.2jar包验证</h3>
+<h4 id="2721更改mk并编译jar包">2.7.2.1更改mk并编译jar包</h4>
+<p>可以知道，包目录下的mk文件实际上跟java相关，除了编译java的interface之外，还会编译对应的jar包。为了编译出classes.jar，需要修改hardware/interfaces/yangyang/1.0目录的Android.mk</p>
+<div class="highlight"><pre class="chroma"><code class="language-makefile" data-lang="makefile"><span class="ln">1</span><span class="c">#hardware/interfaces/yangyang/1.0/Android.mk
+</span><span class="ln">2</span><span class="c"></span><span class="nv">LOCAL_PATH</span> <span class="o">:=</span> <span class="k">$(</span>call my-dir<span class="k">)</span>
+<span class="ln">3</span><span class="err">include</span> <span class="k">$(</span><span class="nv">CLEAR_VARS</span><span class="k">)</span>
+<span class="ln">4</span><span class="c"># 增加一个LOCAL_JACK_ENABLED disable的方式，这样编译的时候就不走jack编译了
+</span><span class="ln">5</span><span class="c"></span><span class="nv">LOCAL_JACK_ENABLED</span> <span class="o">:=</span> disabled
+<span class="ln">6</span><span class="nv">LOCAL_MODULE</span> <span class="o">:=</span> android.hardware.yangyang-V1.0-java
+<span class="ln">7</span><span class="nv">LOCAL_MODULE_CLASS</span> <span class="o">:=</span> JAVA_LIBRARIES
+<span class="ln">8</span><span class="err">...</span>
+</code></pre></div><h4 id="2722jar包集成到android源码中">2.7.2.2jar包集成到Android源码中</h4>
+<p>具体目录如下所示。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/hidl/hidl_7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/hidl/hidl_7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>我们这边只看一个主界面MainActivity，注册AndroidManifest.xml和mk的编译脚本</p>
+<p>MainActivity.java，<strong>笔者在主界面中用的还是v7的包，其实也可以用androidx的包</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//packages/apps/HIDLdemo/src/com/example/hidldemo/MainActivity.java
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kn">package</span> <span class="nn">com.example.hidldemo</span><span class="o">;</span>
+<span class="ln"> 3</span>
+<span class="ln"> 4</span><span class="kn">import</span> <span class="nn">android.hardware.yangyang.V1_0.IYangyang</span><span class="o">;</span>
+<span class="ln"> 5</span><span class="kn">import</span> <span class="nn">android.os.Bundle</span><span class="o">;</span>
+<span class="ln"> 6</span><span class="kn">import</span> <span class="nn">android.os.RemoteException</span><span class="o">;</span>
+<span class="ln"> 7</span><span class="kn">import</span> <span class="nn">android.support.v7.app.AppCompatActivity</span><span class="o">;</span>
+<span class="ln"> 8</span><span class="kn">import</span> <span class="nn">android.util.Log</span><span class="o">;</span>
+<span class="ln"> 9</span><span class="kn">import</span> <span class="nn">android.view.View</span><span class="o">;</span>
+<span class="ln">10</span><span class="kn">import</span> <span class="nn">android.widget.Toast</span><span class="o">;</span>
+<span class="ln">11</span>
+<span class="ln">12</span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MainActivity</span> <span class="kd">extends</span> <span class="n">AppCompatActivity</span> <span class="o">{</span>
+<span class="ln">13</span>    <span class="n">IYangyang</span> <span class="n">iYangyangService</span><span class="o">;</span>
+<span class="ln">14</span>    <span class="nd">@Override</span>
+<span class="ln">15</span>    <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onCreate</span><span class="o">(</span><span class="n">Bundle</span> <span class="n">savedInstanceState</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">16</span>        <span class="kd">super</span><span class="o">.</span><span class="na">onCreate</span><span class="o">(</span><span class="n">savedInstanceState</span><span class="o">);</span>
+<span class="ln">17</span>        <span class="n">setContentView</span><span class="o">(</span><span class="n">R</span><span class="o">.</span><span class="na">layout</span><span class="o">.</span><span class="na">activity_main</span><span class="o">);</span>
+<span class="ln">18</span>        <span class="k">try</span> <span class="o">{</span>
+<span class="ln">19</span>            <span class="n">iYangyangService</span> <span class="o">=</span> <span class="n">IYangyang</span><span class="o">.</span><span class="na">getService</span><span class="o">();</span> <span class="c1">//获取服务
+</span><span class="ln">20</span><span class="c1"></span>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">RemoteException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">21</span>            <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="ln">22</span>        <span class="o">}</span>
+<span class="ln">23</span>    <span class="o">}</span>
+<span class="ln">24</span>
+<span class="ln">25</span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">hidlTest</span><span class="o">(</span><span class="n">View</span> <span class="n">view</span><span class="o">){</span>
+<span class="ln">26</span>        <span class="k">if</span> <span class="o">(</span><span class="n">iYangyangService</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">){</span>
+<span class="ln">27</span>            <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="s">&#34;MainActivity&#34;</span><span class="o">,</span> <span class="s">&#34;Yangyang48 | service is connect.&#34;</span><span class="o">);</span>
+<span class="ln">28</span>            <span class="n">String</span> <span class="n">s</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">29</span>            <span class="k">try</span> <span class="o">{</span>
+<span class="ln">30</span>                <span class="n">s</span> <span class="o">=</span> <span class="n">iYangyangService</span><span class="o">.</span><span class="na">helloWorld</span><span class="o">(</span><span class="s">&#34;I am Yangyang48_java&#34;</span><span class="o">);</span><span class="c1">//调用HAL层接口
+</span><span class="ln">31</span><span class="c1"></span>            <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">RemoteException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">32</span>                <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="ln">33</span>            <span class="o">}</span>
+<span class="ln">34</span>            <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="s">&#34;MainActivity&#34;</span><span class="o">,</span> <span class="n">s</span><span class="o">);</span>
+<span class="ln">35</span>            <span class="n">Toast</span><span class="o">.</span><span class="na">makeText</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="n">s</span><span class="o">,</span> <span class="n">Toast</span><span class="o">.</span><span class="na">LENGTH_LONG</span><span class="o">).</span><span class="na">show</span><span class="o">();</span>
+<span class="ln">36</span>        <span class="o">}</span>
+<span class="ln">37</span>    <span class="o">}</span>
+<span class="ln">38</span><span class="o">}</span>
+</code></pre></div><p>AndroidManifest.xml，这个跟默认的app写法一致</p>
+<div class="highlight"><pre class="chroma"><code class="language-xml" data-lang="xml"><span class="ln"> 1</span><span class="cp">&lt;?xml version=&#34;1.0&#34; encoding=&#34;utf-8&#34;?&gt;</span>
+<span class="ln"> 2</span><span class="nt">&lt;manifest</span> <span class="na">xmlns:android=</span><span class="s">&#34;http://schemas.android.com/apk/res/android&#34;</span>
+<span class="ln"> 3</span>    <span class="na">package=</span><span class="s">&#34;com.example.hidldemo&#34;</span><span class="nt">&gt;</span>
+<span class="ln"> 4</span>    <span class="nt">&lt;application</span>
+<span class="ln"> 5</span>        <span class="na">android:allowBackup=</span><span class="s">&#34;true&#34;</span>
+<span class="ln"> 6</span>        <span class="na">android:icon=</span><span class="s">&#34;@mipmap/ic_launcher&#34;</span>
+<span class="ln"> 7</span>        <span class="na">android:label=</span><span class="s">&#34;@string/app_name&#34;</span>
+<span class="ln"> 8</span>        <span class="na">android:roundIcon=</span><span class="s">&#34;@mipmap/ic_launcher_round&#34;</span>
+<span class="ln"> 9</span>        <span class="na">android:supportsRtl=</span><span class="s">&#34;true&#34;</span>
+<span class="ln">10</span>        <span class="na">android:theme=</span><span class="s">&#34;@style/AppTheme&#34;</span><span class="nt">&gt;</span>
+<span class="ln">11</span>        <span class="nt">&lt;activity</span> <span class="na">android:name=</span><span class="s">&#34;.MainActivity&#34;</span><span class="nt">&gt;</span>
+<span class="ln">12</span>            <span class="nt">&lt;intent-filter&gt;</span>
+<span class="ln">13</span>                <span class="nt">&lt;action</span> <span class="na">android:name=</span><span class="s">&#34;android.intent.action.MAIN&#34;</span> <span class="nt">/&gt;</span>
+<span class="ln">14</span>                <span class="nt">&lt;category</span> <span class="na">android:name=</span><span class="s">&#34;android.intent.category.LAUNCHER&#34;</span> <span class="nt">/&gt;</span>
+<span class="ln">15</span>            <span class="nt">&lt;/intent-filter&gt;</span>
+<span class="ln">16</span>        <span class="nt">&lt;/activity&gt;</span>
+<span class="ln">17</span>    <span class="nt">&lt;/application&gt;</span>
+<span class="ln">18</span><span class="nt">&lt;/manifest&gt;</span>
+</code></pre></div><p>Android.mk</p>
+<div class="highlight"><pre class="chroma"><code class="language-makefile" data-lang="makefile"><span class="ln"> 1</span><span class="nv">LOCAL_PATH</span> <span class="o">:=</span> <span class="k">$(</span>call my-dir<span class="k">)</span>
+<span class="ln"> 2</span><span class="err">include</span> <span class="k">$(</span><span class="nv">CLEAR_VARS</span><span class="k">)</span>
+<span class="ln"> 3</span><span class="c">#定义app的apk名
+</span><span class="ln"> 4</span><span class="c"></span><span class="nv">LOCAL_PACKAGE_NAME</span> <span class="o">:=</span> HIDLdemo
+<span class="ln"> 5</span><span class="nv">LOCAL_SRC_FILES</span> <span class="o">:=</span> <span class="k">$(</span>call all-java-files-under, src<span class="k">)</span>
+<span class="ln"> 6</span><span class="nv">LOCAL_MODULE_TAGS</span> <span class="o">:=</span>optional
+<span class="ln"> 7</span><span class="nv">LOCAL_STATIC_JAVA_LIBRARIES</span> <span class="o">:=</span> android-support-v4
+<span class="ln"> 8</span><span class="c"># 这里可以加入androidx的包，需要在同目录下也同样导入
+</span><span class="ln"> 9</span><span class="c"></span><span class="nv">LOCAL_STATIC_JAVA_LIBRARIES</span> <span class="o">+=</span> android-support-v7-appcompat
+<span class="ln">10</span><span class="c"># 增加yangyang的jar包，这个步骤不能缺
+</span><span class="ln">11</span><span class="c"></span><span class="nv">LOCAL_STATIC_JAVA_LIBRARIES</span> <span class="o">+=</span> android.hardware.yangyang-V1.0-java-static
+<span class="ln">12</span>
+<span class="ln">13</span><span class="nv">LOCAL_RESOURCE_DIR</span> <span class="o">:=</span> <span class="k">$(</span>LOCAL_PATH<span class="k">)</span>/res
+<span class="ln">14</span><span class="nv">LOCAL_RESOURCE_DIR</span> <span class="o">+=</span> prebuilts/sdk/current/support/v7/appcompat/res
+<span class="ln">15</span>
+<span class="ln">16</span><span class="nv">LOCAL_CERTIFICATE</span> <span class="o">:=</span> platform
+<span class="ln">17</span><span class="nv">LOCAL_AAPT_FLAGS</span> <span class="o">:=</span> --auto-add-overlay
+<span class="ln">18</span><span class="err">include</span> <span class="k">$(</span><span class="nv">BUILD_PACKAGE</span><span class="k">)</span>
+</code></pre></div><h1 id="3总结">3总结</h1>
+<p>HIDL主要通过hwbinder注册，通过hwservicemanager来管理，通过一个客户端和一个服务端，总的来实现一个hidl的系统。本文主要简述关于HIDL的使用方式。通过自定义一个HIDL服务端，通过c++和java两种方式的客户端，去调用到服务端的最终实现。</p>
+<p>当然HIDL的精髓不只是一个简单的小demo就可以描述清楚，这里笔者做一个抛砖引玉的作用，后续会持续更新关于HIDL方面的文章。</p>
+<p>hwbinder的关系图如下图所示。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/hidl/hidl_8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/hidl/hidl_8.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="4下载">4下载</h1>
+<p>本文源码下载，点击<a href="https://github.com/YangYang48/project/tree/master/MyHIDL">这里</a></p>
 <h1 id="参考">参考</h1>
-<p><a href="https://source.android.google.cn/devices/architecture/hidl/binder-ipc">[1] android官方文档, 使用Binder IPC，带你学懂Handler和内存屏障, 2020.</a></p>
+<p><a href="https://source.android.google.cn/devices/architecture/hidl/binder-ipc">[1] android官方文档, 使用Binder IPC, 2020.</a></p>
 <p><a href="https://www.jianshu.com/p/ca6823b897b5">[2] 木叶风神, Android HIDL学习（2） &mdash;- HelloWorld, 2018.</a></p>
 <p><a href="https://blog.csdn.net/yiranfeng/article/details/105175578">[3] IngresGe, Android10.0 Binder通信原理(一)Binder、HwBinder、VndBinder概要 &mdash; 注册回调, 2020.</a></p>
 <p><a href="https://blog.csdn.net/yiranfeng/article/details/107966454">[4] IngresGe, Native层HIDL服务的注册原理-Android10.0 HwBinder通信原理(六), 2020.</a></p>
@@ -837,7 +1240,12 @@ HIDL则是串联Interface-&gt;Hw Binder SDK-&gt;dev/hwbinder</p>
 <p><a href="https://linus.blog.csdn.net/article/details/104289913">[7] 嵌入式Linux,, binder，hwbinder，vndbinder之间的关系, 2020.</a></p>
 <p><a href="https://justinwei.blog.csdn.net/article/details/86531179">[8] 私房菜,Android HIDL 中的数据类型, 2019.</a></p>
 <p><a href="https://blog.csdn.net/liujun3512159/article/details/123103620">[9] liujun3512159,HIDL实战笔记, 2022.</a></p>
-<h1 id="heading"></h1>
+<p><a href="http://www.javashuo.com/article/p-ghdvyhzt-mk.html">[10] 开发小院,CameraProvider进程启动流程, 2020.</a></p>
+<p><a href="https://blog.csdn.net/shift_wwx/article/details/86531137">[11] 私房菜,Android HIDL 中的函数, 2019.</a></p>
+<p><a href="https://blog.csdn.net/u013357557/article/details/84561652">[12] Gunder,HIDL最全编译流程, 2018.</a></p>
+<p><a href="https://blog.csdn.net/u013357557/article/details/84561457">[13] Gunder,HIDL概述, 2018.</a></p>
+<p><a href="https://blog.csdn.net/GetNextWindow/article/details/48160569?spm=1001.2101.3001.6650.12&amp;utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7Edefault-12.pc_relevant_default&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7Edefault-12.pc_relevant_default&amp;utm_relevant_index=18">[14] nginux,source /build/envsetup.sh和lunch）, 2015.</a></p>
+<p><a href="https://blog.csdn.net/tkwxty/article/details/104395820">[15] IT先森,Android.bp入门指南之浅析Android.bp语法, 2020.</a></p>
               
             </div>
           </div>
