@@ -2334,7 +2334,7 @@
 <span class="ln">38</span>        <span class="s2">&#34;manifest_android.frameworks.cameraservice.service@2.1.xml&#34;</span>,
 <span class="ln">39</span>    <span class="o">]</span>,
 <span class="ln">40</span><span class="err">}</span>
-</code></pre></div><p>可以看到这个rc文件解析之后，被开启cameraserver，这个cameraserver实际上是一个进程，位于/system/bin/cameraserver。这里的cameraserver的rc文件，<strong>里面没有设置oneshot，说明会自重启</strong>，没有设置disable，说明不需要其他应用显示启动它，具体rc语法点击<a href="https://blog.csdn.net/feigebangni/article/details/50300063">这里</a>。</p>
+</code></pre></div><p>可以看到这个rc文件解析之后，被开启cameraserver，这个cameraserver实际上是一个进程，位于/system/bin/cameraserver。这里的cameraserver的rc文件，<strong>里面没有设置oneshot，说明当service退出后会自重启</strong>，没有设置disable，说明这个服务会随着它的类启动而自动启动，具体rc语法点击<a href="https://blog.csdn.net/eliot_shao/article/details/53163522">这里</a>。</p>
 <div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>#frameworks/av/camera/cameraserver/cameraserver.rc 
 <span class="ln">2</span>service cameraserver /system/bin/cameraserver
 <span class="ln">3</span>    class main
@@ -2526,7 +2526,7 @@
 <span class="ln">5</span>    <span class="n">t</span><span class="o">.</span><span class="na">traceEnd</span><span class="o">();</span>
 <span class="ln">6</span><span class="o">}</span>
 </code></pre></div><h3 id="324cameraservice服务的aidl使用">3.2.4CameraService服务的AIDL使用</h3>
-<p>CameraManager类获取“media.camera”服务，通过它和摄像头打交道，通过AIDL将App的相机进程和CameraService进程互相通信。这里的getService，就是获取CameraService进程，因为之前的getname已经将&quot;media.camera&quot;和CameraService绑定，那么这里就可以直接调用到CameraService。App相机进程在servicemanager中查询&quot;media.camera&quot;这个标记binder的服务，查询之后和CameraService建立Binder通信，通过App进程中jar包Api，对应调用到CameraService中相应的实现。</p>
+<p>CameraManager类获取&quot;media.camera&quot;服务，通过它和摄像头打交道，通过AIDL将App的相机进程和CameraService进程互相通信。这里的getService，就是获取CameraService进程，因为之前的getname已经将&quot;media.camera&quot;和CameraService绑定，那么这里就可以直接调用到CameraService。App相机进程在servicemanager中查询&quot;media.camera&quot;这个标记binder的服务，查询之后和CameraService建立Binder通信，通过App进程中jar包Api，对应调用到CameraService中相应的实现。</p>
 <div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//以camera2为例
 </span><span class="ln"> 2</span><span class="c1">//frameworks/base/core/java/android/hardware/camera2/CameraManager.java
 </span><span class="ln"> 3</span><span class="c1"></span><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">CAMERA_SERVICE_BINDER_NAME</span> <span class="o">=</span> <span class="s">&#34;media.camera&#34;</span><span class="o">;</span>
@@ -2739,6 +2739,7 @@ vdprintf, vsprintf, vsnprintf - formatted output conversion</p>
 <p><a href="https://blog.csdn.net/qq_37858386/article/details/121416871">[12] 海月汐辰, Android mk文件 LOCAL_INIT_RC 将RC文件编译到/system/etc/init或vendor/etc/init，system\core\init\init.cpp解析这些rc, 2022.</a></p>
 <p><a href="https://blog.csdn.net/feigebangni/article/details/50300063">[13] astro-yang, init.rc语法详解, 2015.</a></p>
 <p><a href="https://blog.csdn.net/weixin_44471948/article/details/120846877">[14] BBOrange丶, pipe()函数详解, 2021.</a></p>
+<p><a href="https://blog.csdn.net/eliot_shao/article/details/53163522">[15] Eliot_shao, Init.rc妙用及语法说明, 2016.</a></p>
               
             </div>
           </div>
