@@ -280,7 +280,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">5400 Words|Read in about 26 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">6000 Words|Read in about 29 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -299,9 +299,74 @@
 </blockquote>
 <p>关于上面的几点现在看会有点懵，笔者这里先按下不表，继续往下看。</p>
 <h2 id="11choreography由来">1.1choreography由来</h2>
+<p>界面的显示大体会经过CPU的计算-&gt; GPU合成栅格化-&gt;显示设备显示。我们知道Android设备的刷新频率一般都是60HZ也就是一秒60次，如果一次绘制在约16毫喵内完成时没有问题的。但是一旦出现不协调的地方就会出问题如下图</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/choreographer/choreographyer_21.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/choreographer/choreographyer_21.png" >
+  
+    </a>
+  
+  
+</div>
+
+<ul>
+<li>第一个周期，cpu计算、GPU操作、显示设备显示没有问题。</li>
+<li>第二个周期，显示上一个周期绘制准备好的图像；CPU计算是在周期将要结束的时候才开始计算</li>
+<li>第三个周期，由于进入第二个周期的时候CPU动手计算晚点了，致使进入第三个周期的时候本应该显示的图像没有准备好，导致整个第三个周期内还是显示上一个周期的图像，这样看上去会卡，掉帧！google工程师们管整个叫Jank延误军机。</li>
+</ul>
+<p>垂直同步简单的说，就是让CPU计算别没有计划没有规律而是在每个周期开始的时候开始计算，这样就有条不紊的有序进行了（如下图）。因此在android4.1及以后的版本中加入了Choreographer这个类，Choreographer收到VSync信号才开始绘制，保证绘制拥有完整的16.7ms，避免绘制的随机性。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/choreographer/choreographyer_22.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/choreographer/choreographyer_22.png" >
+  
+    </a>
+  
+  
+</div>
+
 <h2 id="12choreography作用">1.2choreography作用</h2>
 <p>这个原理可以简单的理解为是Handler的消息机制的变体。只不过这里用到了更多的异步消息的同步屏障处理。</p>
-<p>Choreographer 的引入，主要是配合 Vsync ，给上层 App 的渲染<strong>提供一个稳定的 Message 处理的时机，也就是 Vsync 到来的时候 ，系统通过对 Vsync 信号周期的调整，来控制每一帧绘制操作的时机. 至于为什么 Vsync 周期选择是 16.6ms (60 fps)</strong> ，是因为目前大部分手机的屏幕都是 60Hz 的刷新率，也就是 16.6ms 刷新一次，系统为了配合屏幕的刷新频率，将 Vsync 的周期也设置为 16.6 ms，每隔 16.6 ms ，Vsync 信号到来唤醒 Choreographer 来做 App 的绘制操作 ，如果每个 Vsync 周期应用都能渲染完成，那么应用的 fps 就是 60 ，给用户的感觉就是非常流畅，这就是引入 Choreographer 的主要作用。</p>
+<p>Choreographer 的引入，主要是配合 Vsync ，给上层 App 的渲染<strong>提供一个稳定的 Message 处理的时机，也就是 Vsync 到来的时候 ，系统通过对 Vsync 信号周期的调整，来控制每一帧绘制操作的时机. 至于为什么 Vsync 周期选择是 16.7ms (60 fps)</strong> ，是因为目前大部分手机的屏幕都是 60Hz 的刷新率，也就是 16.7ms 刷新一次，系统为了配合屏幕的刷新频率，将 Vsync 的周期也设置为 16.7 ms，每隔 16.7 ms ，Vsync 信号到来唤醒 Choreographer 来做 App 的绘制操作 ，如果每个 Vsync 周期应用都能渲染完成，那么应用的 fps 就是 60 ，给用户的感觉就是非常流畅，这就是引入 Choreographer 的主要作用。</p>
 
 
  
@@ -481,7 +546,127 @@
 <span class="ln">45</span><span class="o">}</span>
 </code></pre></div><h3 id="214mcallbackqueues">2.1.4mCallbackQueues</h3>
 <p>这个是一个数据结构为CallbackQueue类型的数组，元素大小为5，分别代表CALLBACK_INPUT、CALLBACK_ANIMATION、CALLBACK_INSETS_ANIMATION、CALLBACK_TRAVERSAL和CALLBACK_COMMIT。每个元素都有CallbackRecord类型的按时间戳排列的优先级队列mHead。</p>
-<p>//todo 补充几张图，数据结构，插入和消费</p>
+<p>mCallbackQueues数据结构图，可以通过下面代码可知是按时间的优先级排序的链表队列</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/choreographer/choreographyer_16.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/choreographer/choreographyer_16.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>1）<strong>提取</strong>extractDueCallbacksLocked</p>
+<p>此方法就是为了得到执行时间小于当前时间的Callback链表集合，得到之后会将链表断成两份，前面一份为需要马上执行的Callback，后面一份为还未到执行时间的Callback，这样保证了下一次绘制请求的Callback能够放在后面一个链表中，最早也在下一个Vsync到才执行</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/choreographer/choreographyer_18.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/choreographer/choreographyer_18.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>2）<strong>插入</strong>addCallbackLocked</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/choreographer/choreographyer_17.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/choreographer/choreographyer_17.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>3）<strong>消费</strong>removeCallbacksLocked</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/choreographer/choreographyer_19.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/choreographer/choreographyer_19.png" >
+  
+    </a>
+  
+  
+</div>
+
 <div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">  1</span><span class="c1">//frameworks/base/core/java/android/view/Choreographer.java#FrameDisplayEventReceiver
 </span><span class="ln">  2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">CALLBACK_INPUT</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span>
 <span class="ln">  3</span><span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">CALLBACK_ANIMATION</span> <span class="o">=</span> <span class="n">1</span><span class="o">;</span>
@@ -965,6 +1150,7 @@
 <span class="ln">18</span><span class="p">}</span>
 </code></pre></div><h3 id="232displayeventdispatcherhandleevent">2.3.2DisplayEventDispatcher.handleEvent</h3>
 <p>这里的callback实际上就是上面注册Vysnc信号传入的DisplayEventDispatcher实例的this</p>
+<p>所以监听了mReceiveFd之后，当mSendFd写入数据时就能收到消息，并回调DisplayEventDispatcher的handleEvent函数</p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/gui/DisplayEventDispatcher.cpp#handleEvent
 </span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="n">DisplayEventDispatcher</span><span class="o">::</span><span class="n">handleEvent</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span> <span class="n">events</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span><span class="p">)</span> <span class="p">{</span>
 <span class="ln"> 3</span>    <span class="p">...</span>
@@ -1029,12 +1215,18 @@
 <span class="ln">12</span><span class="p">}</span>
 </code></pre></div><h3 id="235recvobjects">2.3.5recvObjects</h3>
 <p>最终是调用到BitTube，使用<strong>双向通信管道的socketpair的receive过程</strong></p>
+<blockquote>
+<p>关于socketpair</p>
+<p>socket在内核中有一个发送缓冲区和一个接收缓冲区，send函数负责将数据存入socket的发送缓冲区，recv函数负责从socket的接收缓冲区中将数据拷贝到用户空间，recv和send不一定是一一对应，也就是说并不是send一次，就一定recv一次接收完，有可能send一次，recv多次才能接收完，也可能send多次，一次recv就接收完了</p>
+<p>简单理解就是send发数据，recv就能够收到数据</p>
+</blockquote>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//frameworks/native/libs/gui/BitTube.cpp#recvObjects
 </span><span class="ln">2</span><span class="c1"></span><span class="n">ssize_t</span> <span class="n">BitTube</span><span class="o">::</span><span class="n">recvObjects</span><span class="p">(</span><span class="n">BitTube</span><span class="o">*</span> <span class="n">tube</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">events</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">count</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">objSize</span><span class="p">)</span> <span class="p">{</span>
 <span class="ln">3</span>    <span class="kt">char</span><span class="o">*</span> <span class="n">vaddr</span> <span class="o">=</span> <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">events</span><span class="p">);</span>
-<span class="ln">4</span>    <span class="n">ssize_t</span> <span class="n">size</span> <span class="o">=</span> <span class="n">tube</span><span class="o">-&gt;</span><span class="n">read</span><span class="p">(</span><span class="n">vaddr</span><span class="p">,</span> <span class="n">count</span> <span class="o">*</span> <span class="n">objSize</span><span class="p">);</span>
-<span class="ln">5</span>    <span class="k">return</span> <span class="n">size</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">?</span> <span class="nl">size</span> <span class="p">:</span> <span class="n">size</span> <span class="o">/</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">ssize_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">objSize</span><span class="p">);</span>
-<span class="ln">6</span><span class="p">}</span>
+<span class="ln">4</span>    <span class="c1">//vaddr为缓冲区的地址，count * objSize为缓冲区的大小
+</span><span class="ln">5</span><span class="c1"></span>    <span class="n">ssize_t</span> <span class="n">size</span> <span class="o">=</span> <span class="n">tube</span><span class="o">-&gt;</span><span class="n">read</span><span class="p">(</span><span class="n">vaddr</span><span class="p">,</span> <span class="n">count</span> <span class="o">*</span> <span class="n">objSize</span><span class="p">);</span>
+<span class="ln">6</span>    <span class="k">return</span> <span class="n">size</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">?</span> <span class="nl">size</span> <span class="p">:</span> <span class="n">size</span> <span class="o">/</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">ssize_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">objSize</span><span class="p">);</span>
+<span class="ln">7</span><span class="p">}</span>
 </code></pre></div><h3 id="236displayeventdispatcherdispatchvsync">2.3.6DisplayEventDispatcher.dispatchVsync</h3>
 <p>这里的dispatchVsync实际上调用的是子类NativeDisplayEventReceiver中的dispatchVsync函数</p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/base/core/jni/android_view_DisplayEventReceiver.cpp#dispatchVsync
@@ -1321,7 +1513,35 @@
 <span class="ln">43</span>    <span class="o">}</span>
 <span class="ln">44</span><span class="o">}</span>
 </code></pre></div><p>这里面有一个recycleCallbackLocked方法，是为了让其置为空</p>
-<p>//todo,空的标记</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/choreographer/choreographyer_20.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/choreographer/choreographyer_20.png" >
+  
+    </a>
+  
+  
+</div>
+
 <div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//frameworks/base/core/java/android/view/Choreographer.java#recycleCallbackLocked
 </span><span class="ln">2</span><span class="c1"></span><span class="kd">private</span> <span class="kt">void</span> <span class="nf">recycleCallbackLocked</span><span class="o">(</span><span class="n">CallbackRecord</span> <span class="n">callback</span><span class="o">)</span> <span class="o">{</span>
 <span class="ln">3</span>    <span class="n">callback</span><span class="o">.</span><span class="na">action</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
@@ -1330,7 +1550,7 @@
 <span class="ln">6</span>    <span class="n">mCallbackPool</span> <span class="o">=</span> <span class="n">callback</span><span class="o">;</span>
 <span class="ln">7</span><span class="o">}</span>
 </code></pre></div><h4 id="2395callbackrecordrun">2.3.9.5CallbackRecord.run</h4>
-<p>最重要的就是run方法，回调到CallbackRecord的run方法</p>
+<p>最重要的就是run方法，回调到CallbackRecord的run方法，具体关于run方法的图解，可以直接跳转到2.4.25关于Choreographer的流程</p>
 <div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/base/core/java/android/view/Choreographer.java#CallbackRecord#run
 </span><span class="ln"> 2</span><span class="c1"></span><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">CallbackRecord</span> <span class="o">{</span>
 <span class="ln"> 3</span>    <span class="kd">public</span> <span class="n">CallbackRecord</span> <span class="n">next</span><span class="o">;</span>
@@ -1350,162 +1570,43 @@
 <span class="ln">17</span>        <span class="o">}</span>
 <span class="ln">18</span>    <span class="o">}</span>
 <span class="ln">19</span><span class="o">}</span>
-</code></pre></div><h5 id="23951framecallbackdoframe">2.3.9.5.1FrameCallback.doFrame</h5>
-<p>Choreographer的FrameCallback用的callbackType只能为CALLBACK_ANIMATION，这里会会调到FrameCallback子类的doFrame方法</p>
-<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//frameworks/base/core/java/android/view/Choreographer.javapostFrameCallbackDelayed
-</span><span class="ln">2</span><span class="c1"></span><span class="kd">public</span> <span class="kt">void</span> <span class="nf">postFrameCallbackDelayed</span><span class="o">(</span><span class="n">FrameCallback</span> <span class="n">callback</span><span class="o">,</span> <span class="kt">long</span> <span class="n">delayMillis</span><span class="o">)</span> <span class="o">{</span>
-<span class="ln">3</span>    <span class="k">if</span> <span class="o">(</span><span class="n">callback</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-<span class="ln">4</span>        <span class="k">throw</span> <span class="k">new</span> <span class="n">IllegalArgumentException</span><span class="o">(</span><span class="s">&#34;callback must not be null&#34;</span><span class="o">);</span>
-<span class="ln">5</span>    <span class="o">}</span>
-<span class="ln">6</span>
-<span class="ln">7</span>    <span class="n">postCallbackDelayedInternal</span><span class="o">(</span><span class="n">CALLBACK_ANIMATION</span><span class="o">,</span>
-<span class="ln">8</span>                                <span class="n">callback</span><span class="o">,</span> <span class="n">FRAME_CALLBACK_TOKEN</span><span class="o">,</span> <span class="n">delayMillis</span><span class="o">);</span>
-<span class="ln">9</span><span class="o">}</span>
-</code></pre></div><h5 id="23952runnablerun">2.3.9.5.2Runnable.run</h5>
-<p>这里的6种类型的run，比如这就是进入了事件分发的机制。事实上，callbackType为CALLBACK_ANIMATION更多一点，这里会会调到Runnable子类的run方法</p>
-<p>1）callbackType为<strong>CALLBACK_INPUT</strong>时</p>
-<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/base/core/java/android/view/ViewRootImpl.java#doConsumeBatchedInput
-</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">final</span> <span class="kd">class</span> <span class="nc">ConsumeBatchedInputRunnable</span> <span class="kd">implements</span> <span class="n">Runnable</span> <span class="o">{</span>
-<span class="ln"> 3</span>    <span class="nd">@Override</span>
-<span class="ln"> 4</span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
-<span class="ln"> 5</span>        <span class="n">mConsumeBatchedInputScheduled</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
-<span class="ln"> 6</span>        <span class="k">if</span> <span class="o">(</span><span class="n">doConsumeBatchedInput</span><span class="o">(</span><span class="n">mChoreographer</span><span class="o">.</span><span class="na">getFrameTimeNanos</span><span class="o">()))</span> <span class="o">{</span>
-<span class="ln"> 7</span>            <span class="c1">//我们想要继续并安排在下一帧消费延时输入事件。
-</span><span class="ln"> 8</span><span class="c1"></span>            <span class="c1">//如果不先消费这一批次的输入事件，我们会等到有更多的输入事件挂起，并且可能会因过程中发生的其他事情而饿死
-</span><span class="ln"> 9</span><span class="c1"></span>            <span class="n">scheduleConsumeBatchedInput</span><span class="o">();</span>
-<span class="ln">10</span>        <span class="o">}</span>
-<span class="ln">11</span>    <span class="o">}</span>
-<span class="ln">12</span><span class="o">}</span>
-<span class="ln">13</span>
-<span class="ln">14</span><span class="kt">boolean</span> <span class="nf">doConsumeBatchedInput</span><span class="o">(</span><span class="kt">long</span> <span class="n">frameTimeNanos</span><span class="o">)</span> <span class="o">{</span>
-<span class="ln">15</span>    <span class="kd">final</span> <span class="kt">boolean</span> <span class="n">consumedBatches</span><span class="o">;</span>
-<span class="ln">16</span>    <span class="k">if</span> <span class="o">(</span><span class="n">mInputEventReceiver</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-<span class="ln">17</span>        <span class="n">consumedBatches</span> <span class="o">=</span> <span class="n">mInputEventReceiver</span><span class="o">.</span><span class="na">consumeBatchedInputEvents</span><span class="o">(</span><span class="n">frameTimeNanos</span><span class="o">);</span>
-<span class="ln">18</span>    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
-<span class="ln">19</span>        <span class="n">consumedBatches</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
-<span class="ln">20</span>    <span class="o">}</span>
-<span class="ln">21</span>    <span class="n">doProcessInputEvents</span><span class="o">();</span>
-<span class="ln">22</span>    <span class="k">return</span> <span class="n">consumedBatches</span><span class="o">;</span>
-<span class="ln">23</span><span class="o">}</span>
-</code></pre></div><p>input最终会调用到DecorView 的 dispatchTouchEvent，这就到了我们熟悉的 Input 事件分发，这里不展开描述事件分发机制。</p>
-<p>2）callbackType为<strong>CALLBACK_ANIMATION</strong>时</p>
-<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/base/core/java/android/view/View.java
-</span><span class="ln"> 2</span><span class="c1">//由于postOnAnimation的参数是Runnable的动作，子类或者是匿名内部类来进行回调就可以收到回调的Vysnc信号事件
-</span><span class="ln"> 3</span><span class="c1"></span><span class="kd">public</span> <span class="kt">void</span> <span class="nf">postOnAnimation</span><span class="o">(</span><span class="n">Runnable</span> <span class="n">action</span><span class="o">)</span> <span class="o">{</span>
-<span class="ln"> 4</span>    <span class="kd">final</span> <span class="n">AttachInfo</span> <span class="n">attachInfo</span> <span class="o">=</span> <span class="n">mAttachInfo</span><span class="o">;</span>
-<span class="ln"> 5</span>    <span class="k">if</span> <span class="o">(</span><span class="n">attachInfo</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-<span class="ln"> 6</span>        <span class="c1">//调用postCallback的api，使用的是runnable形式
-</span><span class="ln"> 7</span><span class="c1"></span>        <span class="n">attachInfo</span><span class="o">.</span><span class="na">mViewRootImpl</span><span class="o">.</span><span class="na">mChoreographer</span><span class="o">.</span><span class="na">postCallback</span><span class="o">(</span>
-<span class="ln"> 8</span>            <span class="n">Choreographer</span><span class="o">.</span><span class="na">CALLBACK_ANIMATION</span><span class="o">,</span> <span class="n">action</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
-<span class="ln"> 9</span>    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
-<span class="ln">10</span>        <span class="c1">// Postpone the runnable until we know
-</span><span class="ln">11</span><span class="c1"></span>        <span class="c1">// on which thread it needs to run.
-</span><span class="ln">12</span><span class="c1"></span>        <span class="n">getRunQueue</span><span class="o">().</span><span class="na">post</span><span class="o">(</span><span class="n">action</span><span class="o">);</span>
-<span class="ln">13</span>    <span class="o">}</span>
-<span class="ln">14</span><span class="o">}</span>
-</code></pre></div><p>回调用到 View.postOnAnimation的操作，如下表所示</p>
-
-
- 
-  
-  
-  
-  
-    
-  
-    
-      
-    
-  
-    
-      
-    
-  
-
-<div class="figure center fig-100" >
-  
-    <a class="fancybox" href="https://yangyang48.github.io/choreographer/choreographyer_6.png" data-fancybox-group="">
-  
-    <img class="fig-img" src="https://yangyang48.github.io/choreographer/choreographyer_6.png" >
-  
-    </a>
-  
-  
-</div>
-
-
-
- 
-  
-  
-  
-  
-    
-  
-    
-      
-    
-  
-    
-      
-    
-  
-
-<div class="figure center fig-100" >
-  
-    <a class="fancybox" href="https://yangyang48.github.io/choreographer/choreographyer_7.png" data-fancybox-group="">
-  
-    <img class="fig-img" src="https://yangyang48.github.io/choreographer/choreographyer_7.png" >
-  
-    </a>
-  
-  
-</div>
-
-<p>3）callbackType为<strong>CALLBACK_TRAVERSAL</strong>时</p>
-<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/base/core/java/android/view/ViewRootImpl.java#scheduleTraversals
-</span><span class="ln"> 2</span><span class="c1">//这个scheduleTraversals方法设置Runnable的回调
-</span><span class="ln"> 3</span><span class="c1"></span><span class="kt">void</span> <span class="nf">scheduleTraversals</span><span class="o">()</span> <span class="o">{</span>
-<span class="ln"> 4</span>    <span class="k">if</span> <span class="o">(!</span><span class="n">mTraversalScheduled</span><span class="o">)</span> <span class="o">{</span>
-<span class="ln"> 5</span>        <span class="n">mTraversalScheduled</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
-<span class="ln"> 6</span>        <span class="n">mTraversalBarrier</span> <span class="o">=</span> <span class="n">mHandler</span><span class="o">.</span><span class="na">getLooper</span><span class="o">().</span><span class="na">getQueue</span><span class="o">().</span><span class="na">postSyncBarrier</span><span class="o">();</span>
-<span class="ln"> 7</span>        <span class="n">mChoreographer</span><span class="o">.</span><span class="na">postCallback</span><span class="o">(</span>
-<span class="ln"> 8</span>            <span class="n">Choreographer</span><span class="o">.</span><span class="na">CALLBACK_TRAVERSAL</span><span class="o">,</span> <span class="n">mTraversalRunnable</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
-<span class="ln"> 9</span>        <span class="n">notifyRendererOfFramePending</span><span class="o">();</span>
-<span class="ln">10</span>        <span class="n">pokeDrawLockIfNeeded</span><span class="o">();</span>
-<span class="ln">11</span>    <span class="o">}</span>
-<span class="ln">12</span><span class="o">}</span>
-<span class="ln">13</span>
-<span class="ln">14</span><span class="c1">//Vsync信号分发事件回调到这里的run方法
-</span><span class="ln">15</span><span class="c1"></span><span class="kd">final</span> <span class="kd">class</span> <span class="nc">TraversalRunnable</span> <span class="kd">implements</span> <span class="n">Runnable</span> <span class="o">{</span>
-<span class="ln">16</span>    <span class="nd">@Override</span>
-<span class="ln">17</span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
-<span class="ln">18</span>        <span class="n">doTraversal</span><span class="o">();</span>
-<span class="ln">19</span>    <span class="o">}</span>
-<span class="ln">20</span><span class="o">}</span>
-<span class="ln">21</span><span class="c1">//这里做真正的measure、layout和draw操作，这里就是具体的绘制三部曲流程了
-</span><span class="ln">22</span><span class="c1"></span><span class="kt">void</span> <span class="nf">doTraversal</span><span class="o">()</span> <span class="o">{</span>
-<span class="ln">23</span>    <span class="k">if</span> <span class="o">(</span><span class="n">mTraversalScheduled</span><span class="o">)</span> <span class="o">{</span>
-<span class="ln">24</span>        <span class="n">mTraversalScheduled</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
-<span class="ln">25</span>        <span class="n">mHandler</span><span class="o">.</span><span class="na">getLooper</span><span class="o">().</span><span class="na">getQueue</span><span class="o">().</span><span class="na">removeSyncBarrier</span><span class="o">(</span><span class="n">mTraversalBarrier</span><span class="o">);</span>
-<span class="ln">26</span>
-<span class="ln">27</span>        <span class="k">if</span> <span class="o">(</span><span class="n">mProfile</span><span class="o">)</span> <span class="o">{</span>
-<span class="ln">28</span>            <span class="n">Debug</span><span class="o">.</span><span class="na">startMethodTracing</span><span class="o">(</span><span class="s">&#34;ViewAncestor&#34;</span><span class="o">);</span>
-<span class="ln">29</span>        <span class="o">}</span>
-<span class="ln">30</span>        <span class="c1">//这里做真正的measure、layout和draw操作，这里就是具体的绘制三部曲流程了
-</span><span class="ln">31</span><span class="c1"></span>        <span class="n">performTraversals</span><span class="o">();</span>
-<span class="ln">32</span>
-<span class="ln">33</span>        <span class="k">if</span> <span class="o">(</span><span class="n">mProfile</span><span class="o">)</span> <span class="o">{</span>
-<span class="ln">34</span>            <span class="n">Debug</span><span class="o">.</span><span class="na">stopMethodTracing</span><span class="o">();</span>
-<span class="ln">35</span>            <span class="n">mProfile</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
-<span class="ln">36</span>        <span class="o">}</span>
-<span class="ln">37</span>    <span class="o">}</span>
-<span class="ln">38</span><span class="o">}</span>
 </code></pre></div><h3 id="2310choreographer处理上一帧图解">2.3.10Choreographer处理上一帧图解</h3>
-<p>//todo图解</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/choreographer/choreographyer_8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/choreographer/choreographyer_8.png" >
+  
+    </a>
+  
+  
+</div>
+
 <h2 id="24下一帧的vsync请求">2.4下一帧的Vsync请求</h2>
-<p>这里的Vsync信号是由SurfaceFlinger中创建HWC触发的，<strong>这一块笔者还在梳理</strong>。</p>
+<p>这里的Vsync信号是由SurfaceFlinger中创建HWC触发的，<strong>具体关于Vysnc会在单独的章节阐述这个流程</strong>。</p>
 <p>下一帧的Vsync的请求的处理，实际上是本质是<strong>双向通信管道的socketpair的send过程</strong>。</p>
+<blockquote>
+<p>VSync信号</p>
+<p>VSync并不是一个实际的信号，可以认为是一条通知，EventThread收到通知之后自己构造一个Event，然后发送出去VSync类型事件构造好了之后通过条件变量唤醒陷入wait状态的EventThread内部线程，它会从mPendingEvents中拿到最头部事件调用dispatchEvent将事件分发给感兴趣的监听者，感兴趣的监听者即是向EventThread请求了Vsync的EventThreadConnection。dispatchEvent的实现很简单，最终就是通过gui::BitTube的sendObjects函数向mSendFd中写入数据，另一端监听了mReceiveFd的进程就能够收到消息，知道Vsync到来了，然后完成绘制工作</p>
+</blockquote>
 <p>我们下面以Animation为例，使用的是postFrameCallback，定义token为FRAME_CALLBACK_TOKEN</p>
 <h3 id="241objectanimatorstart">2.4.1ObjectAnimator.start</h3>
 <div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//frameworks/base/core/java/android/animation/ObjectAnimator.java#start
@@ -2019,7 +2120,7 @@
 <span class="ln">4</span>    <span class="n">ssize_t</span> <span class="n">size</span> <span class="o">=</span> <span class="n">tube</span><span class="o">-&gt;</span><span class="n">write</span><span class="p">(</span><span class="n">vaddr</span><span class="p">,</span> <span class="n">count</span> <span class="o">*</span> <span class="n">objSize</span><span class="p">);</span>
 <span class="ln">5</span>    <span class="k">return</span> <span class="n">size</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">?</span> <span class="nl">size</span> <span class="p">:</span> <span class="n">size</span> <span class="o">/</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">ssize_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">objSize</span><span class="p">);</span>
 <span class="ln">6</span><span class="p">}</span>
-</code></pre></div><p>下一帧的Vsync请求流程图如下所示</p>
+</code></pre></div><h3 id="2434下一帧的vsync请求流程图如下所示">2.4.34下一帧的Vsync请求流程图如下所示</h3>
 <p>java流程</p>
 
 
@@ -2110,25 +2211,529 @@
   
 </div>
 
+<h3 id="2425关于choreographer的流程">2.4.25关于Choreographer的流程</h3>
+<p>结合2.3的Choreographer处理上一帧流程和2.4的下一帧的Vsync请求流程，具体可以看到下图</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/choreographer/choreographyer_9.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/choreographer/choreographyer_9.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>承接2.3.9.5所示的run方法，不同的action（action为Runnable或者 FrameCallback两者的子类）和callbackType（CALLBACK_INPUT、CALLBACK_ANIMATION、CALLBACK_INSETS_ANIMATION、CALLBACK_TRAVERSAL和CALLBACK_COMMIT），最终回调用不同的方法。</p>
+<h4 id="24251framecallbackdoframe">2.4.25.1FrameCallback.doFrame</h4>
+<p>Choreographer的FrameCallback用的callbackType只能为CALLBACK_ANIMATION，这里会会调到FrameCallback子类的doFrame方法</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//frameworks/base/core/java/android/view/Choreographer.javapostFrameCallbackDelayed
+</span><span class="ln">2</span><span class="c1"></span><span class="kd">public</span> <span class="kt">void</span> <span class="nf">postFrameCallbackDelayed</span><span class="o">(</span><span class="n">FrameCallback</span> <span class="n">callback</span><span class="o">,</span> <span class="kt">long</span> <span class="n">delayMillis</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">3</span>    <span class="k">if</span> <span class="o">(</span><span class="n">callback</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">4</span>        <span class="k">throw</span> <span class="k">new</span> <span class="n">IllegalArgumentException</span><span class="o">(</span><span class="s">&#34;callback must not be null&#34;</span><span class="o">);</span>
+<span class="ln">5</span>    <span class="o">}</span>
+<span class="ln">6</span>
+<span class="ln">7</span>    <span class="n">postCallbackDelayedInternal</span><span class="o">(</span><span class="n">CALLBACK_ANIMATION</span><span class="o">,</span>
+<span class="ln">8</span>                                <span class="n">callback</span><span class="o">,</span> <span class="n">FRAME_CALLBACK_TOKEN</span><span class="o">,</span> <span class="n">delayMillis</span><span class="o">);</span>
+<span class="ln">9</span><span class="o">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/choreographer/choreographyer_10.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/choreographer/choreographyer_10.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/choreographer/choreographyer_11.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/choreographer/choreographyer_11.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>表2.1postFrameCallbackDelayed子类</p>
+<table>
+<thead>
+<tr>
+<th>子类名</th>
+<th>回调名</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AnimationHandler.java</td>
+<td>mFrameCallback</td>
+</tr>
+<tr>
+<td>ViewRootImpl.java</td>
+<td>mRenderProfiler</td>
+</tr>
+<tr>
+<td>TextView.java</td>
+<td>mTickCallback</td>
+</tr>
+<tr>
+<td></td>
+<td>mStartCallback</td>
+</tr>
+<tr>
+<td>SfVsyncFrameCallbackProvider.java</td>
+<td>callback</td>
+</tr>
+<tr>
+<td>BackdropFrameRenderer.java</td>
+<td>BackdropFrameRenderer::this</td>
+</tr>
+<tr>
+<td>TiledImageView.java</td>
+<td>mFrameCallback</td>
+</tr>
+<tr>
+<td>SurfaceAnimationRunner.java</td>
+<td>SurfaceAnimationRunner::startAnimations</td>
+</tr>
+<tr>
+<td>WindowAnimator.java</td>
+<td>mAnimationFrameCallback</td>
+</tr>
+<tr>
+<td>WindowTracing.java</td>
+<td>mFrameCallback</td>
+</tr>
+<tr>
+<td>BubbleStackView.java</td>
+<td>new Choreographer.FrameCallback()</td>
+</tr>
+<tr>
+<td>FrameProtoTracer.java</td>
+<td>FrameProtoTracer::this</td>
+</tr>
+</tbody>
+</table>
+<p>举例说明</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/choreographer/choreographyer_12.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/choreographer/choreographyer_12.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h4 id="25252runnablerun">2.5.25.2Runnable.run</h4>
+<p>这里的5种类型的run，比如这就是进入了事件分发的机制。事实上，callbackType为CALLBACK_ANIMATION更多一点，这里会会调到Runnable子类的run方法</p>
+<p>1）callbackType为<strong>CALLBACK_INPUT</strong>时</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/base/core/java/android/view/ViewRootImpl.java#doConsumeBatchedInput
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">final</span> <span class="kd">class</span> <span class="nc">ConsumeBatchedInputRunnable</span> <span class="kd">implements</span> <span class="n">Runnable</span> <span class="o">{</span>
+<span class="ln"> 3</span>    <span class="nd">@Override</span>
+<span class="ln"> 4</span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 5</span>        <span class="n">mConsumeBatchedInputScheduled</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+<span class="ln"> 6</span>        <span class="k">if</span> <span class="o">(</span><span class="n">doConsumeBatchedInput</span><span class="o">(</span><span class="n">mChoreographer</span><span class="o">.</span><span class="na">getFrameTimeNanos</span><span class="o">()))</span> <span class="o">{</span>
+<span class="ln"> 7</span>            <span class="c1">//我们想要继续并安排在下一帧消费延时输入事件。
+</span><span class="ln"> 8</span><span class="c1"></span>            <span class="c1">//如果不先消费这一批次的输入事件，我们会等到有更多的输入事件挂起，并且可能会因过程中发生的其他事情而饿死
+</span><span class="ln"> 9</span><span class="c1"></span>            <span class="n">scheduleConsumeBatchedInput</span><span class="o">();</span>
+<span class="ln">10</span>        <span class="o">}</span>
+<span class="ln">11</span>    <span class="o">}</span>
+<span class="ln">12</span><span class="o">}</span>
+<span class="ln">13</span>
+<span class="ln">14</span><span class="kt">boolean</span> <span class="nf">doConsumeBatchedInput</span><span class="o">(</span><span class="kt">long</span> <span class="n">frameTimeNanos</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">15</span>    <span class="kd">final</span> <span class="kt">boolean</span> <span class="n">consumedBatches</span><span class="o">;</span>
+<span class="ln">16</span>    <span class="k">if</span> <span class="o">(</span><span class="n">mInputEventReceiver</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">17</span>        <span class="n">consumedBatches</span> <span class="o">=</span> <span class="n">mInputEventReceiver</span><span class="o">.</span><span class="na">consumeBatchedInputEvents</span><span class="o">(</span><span class="n">frameTimeNanos</span><span class="o">);</span>
+<span class="ln">18</span>    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln">19</span>        <span class="n">consumedBatches</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+<span class="ln">20</span>    <span class="o">}</span>
+<span class="ln">21</span>    <span class="n">doProcessInputEvents</span><span class="o">();</span>
+<span class="ln">22</span>    <span class="k">return</span> <span class="n">consumedBatches</span><span class="o">;</span>
+<span class="ln">23</span><span class="o">}</span>
+<span class="ln">24</span>
+<span class="ln">25</span><span class="kt">void</span> <span class="nf">scheduleConsumeBatchedInput</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln">26</span>    <span class="k">if</span> <span class="o">(!</span><span class="n">mConsumeBatchedInputScheduled</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">mConsumeBatchedInputImmediatelyScheduled</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">27</span>        <span class="n">mConsumeBatchedInputScheduled</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+<span class="ln">28</span>        <span class="n">mChoreographer</span><span class="o">.</span><span class="na">postCallback</span><span class="o">(</span><span class="n">Choreographer</span><span class="o">.</span><span class="na">CALLBACK_INPUT</span><span class="o">,</span>
+<span class="ln">29</span>                                    <span class="n">mConsumedBatchedInputRunnable</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+<span class="ln">30</span>    <span class="o">}</span>
+<span class="ln">31</span><span class="o">}</span>
+</code></pre></div><p>input最终会调用到DecorView 的 dispatchTouchEvent，这就到了我们熟悉的 Input 事件分发，这里不展开描述事件分发机制。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/choreographer/choreographyer_13.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/choreographer/choreographyer_13.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>2）callbackType为<strong>CALLBACK_ANIMATION</strong>时</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/base/core/java/android/view/View.java
+</span><span class="ln"> 2</span><span class="c1">//由于postOnAnimation的参数是Runnable的动作，子类或者是匿名内部类来进行回调就可以收到回调的Vysnc信号事件
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kd">public</span> <span class="kt">void</span> <span class="nf">postOnAnimation</span><span class="o">(</span><span class="n">Runnable</span> <span class="n">action</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 4</span>    <span class="kd">final</span> <span class="n">AttachInfo</span> <span class="n">attachInfo</span> <span class="o">=</span> <span class="n">mAttachInfo</span><span class="o">;</span>
+<span class="ln"> 5</span>    <span class="k">if</span> <span class="o">(</span><span class="n">attachInfo</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 6</span>        <span class="c1">//调用postCallback的api，使用的是runnable形式
+</span><span class="ln"> 7</span><span class="c1"></span>        <span class="n">attachInfo</span><span class="o">.</span><span class="na">mViewRootImpl</span><span class="o">.</span><span class="na">mChoreographer</span><span class="o">.</span><span class="na">postCallback</span><span class="o">(</span>
+<span class="ln"> 8</span>            <span class="n">Choreographer</span><span class="o">.</span><span class="na">CALLBACK_ANIMATION</span><span class="o">,</span> <span class="n">action</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+<span class="ln"> 9</span>    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln">10</span>        <span class="c1">// Postpone the runnable until we know
+</span><span class="ln">11</span><span class="c1"></span>        <span class="c1">// on which thread it needs to run.
+</span><span class="ln">12</span><span class="c1"></span>        <span class="n">getRunQueue</span><span class="o">().</span><span class="na">post</span><span class="o">(</span><span class="n">action</span><span class="o">);</span>
+<span class="ln">13</span>    <span class="o">}</span>
+<span class="ln">14</span><span class="o">}</span>
+</code></pre></div><p>由于上面的action，是由其他类去注入的，因此会回调用到 View.postOnAnimation的操作，如下表所示</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/choreographer/choreographyer_6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/choreographer/choreographyer_6.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/choreographer/choreographyer_7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/choreographer/choreographyer_7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>举例如下，RecyclerView.java</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/choreographer/choreographyer_14.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/choreographer/choreographyer_14.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>3）callbackType为<strong>CALLBACK_TRAVERSAL</strong>时</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/base/core/java/android/view/ViewRootImpl.java#scheduleTraversals
+</span><span class="ln"> 2</span><span class="c1">//这个scheduleTraversals方法设置Runnable的回调
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kt">void</span> <span class="nf">scheduleTraversals</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 4</span>    <span class="k">if</span> <span class="o">(!</span><span class="n">mTraversalScheduled</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 5</span>        <span class="n">mTraversalScheduled</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+<span class="ln"> 6</span>        <span class="n">mTraversalBarrier</span> <span class="o">=</span> <span class="n">mHandler</span><span class="o">.</span><span class="na">getLooper</span><span class="o">().</span><span class="na">getQueue</span><span class="o">().</span><span class="na">postSyncBarrier</span><span class="o">();</span>
+<span class="ln"> 7</span>        <span class="n">mChoreographer</span><span class="o">.</span><span class="na">postCallback</span><span class="o">(</span>
+<span class="ln"> 8</span>            <span class="n">Choreographer</span><span class="o">.</span><span class="na">CALLBACK_TRAVERSAL</span><span class="o">,</span> <span class="n">mTraversalRunnable</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+<span class="ln"> 9</span>        <span class="n">notifyRendererOfFramePending</span><span class="o">();</span>
+<span class="ln">10</span>        <span class="n">pokeDrawLockIfNeeded</span><span class="o">();</span>
+<span class="ln">11</span>    <span class="o">}</span>
+<span class="ln">12</span><span class="o">}</span>
+<span class="ln">13</span>
+<span class="ln">14</span><span class="c1">//Vsync信号分发事件回调到这里的run方法
+</span><span class="ln">15</span><span class="c1"></span><span class="kd">final</span> <span class="kd">class</span> <span class="nc">TraversalRunnable</span> <span class="kd">implements</span> <span class="n">Runnable</span> <span class="o">{</span>
+<span class="ln">16</span>    <span class="nd">@Override</span>
+<span class="ln">17</span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln">18</span>        <span class="n">doTraversal</span><span class="o">();</span>
+<span class="ln">19</span>    <span class="o">}</span>
+<span class="ln">20</span><span class="o">}</span>
+<span class="ln">21</span><span class="c1">//这里做真正的measure、layout和draw操作，这里就是具体的绘制三部曲流程了
+</span><span class="ln">22</span><span class="c1"></span><span class="kt">void</span> <span class="nf">doTraversal</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln">23</span>    <span class="k">if</span> <span class="o">(</span><span class="n">mTraversalScheduled</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">24</span>        <span class="n">mTraversalScheduled</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+<span class="ln">25</span>        <span class="n">mHandler</span><span class="o">.</span><span class="na">getLooper</span><span class="o">().</span><span class="na">getQueue</span><span class="o">().</span><span class="na">removeSyncBarrier</span><span class="o">(</span><span class="n">mTraversalBarrier</span><span class="o">);</span>
+<span class="ln">26</span>
+<span class="ln">27</span>        <span class="k">if</span> <span class="o">(</span><span class="n">mProfile</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">28</span>            <span class="n">Debug</span><span class="o">.</span><span class="na">startMethodTracing</span><span class="o">(</span><span class="s">&#34;ViewAncestor&#34;</span><span class="o">);</span>
+<span class="ln">29</span>        <span class="o">}</span>
+<span class="ln">30</span>        <span class="c1">//这里做真正的measure、layout和draw操作，这里就是具体的绘制三部曲流程了
+</span><span class="ln">31</span><span class="c1"></span>        <span class="n">performTraversals</span><span class="o">();</span>
+<span class="ln">32</span>
+<span class="ln">33</span>        <span class="k">if</span> <span class="o">(</span><span class="n">mProfile</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">34</span>            <span class="n">Debug</span><span class="o">.</span><span class="na">stopMethodTracing</span><span class="o">();</span>
+<span class="ln">35</span>            <span class="n">mProfile</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+<span class="ln">36</span>        <span class="o">}</span>
+<span class="ln">37</span>    <span class="o">}</span>
+<span class="ln">38</span><span class="o">}</span>
+</code></pre></div><p>举例说明</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/choreographer/choreographyer_15.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/choreographer/choreographyer_15.png" >
+  
+    </a>
+  
+  
+</div>
+
 <h2 id="35-choreographer应用">3.5 Choreographer应用</h2>
-<p>利用 FrameCallback 的 doFrame 回调用于监控应用的帧率</p>
-<p><strong>FrameCallback 接口</strong></p>
+<p>许多性能监控的手段都是利用 Choreographer 来做的，除了自带的掉帧计算，Choreographer 提供的 FrameCallback 和 FrameInfo 都给 App 暴露了接口，让 App 开发者可以通过这些方法监控自身 App 的性能，其中常用的方法如下：</p>
+<ol>
+<li>利用 FrameCallback 的 doFrame 回调</li>
+<li>利用 FrameInfo 进行监控
+<ol>
+<li>使用 ：adb shell dumpsys gfxinfo framestats</li>
+<li>示例 ：adb shell dumpsys gfxinfo <!-- raw HTML omitted --> framestats</li>
+</ol>
+</li>
+<li>利用 SurfaceFlinger 进行监控
+<ol>
+<li>使用 ：adb shell dumpsys SurfaceFlinger –latency</li>
+<li>示例 ：adb shell dumpsys SurfaceFlinger –latency <!-- raw HTML omitted -->/<!-- raw HTML omitted --></li>
+</ol>
+</li>
+</ol>
+<h3 id="351framecallback-接口">3.5.1FrameCallback 接口</h3>
+<p>利用 FrameCallback 的 doFrame 回调用于监控应用的帧率，类似开源项目TinyDancer 就是使用了这个方法来计算 FPS (<a href="https://github.com/friendlyrobotnyc/TinyDancer">https://github.com/friendlyrobotnyc/TinyDancer</a>)</p>
 <div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//frameworks/base/core/java/android/view/Choreographer.java#FrameCallback
 </span><span class="ln">2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">FrameCallback</span> <span class="o">{</span>
 <span class="ln">3</span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">doFrame</span><span class="o">(</span><span class="kt">long</span> <span class="n">frameTimeNanos</span><span class="o">);</span>
 <span class="ln">4</span><span class="o">}</span>
-</code></pre></div><div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span>
-<span class="ln">2</span><span class="n">Choreographer</span><span class="o">.</span><span class="na">getInstance</span><span class="o">().</span><span class="na">postFrameCallback</span><span class="o">(</span><span class="n">youOwnFrameCallback</span> <span class="o">);</span>
-<span class="ln">3</span>
-<span class="ln">4</span><span class="kd">public</span> <span class="kt">void</span> <span class="nf">postFrameCallbackDelayed</span><span class="o">(</span><span class="n">FrameCallback</span> <span class="n">callback</span><span class="o">,</span> <span class="kt">long</span> <span class="n">delayMillis</span><span class="o">)</span> <span class="o">{</span>
-<span class="ln">5</span>    <span class="o">......</span>
-<span class="ln">6</span>    <span class="n">postCallbackDelayedInternal</span><span class="o">(</span><span class="n">CALLBACK_ANIMATION</span><span class="o">,</span>
-<span class="ln">7</span>            <span class="n">callback</span><span class="o">,</span> <span class="n">FRAME_CALLBACK_TOKEN</span><span class="o">,</span> <span class="n">delayMillis</span><span class="o">);</span>
-<span class="ln">8</span><span class="o">}</span>
-</code></pre></div><h1 id="3总结">3总结</h1>
-<p><strong>Choreographer</strong>：编舞者，指对CPU/GPU绘制的指导，收到VSync信号才开始绘制，保证绘制拥有完整的16.6ms。通常应用层不会直接使用Choreographer，但是可以通过Choreographer来监控应用的帧率。主要是作为一种承上启下的作用。</p>
+</code></pre></div><p>开始自定义处理帧逻辑</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="n">Choreographer</span><span class="o">.</span><span class="na">getInstance</span><span class="o">().</span><span class="na">postFrameCallback</span><span class="o">(</span><span class="k">new</span> <span class="n">Choreographer</span><span class="o">.</span><span class="na">postFrameCallback</span><span class="o">(){</span>
+<span class="ln"> 2</span>    <span class="nd">@override</span>
+<span class="ln"> 3</span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">doFrame</span><span class="o">(</span><span class="kt">long</span> <span class="n">now</span><span class="o">)</span>
+<span class="ln"> 4</span>    <span class="o">{</span>
+<span class="ln"> 5</span>        <span class="c1">//计算上一次now和这一次now的时间间隔
+</span><span class="ln"> 6</span><span class="c1"></span>        <span class="n">mGap</span> <span class="o">=</span> <span class="n">now</span> <span class="o">-</span> <span class="n">mNext</span><span class="o">;</span>
+<span class="ln"> 7</span>        <span class="n">mNext</span> <span class="o">=</span> <span class="n">now</span><span class="o">;</span>
+<span class="ln"> 8</span>    <span class="o">}</span>
+<span class="ln"> 9</span><span class="o">});</span>
+<span class="ln">10</span>
+<span class="ln">11</span><span class="kd">public</span> <span class="kt">void</span> <span class="nf">postFrameCallback</span><span class="o">(</span><span class="n">FrameCallback</span> <span class="n">callback</span><span class="o">,</span> <span class="kt">long</span> <span class="n">delayMillis</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">12</span>    <span class="o">......</span>
+<span class="ln">13</span>    <span class="n">postCallbackDelayedInternal</span><span class="o">(</span><span class="n">CALLBACK_ANIMATION</span><span class="o">,</span>
+<span class="ln">14</span>            <span class="n">callback</span><span class="o">,</span> <span class="n">FRAME_CALLBACK_TOKEN</span><span class="o">,</span> <span class="n">delayMillis</span><span class="o">);</span>
+<span class="ln">15</span><span class="o">}</span>
+</code></pre></div><h3 id="352frameinfo-进行监控">3.5.2FrameInfo 进行监控</h3>
+<p>截取部分数据</p>
+<div class="highlight"><pre class="chroma"><code class="language-txt" data-lang="txt"><span class="ln"> 1</span>picasso:/ $ dumpsys gfxinfo com.miui.home framestats
+<span class="ln"> 2</span>Applications Graphics Acceleration Info:
+<span class="ln"> 3</span>Uptime: 18524925 Realtime: 30993029
+<span class="ln"> 4</span>
+<span class="ln"> 5</span>** Graphics info for pid 24987 [com.miui.home] **
+<span class="ln"> 6</span>
+<span class="ln"> 7</span>Stats since: 15566429111717ns
+<span class="ln"> 8</span>Total frames rendered: 976
+<span class="ln"> 9</span>Janky frames: 179 (18.34%)
+<span class="ln">10</span>50th percentile: 5ms
+<span class="ln">11</span>90th percentile: 11ms
+<span class="ln">12</span>95th percentile: 19ms
+<span class="ln">13</span>99th percentile: 150ms
+<span class="ln">14</span>Number Missed Vsync: 31
+<span class="ln">15</span>Number High input latency: 710
+<span class="ln">16</span>Number Slow UI thread: 49
+<span class="ln">17</span>Number Slow bitmap uploads: 19
+<span class="ln">18</span>Number Slow issue draw commands: 45
+<span class="ln">19</span>Number Frame deadline missed: 77
+<span class="ln">20</span>HISTOGRAM: 5ms=667 6ms=65 7ms=49 8ms=35 9ms=30 10ms=30 11ms=13 12ms=8 13ms=10 14ms=2 15ms=6 16ms=4 17ms=2 18ms=4 19ms=3 20ms=1 21ms=2 22ms=1 23ms=4 24ms=1 25ms=2 26ms=0 27ms=0 28ms=1 29ms=1 30ms=0 31ms=0 32ms=2 34ms=0 36ms=0 38ms=0 40ms=3 42ms=2 44ms=2 46ms=1 48ms=0 53ms=4 57ms=0 61ms=0 65ms=1 69ms=0 73ms=1 77ms=0 81ms=2 85ms=0 89ms=0 93ms=2 97ms=1 101ms=3 105ms=0 109ms=0 113ms=0 117ms=0 121ms=0 125ms=0 129ms=0 133ms=1 150ms=3 200ms=1 250ms=2 300ms=2 350ms=1 400ms=0 450ms=0 500ms=0 550ms=0 600ms=0 650ms=0 700ms=0 750ms=0 800ms=0 850ms=0 900ms=0 950ms=0 1000ms=1 1050ms=0 1100ms=0 1150ms=0 1200ms=0 1250ms=0 1300ms=0 1350ms=0 1400ms=0 1450ms=0 1500ms=0 1550ms=0 1600ms=0 1650ms=0 1700ms=0 1750ms=0 1800ms=0 1850ms=0 1900ms=0 1950ms=0 2000ms=0 2050ms=0 2100ms=0 2150ms=0 2200ms=0 2250ms=0 2300ms=0 2350ms=0 2400ms=0 2450ms=0 2500ms=0 2550ms=0 2600ms=0 2650ms=0 2700ms=0 2750ms=0 2800ms=0 2850ms=0 2900ms=0 2950ms=0 3000ms=0 3050ms=0 3100ms=0 3150ms=0 3200ms=0 3250ms=0 3300ms=0 3350ms=0 3400ms=0 3450ms=0 3500ms=0 3550ms=0 3600ms=0 3650ms=0 3700ms=0 3750ms=0 3800ms=0 3850ms=0 3900ms=0 3950ms=0 4000ms=0 4050ms=0 4100ms=0 4150ms=0 4200ms=0 4250ms=0 4300ms=0 4350ms=0 4400ms=0 4450ms=0 4500ms=0 4550ms=0 4600ms=0 4650ms=0 4700ms=0 4750ms=0 4800ms=0 4850ms=0 4900ms=0 4950ms=0
+</code></pre></div><p>具体可以点击<a href="https://www.cnblogs.com/zhengna/p/10032078.html">这里</a></p>
+<h3 id="353surfaceflinger-进行监控">3.5.3SurfaceFlinger 进行监控</h3>
+<p>截取部分数据</p>
+<div class="highlight"><pre class="chroma"><code class="language-txt" data-lang="txt"><span class="ln"> 1</span>picasso:/ $ dumpsys SurfaceFlinger -latency com.miui.home/com.miui.home.launcher.Launcher
+<span class="ln"> 2</span>Build configuration: [sf PRESENT_TIME_OFFSET=0 FORCE_HWC_FOR_RBG_TO_YUV=1 MAX_VIRT_DISPLAY_DIM=4096 RUNNING_WITHOUT_SYNC_FRAMEWORK=0 NUM_FRAMEBUFFER_SURFACE_BUFFERS=3] [libui] [libgui]
+<span class="ln"> 3</span>
+<span class="ln"> 4</span>Display identification data:
+<span class="ln"> 5</span>Display 19260668995500161 (HWC display 0): port=129 pnpId=QCM displayName=&#34;xiaomi 37 02 &#34;
+<span class="ln"> 6</span>
+<span class="ln"> 7</span>Wide-Color information:
+<span class="ln"> 8</span>Device has wide color built-in display: 1
+<span class="ln"> 9</span>Device uses color management: 1
+<span class="ln">10</span>DisplayColorSetting: Unknown 258
+<span class="ln">11</span>Display 19260668995500161 color modes:
+<span class="ln">12</span>    ColorMode::NATIVE (0)
+<span class="ln">13</span>    ColorMode::SRGB (7)
+<span class="ln">14</span>    ColorMode::DISPLAY_P3 (9)
+<span class="ln">15</span>    Current color mode: ColorMode::SRGB (7)
+<span class="ln">16</span>
+<span class="ln">17</span>Sync configuration: [using: EGL_ANDROID_native_fence_sync EGL_KHR_wait_sync]
+<span class="ln">18</span>
+<span class="ln">19</span>VSYNC configuration:
+<span class="ln">20</span>         app phase:   1000000 ns                 SF phase:   1000000 ns
+<span class="ln">21</span>   early app phase:   1000000 ns           early SF phase:   1000000 ns
+<span class="ln">22</span>GL early app phase:   1000000 ns        GL early SF phase:   1000000 ns
+<span class="ln">23</span>    present offset:         0 ns             VSYNC period:  20000000 ns
+<span class="ln">24</span>
+<span class="ln">25</span>Scheduler enabled.+  Smart 90 for video detection: off
+</code></pre></div><p>具体可以点击<a href="https://zhuanlan.zhihu.com/p/435304317">这里</a></p>
+<h1 id="3总结">3总结</h1>
+<p><strong>Choreographer</strong>：编舞者，指对CPU/GPU绘制的指导，收到VSync信号才开始绘制，保证绘制拥有完整的16.7ms。通常应用层不会直接使用Choreographer，但是存在<strong>Vsync + TripleBuffer + Choreographer</strong> 的机制，其就可以提供一个稳定的帧率输出机制，让软件层和硬件层可以以共同的频率一起工作。主要是作为一种承上启下的作用，实质就是通过上层封装，间接去操作socketpair双向通信管道。</p>
 <p>承上</p>
+<p>负责接收和处理 <strong>App</strong> 的各种更新消息和回调，等到 Vsync 事件回调(通过 FrameDisplayEventReceiver.onVsync )统一处理。比如集中五种处理 Input(主要是 Input 事件的处理) 、Animation(动画相关)、Traversal(包括 measure、layout、draw 等操作) 等，判断卡顿掉帧情况，记录 CallBack 耗时等</p>
 <p>启下</p>
+<p>负责请求和申请Vsync的下一帧信号。请求 Vsync(FrameDisplayEventReceiver.scheduleVsync)。</p>
 <ul>
 <li>尽量避免在执行动画渲染的前后在主线程放入耗时操作，否则会造成卡顿感，影响用户体验；</li>
 <li>可通过Choreographer.getInstance().postFrameCallback()来监听帧率情况；</li>
@@ -2137,7 +2742,28 @@
 </ul>
 <h1 id="4补充">4补充</h1>
 <p>1.关于mFrameScheduled的bool值</p>
-<p>2.这里面涉及到的不分时间梳理</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//doFrame是处理上一帧的数据，每隔一个Vsync信号，即每隔16.7ms，只处理一次，当然在卡顿的时候并不能保证16.7ms一个信号周期
+</span><span class="ln"> 2</span><span class="c1">//frameworks/base/core/java/android/view/Choreographer.java#doFrame
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kt">void</span> <span class="nf">doFrame</span><span class="o">(</span><span class="kt">long</span> <span class="n">frameTimeNanos</span><span class="o">,</span> <span class="kt">int</span> <span class="n">frame</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 4</span>    <span class="kd">synchronized</span> <span class="o">(</span><span class="n">mLock</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 5</span>        <span class="k">if</span> <span class="o">(!</span><span class="n">mFrameScheduled</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 6</span>            <span class="k">return</span><span class="o">;</span> <span class="c1">// no work to do
+</span><span class="ln"> 7</span><span class="c1"></span>        <span class="o">}</span>
+<span class="ln"> 8</span>        <span class="o">...</span>
+<span class="ln"> 9</span>        <span class="n">mFrameScheduled</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+<span class="ln">10</span>    <span class="o">}</span>
+<span class="ln">11</span><span class="o">}</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="c1">//这里的scheduleFrameLocked，使得每次申请下一帧都保持最新的一次事件
+</span><span class="ln">14</span><span class="c1">//frameworks/base/core/java/android/view/Choreographer.java#scheduleFrameLocked
+</span><span class="ln">15</span><span class="c1"></span><span class="kd">private</span> <span class="kt">void</span> <span class="nf">scheduleFrameLocked</span><span class="o">(</span><span class="kt">long</span> <span class="n">now</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">16</span>    <span class="k">if</span> <span class="o">(!</span><span class="n">mFrameScheduled</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">17</span>        <span class="n">mFrameScheduled</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+<span class="ln">18</span>        <span class="o">...</span>
+<span class="ln">19</span>    <span class="o">}</span>
+<span class="ln">20</span><span class="o">}</span>
+</code></pre></div><p>2.这里面涉及到的部分时间梳理</p>
+<p>会在Vsync信号篇章中具体展开。</p>
 <h1 id="5源码下载">5源码下载</h1>
 <p>源码下载，点击<a href="https://github.com/YangYang48/project/tree/master/choreographer/">这里</a></p>
 <h1 id="参考">参考</h1>
@@ -2153,6 +2779,10 @@
 <p><a href="https://www.cnblogs.com/dasusu/p/8311324.html">[10] 大苏, Android 屏幕刷新机制, 2018.</a></p>
 <p><a href="https://blog.csdn.net/Android062005/article/details/123090139">[11] 梅花十三儿, [Android禅修之路] 解读Vsync(一), 2022.</a></p>
 <p><a href="https://blog.csdn.net/yu132563/article/details/80103693">[12] Innerpeace_yu, C++中explicit的用法, 2018.</a></p>
+<p><a href="https://www.cnblogs.com/zhengna/p/10032078.html">[13] zhengna, Android UI性能测试——使用 Gfxinfo 衡量性能, 2019.</a></p>
+<p><a href="https://zhuanlan.zhihu.com/p/435304317">[14] 麻辣小龙虾, 安卓帧率计算方案和背后原理剖析, 2021.</a></p>
+<p><a href="https://blog.csdn.net/qq_34211365/article/details/105093648">[15] DJLZPP, AndroidQ UI刷新机制详解, 2020.</a></p>
+<p><a href="https://blog.csdn.net/qq_34211365/article/details/105155801">[16] DJLZPP, AndroidQ 应用层Vsync信号的注册与接收（下）, 2020.</a></p>
               
             </div>
           </div>
