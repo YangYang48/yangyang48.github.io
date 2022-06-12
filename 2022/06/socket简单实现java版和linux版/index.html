@@ -8,18 +8,18 @@
 <meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
 <meta name="author" content="Yang Ju">
 <meta name="keywords" content="">
-<meta name="description" content="屏幕的刷新率一般为60fps，当然最新的手机刷新率更高，这一切都是surfacelinger的安排，通过一个叫Choreographer来监控和保证应用的帧率为固定的1/60s。">
+<meta name="description" content="Android中除了Binder之外，还有其他的跨进程通信。socket就是其中之一，多用于进程的启动还有日志等模块中的通信，是Android系统不可缺少的一部分。">
 
 
-<meta property="og:description" content="屏幕的刷新率一般为60fps，当然最新的手机刷新率更高，这一切都是surfacelinger的安排，通过一个叫Choreographer来监控和保证应用的帧率为固定的1/60s。">
+<meta property="og:description" content="Android中除了Binder之外，还有其他的跨进程通信。socket就是其中之一，多用于进程的启动还有日志等模块中的通信，是Android系统不可缺少的一部分。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="socket简单实现（Java版和Linux版）">
 <meta name="twitter:title" content="socket简单实现（Java版和Linux版）">
 <meta property="og:url" content="https://yangyang48.github.io/2022/06/socket%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0java%E7%89%88%E5%92%8Clinux%E7%89%88/">
 <meta property="twitter:url" content="https://yangyang48.github.io/2022/06/socket%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0java%E7%89%88%E5%92%8Clinux%E7%89%88/">
 <meta property="og:site_name" content="欢迎来到我的博客~">
-<meta property="og:description" content="屏幕的刷新率一般为60fps，当然最新的手机刷新率更高，这一切都是surfacelinger的安排，通过一个叫Choreographer来监控和保证应用的帧率为固定的1/60s。">
-<meta name="twitter:description" content="屏幕的刷新率一般为60fps，当然最新的手机刷新率更高，这一切都是surfacelinger的安排，通过一个叫Choreographer来监控和保证应用的帧率为固定的1/60s。">
+<meta property="og:description" content="Android中除了Binder之外，还有其他的跨进程通信。socket就是其中之一，多用于进程的启动还有日志等模块中的通信，是Android系统不可缺少的一部分。">
+<meta name="twitter:description" content="Android中除了Binder之外，还有其他的跨进程通信。socket就是其中之一，多用于进程的启动还有日志等模块中的通信，是Android系统不可缺少的一部分。">
 <meta property="og:locale" content="zh-cn">
 
   
@@ -270,23 +270,462 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">100 Words|Read in about 1 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">600 Words|Read in about 3 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
-              <p>屏幕的刷新率一般为60fps，当然最新的手机刷新率更高，这一切都是surfacelinger的安排，通过一个叫Choreographer来监控和保证应用的帧率为固定的1/60s。</p>
-<h1 id="android中socket通信的简单实现">Android中socket通信的简单实现</h1>
-<p><a href="https://www.jb51.net/article/184151.htm">https://www.jb51.net/article/184151.htm</a></p>
-<p><a href="https://blog.csdn.net/c19344881x/article/details/120455491?spm=1001.2101.3001.6650.1&amp;utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1-120455491-blog-112719793.pc_relevant_default&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1-120455491-blog-112719793.pc_relevant_default&amp;utm_relevant_index=2">https://blog.csdn.net/c19344881x/article/details/120455491?spm=1001.2101.3001.6650.1&amp;utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1-120455491-blog-112719793.pc_relevant_default&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1-120455491-blog-112719793.pc_relevant_default&amp;utm_relevant_index=2</a></p>
-<p><a href="https://blog.csdn.net/qq_31059475/article/details/77089650">https://blog.csdn.net/qq_31059475/article/details/77089650</a></p>
-<p><a href="https://blog.csdn.net/qq_33782617/article/details/112719793">https://blog.csdn.net/qq_33782617/article/details/112719793</a></p>
-<p><a href="https://www.jianshu.com/p/46efb4b102d9">https://www.jianshu.com/p/46efb4b102d9</a></p>
-<h1 id="linux">linux</h1>
-<p><a href="https://blog.csdn.net/qq_40989769/article/details/112392736?utm_medium=distribute.pc_relevant.none-task-blog-2~default~baidujs_baidulandingword~default-5-112392736-blog-116913942.pc_relevant_antiscanv2&amp;spm=1001.2101.3001.4242.4&amp;utm_relevant_index=8">https://blog.csdn.net/qq_40989769/article/details/112392736?utm_medium=distribute.pc_relevant.none-task-blog-2~default~baidujs_baidulandingword~default-5-112392736-blog-116913942.pc_relevant_antiscanv2&amp;spm=1001.2101.3001.4242.4&amp;utm_relevant_index=8</a></p>
-<p><a href="https://blog.csdn.net/shenmingxueIT/article/details/108894726?utm_medium=distribute.pc_relevant.none-task-blog-2~default~baidujs_baidulandingword~default-8-108894726-blog-116913942.pc_relevant_antiscanv2&amp;spm=1001.2101.3001.4242.5&amp;utm_relevant_index=11">https://blog.csdn.net/shenmingxueIT/article/details/108894726?utm_medium=distribute.pc_relevant.none-task-blog-2~default~baidujs_baidulandingword~default-8-108894726-blog-116913942.pc_relevant_antiscanv2&amp;spm=1001.2101.3001.4242.5&amp;utm_relevant_index=11</a></p>
-<p><a href="https://blog.csdn.net/weixin_41857871/article/details/124476225?spm=1001.2101.3001.6650.7&amp;utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ERate-7-124476225-blog-116913942.pc_relevant_antiscanv2&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ERate-7-124476225-blog-116913942.pc_relevant_antiscanv2&amp;utm_relevant_index=14">https://blog.csdn.net/weixin_41857871/article/details/124476225?spm=1001.2101.3001.6650.7&amp;utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ERate-7-124476225-blog-116913942.pc_relevant_antiscanv2&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ERate-7-124476225-blog-116913942.pc_relevant_antiscanv2&amp;utm_relevant_index=14</a></p>
-<p><a href="http://c.biancheng.net/view/2128.html">http://c.biancheng.net/view/2128.html</a></p>
-<p><a href="https://blog.csdn.net/weixin_41263449/article/details/108271804">https://blog.csdn.net/weixin_41263449/article/details/108271804</a></p>
+              <p>Android中除了Binder之外，还有其他的跨进程通信。socket就是其中之一，多用于进程的启动还有日志等模块中的通信，是Android系统不可缺少的一部分。</p>
+<p>socket简单实现（Java版和Linux版）</p>
+<h1 id="1socket">1socket</h1>
+<p>专业术语来讲是套接字。socket的英文翻译为插座。把插座的含义引申开来，可以认为是一端接电源插头，另外插座上面的槽，可以提供多个其他设备使用。这里的电源插头端可以理解为是服务端，能够提供客户端交互的一端，插座上的槽可以理解为是客户端，能够尝试与服务端通信的一端。一旦通过connect连接(通电)起来就把的通信两端通过socket连接起来了。</p>
+<h1 id="2android中socket通信的简单实现">2Android中socket通信的简单实现</h1>
+<p>考虑到Android中的socket实现，会被网络请求的框架封装起来，比如Okhttp，Retrofit等。所以下面所示都是直接使用socket API。</p>
+<h2 id="21java中的socket接口">2.1java中的socket接口</h2>
+<p>这要是需要认识两个类，一个是ServerSocket.java，另一个是Socket.java，这两个是对外提供的API接口。</p>
+<h2 id="22-serversocket构造">2.2 ServerSocket构造</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>1.有参构造方法都会使服务器与特定端口绑定，该端口由参数port指定。端口被占用或是没有以超级用户身份运行服务器程序(比如绑定到1-1023的端口)，会抛出BindException。</p>
+<p>2.有参构造里面还有一个backlog，用于设定客户连接请求队列的长度。服务端进程运行时，可同时监听到多个客户的连接请求。这里用于客户端请求连接服务端的队列，默认为50。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//服务端
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">ServerSocket</span> <span class="n">serverSocket</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln"> 3</span><span class="kd">public</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">port</span> <span class="o">=</span> <span class="n">2022</span><span class="o">;</span>
+<span class="ln"> 4</span><span class="k">try</span> <span class="o">{</span>
+<span class="ln"> 5</span>    <span class="n">InetAddress</span> <span class="n">addr</span> <span class="o">=</span> <span class="n">InetAddress</span><span class="o">.</span><span class="na">getLocalHost</span><span class="o">();</span>
+<span class="ln"> 6</span>    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&#34;local host:&#34;</span><span class="o">+</span><span class="n">addr</span><span class="o">);</span>
+<span class="ln"> 7</span>    <span class="n">serverSocket</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ServerSocket</span><span class="o">(</span><span class="n">port</span><span class="o">);</span>
+<span class="ln"> 8</span>    <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span><span class="s">&#34;-&gt;&gt;&gt;serverSocket success&#34;</span><span class="o">);</span>
+<span class="ln"> 9</span><span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">10</span>    <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="ln">11</span><span class="o">}</span>
+</code></pre></div><h2 id="23-accept">2.3 accept</h2>
+<p>一种阻塞的方法，如果没有客户端对其服务端有连接，那么就一直等待。</p>
+<p>ServerSocket的accept方法从连接请求队列中取出一个客户的连接请求，然后创建与客户连接的Socket对象，并将它返回。如果队列中没有连接请求，accept()方法就会一直等待，直到接收到了连接请求才返回。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//服务端
+</span><span class="ln"> 2</span><span class="c1">//考虑到不只有一个客户端连接，所以需要一个循环
+</span><span class="ln"> 3</span><span class="c1"></span><span class="k">try</span> <span class="o">{</span>
+<span class="ln"> 4</span>    <span class="n">Socket</span> <span class="n">socket</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln"> 5</span>    <span class="c1">//等待连接，每建立一个连接，就新建一个线程
+</span><span class="ln"> 6</span><span class="c1"></span>    <span class="k">while</span><span class="o">(</span><span class="kc">true</span><span class="o">){</span>
+<span class="ln"> 7</span>        <span class="c1">//等待一个客户端的连接，在连接之前，此方法是阻塞的
+</span><span class="ln"> 8</span><span class="c1"></span>        <span class="n">socket</span> <span class="o">=</span> <span class="n">serverSocket</span><span class="o">.</span><span class="na">accept</span><span class="o">();</span>
+<span class="ln"> 9</span>        <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;-&gt;&gt;&gt;connect to&#34;</span><span class="o">+</span><span class="n">socket</span><span class="o">.</span><span class="na">getInetAddress</span><span class="o">()+</span><span class="s">&#34;:&#34;</span><span class="o">+</span><span class="n">socket</span><span class="o">.</span><span class="na">getLocalPort</span><span class="o">());</span>
+<span class="ln">10</span>    <span class="o">}</span>
+<span class="ln">11</span><span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">12</span>    <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="ln">13</span><span class="o">}</span>
+</code></pre></div><h2 id="24-socket初始化">2.4 Socket初始化</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>无参构造可设置超时时间。当客户端Socket构造方法与服务器建立连接时，需要等待一段时间，默认会一直等待下去，直到连接成功，或出现异常。</p>
+<p>有参省略了无参的步骤，不需要设置远端地址和连接操作。</p>
+<blockquote>
+<p>IP地址获取举例</p>
+<p>返回本地主机的IP地址</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="n">InetAddress</span> <span class="n">addr1</span> <span class="o">=</span> <span class="n">InetAddress</span><span class="o">.</span><span class="na">getLocalHost</span><span class="o">();</span>
+</code></pre></div><p>返回代表 &ldquo;36.152.44.95&quot;的 IP地址，这个实际上是百度的IP</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="n">InetAddress</span> <span class="n">addr2</span> <span class="o">=</span> <span class="n">InetAddress</span><span class="o">.</span><span class="na">getByName</span><span class="o">(</span><span class="s">&#34;36.152.44.95&#34;</span><span class="o">);</span>
+</code></pre></div><p>返回域名为&quot;yangyang48.github.io&quot;的域名</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="n">InetAddress</span> <span class="n">addr3</span> <span class="o">=</span> <span class="n">InetAddress</span><span class="o">.</span><span class="na">getByName</span><span class="o">(</span><span class="s">&#34;yangyang48.github.io&#34;</span><span class="o">);</span>
+<span class="ln">2</span><span class="n">String</span> <span class="n">name</span> <span class="o">=</span> <span class="n">address</span><span class="o">.</span><span class="na">getHostName</span><span class="o">();</span>
+<span class="ln">3</span><span class="n">String</span> <span class="n">ip</span> <span class="o">=</span> <span class="n">address</span><span class="o">.</span><span class="na">getHostAddress</span><span class="o">();</span>
+<span class="ln">4</span><span class="c1">//日志打印yangyang48.github.io---185.199.109.153
+</span><span class="ln">5</span><span class="c1"></span><span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="n">name</span> <span class="o">+</span> <span class="s">&#34;---&#34;</span> <span class="o">+</span> <span class="n">ip</span><span class="o">);</span>
+</code></pre></div><p><strong>注意点</strong>：addr3这个例子不能放在UI子线程中，可以放在子线程中。因为输入网址是一个耗时操作，主线程会因此异常。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_6.png" >
+  
+    </a>
+  
+  
+</div>
+
+</blockquote>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//客户端
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">static</span> <span class="n">String</span> <span class="n">IP_ADDRESS</span> <span class="o">=</span> <span class="s">&#34;&#34;</span><span class="o">;</span>
+<span class="ln"> 3</span><span class="kd">public</span> <span class="kd">static</span> <span class="kt">int</span> <span class="n">PORT</span> <span class="o">=</span> <span class="n">2022</span><span class="o">;</span>
+<span class="ln"> 4</span>
+<span class="ln"> 5</span><span class="n">IP_ADDRESS</span> <span class="o">=</span> <span class="n">tv_adress</span><span class="o">.</span><span class="na">getText</span><span class="o">().</span><span class="na">toString</span><span class="o">();</span>
+<span class="ln"> 6</span><span class="c1">//这里的message为自己手动输入的字符串
+</span><span class="ln"> 7</span><span class="c1"></span><span class="k">new</span> <span class="n">ConnectionThread</span><span class="o">(</span><span class="n">message</span><span class="o">).</span><span class="na">start</span><span class="o">();</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span><span class="c1">//新建一个子线程，实现socket通信
+</span><span class="ln">10</span><span class="c1"></span><span class="kd">class</span> <span class="nc">ConnectionThread</span> <span class="kd">extends</span> <span class="n">Thread</span> <span class="o">{</span>
+<span class="ln">11</span>    <span class="n">String</span> <span class="n">message</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">12</span>
+<span class="ln">13</span>    <span class="kd">public</span> <span class="nf">ConnectionThread</span><span class="o">(</span><span class="n">String</span> <span class="n">msg</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">14</span>        <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;-&gt;&gt;&gt;ConnectionThread|msg = &#34;</span> <span class="o">+</span> <span class="n">msg</span><span class="o">);</span>
+<span class="ln">15</span>        <span class="n">message</span> <span class="o">=</span> <span class="n">msg</span><span class="o">;</span>
+<span class="ln">16</span>    <span class="o">}</span>
+<span class="ln">17</span>
+<span class="ln">18</span>    <span class="nd">@Override</span>
+<span class="ln">19</span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln">20</span>        <span class="k">if</span> <span class="o">(</span><span class="n">soc</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">21</span>            <span class="k">try</span> <span class="o">{</span>
+<span class="ln">22</span>                <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span><span class="s">&#34;-&gt;&gt;&gt;new socket&#34;</span><span class="o">);</span>
+<span class="ln">23</span>                <span class="k">if</span> <span class="o">(</span><span class="s">&#34;&#34;</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">IP_ADDRESS</span><span class="o">))</span> <span class="o">{</span>
+<span class="ln">24</span>                    <span class="k">return</span><span class="o">;</span>
+<span class="ln">25</span>                <span class="o">}</span>
+<span class="ln">26</span>                <span class="c1">//这个是阻塞的方法，连接成功后才会执行后面的语句
+</span><span class="ln">27</span><span class="c1"></span>                <span class="n">soc</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Socket</span><span class="o">(</span><span class="n">IP_ADDRESS</span><span class="o">,</span> <span class="n">PORT</span><span class="o">);</span>
+<span class="ln">28</span>            <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">29</span>                <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="ln">30</span>            <span class="o">}</span>
+<span class="ln">31</span>        <span class="o">}</span>
+<span class="ln">32</span>    <span class="o">}</span>
+<span class="ln">33</span><span class="o">}</span>
+</code></pre></div><p>除上述之外，还有一些获取Socket的信息</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>getInetAddress</code></td>
+<td>获得连接的远程服务器的IP地址</td>
+</tr>
+<tr>
+<td><code>etRemoteSocketAddress</code></td>
+<td>获取连接的远程服务器地址</td>
+</tr>
+<tr>
+<td><code>getLocalSocketAddress</code></td>
+<td>获取本地绑定的地址</td>
+</tr>
+<tr>
+<td><code>getPort</code></td>
+<td>获得远程服务器的端口</td>
+</tr>
+<tr>
+<td><code>getLocalAddress</code></td>
+<td>获得客户本地的IP地址</td>
+</tr>
+<tr>
+<td><code>getLocalPort</code></td>
+<td>获得客户本地的端口</td>
+</tr>
+<tr>
+<td><code>getInputStream</code></td>
+<td>获得输入流。如果Socket还没有连接，或者已经关闭，或者已经通过<code>shutdownInput</code>方法关闭输入流，那么此方法会抛出<code>IOException</code></td>
+</tr>
+<tr>
+<td><code>getOutputStream</code></td>
+<td>获得输出流。如果Socket还没有连接，或者已经关闭，或者已经通过<code>shutdownOutput</code>方法关闭输出流，那么此方法会抛出<code>IOException</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="25获取输入输出流">2.5获取输入输出流</h2>
+<p>因为存在服务端具有同时为多个客户提供服务的能力，所以每一次服务端都新连接都需要起一个线程来满足应对多个客户端。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//服务端
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">try</span> <span class="o">{</span>
+<span class="ln"> 3</span>    <span class="n">Socket</span> <span class="n">socket</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln"> 4</span>    <span class="k">while</span><span class="o">(</span><span class="kc">true</span><span class="o">){</span>
+<span class="ln"> 5</span>        <span class="n">socket</span> <span class="o">=</span> <span class="n">serverSocket</span><span class="o">.</span><span class="na">accept</span><span class="o">();</span>
+<span class="ln"> 6</span>        <span class="c1">//每次连接都开启一个线程，最好使用JDK的线程池
+</span><span class="ln"> 7</span><span class="c1"></span>        <span class="k">new</span> <span class="n">ConnectThread</span><span class="o">(</span><span class="n">socket</span><span class="o">).</span><span class="na">start</span><span class="o">();</span>
+<span class="ln"> 8</span>    <span class="o">}</span>
+<span class="ln"> 9</span><span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">10</span>    <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="ln">11</span><span class="o">}</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="c1">//向客户端发送信息
+</span><span class="ln">14</span><span class="c1"></span><span class="kd">class</span> <span class="nc">ConnectThread</span> <span class="kd">extends</span> <span class="n">Thread</span><span class="o">{</span>
+<span class="ln">15</span>    <span class="n">Socket</span> <span class="n">socket</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">16</span>    <span class="c1">//socket变量注入
+</span><span class="ln">17</span><span class="c1"></span>    <span class="kd">public</span> <span class="nf">ConnectThread</span><span class="o">(</span><span class="n">Socket</span> <span class="n">socket</span><span class="o">){</span>
+<span class="ln">18</span>        <span class="kd">super</span><span class="o">();</span>
+<span class="ln">19</span>        <span class="k">this</span><span class="o">.</span><span class="na">socket</span> <span class="o">=</span> <span class="n">socket</span><span class="o">;</span>
+<span class="ln">20</span>    <span class="o">}</span>
+<span class="ln">21</span>
+<span class="ln">22</span>    <span class="nd">@Override</span>
+<span class="ln">23</span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">(){</span>
+<span class="ln">24</span>        <span class="k">try</span> <span class="o">{</span>
+<span class="ln">25</span>            <span class="c1">//这里通过socket来获取二进制的输入输出流用于传递数据
+</span><span class="ln">26</span><span class="c1"></span>            <span class="n">DataInputStream</span> <span class="n">dis</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DataInputStream</span><span class="o">(</span><span class="n">socket</span><span class="o">.</span><span class="na">getInputStream</span><span class="o">());</span>
+<span class="ln">27</span>            <span class="n">DataOutputStream</span> <span class="n">dos</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DataOutputStream</span><span class="o">(</span><span class="n">socket</span><span class="o">.</span><span class="na">getOutputStream</span><span class="o">());</span>
+<span class="ln">28</span>            <span class="k">while</span><span class="o">(</span><span class="kc">true</span><span class="o">){</span>
+<span class="ln">29</span>                <span class="n">i</span><span class="o">++;</span>
+<span class="ln">30</span>                <span class="n">String</span> <span class="n">msgRecv</span> <span class="o">=</span> <span class="n">dis</span><span class="o">.</span><span class="na">readUTF</span><span class="o">();</span>
+<span class="ln">31</span>                <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;-&gt;&gt;&gt;msg from client: &#34;</span> <span class="o">+</span> <span class="n">msgRecv</span><span class="o">);</span>
+<span class="ln">32</span>                <span class="c1">//服务端的消息，只是在客户端的基本上加了一个符号
+</span><span class="ln">33</span><span class="c1"></span>                <span class="n">dos</span><span class="o">.</span><span class="na">writeUTF</span><span class="o">(</span><span class="n">msgRecv</span> <span class="o">+</span> <span class="n">i</span><span class="o">);</span>
+<span class="ln">34</span>                <span class="n">dos</span><span class="o">.</span><span class="na">flush</span><span class="o">();</span>
+<span class="ln">35</span>            <span class="o">}</span>
+<span class="ln">36</span>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">37</span>            <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="ln">38</span>        <span class="o">}</span>
+<span class="ln">39</span>    <span class="o">}</span>
+<span class="ln">40</span><span class="o">}</span>
+</code></pre></div><p>跟上面的服务端的流程类似，客户端也有相似的流程</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//客户端
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">static</span> <span class="n">String</span> <span class="n">IP_ADDRESS</span> <span class="o">=</span> <span class="s">&#34;&#34;</span><span class="o">;</span>
+<span class="ln"> 3</span><span class="kd">public</span> <span class="kd">static</span> <span class="kt">int</span> <span class="n">PORT</span> <span class="o">=</span> <span class="n">2022</span><span class="o">;</span>
+<span class="ln"> 4</span><span class="n">String</span> <span class="n">messageRecv</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span><span class="n">IP_ADDRESS</span> <span class="o">=</span> <span class="n">tv_adress</span><span class="o">.</span><span class="na">getText</span><span class="o">().</span><span class="na">toString</span><span class="o">();</span>
+<span class="ln"> 7</span><span class="c1">//这里的message为自己手动输入的字符串
+</span><span class="ln"> 8</span><span class="c1"></span><span class="k">new</span> <span class="n">ConnectionThread</span><span class="o">(</span><span class="n">message</span><span class="o">).</span><span class="na">start</span><span class="o">();</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span><span class="c1">//新建一个子线程，实现socket通信
+</span><span class="ln">11</span><span class="c1"></span><span class="kd">class</span> <span class="nc">ConnectionThread</span> <span class="kd">extends</span> <span class="n">Thread</span> <span class="o">{</span>
+<span class="ln">12</span>    <span class="nd">@Override</span>
+<span class="ln">13</span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln">14</span>        <span class="k">if</span> <span class="o">(</span><span class="n">soc</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">15</span>            <span class="k">try</span> <span class="o">{</span>
+<span class="ln">16</span>                <span class="n">soc</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Socket</span><span class="o">(</span><span class="n">IP_ADDRESS</span><span class="o">,</span> <span class="n">PORT</span><span class="o">);</span>
+<span class="ln">17</span>                <span class="c1">//这里通过socket来获取二进制的输入输出流用于传递数据
+</span><span class="ln">18</span><span class="c1"></span>                <span class="n">dis</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DataInputStream</span><span class="o">(</span><span class="n">soc</span><span class="o">.</span><span class="na">getInputStream</span><span class="o">());</span>
+<span class="ln">19</span>                <span class="n">dos</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DataOutputStream</span><span class="o">(</span><span class="n">soc</span><span class="o">.</span><span class="na">getOutputStream</span><span class="o">());</span>
+<span class="ln">20</span>            <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">21</span>                <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="ln">22</span>            <span class="o">}</span>
+<span class="ln">23</span>        <span class="o">}</span>
+<span class="ln">24</span>        <span class="k">try</span> <span class="o">{</span>
+<span class="ln">25</span>            <span class="c1">//客户端发送消息
+</span><span class="ln">26</span><span class="c1"></span>            <span class="n">dos</span><span class="o">.</span><span class="na">writeUTF</span><span class="o">(</span><span class="n">message</span><span class="o">);</span>
+<span class="ln">27</span>            <span class="n">dos</span><span class="o">.</span><span class="na">flush</span><span class="o">();</span>
+<span class="ln">28</span>            <span class="c1">//客户端接收消息
+</span><span class="ln">29</span><span class="c1"></span>            <span class="n">messageRecv</span> <span class="o">=</span> <span class="n">dis</span><span class="o">.</span><span class="na">readUTF</span><span class="o">();</span><span class="c1">//如果没有收到数据，会阻塞
+</span><span class="ln">30</span><span class="c1"></span>            <span class="n">Message</span> <span class="n">msg</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Message</span><span class="o">();</span>
+<span class="ln">31</span>            <span class="n">Bundle</span> <span class="n">b</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Bundle</span><span class="o">();</span>
+<span class="ln">32</span>            <span class="n">b</span><span class="o">.</span><span class="na">putString</span><span class="o">(</span><span class="s">&#34;data&#34;</span><span class="o">,</span> <span class="n">messageRecv</span><span class="o">);</span>
+<span class="ln">33</span>            <span class="n">msg</span><span class="o">.</span><span class="na">setData</span><span class="o">(</span><span class="n">b</span><span class="o">);</span>
+<span class="ln">34</span>            <span class="n">handler</span><span class="o">.</span><span class="na">sendMessage</span><span class="o">(</span><span class="n">msg</span><span class="o">);</span>
+<span class="ln">35</span>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">36</span>            <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="ln">37</span>        <span class="o">}</span>
+<span class="ln">38</span>    <span class="o">}</span>
+<span class="ln">39</span><span class="o">}</span>
+</code></pre></div><p>上述socket通信传递的信息，主要是通过DataOutputStream和DataInputStream来传递，本质上还是用于数据的收发。</p>
+<p>DataOutputStream数据输出流允许应用程序将基本Java数据类型写到基础输出流中，而DataInputStream数据输入流允许应用程序以机器无关的方式从底层输入流中读取基本的Java类型。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<blockquote>
+<p><strong>demo中的注意点</strong></p>
+<p>1.AndroidManifest.xml中需要添加<code>&lt;uses-permission android:name=&quot;android.permission.INTERNET&quot; /&gt;</code></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>不添加上述权限，会影响下面检查权限时错误，在启动socket服务的时候会失败。</p>
+<p>java.net.SocketException: socket failed: EACCES (Permission denied)</p>
+<p>2.服务端和客户端的端口号需要相同，且需要大于1023</p>
+<p>即使IP相同。端口号不同也是会正常连接。包括正常的Socket初始化，但是去读写获取二进制流的时候，会读写错误。</p>
+<p>端口号小于1024，可能需要设备的超级权限，默认设备user版本是无权限的。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_4.png" >
+  
+    </a>
+  
+  
+</div>
+
+</blockquote>
+<h1 id="3linux">3linux</h1>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>关于socket中的send和write的区别</p>
+<blockquote>
+<p>对于linux来说,每个socket会有自己的send/receive buffer。调用write,只是说将用户进程的数据,拷贝到了内核的socket buffer里面,拷贝完之后,就没有write什么事了。内核自己会用自己的进程,调用TCP/IP协议栈,把用户进程的数据发出去。可以把内核的TCP/IP协议想象成另外一个进程,调用write的时候,只是把数据发给这个进程,这个进程会处理剩下的事情。实际上在早期,TCP/IP协议栈还真是当成一个软件产品在卖,不过后来主流操作系统都内置了协议栈,这些产品才凉了。</p>
+</blockquote>
+<p>socket_write写到缓冲(本地<a href="https://so.csdn.net/so/search?q=%E5%A5%97%E6%8E%A5%E5%AD%97&amp;spm=1001.2101.3001.7020">套接字</a>缓冲) 实际有可能未发送出去</p>
+<p>socket_send 已经从套接字缓冲发出</p>
+<h1 id="4总结">4总结</h1>
+<h1 id="5源码下载">5源码下载</h1>
+<p>源码下载，点击<a href="https://github.com/YangYang48/project/tree/master/MySocket">这里</a></p>
+<h1 id="参考">参考</h1>
+<p><a href="https://blog.csdn.net/ApolloNing/article/details/110522089">[1] 盖了帽, 简单说一下DataInputStream和DataOutputStream这两个流, 2020.</a></p>
+<p><a href="https://blog.csdn.net/qq_33782617/article/details/112719793">[2] 沉沦者,android socket 学习及示例, 2021.</a></p>
+<p><a href="https://blog.csdn.net/c19344881x/article/details/120455491?spm=1001.2101.3001.6650.1&amp;utm_medium=distribute.pc_relevant.none-task-blog-2~default~CTRLIST~default-1-120455491-blog-112719793.pc_relevant_default&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2~default~CTRLIST~default-1-120455491-blog-112719793.pc_relevant_default&amp;utm_relevant_index=2">[3] c小旭, Android Socket通信简单实现, 2021.</a></p>
+<p><a href="https://www.jb51.net/article/184151.htm">[4] feng海涛, Android中socket通信的简单实现, 2020.</a></p>
+<p><a href="https://blog.csdn.net/qq_31059475/article/details/77089650">[5] Sally-he, Java中Socket的用法&ndash;Spring MVC, 2017.</a></p>
+<p><a href="https://www.jianshu.com/p/46efb4b102d9">[6] yjy239, Android socket源码解析(一)socket的初始化原理, 2021.</a></p>
+<p><a href="https://www.jianshu.com/p/665994c2e784">[7] 桥头放牛娃, ServerSocket详解, 2018.</a></p>
+<p><a href="https://www.jianshu.com/p/5a294e08efbc">[8] 桥头放牛娃, Socket详解, 2018.</a></p>
+<p><a href="https://blog.csdn.net/pzqingchong/article/details/52901833">[9] 皮子2 , socket_write socket_send区别, 2016.</a></p>
+<p><a href="https://blog.csdn.net/qq_40989769/article/details/112392736?utm_medium=distribute.pc_relevant.none-task-blog-2~default~baidujs_baidulandingword~default-5-112392736-blog-116913942.pc_relevant_antiscanv2&amp;spm=1001.2101.3001.4242.4&amp;utm_relevant_index=8">[10] linux大本营, Linux进程间通信方式之socket使用实例, 2021.</a></p>
+<p><a href="https://blog.csdn.net/shenmingxueIT/article/details/108894726?utm_medium=distribute.pc_relevant.none-task-blog-2~default~baidujs_baidulandingword~default-8-108894726-blog-116913942.pc_relevant_antiscanv2&amp;spm=1001.2101.3001.4242.5&amp;utm_relevant_index=11">[11] shenmingik, Linux网络编程——使用socket编程, 2020.</a></p>
+<p><a href="https://blog.csdn.net/weixin_41857871/article/details/124476225?spm=1001.2101.3001.6650.7&amp;utm_medium=distribute.pc_relevant.none-task-blog-2~default~BlogCommendFromBaidu~Rate-7-124476225-blog-116913942.pc_relevant_antiscanv2&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2~default~BlogCommendFromBaidu~Rate-7-124476225-blog-116913942.pc_relevant_antiscanv2&amp;utm_relevant_index=14">[12] 窑下村吴彦祖, Linux下的socket应用——socket函数, 2022.</a></p>
+<p><a href="http://c.biancheng.net/view/2128.html">[13] C语言中文网, Linux下的socket演示程序.</a></p>
+<p><a href="https://blog.csdn.net/weixin_41263449/article/details/108271804">[14] JiahongWu, Linux Socket接口使用方法, 2020.</a></p>
               
             </div>
           </div>
