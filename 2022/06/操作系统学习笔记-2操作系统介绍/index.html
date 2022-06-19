@@ -270,7 +270,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">100 Words|Read in about 1 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">200 Words|Read in about 1 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -451,6 +451,155 @@
 <p>异步：这个事件产生了，但是操作系统并不知道这个时间什么时候产生</p>
 <p>同步：特定的指令触发某种请求让操作系统完成。</p>
 </blockquote>
+<h2 id="22-操作系统的中断异常和系统调用">2.2 操作系统的中断、异常和系统调用</h2>
+<p>不同的外设产生一个中断都有一个编号，一个编号会对应一个地址，地址就会特定中断服务地址的。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os2_5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os2_5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>操作系统收到了一个中断信号，会根据一个中断表，会查到对应中断服务进程的起始地址。</p>
+<p>当产生中断之后，打断当前的正常执行来处理紧急的外设中断事件，然后中断事件结束之后会继续正常运行。</p>
+<p>使得上面能正常，分两部分完成，硬件和软件两部分组成</p>
+<p>硬件</p>
+<ol>
+<li>设置中断标记[CPU初始化]</li>
+<li>包括将内部、外部时间设置中断标记和中断事件的ID</li>
+</ol>
+<p>软件</p>
+<ol>
+<li>保存当前处理状态（线程）</li>
+<li>中断服务程序处理</li>
+<li>清除中断标记</li>
+<li>恢复之前保存的处理状态</li>
+</ol>
+<p>和中断类似，异常也是有对应的编号</p>
+<ol>
+<li>保存现场</li>
+<li>异常处理，包括杀死产生异常的程序和重新执行异常指令</li>
+<li>恢复现场</li>
+</ol>
+<p>系统调用有所区别</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os2_6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os2_6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>应用程序调用printf()会触发write系统调用，write会带有参数，比如哪个设备显示字符串和字符串的内容。操作系统获取到这两个参数之后，会去访问对应的设备，比如屏幕，让屏幕把字符串给显示出来。整个系统是操作系统去完成，而不是应用本身去完成。应用只需发一个请求交给操作系统即可，当操作系统完成这个请求之后，就会返回一个成功或者失败。这样应用就可以知道，应用程序做完这个请求之后可以继续完成其他的操作。</p>
+<p>程序访问主要是通过高层次的API接口而不是直接进行系统调用。</p>
+<ol>
+<li>
+<p>win32 API用于Windows</p>
+</li>
+<li>
+<p>POSIX API（通用API）用于POSIX-based systems，包括UNIX、Linux、Mac OS的所有版本</p>
+</li>
+<li>
+<p>Java API用于Java虚拟机JVM</p>
+</li>
+<li>
+<p>通常情况下，于每个系统调动相关的序号</p>
+<p>系统调用接口根据这些序号为维护表的索引</p>
+</li>
+<li>
+<p>系统调用接口调用内核态中预期的系统调用</p>
+<p>并返回系统调用的状态和其他任何返回值</p>
+</li>
+<li>
+<p>用户不需要知道系统调用是如何实现的</p>
+<p>只需要获取API的了解操作系统将什么作为返回结果</p>
+<p>操作系统接口的细节大部分隐藏在API中，通过运行程序支持的库来管理</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os2_7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os2_7.png" >
+  
+    </a>
+  
+  
+</div>
+
+</li>
+</ol>
+<p>函数调用和系统调用的区别</p>
+<p>函数调用的时候，是在一个栈空间的，完成参数的传递和参数的返回。系统调用的时候，应用程序和操作系统会使用各自的堆栈。当应用层程序发起系统调用之后，会切换到内核里面去执行，他需要去切换堆栈，同时还会有状态的切换，从用户态到内核态的切换。</p>
+<p>这个堆栈和状态的切换，都需要额外的开销。即当系统调用的时候会比函数调用的开销大，操作系统会付出额外的时间代价，但换来的是安全的、可靠的。</p>
+<p>额外开销的总结（跨越操作系统的开销）</p>
+<ul>
+<li><strong>在执行时间上的开销超过程序调用</strong></li>
+<li>建立中断/异常/系统调用号与对应服务例程映射关系的初始化开销</li>
+<li>建立内核堆栈</li>
+<li>验证参数</li>
+<li>内核态映射到用户态的地址空间（包括更新页面映射的权限）</li>
+<li>内核态独立地址空间（TLB后备缓冲区）</li>
+</ul>
               
             </div>
           </div>
