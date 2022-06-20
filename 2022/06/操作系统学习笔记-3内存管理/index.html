@@ -270,7 +270,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">100 Words|Read in about 1 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">200 Words|Read in about 1 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -580,8 +580,209 @@
   
 </div>
 
-<h2 id="33连续分配内存内存碎片与分区的动态分配">3.3连续分配内存：内存碎片与分区的动态分配</h2>
-<h2 id="34连续分配内存压缩式与交换式碎片整理">3.4连续分配内存：压缩式与交换式碎片整理</h2>
+<h2 id="33连续内存分配">3.3连续内存分配</h2>
+<ul>
+<li>内存碎片问题</li>
+<li>分区的动态分配（第一适配、最佳适配、最差适配）</li>
+<li>压缩式碎片整理和交换式碎片整理</li>
+</ul>
+<h3 id="331内存碎片问题">3.3.1内存碎片问题</h3>
+<p>内存碎片问题就是空闲内存不能被利用</p>
+<p>外部碎片：在分配单元间的未使用内存</p>
+<p>内部碎片：在分配单元中的未使用内存</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os3_8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os3_8.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="332连续分配内存内存碎片与分区的动态分配">3.3.2连续分配内存：内存碎片与分区的动态分配</h3>
+<p>操作系统会对应的三种算法，分别是第一匹配分配、最佳匹配分配、最差匹配分配。</p>
+<p>为了使得程序能够得到连续的区间，程序中的数据可以有连续的空间。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os3_9.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os3_9.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h4 id="3321第一匹配分配">3.3.2.1第一匹配分配</h4>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os3_10.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os3_10.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>为了分配n字节，使用第一个可用空闲块以致块的尺寸比n大。</p>
+<h4 id="3322最佳匹配分配">3.3.2.2最佳匹配分配</h4>
+<p>为了分配n字节，使用最小的可用空闲块，以致块的尺寸比n大</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os3_11.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os3_11.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h4 id="3323最差匹配分配">3.3.2.3最差匹配分配</h4>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os3_12.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os3_12.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>为了分配n字节，使用最大可用空闲块，以致块的尺寸比n大。</p>
+<h4 id="3324总结">3.3.2.4总结</h4>
+<p>到底哪一种是做好的算法？其实没有最好的算法这一说。应用程序的请求是随机产生的，根据特定的场景产生有各自的特点，应用程序一会需要大的空间块，一会需要小的空间块，需求是随机的可变的，不存在一种可以满足所有的需求。</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>第一匹配分配</th>
+<th>最佳匹配分配</th>
+<th>最差匹配分配</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>基本原理</td>
+<td>简单实现</td>
+<td>1）为了避免分割大空间块<!-- raw HTML omitted -->2）为了最小化外部碎片产生的尺寸</td>
+<td>为了避免有太多微小的碎片</td>
+</tr>
+<tr>
+<td>需求</td>
+<td>1）按地址排序的空闲块列表<!-- raw HTML omitted -->2）分配需要寻找一个合适的分区<!-- raw HTML omitted -->3）重分配需要检查，看是否自由分区能合并于相邻的空闲分区（若有）</td>
+<td>1）按尺寸排列的空间块列表<!-- raw HTML omitted -->2）分配需要寻找一个合适的分区<!-- raw HTML omitted -->3）重分配需要搜索及合并于相邻的空间分区（若有）</td>
+<td>1）按尺寸排列的空闲块列表<!-- raw HTML omitted -->2）分配很快（获得最大的分区）<!-- raw HTML omitted -->3）重分配需要合并于相邻的空闲分区，若有就调整空闲块列表</td>
+</tr>
+<tr>
+<td>优势</td>
+<td>简单，易于产生<strong>更大空闲块</strong>，向着地址空间的结尾</td>
+<td>当大部分分配的尺寸是<strong>小尺寸</strong>时非常有效，比较简单</td>
+<td>假如分配是<strong>中等尺寸</strong>效果最好</td>
+</tr>
+<tr>
+<td>劣势</td>
+<td>产生外部碎片和不确定性</td>
+<td>产生外部碎片，重分配慢和易产生很多没用的微小碎片（不怎么样）</td>
+<td>重分配慢，产生外部碎片和易于破碎大的空闲块以致大分区无法被分配</td>
+</tr>
+</tbody>
+</table>
+<h3 id="333连续分配内存压缩式与交换式碎片整理">3.3.3连续分配内存：压缩式与交换式碎片整理</h3>
               
             </div>
           </div>
