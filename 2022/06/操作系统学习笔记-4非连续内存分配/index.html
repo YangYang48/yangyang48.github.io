@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="熟悉完操作系统的第三篇章，开始学习第四篇章，关于操作系统的非连续内存分配。">
+
+
+<meta property="og:description" content="熟悉完操作系统的第三篇章，开始学习第四篇章，关于操作系统的非连续内存分配。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="操作系统学习笔记 4非连续内存分配">
+<meta name="twitter:title" content="操作系统学习笔记 4非连续内存分配">
+<meta property="og:url" content="https://yangyang48.github.io/2022/06/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-4%E9%9D%9E%E8%BF%9E%E7%BB%AD%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2022/06/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-4%E9%9D%9E%E8%BF%9E%E7%BB%AD%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="熟悉完操作系统的第三篇章，开始学习第四篇章，关于操作系统的非连续内存分配。">
+<meta name="twitter:description" content="熟悉完操作系统的第三篇章，开始学习第四篇章，关于操作系统的非连续内存分配。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2022-06-26T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2022-06-26T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="OS">
+    
+      <meta property="article:section" content="2022">
+    
+      <meta property="article:section" content="June">
+    
+  
+  
+    
+      <meta property="article:tag" content="学习笔记">
+    
+      <meta property="article:tag" content="清华大学陈渝">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/os/os4_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/os/os4_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/os/os4_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/os/os4_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>操作系统学习笔记 4非连续内存分配</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2022/06/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-4%E9%9D%9E%E8%BF%9E%E7%BB%AD%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/os/os4_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      操作系统学习笔记 4非连续内存分配
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2022-06-26T00:00:00Z">
+        
+  六月 26, 2022
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/os">OS</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2022">2022</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/june">June</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">100 Words|Read in about 1 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>熟悉完操作系统的第三篇章，开始学习第四篇章，关于操作系统的非连续内存分配。</p>
+<h1 id="4非连续内存分配">4非连续内存分配</h1>
+<p>这部分是物理内存管理的第二部分。本章主要介绍管理非连续内存。</p>
+<blockquote>
+<p>Q1:为什么需要非连续内存分配？</p>
+<p>Q2:当前非连续内存的管理方法（分段和分页）</p>
+<p>Q3:分页的数据结构（页表）</p>
+</blockquote>
+<p>带着上述三个问题，开始本章的内容。</p>
+<h2 id="40为什么需要非连续内存分配">4.0为什么需要非连续内存分配</h2>
+<p>上一章内存管理中讲述了，连续分配内存管理方式，无论是首次适配，最佳适配，最差适配都会带来潜在的一系列问题。</p>
+<p>连续内存分配的缺点</p>
+<ul>
+<li>分配给一个程序的物理内存是连续的</li>
+<li>内存利用率较低</li>
+<li>有外碎片、内碎片的问题</li>
+</ul>
+<p>非连续分配的优点</p>
+<ul>
+<li>一个程序的物理地址是非连续的</li>
+<li>更好的内存利用和管理</li>
+<li>允许共享代码和数据（共享库）</li>
+<li>支持动态加载和动态链接</li>
+</ul>
+<p>非连续分配的缺点</p>
+<p>如何建立虚拟地址和物理地址之间的转换</p>
+<p>软件方案和硬件方案，但是纯软件方案的转换非常有限，还需要通过硬件方案来支持。目前两种硬件方案，<strong>分段和分页</strong>。</p>
+<h2 id="41-分段">4.1 分段</h2>
+<p>分段主要考虑两点</p>
+<ul>
+<li>程序的分段地址空间</li>
+<li>分段寻址方案</li>
+</ul>
+<h3 id="411程序的分段地址空间">4.1.1程序的分段地址空间</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os4_1.png" title="图4-1 分段的机制下应用程序的地址图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os4_1.png"  alt="图4-1 分段的机制下应用程序的地址图">
+  
+    </a>
+  
+   
+    <span class="caption">图4-1 分段的机制下应用程序的地址图</span>
+  
+</div>
+
+<p>由上图4-1可以看到，分段其实是为了更好地分离和共享。</p>
+<p>从应用程序的运行来说，它的虚拟的逻辑地址空间是一个连续的地址空间，虽然说是连续地址空间，但是分段之后有效的隔离开来。堆栈端可以分别放到不同的物理地址上面，用特定的权限管理起来。把堆区，运行栈，程序数据，库和用户代码都隔离开来。这样一来，可以让用户代码段和主程序段可以共享，能够相互之间进行访问。有些数据可以和另外的数据相对隔离，有些数据是可写的，有些数据是可读的。因为存在不同的区域，可以更加有效的进行管理分配，保证有效的保护机制实现。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os4_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os4_2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>左边的连续逻辑地址空间，右边是不连续的物理地址空间，这就需要一种映射机制来相应建立关联。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os4_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os4_3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="412分段寻址方案">4.1.2分段寻址方案</h3>
+<p>一个应用程序运行之后的地址，可以认为是一维的逻辑地址。</p>
+<p>一维的逻辑地址和分段的物理地址对应，需要一种表述方法。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os4_4.png" title="图4-2 段访问机制图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os4_4.png"  alt="图4-2 段访问机制图">
+  
+    </a>
+  
+   
+    <span class="caption">图4-2 段访问机制图</span>
+  
+</div>
+
+<p>一维的逻辑地址是由很多段组成的，段可以不连续。一维的地址会被分成两块，一块是段的寻址，另外一块是段内偏移的寻址。根据上图4-2所示，这里可以有两种方式，段寄存器和地址寄存器的方案（X86），还有一种是单地址实现方案。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os4_5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os4_5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>从左边看，左上角有一个可以运行的程序，CPU来执行每条指令。那么CPU就需要去寻址，地址可以采取单一的管理机制。那么把一个逻辑地址分成两块，上面部分是段号，下面部分是段内的偏移。通过段号，希望能够找到所在物理内存的起始地址，这个信息保存在<strong>段表</strong>中。另外，每个段的大小是不一样的，需要知道每个段的起始地址和长度，这个信息也是存放到段表里面的。段表里面有两个很重要的信息，一个是段的起始地址，另外一个是段的长度的限制。</p>
+<blockquote>
+<p>段表的建立</p>
+<p>段表由<strong>操作系统</strong>建立。在正式的寻址之前就应该建立好。操作系统建立好段表之后，这时候段机制就可以正常工作了。至于怎么建立段表和硬件有紧密的联系。</p>
+</blockquote>
+<h2 id="42分页">4.2分页</h2>
+<p>段机制相对而言，在现有的硬件中使用比较少，绝大多数CPU使用的还是分页机制。</p>
+<p>分页主要是下面两部分</p>
+<ul>
+<li>分页地址空间</li>
+<li>页寻址方式</li>
+</ul>
+<p>分段机制，需要知道段号和段内的偏移。分页也是类似，需要知道页号和页的偏移。主要的区别就是分段里面的段的尺寸是可变的，分页里面页的大小是固定的。</p>
+<h3 id="421分页地址空间">4.2.1分页地址空间</h3>
+<ul>
+<li>
+<p>划分物理内存至固定大小的帧（frame指的是物理页）</p>
+<p>大小是2的幂，例如，512,4096,8192等</p>
+</li>
+<li>
+<p>划分逻辑地址空间至相同大小的页（page指的是逻辑页）</p>
+<p>大小是2的幂，例如，512,4096,8192等</p>
+</li>
+</ul>
+<p>我们需要建立物理页和逻辑也地址的关系。</p>
+<p>建立的方案，是转换逻辑地址为物理地址（pages to frames）</p>
+<ul>
+<li>页表</li>
+<li>MMU（内存管理单元）/TLB（快表）</li>
+</ul>
+<h4 id="4211帧frame">4.2.1.1帧（frame）</h4>
+<p>页帧代表物理内存地址，有两部分组成。页帧号和页帧内的偏移。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os4_6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os4_6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>页帧号占了F位，页帧又占了S位。总共有2^F个帧和每帧有2^S字节。</p>
+<p>帧号可以理解成一本书的第几页，帧内偏移可以理解为一本书的第几页的第几行。我们知道帧号和帧内偏移，就可以知道具体物理地址，物理地址为2^S*f+o</p>
+<blockquote>
+<p>具体计算实例如下所示</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os4_7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os4_7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>结果含义：（从0计数）第三帧的第六偏移的位置计算，其中每一帧切成512个偏移量，每帧中的各个便宜前7bit的代表帧号且相同，后9bit代表帧里面具体的偏移量。</p>
+</blockquote>
+<h4 id="4212页page">4.2.1.2页（page）</h4>
+<p>计算方式类似前面的帧。区别在于，页号的size和帧号的size可能不一样。但是每个页的大小，每个页帧的大小是一样的。我们可以得出，相应的页号和相应的页内偏移的逻辑地址，可以得到它对应的实际逻辑地址。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os4_8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os4_8.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="422页寻址方式">4.2.2页寻址方式</h3>
+<p>一个页的偏移大小虚拟和物理是一致的，但总的地址空间，虚拟和物理可能是不一致的。页号位数可能实不相等的，但偏移位数是相等的，这样页表就只存储页号就可以了，偏移地址不用存，页号位数不相等意味着逻辑内存中可能找不到对应的物理内存。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os4_.png" title="图4-3 页寻址方式图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os4_9.png"  alt="图4-3 页寻址方式图">
+  
+    </a>
+  
+   
+    <span class="caption">图4-3 页寻址方式图</span>
+  
+</div>
+
+<p>首先程序运行时候，CPU获取寻址，无论是执行一条语句还是访问一个数据，需要直到指令或者数据所在的地址。这个地址是一个逻辑虚拟地址，上图4-3所示，可以看到分成两块。一块是o，一块是p。p是页号，建立一个索引，page table，用于查询。页表中存的是以页号为索引的对应那一项的内容，放的内容是帧号。</p>
+<p>有了索引的信息之后，就可以通过页号查到对应的帧号。</p>
+<p>通过页帧号和偏移大小可以知道帧号和偏移大小。最终找到对应的物理地址。</p>
+<blockquote>
+<p>页表page table是谁来建立的?</p>
+<p>页表是操作系统来建立。建立好页表之后，才能让程序正常的完成映射关系。在操作系统初始化，内存管理使能分页机制的时候，就需要建立好。</p>
+</blockquote>
+<p>一般来讲，逻辑地址空间和物理地址空间大小不一致，且逻辑地址空间大于物理地址空间。可以知道逻辑地址是一个连续的寻址，而映射到物理地址是一个不连续的寻址，分散在不同的物理地址空间。这样的好处，有助于减少内存碎片。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os4_10.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os4_10.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="43-页表-概述tlb">4.3 页表-概述、TLB</h2>
+<h2 id="44-页表-二级多级页表">4.4 页表-二级、多级页表</h2>
+<h2 id="45-页表-反向页表">4.5 页表-反向页表</h2>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%B8%85%E5%8D%8E%E5%A4%A7%E5%AD%A6%E9%99%88%E6%B8%9D/">清华大学陈渝</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/06/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-3%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/" data-tooltip="操作系统学习笔记 3内存管理">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2022 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/06/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-3%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/" data-tooltip="操作系统学习笔记 3内存管理">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2022%2F06%2F%25E6%2593%258D%25E4%25BD%259C%25E7%25B3%25BB%25E7%25BB%259F%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25AC%2594%25E8%25AE%25B0-4%25E9%259D%259E%25E8%25BF%259E%25E7%25BB%25AD%25E5%2586%2585%25E5%25AD%2598%25E5%2588%2586%25E9%2585%258D%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2022%2F06%2F%25E6%2593%258D%25E4%25BD%259C%25E7%25B3%25BB%25E7%25BB%259F%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25AC%2594%25E8%25AE%25B0-4%25E9%259D%259E%25E8%25BF%259E%25E7%25BB%25AD%25E5%2586%2585%25E5%25AD%2598%25E5%2588%2586%25E9%2585%258D%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2022%2F06%2F%25E6%2593%258D%25E4%25BD%259C%25E7%25B3%25BB%25E7%25BB%259F%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25AC%2594%25E8%25AE%25B0-4%25E9%259D%259E%25E8%25BF%259E%25E7%25BB%25AD%25E5%2586%2585%25E5%25AD%2598%25E5%2588%2586%25E9%2585%258D%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2022\/06\/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-4%E9%9D%9E%E8%BF%9E%E7%BB%AD%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D\/';
+          
+            this.page.identifier = '\/2022\/06\/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-4%E9%9D%9E%E8%BF%9E%E7%BB%AD%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
