@@ -730,7 +730,7 @@
   
     <a class="fancybox" href="https://yangyang48.github.io/os/os4_12.png" title="图4-3-2 地址转换实例图" data-fancybox-group="">
   
-    <img class="fig-img" src="https://yangyang48.github.io/os/os4_11.png"  alt="图4-3-2 地址转换实例图">
+    <img class="fig-img" src="https://yangyang48.github.io/os/os4_12.png"  alt="图4-3-2 地址转换实例图">
   
     </a>
   
@@ -774,7 +774,125 @@
 <p>间接访问，把很大的空间拆成多个小的空间，多级的页表方式可以有效地缓解页表空间占据过大的问题。</p>
 </li>
 </ul>
+<h4 id="4314tlb">4.3.1.4TLB</h4>
+<p>TLB可以解决时间的问题。CPU里面的mmu（内存管理单元），在内存管理单元里有一个TLB（缓冲），用于缓冲页表里面的内容。</p>
+<p>TLB是一个特殊的区域，里面包含两项，key和value。TLB的表项是由<strong>相关的存储器</strong>实现的。相关存储器是一种快速的查询的存储器，可以并发的查找，但是实现的容量是有限的。经常用到的页表项可以放到TLB里面去，这样可以提升访问速度，就不需要再查页表。</p>
+<p>当CPU得到一个逻辑地址的时候，首先会根据p到TLB进行查询，如果能够在TLB的中查询到，可以找到对应的帧号，然后在根据页内偏移得到对应的物理地址。如果在TLB中找不到，即未命中，这个时候会去查找页表，页表中的Flags中间位如果为1，同样可以找到对应帧号，然后根据帧号和页内偏移量得到对应的物理地址，并把对应的帧号取出来存在TLB中。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os4_13.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os4_13.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><strong>TLB相关问题</strong></p>
+<ol>
+<li>
+<p>TLB缺失问题</p>
+<p>32位系统，一个页一般是4096（4K）。如果每个地址都需要访问，才会引起TLB缺失，这个是可以接受的程度。引入某种机制，使得TLB的缺失尽量小。<strong>比如尽量写的程序有局部性，让程序有访问的局部性，可以把访问集中在一个区域里，可以有效的减少TLB的缺失</strong>。</p>
+</li>
+<li>
+<p>过程的软硬件参与问题</p>
+<p>关于TLB未命中之后，会从页表里面取出帧号，并将对应页号和帧号作为k/v键值对存到TLB中。根据CPU特征不同，x86的CPU上述过程会在页表中完成，不需要操作系统来参与；另一类CPU的话，是由操作系统完成，需要软件完成。</p>
+</li>
+</ol>
 <h3 id="432-页表-二级多级页表">4.3.2 页表-二级、多级页表</h3>
+<p>通过TLB机制可以把常用的页表项缓存到CPU中，从而使得地址映射关系很快，不需要多次访问内存。但是空间上的问题就需要<strong>多级页表</strong>的方式。</p>
+<p>首先先看二级页表，逻辑地址也做了进一步的区分。</p>
+<p>页号和页内偏移量进行细化，把页号分成两部分，页内偏移量不变，页号分成p1的页号和p2的页号，对应一级页表和二级页表的页号。这样使得大地址寻址，变成对n个小的table寻址。</p>
+<h4 id="4321二级列表">4.3.2.1二级列表</h4>
+<p>寻址过程</p>
+<p>如下图4-3-3所示，大的页号分成两块，p1和p2。</p>
+<ol>
+<li>寻址开始需要寻找一级页表，一级页表的起始地址CPU是知道的，p1的num作为index，一级页表的页表项存了一个值，这个值是<strong>二级页表的起始值</strong>。</li>
+<li>二级页表的起始值知道之后，根据二级页表的p2，p2的num作为index，二级页表的index和一级页表存的二级页表的起始地址，形成二级页表中的针对p2的index的页表项，二级列表中存的则是最终的帧号。</li>
+<li>加上页内偏移量，可以找到最终的物理地址。</li>
+</ol>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os4_14.png" title="图4-3-3 二级列表图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os4_14.png"  alt="图4-3-3 二级列表图">
+  
+    </a>
+  
+   
+    <span class="caption">图4-3-3 二级列表图</span>
+  
+</div>
+
+<p>如果p1指向的页表项不存在，意味着驻留位Flags为0，代表映射关系不存在，二级列表不需要存档对应的帧号，因为帧号不存在。相比较一级列表，及时映射关系不存在，依然要保留对应的空间，<strong>这样会更加省空间。</strong></p>
+<h4 id="4322多级页表">4.3.2.2多级页表</h4>
+<p>运用二级列表的关系，通过构造索引树，访问的开销会越来越大，但好处是节省大量空间。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os4_15.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os4_15.png" >
+  
+    </a>
+  
+  
+</div>
+
 <h3 id="433-页表-反向页表">4.3.3 页表-反向页表</h3>
               
             </div>
