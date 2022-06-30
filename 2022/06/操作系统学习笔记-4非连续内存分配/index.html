@@ -894,6 +894,189 @@
 </div>
 
 <h3 id="433-页表-反向页表">4.3.3 页表-反向页表</h3>
+<p>单级页表或者是多级页表，它的页表大小都和逻辑地址空间大小有对应关系。逻辑空间地址越大，对应的页表也会越多。存在一种机制，使得页表大小和逻辑地址空间大小没有直接的关系，尽量和物理地址空间建立一种联系，这种机制的思想就是反向页表的思想。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os4_17.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os4_17.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>如果有大的64位的地址空间，需要建立五级页表。前向映射页表变成繁琐，之前的单级页表或者多级页表都是以逻辑页的页号作为索引号，来索引一个大数组。反向页表以物理页作为索引号，来索引一个数组，查找逻辑页的页号。</p>
+<h4 id="4331页寄存器方案">4.3.3.1页寄存器方案</h4>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os4_18.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os4_18.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>这种方法，相当于寄存器的容量只与物理地址空间大小相关。但是缺点是如何根据页号找到页帧号。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os4_19.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os4_19.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h4 id="4332关联内存方案">4.3.3.2关联内存方案</h4>
+<p>这是一种特殊的寄存器，可以并行查找页号所对应的页帧号</p>
+<p>k是页号，v是对应的页帧号，类似TLB。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os4_21.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os4_21.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h4 id="4333哈希查找方案">4.3.3.3哈希查找方案</h4>
+<p>把关联内存方法，用另一种机制实现。把page num查找frame num的过程用hash table来实现。hash表是一种数学计算方法，输入是page num，输出是frame num。哈希函数处理软件计算，为了提高效率，更多的会用到硬件加速。另外再加上当前运行的程序的id标识号，page num和pid可以很好的做一个input，来设计出简洁的hash函数，算出对应的帧号。但同时会引入哈希冲突，多个不同输入会存在相同的输出。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os4_23.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os4_23.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h4 id="4334总结">4.3.3.4总结</h4>
+<p>个人理解：建立的<strong>反向页表根据页帧数量（物理地址大小）来建立</strong>，转换时方法跟以往一样都是通过<strong>逻辑地址转换物理地址</strong>，只是如果是哈希查找方法，会引入哈希冲突问题。</p>
+<p>反向页表，一般高端CPU才会引入这个机制，好处是不收逻辑地址空间和虚拟地址空间大小的限制，它容量可以做的很小，只和物理地址空间相关。以往每一个运行的程序都需要一个页表，但是反向页表整个系统只需要一个反向页表，是以物理页帧的页帧号作为index的建立的表，这个表和有多少进程是没有关系的，但是需要高速的硬件处理机制，哈希运算机制和解决哈希冲突的机制。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">反向页表实现方案</th>
+<th style="text-align:left">好处</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">页寄存器</td>
+<td style="text-align:left">1）转换表的大小对于物理内存来说很小<!-- raw HTML omitted -->2）转换表的大小跟逻辑空间的大小无关</td>
+<td>1）需要的信息对调了，即根据帧号可以找到页号<!-- raw HTML omitted -->2）如何转换回来？即根据页号找到帧号<!-- raw HTML omitted -->3）在需要在反向页表中搜索想要的页号</td>
+</tr>
+<tr>
+<td style="text-align:center">关联内存</td>
+<td style="text-align:left">1）如果帧数较少，页寄存器可以被放置在关联内存中<!-- raw HTML omitted -->2）在关联内存中查找逻辑页号，成功标识：帧号被提取；错误标识：页错误异常</td>
+<td>1）大量的关联内存非常昂贵<!-- raw HTML omitted -->2）难以再单个时钟周期内完成<!-- raw HTML omitted -->3）耗电</td>
+</tr>
+<tr>
+<td style="text-align:center">哈希查找</td>
+<td style="text-align:left">1）在反向页表中通过哈希算法来搜索一个页对应的帧号<!-- raw HTML omitted -->2）页i被放置在表中f(i)位置，其中f是设定的哈希函数<!-- raw HTML omitted -->3）为了查找页i，执行下列操作<!-- raw HTML omitted -->i）计算哈希函数f(i)并且使用它作为页寄存器表的索引<!-- raw HTML omitted -->ii）获取对应的页寄存器<!-- raw HTML omitted -->iii）检查寄存器标签是否包含i，如果包含，则代表成功，否则失败</td>
+<td>1）会引入哈希冲突，多个不同输入会存在相同的输出<!-- raw HTML omitted -->2）反向页表是放在内存中，哈希计算也需要从内存中读取和计算，内存的开销会很大，也需要引入类似TLB机制缓存起来</td>
+</tr>
+</tbody>
+</table>
               
             </div>
           </div>
