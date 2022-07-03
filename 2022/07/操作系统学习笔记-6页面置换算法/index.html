@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="熟悉完操作系统的第五篇章，开始学习第六篇章，关于操作系统的页面置换算法。">
+
+
+<meta property="og:description" content="熟悉完操作系统的第五篇章，开始学习第六篇章，关于操作系统的页面置换算法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="操作系统学习笔记 6页面置换算法">
+<meta name="twitter:title" content="操作系统学习笔记 6页面置换算法">
+<meta property="og:url" content="https://yangyang48.github.io/2022/07/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-6%E9%A1%B5%E9%9D%A2%E7%BD%AE%E6%8D%A2%E7%AE%97%E6%B3%95/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2022/07/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-6%E9%A1%B5%E9%9D%A2%E7%BD%AE%E6%8D%A2%E7%AE%97%E6%B3%95/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="熟悉完操作系统的第五篇章，开始学习第六篇章，关于操作系统的页面置换算法。">
+<meta name="twitter:description" content="熟悉完操作系统的第五篇章，开始学习第六篇章，关于操作系统的页面置换算法。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2022-07-03T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2022-07-03T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="OS">
+    
+      <meta property="article:section" content="2022">
+    
+      <meta property="article:section" content="July">
+    
+  
+  
+    
+      <meta property="article:tag" content="学习笔记">
+    
+      <meta property="article:tag" content="清华大学陈渝">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/os/os6_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/os/os6_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/os/os6_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/os/os6_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>操作系统学习笔记 6页面置换算法</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2022/07/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-6%E9%A1%B5%E9%9D%A2%E7%BD%AE%E6%8D%A2%E7%AE%97%E6%B3%95/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/os/os6_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      操作系统学习笔记 6页面置换算法
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2022-07-03T00:00:00Z">
+        
+  七月 3, 2022
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/os">OS</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2022">2022</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/july">July</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">200 Words|Read in about 1 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>熟悉完操作系统的第五篇章，开始学习第六篇章，关于操作系统的页面置换算法。</p>
+<h1 id="6页面置换算法">6页面置换算法</h1>
+<ul>
+<li>
+<p>功能与目标</p>
+</li>
+<li>
+<p>实验设置与评价方法</p>
+</li>
+<li>
+<p>局部页面置换算法</p>
+<p>最优页面置换算法（OPT，optimal）</p>
+<p>先进先出算法（FIFO）</p>
+<p>最近最久未使用算法（LRU，Least Recently Used）</p>
+<p>时钟页面置换算法（Clock）</p>
+<p>最不常用算法（LFU，Least Frequently Used）</p>
+<p>Belady现象</p>
+<p>LRU、FIFO和Clock的比较</p>
+</li>
+<li>
+<p>全局页面置换算法</p>
+<p>工作集模型</p>
+<p>工作集页置换算法</p>
+<p>缺页率置换算法</p>
+</li>
+</ul>
+<h2 id="61功能目标">6.1功能目标</h2>
+<ul>
+<li>
+<p><strong>功能</strong></p>
+<p>当缺页中断发生，需要调入新的页面而内存已满时，选择内存当中哪个物理页面被置换。</p>
+</li>
+<li>
+<p><strong>目标</strong></p>
+<p>尽可能地减少页面的换进换出次数（即缺页中断的次数）。具体来说，未来不再使用的或短期较少使用的页面换出，通常只能在局部性原理指导下依据过去的统计数据来进行预测</p>
+</li>
+<li>
+<p><strong>页面锁定</strong></p>
+<p>用于描述必须<strong>常驻内存</strong>的操作系统的关键部分或时间关键的应用程序。实现的方法是：在页表中添加<strong>锁定标志位</strong>（lock bit）。</p>
+</li>
+</ul>
+<h2 id="62模拟操作系统环境">6.2模拟操作系统环境</h2>
+<p>记录一个进程对页访问的一个轨迹</p>
+<p>一个正在运行的程序会有一系列的访问，把访问的内存记录下来，读和写的内存地址记录下来，形成一个序列。如下图6-1所示，以页号和页内偏移量作为一个标记，（3, 0）表示第三个页面的第0个页内偏移量，这一系列的序列就形成了一个访问序列。</p>
+<p>这里面可以忽略页内偏移量，只关注页号。因为只有当一个页不存在的时候，才会产生缺页中断，才会考虑是否把页置换出去。如果在同一个页内多次访问，只有在第一次才可能缺页，一旦把页调到内存中来就不会产生缺页中断。否则之后在进程访问中又被置换出去了才会再次缺页中断。</p>
+<p>只有页号形成页访问序列的list，list可以用来设计页面置换算法，来看看在一定的页帧或者物理页大小的情况下，我们用某种算法会造成多少次的<strong>缺页次数</strong>。缺页次数越少，性能越好。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="63最优页面置换算法">6.3最优页面置换算法</h2>
+<p><strong>基本思路</strong></p>
+<p>当一个缺页中断发生时，对于保存在内存当中的每一个逻辑页面，计算在它的下一次访问之前，还需等待多长时间，从中选择等待时间最长的那个，作为被置换的页面。</p>
+<p><strong>缺点</strong></p>
+<p>这只是一种理想情况，在实际系统中是无法实现的，因为操作系统无法直到每一个页面要等待多久时间以后才会再次访问。</p>
+<blockquote>
+<p>可用作其他算法的性能评价的依据（在一个模拟器上运行某个程序，并记录每一次的页面访问情况，在第二遍运行时即可使用最优算法）。</p>
+<p>举例说明</p>
+<p>这里有四个页帧，访问的页有五个，显然会出现物理页不够的情况，就会产生缺页中断。这里的最优置换算法的实现，0时刻在1时刻之前，物理页帧已经存了abcd四个虚拟页了，访问前四个时刻，由于对应的物理页都存到了abcd虚拟页，这四次访问不会产生缺页中断。第五个时刻，访问e的时候，虚拟的页没有在物理页当中，我们需要把其他一个页给换出去。</p>
+<p>根据最优置换算法，应该换里上下时刻访问最远的那个页。其中，a最近一次是7时刻，b最近一次是6时刻，c最近一次是9时刻，d最近一次是10时刻。可以看出来，最远是d，所以替换d换成e。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_2.png" >
+  
+    </a>
+  
+  
+</div>
+
+</blockquote>
+<h2 id="64先进先出算法">6.4先进先出算法</h2>
+<p><strong>基本思路</strong></p>
+<p>选择在内存中驻留时间最长的页面并淘汰之。具体来说，系统维护着一个链表，记录了所有位于内存当中的逻辑页面。从链表的排列顺序来看，链首页面的驻留时间最长，链尾页面的驻留时间最短。当发生一个缺页中断时，把链首页面淘汰出局，并把新的页面添加到链表的末尾。</p>
+<p><strong>性能</strong></p>
+<p>性能<strong>较差</strong>，调出的页面有可能是经常要访问的页面，并且有Belady现象。FIFO算法很少单独使用。</p>
+<blockquote>
+<p>Belady现象</p>
+<p>当给一个运行的程序更多的物理页的时候，按理来说缺页次数会变得更少了，但采用FIFO算法，物理页帧越多反而产生的缺页次数越大。</p>
+</blockquote>
+<p>举例说明</p>
+<blockquote>
+<p>如下图6-2所示，已经放置了abcd四个物理页。前四个时刻范文cadb在物理页中都存在，不会产生缺页中断。第五个时刻访问e的时候，不在当前的物理页帧存着，需要把某一个页替换出去。这里有一个假设，a-&gt;b-&gt;c-&gt;d的顺序。</p>
+<p>可以看出驻留时间最长的物理页是a，需要替换出去，换成e。以此类推，可以看到在7,8,9,10的时候会产生缺页中断，置换新的虚拟页放在物理页中。实现简单，但反而会产生更多的中断。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_3.png" >
+  
+    </a>
+  
+  
+</div>
+
+</blockquote>
+<h2 id="65最近最久使用算法">6.5最近最久使用算法</h2>
+<p><strong>基本思路</strong></p>
+<p>当一个缺页中断发生时，选择最久未使用的那个页面，并淘汰之。</p>
+<p><strong>原理</strong></p>
+<p>它是对最优页面置换算法的一个近似，其依据是程序的局部性原理，即在最近一小段时间（最近几条指令）内，如果某些页面被频繁的访问，那未来的一小段时间内，他们还可能会再一次被频繁地访问。反过来说，如果在过去某些页面长时间<strong>未被访问</strong>，那么在将来它们还可能会长时间地<strong>得不到访问</strong>。</p>
+<blockquote>
+<p>这是对最优置换算法的近似，它是对过去的推测应该把那个页置换出去。</p>
+</blockquote>
+<p>举例说明</p>
+<blockquote>
+<p>跟前面类似，前四次的时刻都不会产生缺页中断，第五次会发生缺页中断。根据最久未被访问算法，得出上一次a=2时刻，上一次b=4时刻，上一次c=1时刻，上一次d=3时刻，由此得知应该置换c，c相对来说最久未被访问。</p>
+<p>以此类推，第九时刻，由于上一次a=7时刻，上一次b=8时刻，上一次e=5时刻，上一次d=3时刻，此时置换应该是d；同理，第10时刻，应该把e置换换成d。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_4.png" >
+  
+    </a>
+  
+  
+</div>
+
+</blockquote>
+<h3 id="651两种可能的实现方法">6.5.1<strong>两种可能的实现方法</strong></h3>
+<p>LRU算法需要记录各个页面使用的先后顺序，开销比较大。</p>
+<ul>
+<li>
+<p><strong>系统维护一个页面链表</strong></p>
+<p>最近刚刚使用过的页面作为首结点，最久未使用的页面作为尾结点。每一次访问内存时，找到相应的页面，把它从链表中摘下来，在移动到链表之首。每次缺页中断发生时，淘汰链尾末尾的页面。</p>
+</li>
+<li>
+<p><strong>设置一个活动页面栈</strong></p>
+<p>当访问某页时，将此页号压入栈顶，然后考察站内是否有与此页面相同的页号，若有则抽出。当需要淘汰一个页面时，总是选择栈底的页面，它就是最久未使用的。</p>
+</li>
+</ul>
+<h3 id="652性能">6.5.2性能</h3>
+<p>根据<strong>设置一个活动页面栈</strong>的算法，可以得到下图6-5所示。</p>
+<p>每次访问都需要去查找栈，如果内存中物理页帧比较多的情况下，查找会比较<strong>费时</strong>。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="66时钟页面置换算法">6.6时钟页面置换算法</h2>
+<p>Clock页面置换算法，<strong>LRU的近似</strong>，对FIFO的一种改进。（到不到LRU的效果，但是会接近LRU的效果）</p>
+<p><strong>基本思路</strong></p>
+<ul>
+<li>需要用到页表项当中的访问位，当一个页面被装入内存时，把该位初始化为0.然后如果这个页面被访问（读/写），则把该位置为1</li>
+<li>把各个页面组织成环形链表（类似钟表面），把指针指向最老的页面（最先进来）</li>
+<li>当发生一个缺页中断时，考察指针所指向的最老页面，若它的访问位为0，立即淘汰；若访问位为1，则把该位置为0，然后指针往下移动一格。如此下去，直到找到被淘汰的页面，然后把指针移动到它的下一格</li>
+</ul>
+<p><strong>原理</strong></p>
+<p>如下图6-3所示，被分配了五个物理页帧，系统访问的虚拟页有8个。建立一个环形的list，左边的图显示，虚拟页有74031的五个虚拟页。</p>
+<p>最左边的那一位代表存在位，1的话代表这个页在物理页帧中是存在的。</p>
+<p>第二位代表的是<strong>可访问位</strong>，1的话代表这个页已经被访问一次，由<strong>硬件</strong>把它置为1。</p>
+<p>第三位是页帧号，这边有五个页帧号，分别为1,2,3,4,5。</p>
+<p><strong>具体流程</strong></p>
+<ul>
+<li>当前指针指向虚拟页为0对应的页表项，页表项里面的可访问位是1，表示当前这个页已经被访问过了，把可访问位是0，然后指针指向下一位。</li>
+<li>然后指针指到虚拟页为3对应的页表项，页表项里面的可访问位是1，表示当前这个页已经被访问过了，把可访问位是0，然后指针指向下一位。</li>
+<li>然后指针指到虚拟页为1对应的页表项，页表项里面的可访问位是0，表示可以直接置换当前的页面。把对应的虚拟页的内容放置到物理页帧5的位置中去，同时把可访问位置为1。</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>举例说明</p>
+<blockquote>
+<p>如下图6-3所示，同上述例子相似，前四个时刻不会产生缺页中断。并且这里维护了一个环形指针，且abcd的可访问位都置为1，这个时候的指针指向了a。</p>
+<p>如果是1，继续变成0，指针往下挪。如果是0，这个页就会做被替换页，直接替换当前虚拟页对应的页帧内容。所以第五个时刻，a页面会被替换成e页面，同时指针指向下一个位置，指向b。</p>
+<p>第六个时刻，没有产生中断，但是硬件会将b对应的页表项可访问位置为1。</p>
+<p>第七个时刻，产生缺页中断，由于当前的指针是b，把当前的表项里面的可访问位置为0，然后指针指向下一项c。因为当前指向的c的可访问位是0，把对应的虚拟页的内容放置到原本c对应的物理位置中去，同时把可访问位置为1。</p>
+<p>以此类推，接下来的两次中断都会同样的方式替换。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_7.png" >
+  
+    </a>
+  
+  
+</div>
+
+</blockquote>
+<h2 id="67二次机会法">6.7二次机会法</h2>
+<p>上面的可访问页面没有区分读和写，页表项中除了可访问位之外，还存在脏位（写位）。如果存在页面写的操作，脏位会被<strong>硬件</strong>置成1。如果仅是读操作，脏位是0。</p>
+<p>所谓置换，就是页面的换入换出。如果某个页从硬盘读到内存中来，程序对页进行访问，意味着内存中页的内容和硬盘的内容一致，如果我们把这一页替换出去，就不需要再把这个页<strong>重新写回</strong>到硬盘里面去，直接释放即可。如果程序访问某个页的时候对其写操作，内存中的数据和硬盘中的数据不一致，如果我们把这一页替换出去，需要把这个页<strong>重新写回</strong>到硬盘里面去，确保未来访问数据的时候硬盘中存的数据是<strong>最新的数据</strong>。</p>
+<p>二次机会法，减少对硬盘的回写操作次数。</p>
+<p>如下图6-4所示，也是一样的环形list。不是刚才的一个可访问位，这里还多了一个脏位，根据这两个位来确定哪一页被置换出去。</p>
+<p>左边图是一个展示的例子，第二位是可访问位，第三位是脏位。根据右下角的表的映射关系，来确定选择哪个页作为置换位。</p>
+<ul>
+<li>如果可访问位为0，脏位为0，这个是需要替换的页。</li>
+<li>如果可访问位为0，脏位为1，这个时候会把脏位置为0，指针继续往下走（1次循环）</li>
+<li>如果可访问位为1，脏位为0，这个时候会把可访问位置为0，指针继续往下走（1次循环）</li>
+<li>如果可访问位为1，脏位为1，这个时候会把可访问位置为0，把脏位置为1，指针继续往下走（2次循环）</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_8.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>举例说明</p>
+<blockquote>
+<p>如下图6-5所示，其中对某个虚拟页的访问，有一个上标w，代表对页面访问是一个写操作。</p>
+<p>初始情况，abcd标记位都是10，代表这些页都是读操作。接下来的四次访问对cd是读操作，对ab是写操作，标记位会发生变化，a(11),b(11),c(10),d(10)，硬件会对ab的脏位置为1。</p>
+<p>到第五时刻的时候，当前指针指向的是a，对应的标志位改成01，指针指向下一个b。当前指针指向的是b，对应的标志位改成01，指针指向下一个c。当前指针指向的是c，对应的标志位改成00，指针指向下一个d。当前指针指向的是d，对应的标志位改成00，指针指向下一个a。经过一次循环之后，发现直到指针指向第二轮的c，对应的标志位为0，把对应的虚拟页的内容放置到原本c对应的物理位置中去，并把标志为置为10。</p>
+<p>以此类推，接下来的两次中断都会同样的方式替换。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_9.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_9.png" >
+  
+    </a>
+  
+  
+</div>
+
+</blockquote>
+<h2 id="68最不常用法">6.8最不常用法</h2>
+<h2 id="69belady现象lrufifoclock比较">6.9Belady现象、LRU、FIFO、Clock比较</h2>
+<h2 id="610局部页替换算法问题工作集模型">6.10局部页替换算法问题、工作集模型</h2>
+<h2 id="611两个全局置换算法">6.11两个全局置换算法</h2>
+<h2 id="612抖动问题">6.12抖动问题</h2>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%B8%85%E5%8D%8E%E5%A4%A7%E5%AD%A6%E9%99%88%E6%B8%9D/">清华大学陈渝</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/07/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-5%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98/" data-tooltip="操作系统学习笔记 5虚拟内存">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2022 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/07/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-5%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98/" data-tooltip="操作系统学习笔记 5虚拟内存">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2022%2F07%2F%25E6%2593%258D%25E4%25BD%259C%25E7%25B3%25BB%25E7%25BB%259F%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25AC%2594%25E8%25AE%25B0-6%25E9%25A1%25B5%25E9%259D%25A2%25E7%25BD%25AE%25E6%258D%25A2%25E7%25AE%2597%25E6%25B3%2595%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2022%2F07%2F%25E6%2593%258D%25E4%25BD%259C%25E7%25B3%25BB%25E7%25BB%259F%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25AC%2594%25E8%25AE%25B0-6%25E9%25A1%25B5%25E9%259D%25A2%25E7%25BD%25AE%25E6%258D%25A2%25E7%25AE%2597%25E6%25B3%2595%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2022%2F07%2F%25E6%2593%258D%25E4%25BD%259C%25E7%25B3%25BB%25E7%25BB%259F%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25AC%2594%25E8%25AE%25B0-6%25E9%25A1%25B5%25E9%259D%25A2%25E7%25BD%25AE%25E6%258D%25A2%25E7%25AE%2597%25E6%25B3%2595%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2022\/07\/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-6%E9%A1%B5%E9%9D%A2%E7%BD%AE%E6%8D%A2%E7%AE%97%E6%B3%95\/';
+          
+            this.page.identifier = '\/2022\/07\/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-6%E9%A1%B5%E9%9D%A2%E7%BD%AE%E6%8D%A2%E7%AE%97%E6%B3%95\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
