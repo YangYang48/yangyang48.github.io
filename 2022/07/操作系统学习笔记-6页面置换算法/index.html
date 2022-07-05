@@ -340,12 +340,14 @@
 
 <div class="figure center fig-100" >
   
-    <a class="fancybox" href="https://yangyang48.github.io/os/os6_1.png" data-fancybox-group="">
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_1.png" title="图6-1 一个进程对页访问的轨迹图" data-fancybox-group="">
   
-    <img class="fig-img" src="https://yangyang48.github.io/os/os6_1.png" >
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_1.png"  alt="图6-1 一个进程对页访问的轨迹图">
   
     </a>
   
+   
+    <span class="caption">图6-1 一个进程对页访问的轨迹图</span>
   
 </div>
 
@@ -422,12 +424,14 @@
 
 <div class="figure center fig-100" >
   
-    <a class="fancybox" href="https://yangyang48.github.io/os/os6_3.png" data-fancybox-group="">
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_3.png" title="图6-2 先进先出算法示例图" data-fancybox-group="">
   
-    <img class="fig-img" src="https://yangyang48.github.io/os/os6_3.png" >
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_3.png"  alt="图6-2 先进先出算法示例图">
   
     </a>
   
+   
+    <span class="caption">图6-2 先进先出算法示例图</span>
   
 </div>
 
@@ -557,18 +561,20 @@
 
 <div class="figure center fig-100" >
   
-    <a class="fancybox" href="https://yangyang48.github.io/os/os6_6.png" data-fancybox-group="">
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_6.png" title="图6-3 时钟页面置换算法流程图" data-fancybox-group="">
   
-    <img class="fig-img" src="https://yangyang48.github.io/os/os6_6.png" >
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_6.png"  alt="图6-3 时钟页面置换算法流程图">
   
     </a>
   
+   
+    <span class="caption">图6-3 时钟页面置换算法流程图</span>
   
 </div>
 
 <p>举例说明</p>
 <blockquote>
-<p>如下图6-3所示，同上述例子相似，前四个时刻不会产生缺页中断。并且这里维护了一个环形指针，且abcd的可访问位都置为1，这个时候的指针指向了a。</p>
+<p>如下图6-4所示，同上述例子相似，前四个时刻不会产生缺页中断。并且这里维护了一个环形指针，且abcd的可访问位都置为1，这个时候的指针指向了a。</p>
 <p>如果是1，继续变成0，指针往下挪。如果是0，这个页就会做被替换页，直接替换当前虚拟页对应的页帧内容。所以第五个时刻，a页面会被替换成e页面，同时指针指向下一个位置，指向b。</p>
 <p>第六个时刻，没有产生中断，但是硬件会将b对应的页表项可访问位置为1。</p>
 <p>第七个时刻，产生缺页中断，由于当前的指针是b，把当前的表项里面的可访问位置为0，然后指针指向下一项c。因为当前指向的c的可访问位是0，把对应的虚拟页的内容放置到原本c对应的物理位置中去，同时把可访问位置为1。</p>
@@ -593,12 +599,14 @@
 
 <div class="figure center fig-100" >
   
-    <a class="fancybox" href="https://yangyang48.github.io/os/os6_7.png" data-fancybox-group="">
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_7.png" title="图6-4 时钟页面置换算法示例图" data-fancybox-group="">
   
-    <img class="fig-img" src="https://yangyang48.github.io/os/os6_7.png" >
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_7.png"  alt="图6-4 时钟页面置换算法示例图">
   
     </a>
   
+   
+    <span class="caption">图6-4 时钟页面置换算法示例图</span>
   
 </div>
 
@@ -607,7 +615,7 @@
 <p>上面的可访问页面没有区分读和写，页表项中除了可访问位之外，还存在脏位（写位）。如果存在页面写的操作，脏位会被<strong>硬件</strong>置成1。如果仅是读操作，脏位是0。</p>
 <p>所谓置换，就是页面的换入换出。如果某个页从硬盘读到内存中来，程序对页进行访问，意味着内存中页的内容和硬盘的内容一致，如果我们把这一页替换出去，就不需要再把这个页<strong>重新写回</strong>到硬盘里面去，直接释放即可。如果程序访问某个页的时候对其写操作，内存中的数据和硬盘中的数据不一致，如果我们把这一页替换出去，需要把这个页<strong>重新写回</strong>到硬盘里面去，确保未来访问数据的时候硬盘中存的数据是<strong>最新的数据</strong>。</p>
 <p>二次机会法，减少对硬盘的回写操作次数。</p>
-<p>如下图6-4所示，也是一样的环形list。不是刚才的一个可访问位，这里还多了一个脏位，根据这两个位来确定哪一页被置换出去。</p>
+<p>如下图6-5所示，也是一样的环形list。不是刚才的一个可访问位，这里还多了一个脏位，根据这两个位来确定哪一页被置换出去。</p>
 <p>左边图是一个展示的例子，第二位是可访问位，第三位是脏位。根据右下角的表的映射关系，来确定选择哪个页作为置换位。</p>
 <ul>
 <li>如果可访问位为0，脏位为0，这个是需要替换的页。</li>
@@ -635,18 +643,20 @@
 
 <div class="figure center fig-100" >
   
-    <a class="fancybox" href="https://yangyang48.github.io/os/os6_8.png" data-fancybox-group="">
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_8.png" title="图6-5 二次机会法流程图" data-fancybox-group="">
   
-    <img class="fig-img" src="https://yangyang48.github.io/os/os6_8.png" >
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_8.png"  alt="图6-5 二次机会法流程图">
   
     </a>
   
+   
+    <span class="caption">图6-5 二次机会法流程图</span>
   
 </div>
 
 <p>举例说明</p>
 <blockquote>
-<p>如下图6-5所示，其中对某个虚拟页的访问，有一个上标w，代表对页面访问是一个写操作。</p>
+<p>如下图6-6所示，其中对某个虚拟页的访问，有一个上标w，代表对页面访问是一个写操作。</p>
 <p>初始情况，abcd标记位都是10，代表这些页都是读操作。接下来的四次访问对cd是读操作，对ab是写操作，标记位会发生变化，a(11),b(11),c(10),d(10)，硬件会对ab的脏位置为1。</p>
 <p>到第五时刻的时候，当前指针指向的是a，对应的标志位改成01，指针指向下一个b。当前指针指向的是b，对应的标志位改成01，指针指向下一个c。当前指针指向的是c，对应的标志位改成00，指针指向下一个d。当前指针指向的是d，对应的标志位改成00，指针指向下一个a。经过一次循环之后，发现直到指针指向第二轮的c，对应的标志位为0，把对应的虚拟页的内容放置到原本c对应的物理位置中去，并把标志为置为10。</p>
 <p>以此类推，接下来的两次中断都会同样的方式替换。</p>
@@ -670,17 +680,67 @@
 
 <div class="figure center fig-100" >
   
-    <a class="fancybox" href="https://yangyang48.github.io/os/os6_9.png" data-fancybox-group="">
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_9.png" title="图6-6 二次机会法示例图" data-fancybox-group="">
   
-    <img class="fig-img" src="https://yangyang48.github.io/os/os6_9.png" >
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_9.png"  alt="图6-6 二次机会法示例图">
   
     </a>
   
+   
+    <span class="caption">图6-6 二次机会法示例图</span>
   
 </div>
 
 </blockquote>
 <h2 id="68最不常用法">6.8最不常用法</h2>
+<p>最不常用法（LFU，Least Frequently Used），使用的策略是最不常使用的页面策略。</p>
+<p><strong>基本思路</strong></p>
+<p>当一个缺页中断发生时，选择访问次数最少的那个页面，并淘汰之。</p>
+<p><strong>实现方法</strong></p>
+<p>对每个页面设置一个访问计算器，每当一个页面被访问时，该页面的访问计数器加1。在发生缺页中断时，淘汰计数值最小的那个页面。</p>
+<p><strong>LRU和LFU区别</strong></p>
+<p>LRU考虑的是<strong>多久未访问</strong>，时间越短越好；而LFU考虑的是<strong>访问的次数</strong>，访问次数越多越好。</p>
+<p><strong>问题</strong></p>
+<p>一个页面在进程开始时使用的很多，但以后就不使用了，同时实现也费时费力。</p>
+<p><strong>解决方法</strong></p>
+<p>定期把次数寄存器右移一位</p>
+<p>举例说明</p>
+<blockquote>
+<p>如下图6-7所示，其中假设最初的访问次数是a(8)，b(5)，c(6)，d(2)。每一个访问页的时候上标为访问次数。</p>
+<p>前四个时刻不存在缺页，所以不会被置换页面。第一个时刻的时候，c页面会访问7次，所以访问次数是a(8)，b(5)，c(13)，d(2)。第二个时刻的时候，a页面会访问1次，所以访问次数是a(9)，b(5)，c(13)，d(2)。第三个时刻的时候，d页面会访问14次，所以访问次数是a(9)，b(5)，c(13)，d(16)。第四个时刻的时候，b页面会访问5次，所以访问次数是a(9)，b(10)，c(13)，d(16)。</p>
+<p>到第五时刻的时候，发生缺页中断，由于四时刻结束之后a虚拟页面的访问次数最少被替换，把对应的虚拟页的内容放置到原本a对应的物理位置中去，并将访问e的次数加上e(18)，b(10)，c(13)，d(16)。同理第六时刻e(18)，b(11)，c(13)，d(16)，第七时刻发生中断，访问次数e(18)，a(19)，c(13)，d(16)，第八时刻发生中断，访问次数e(18)，a(19)，b(20)，d(16)，第九时刻发生中断，访问次数e(18)，a(19)，b(20)，c(20)，第十时刻发生中断，访问次数d(17)，a(19)，b(20)，c(20)。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_11.png" title="图6-7 最不常用法示例图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_11.png"  alt="图6-7 最不常用法示例图">
+  
+    </a>
+  
+   
+    <span class="caption">图6-7 最不常用法示例图</span>
+  
+</div>
+
+</blockquote>
 <h2 id="69belady现象lrufifoclock比较">6.9Belady现象、LRU、FIFO、Clock比较</h2>
 <h2 id="610局部页替换算法问题工作集模型">6.10局部页替换算法问题、工作集模型</h2>
 <h2 id="611两个全局置换算法">6.11两个全局置换算法</h2>
