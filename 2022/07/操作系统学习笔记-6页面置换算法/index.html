@@ -270,7 +270,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">200 Words|Read in about 1 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">300 Words|Read in about 1 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -437,6 +437,7 @@
 
 </blockquote>
 <h2 id="65最近最久使用算法">6.5最近最久使用算法</h2>
+<p>最近最久使用算法LRU（Least Recently Used）</p>
 <p><strong>基本思路</strong></p>
 <p>当一个缺页中断发生时，选择最久未使用的那个页面，并淘汰之。</p>
 <p><strong>原理</strong></p>
@@ -742,7 +743,302 @@
 
 </blockquote>
 <h2 id="69belady现象lrufifoclock比较">6.9Belady现象、LRU、FIFO、Clock比较</h2>
+<p>前面的局部页面置换算法，针对一个正在运行的程序，程序访问内存页的情况，来决定应该采用什么策略，并且指定相应的算法把页给替换出去。</p>
+<h3 id="691belady">6.9.1Belady</h3>
+<h4 id="6911belady现象">6.9.1.1<strong>Belady现象</strong></h4>
+<p>在采用FIFO算法时，有时会出现分配的物理页面数增加，缺页率反而提高的异常现象</p>
+<h4 id="6912belady现象的原因">6.9.1.2<strong>Belady现象的原因</strong></h4>
+<p>FIFO算法的置换特征与进程访问内存的动态特征是<strong>矛盾</strong>的，与置换算法的目标是不一致的（即<strong>替换较少使用的页面</strong>），因此，被它置换出去的页面并不一定是进程不会访问的</p>
+<p>举例说明</p>
+<blockquote>
+<p>如下图6-8所示，物理页帧为3。序列一共12次。因为这里的物理页帧为3个，所以前三个序列会产生缺页中断，到第4个时刻，访问4页面，替换当前内存中最久的那一页，直接从list中摘掉1就ok了，把4在放到尾巴上。同理接下来到第5个时刻，访问1页面，替换当前内存中最久的那一页，直接从list中摘掉2就ok了，把1在放到尾巴上。</p>
+<p>以此类推，最终这里的缺页中断次数为9次。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_12.png" title="图6-8 物理页帧为3的FIFO算法图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_12.png"  alt="图6-8 物理页帧为3的FIFO算法图">
+  
+    </a>
+  
+   
+    <span class="caption">图6-8 物理页帧为3的FIFO算法图</span>
+  
+</div>
+
+<p>但是当物理页帧为4，理论来说缺页中断会变少，但FIFO这个算法可能会使得缺页中断增加。</p>
+<p>如下图6-9所示，同样的序列一共12次。因为这里的物理页帧为4个，所以前四个序列会产生缺页中断，到第5个时刻，访问1页面，不会产生缺页中断。到第6个时刻，访问2页面，不会产生缺页中断。第7的时刻，页面5不在这几个虚拟页对应的物理位置中，就去掉头1，替换对应的1所在物理位置中。</p>
+<p>以此类推，之后的每一次访问，都需要缺页中断，把对应的虚拟页的内容放置到原本FIFO头部页面对应的物理位置中去。这里的缺页中断次数为10次，<strong>高于物理页帧只有3的场景。</strong></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_13.png" title="图6-9 物理页帧为4的FIFO算法图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_13.png"  alt="图6-9 物理页帧为4的FIFO算法图">
+  
+    </a>
+  
+   
+    <span class="caption">图6-9 物理页帧为4的FIFO算法图</span>
+  
+</div>
+
+<p>但如果是<strong>LRU算法</strong>，情况跟上述会不一样，当物理页帧从3至4，缺页中断会变少，从10次缺页中断到8次缺页中断。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_14.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_14.png" >
+  
+    </a>
+  
+  
+</div>
+
+</blockquote>
+<h3 id="692lrufifoclock比较">6.9.2LRU、FIFO、Clock比较</h3>
+<p>LRU算法、FIFO算法和Clock算法本质上都是先进先出的思路。</p>
+<table>
+<thead>
+<tr>
+<th>算法</th>
+<th>特点</th>
+<th>不足</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LRU算法</td>
+<td>LRU符合一种栈算法的特点，意味着能满足一种属性，给的物理页帧越多，缺页中断次数越少。只不过LRU是针对<strong>页面的最近访问时间</strong>来进行排序，所以需要在每一次页面访问的时候动态地调整各个页面之间的先后顺序（有一个页面的最近访问时间变了）</td>
+<td>LRU算法性能较好，但系统开销较大。</td>
+</tr>
+<tr>
+<td>FIFO算法</td>
+<td>FIFO是针对页面<strong>进入内存的时间</strong>来进行排序，这个时间是固定不变的，所以各页面之间的先后顺序是固定的。</td>
+<td>FIFO算法没有考虑页面访问的历史信息，可能会发生<strong>Belady现象</strong>。</td>
+</tr>
+<tr>
+<td>Clock算法</td>
+<td>Clock算法是LRU的近似，用到了两个bit，可访问位和脏位，用于表示访问时间。两个bit位不可能精确的表示出一段时间内，不同页面访问的先后顺序，是一种<strong>近似</strong>。通过使用硬件的bit位，来模拟页面访问时间和先后顺序。它可以有效的逼近LRU算法，且开销相对比较小。</td>
+<td>如果没有局部性的特征，<strong>LRU算法和FIFO算法的结果可能会一样</strong>。</td>
+</tr>
+</tbody>
+</table>
+<p>FIFO算法没有考虑页面访问的历史信息，但是LRU算法会考虑到这一点。如果程序具有局部性的特点，LRU就能更好的体现出适应局部性特点，产生更少的缺页次数。缺页次数不仅是算法本身的问题，也会和程序本身相关，如果没有局部性的特征，<strong>LRU算法和FIFO算法的结果可能会一样</strong>。如果一个页面在进入内存后没有被访问，那么它的最近访问时间就是它进入内存的时间。换句话说，如果内存当中的所有页面都未曾访问过，那么<strong>LRU算法就退化为FIFO算法</strong>。</p>
+<p>LRU算法性能较好，但系统开销较大。FIFO算法系统的开销较小，因此，折衷的办法就是Clock算法，在每一次页面访问时，它不必去动态地调整该页面在链表中的顺序，而仅仅是做一个标记，然后等到发生缺页中断的时候，再把它移动到链表末尾。对于内存当中那些未被访问的页面，Clock算法的表现和LRU算法一样好；而对于那些曾经被访问过的页面，它不像LRU算法那样，记住它们的准确位置。</p>
+<blockquote>
+<p><strong>LRU算法就退化为FIFO算法</strong></p>
+<p>例如：给进程分配3个物理页面，逻辑页面的访问顺序为1、2、3、4、5、6、1、2、3。</p>
+</blockquote>
 <h2 id="610局部页替换算法问题工作集模型">6.10局部页替换算法问题、工作集模型</h2>
+<h3 id="6101局部页替换算法问题">6.10.1局部页替换算法问题</h3>
+<p>上述的页面置换算法都是针对一个进程来说，实际上操作系统可以支持多个正在执行的程序。如果每个执行程序都采用一个固定的局部置换算法，会带来一系列的问题，因此还需要研究<strong>全局页面置换算法</strong>。</p>
+<p>如下图6-10所示，使用FIFO算法，三个物理页帧会发生9次缺页中断，四个物理页帧只会发生一次页面中断。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_15.png" title="图6-10 FIFO页面置换算法图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_15.png"  alt="图6-10 FIFO页面置换算法图">
+  
+    </a>
+  
+   
+    <span class="caption">图6-10 FIFO页面置换算法图</span>
+  
+</div>
+
+<p>显然，物理页帧的大小会对整个页面置换算法最后的效果产生很大的影响。</p>
+<p>如果对一个正在运行的程序分配固定的物理页帧，从某种程度上限制了程序它产生缺页的特点。程序在运行中有一个阶段性，开始访问的时候可能需要很多内存，中间这段时间可能需要的内存很少，在结束的时候又需要很多的内存，这是<strong>动态变化</strong>的过程，对<strong>物理页帧的需求是可变的</strong>。</p>
+<p>前面的算法，有一个假定，它的物理页帧都是固定的。系统里面只跑一个程序，把所有的物理页帧都分配给它是没有问题的。但是操作系统里面有很多程序，如果<strong>分配固定的物理页帧</strong>，就会限制<strong>灵活性</strong>。根据程序运行的不同阶段，能分配不同大小的物理页帧，这样才能保证灵活性。</p>
+<h3 id="6102工作集模型">6.10.2工作集模型</h3>
+<p>前面介绍的各种页面置换算法，都是基于一个前提，即<strong>程序的局部性原理</strong>。</p>
+<ul>
+<li>
+<p>如果局部性原理不成立</p>
+<p>那么各种页面置换算法就没有什么分别，<strong>也没有什么意义</strong>。例如：假设进程对逻辑页面的访问顺序是1,2,3,4,5,6,7,8&hellip;即单调递增，那么在物理页数有限的前提下，不管采用何种置换算法，每次的页面访问都必然导致缺页中断。</p>
+</li>
+<li>
+<p>如果局部性原理成立</p>
+<p>那么如何来证明它的存在，如果来对它进行定量地分析？这就是<strong>工作集模型</strong></p>
+</li>
+</ul>
+<h4 id="61021工作集模型">6.10.2.1<strong>工作集模型</strong></h4>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_16.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_16.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>举例说明</p>
+<blockquote>
+<p>如下图6-11所示，页面的访问序列很长。起始时间为t1，△表示当前往过去的长度。这里约定△长度为10，那么左侧工作集的访问的页面集合是1,2,5,6,7,这几个页面。w(t1, △)大小为5。同理，起始时间为t2，窗口还是10，它访问的页面时3和4，w(t2, △)大小为2。</p>
+<p>可以看到t2时间里，具有<strong>更高的局部性</strong>，重复的访问3和4页面。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_17.png" title="图6-11 工作集模型示例图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_17.png"  alt="图6-11 工作集模型示例图">
+  
+    </a>
+  
+   
+    <span class="caption">图6-11 工作集模型示例图</span>
+  
+</div>
+
+</blockquote>
+<h4 id="61022工作集大小">6.10.2.2工作集大小</h4>
+<p><strong>工作集大小的变化</strong></p>
+<p>进程开始执行后，随着访问新页面逐步建立较稳定的工作集。当内存访问的局部性区域的位置大致稳定时，工作集大小也<strong>大致稳定</strong>；局部性区域的与之发生改变时，工作集快速<strong>扩张和收缩</strong>过渡到下一个稳定值。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_18.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_18.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="6103常驻集">6.10.3常驻集</h3>
+<p>常驻集是指在当前时刻，进程实际<strong>驻留</strong>在内存当中的<strong>页面集合</strong>。</p>
+<ul>
+<li>工作集是进程在运行过程中固有的性质（内存加外存），而常驻集取决于系统分配给进程的物理页面数目，以及所采用的页面置换算法。</li>
+<li>如果一个进程的整个工作集都在内存当中，即常驻集大于等于工作集，那么进程将很顺利地运行，而不会造成太多的缺页中断（直到工作集发生剧烈变动，从而过渡到另一个状态）</li>
+<li>当进程常驻集的大小达到某个数目之后，再给它分配更多的物理页面，缺页率也不会明显下降</li>
+</ul>
+<p>如果给不同的运行中的程序<strong>不同的常驻集</strong>，使得整体的缺页中断次数比较少，那么整体的性能就会提高。采用局部页面置换算法，可能就不能有效的解决这个问题。</p>
 <h2 id="611两个全局置换算法">6.11两个全局置换算法</h2>
 <h2 id="612抖动问题">6.12抖动问题</h2>
               
