@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="熟悉完操作系统的第六篇章，开始学习第七篇章，关于操作系统的进程管理。">
+
+
+<meta property="og:description" content="熟悉完操作系统的第六篇章，开始学习第七篇章，关于操作系统的进程管理。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="操作系统学习笔记 7进程管理">
+<meta name="twitter:title" content="操作系统学习笔记 7进程管理">
+<meta property="og:url" content="https://yangyang48.github.io/2022/07/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-7%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2022/07/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-7%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="熟悉完操作系统的第六篇章，开始学习第七篇章，关于操作系统的进程管理。">
+<meta name="twitter:description" content="熟悉完操作系统的第六篇章，开始学习第七篇章，关于操作系统的进程管理。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2022-07-10T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2022-07-10T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="OS">
+    
+      <meta property="article:section" content="2022">
+    
+      <meta property="article:section" content="July">
+    
+  
+  
+    
+      <meta property="article:tag" content="学习笔记">
+    
+      <meta property="article:tag" content="清华大学陈渝">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/os/os7_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/os/os7_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/os/os7_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/os/os7_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>操作系统学习笔记 7进程管理</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2022/07/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-7%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/os/os7_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      操作系统学习笔记 7进程管理
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2022-07-10T00:00:00Z">
+        
+  七月 10, 2022
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/os">OS</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2022">2022</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/july">July</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">200 Words|Read in about 1 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>熟悉完操作系统的第六篇章，开始学习第七篇章，关于操作系统的进程管理。</p>
+<h1 id="7进程管理">7进程管理</h1>
+<ol>
+<li>进程（PROCESS）描述</li>
+<li>进程状态（State）</li>
+<li>线程（THREAD）</li>
+<li>进程间通信（INTER-PROCESS COMMUNICATION）</li>
+<li>进程互斥与同步</li>
+<li>死锁（DEADLOCK）</li>
+</ol>
+<h2 id="71进程描述">7.1进程描述</h2>
+<ul>
+<li>进程定义</li>
+<li>进程的组成</li>
+<li>进程的特点</li>
+<li>进程控制结构</li>
+</ul>
+<p>在使用计算及过程中，可以看到进程的影子。如下图7-1所示，左边看到很多正在运行的程序，某种角度上可以把正在运行的程序看做是进程，<strong>代表程序在整个执行过程</strong>的描述。右边可以看到CPU的使用率、内存、网络一会高一会低，代表进程有时候占用CPU、内存、网络多，有时候占用CPU、内存、网络较少。</p>
+<p>本来操作系统只能运行一个程序，随着计算机的发展，CPU能力越来越强，内存越来越多，可以在内存中放入更多的运行程序，这个时候再用程序表示各个运行的程序就不大合适了，可能一个程序会跑多个，多个程序的实例在内存中无法表示。通过引入进程，可以更好地表示程序的整个执行过程。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os7_1.png" title="图7-1 Linux的任务管理器图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os7_1.png"  alt="图7-1 Linux的任务管理器图">
+  
+    </a>
+  
+   
+    <span class="caption">图7-1 Linux的任务管理器图</span>
+  
+</div>
+
+<h3 id="711进程">7.1.1进程</h3>
+<p>一个具有一定<strong>独立功能</strong>的程序在一个数据集合上的一次<strong>动态执行</strong>过程。</p>
+<p>一个静态的程序，通过操作系统在内存中让程序执行起来，形成动态的执行过程就是进程。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os7_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os7_2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="712-进程的组成">7.1.2 进程的组成</h3>
+<p>一个进程应该包括</p>
+<ul>
+<li>程序的代码</li>
+<li>程序处理的数据</li>
+<li>程序计数器中的值，指示下一条将运行的指令</li>
+<li>一组通用的寄存器的当前值，堆和栈</li>
+<li>一组系统资源（如打开文件）</li>
+</ul>
+<p>总之，进程包含了<strong>正在运行</strong>的一个程序的<strong>所有状态信息</strong></p>
+<h4 id="7121进程与程序的联系">7.1.2.1进程与程序的联系</h4>
+<ul>
+<li>程序是产生进程的基础</li>
+<li>程序的每次运行构成不同的进程</li>
+<li>进程是程序功能的体现</li>
+<li>通过多次执行，一个程序可对应多个进程；通过调用关系，一个进程可包括多个程序。</li>
+</ul>
+<h4 id="7122进程与程序的区别">7.1.2.2进程与程序的区别</h4>
+<ul>
+<li>进程是动态的，进程是程序的执行，进程有核心态/用户态；程序是静态的，程序是有序代码的集合</li>
+<li>进程是暂时的的，程序是永久的；进程是一个状态变化的过程，程序可以长久保存</li>
+<li>进程与程序的组成不同，进程的组成包括<strong>程序、数据和进程控制块</strong>（即进程状态信息）</li>
+</ul>
+<p>举例说明</p>
+<blockquote>
+<p>如下图7-2所示，进程是包括程序和其他部分，可以被其他优先级更高的进程中断，切换到优先级高的进程中来。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os7_3.png" title="图7-2 进程与程序类比关系图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os7_3.png"  alt="图7-2 进程与程序类比关系图">
+  
+    </a>
+  
+   
+    <span class="caption">图7-2 进程与程序类比关系图</span>
+  
+</div>
+
+</blockquote>
+<h3 id="713进程的特点">7.1.3进程的特点</h3>
+<p>动态性</p>
+<p>可动态地创建、结束进程</p>
+<p>并发性</p>
+<p>进程可以被独立调度并占用处理机运行</p>
+<p>独立性</p>
+<p>不同进程的工作不互相影响（<strong>页表机制</strong>）</p>
+<p>制约性</p>
+<p>因访问<strong>共享数据/资源</strong>或<strong>进程间同步</strong>而产生制约</p>
+<blockquote>
+<p>一段时间内有多个进程在执行，给人一种错觉像是并行执行。</p>
+<ul>
+<li>
+<p>并发</p>
+<p>一段时间内有多个进程在执行</p>
+</li>
+<li>
+<p>并行</p>
+<p>一个时刻有多个进程在执行</p>
+</li>
+</ul>
+<p>如果目前只有一个CPU，是无法并行执行多个进程的。操作系统会不停调度不同的进程来执行，进程执行时间会受到其他进程的影响，但是<strong>独立性</strong>是不会受到影响。</p>
+<p>独立性的保证</p>
+<p>通过<strong>页表</strong>可以使得不同的程序访问不同的地址空间，这个过程中不可能越过当前程序的地址空间。越过这个地址空间会产生缺页异常，页错误等。</p>
+</blockquote>
+<h3 id="714进程控制结构">7.1.4进程控制结构</h3>
+<p>程序=算法+数据结构</p>
+<p>描述进程的数据结构：<strong>进程控制块</strong>（Process Control Block，PCB）</p>
+<p>操作系统为每个进程都维护了一个PCB，用来保存与该进程有关的各种状态信息。</p>
+<h3 id="7141进程控制块">7.1.4.1进程控制块</h3>
+<p>操作系统管理控制进程运行所用的信息集合。操作系统用PCB来描述进程的基本情况以及运行变化的进程，<strong>PCB是进程存在的唯一标志</strong>。</p>
+<h4 id="7142使用进程控制块">7.1.4.2使用进程控制块</h4>
+<ul>
+<li>
+<p>进程的创建</p>
+<p>为该进程生成一个PCB</p>
+</li>
+<li>
+<p>进程的终止</p>
+<p>回收它的PCB</p>
+</li>
+<li>
+<p>进程的组织管理</p>
+<p>通过对PCB的组织管理来实现</p>
+</li>
+</ul>
+<h4 id="7143pcb含有以下三大类信息">7.1.4.3PCB含有以下三大类信息</h4>
+<ol>
+<li>
+<p><strong>进程标识信息</strong></p>
+<p>如本进程的标识，本进程的产生者标识（父进程标识）；用户标识</p>
+</li>
+<li>
+<p><strong>处理机状态信息保存区</strong></p>
+<p>保存进程的运行现场信息；</p>
+<p><strong>用户可见寄存器</strong>，用户程序可以使用的数据，地址等寄存器</p>
+<p><strong>控制和状态寄存器</strong>，如程序计数器PC，程序状态字PSW</p>
+<p><strong>栈指针</strong>，过程调用/系统调用/中断处理和返回时需要用到它</p>
+</li>
+<li>
+<p><strong>进程控制信息</strong></p>
+<p><strong>调度和状态信息</strong></p>
+<p>用于操作系统调度进程并占用处理机使用</p>
+<p><strong>进程间通信信息</strong></p>
+<p>为支持进程间的与通信相关的各种标识、信号、信件等，这些信息存在接收方的进程控制块中</p>
+<p><strong>存储管理信息</strong></p>
+<p>包含有指向本进程映像存储空间的数据结构</p>
+<p><strong>进程所用资源</strong></p>
+<p>说明由进程打开、使用的系统资源，如打开的文件等</p>
+<p><strong>有关数据结构连接信息</strong></p>
+<p>进程可以连接到一个进程队列中，或连接到相关的其他进程的PCB。</p>
+</li>
+</ol>
+<h4 id="7144pcb的组织方式">7.1.4.4PCB的组织方式</h4>
+<ul>
+<li>
+<p><strong>链表</strong>（更好的动态插入和删除）</p>
+<p>同一状态的进程其PCB成一链表，多个状态对应多个不同的链表</p>
+<p>各状态的进程形成不同的链表：就绪链表和阻塞链表</p>
+</li>
+<li>
+<p><strong>索引表</strong>（较少的动态插入和删除）</p>
+<p>同一状态的进程归入一个index表（由index指向PCB），多个状态对应多个不同的index表。</p>
+<p>各状态的进行形成不同的索引表：就绪索引表和阻塞索引表</p>
+</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os7_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os7_4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="72-进程状态">7.2 进程状态</h2>
+<ul>
+<li>进程的生命期管理</li>
+<li>进程状态变化模型</li>
+<li>进程挂起模型</li>
+</ul>
+<h3 id="721进程的生命期管理">7.2.1进程的生命期管理</h3>
+<p>进程的生命期管理</p>
+<ul>
+<li>进程创建</li>
+<li>进程运行</li>
+<li>进程等待</li>
+<li>进程唤醒</li>
+<li>进程结束</li>
+</ul>
+<p>进程创建</p>
+<p>引起进程创建的3个主要事件</p>
+<ul>
+<li>系统初始化时</li>
+<li>用户请求创建一个新进程</li>
+<li>正在运行的进程执行了创建进程的系统调用</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os7_5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os7_5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>进程运行</p>
+<p>内核选择一个就绪的进程，让它占用处理机并执行</p>
+<p>为何选择？</p>
+<p>如何选择？</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os7_6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os7_6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>进程等待</p>
+<p>在以下情况下，进程等待（阻塞）</p>
+<ul>
+<li>请求并等待系统服务，无法马上完成</li>
+<li>启动某种操作，无法马上完成</li>
+<li>需要的数据没有到达</li>
+</ul>
+<p><strong>进程只能自己阻塞自己</strong>，因为只有进程自身才知道何时需要等待某种事件的发生。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os7_7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os7_7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>进程唤醒</p>
+<p>唤醒进程的原因</p>
+<ul>
+<li>被阻塞进程需要的资源可被满足</li>
+<li>被阻塞进程等待事件到达</li>
+<li>将该进程的PCB插入到就绪队列</li>
+</ul>
+<p>进程只能被<strong>别的进程或操作系统</strong>唤醒。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os7_8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os7_8.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>进程结束</p>
+<p>在以下四种情况下，进程结束</p>
+<ul>
+<li>正常退出（自愿的）</li>
+<li>错误退出（自愿的）</li>
+<li>致命错误（强制性的）</li>
+<li>被其他进程所杀（强制性的）</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os7_9.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os7_9.png" >
+  
+    </a>
+  
+  
+</div>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%B8%85%E5%8D%8E%E5%A4%A7%E5%AD%A6%E9%99%88%E6%B8%9D/">清华大学陈渝</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/07/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-6%E9%A1%B5%E9%9D%A2%E7%BD%AE%E6%8D%A2%E7%AE%97%E6%B3%95/" data-tooltip="操作系统学习笔记 6页面置换算法">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2022 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/07/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-6%E9%A1%B5%E9%9D%A2%E7%BD%AE%E6%8D%A2%E7%AE%97%E6%B3%95/" data-tooltip="操作系统学习笔记 6页面置换算法">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2022%2F07%2F%25E6%2593%258D%25E4%25BD%259C%25E7%25B3%25BB%25E7%25BB%259F%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25AC%2594%25E8%25AE%25B0-7%25E8%25BF%259B%25E7%25A8%258B%25E7%25AE%25A1%25E7%2590%2586%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2022%2F07%2F%25E6%2593%258D%25E4%25BD%259C%25E7%25B3%25BB%25E7%25BB%259F%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25AC%2594%25E8%25AE%25B0-7%25E8%25BF%259B%25E7%25A8%258B%25E7%25AE%25A1%25E7%2590%2586%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2022%2F07%2F%25E6%2593%258D%25E4%25BD%259C%25E7%25B3%25BB%25E7%25BB%259F%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25AC%2594%25E8%25AE%25B0-7%25E8%25BF%259B%25E7%25A8%258B%25E7%25AE%25A1%25E7%2590%2586%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2022\/07\/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-7%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86\/';
+          
+            this.page.identifier = '\/2022\/07\/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-7%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
