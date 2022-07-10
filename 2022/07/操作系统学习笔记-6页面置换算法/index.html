@@ -270,7 +270,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">300 Words|Read in about 1 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">300 Words|Read in about 2 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -1040,7 +1040,234 @@
 </ul>
 <p>如果给不同的运行中的程序<strong>不同的常驻集</strong>，使得整体的缺页中断次数比较少，那么整体的性能就会提高。采用局部页面置换算法，可能就不能有效的解决这个问题。</p>
 <h2 id="611两个全局置换算法">6.11两个全局置换算法</h2>
+<h3 id="6111工作集全局置换算法">6.11.1工作集全局置换算法</h3>
+<p>熟悉了前面工作集的概念，在当前时刻t之间的△时间窗口当中的所有页面所组成的集合。（随着t的变化，该集合也在不断地变化）</p>
+<ul>
+<li>在这个工作集窗口里面的页，表示当<strong>前时间段内被访问</strong>的页。</li>
+<li>如果说这个页要替换，要替换页是不在工作集页面中的页</li>
+<li>随着程序的执行，在滑动过程中，其中一个页不再这个时间窗口之内，这个页会被丢掉，<strong>并不是发生缺页中断的时候才开始去丢掉页</strong>。</li>
+</ul>
+<p>举例说明</p>
+<blockquote>
+<p>我们把工作集的滑动窗口大小设置为4，这里有分配了5个物理页帧，在1时刻之前已经访问了三个物理页帧，分别是ade。</p>
+<p>在第一个时刻访问c，发生缺页中断，工作集就是acde。第2个时刻，访问c的时候，这个时候工作集会调整为acd，没有产生缺页也需要把e换出去。在第四个时刻，访问b的时候，会被换出去a，工作集调整为bcd。</p>
+<p>同理，因为滑动窗口是固定的4，可以推断处之后,不同时刻的工作集。</p>
+</blockquote>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_19.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_19.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>原理就是上述的滑动思想</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_20.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_20.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="6112-缺页率页面置换算法">6.11.2 缺页率页面置换算法</h3>
+<ul>
+<li>
+<p>可变分配策略</p>
+<p>常驻集大小可变。例如：每个进程在刚开始运行的时候，先根据程序大小给它分配一定数目的物理页面，然后在程序运行过程中，在<strong>动态地调整</strong>常驻集的大小。</p>
+<p>可采用<strong>全局页面置换算法</strong>的方式，发生一个缺页中断时，被置换的页面可以是在其他进程当中，各个并发进程竞争地使用物理页面。</p>
+</li>
+<li>
+<p>优缺点</p>
+<p>性能较好，但增加了系统开销</p>
+</li>
+<li>
+<p>具体实现</p>
+<p>可以使用<strong>缺页率算法</strong>（PFF，page fault frequency）来动态调整常驻集的大小</p>
+</li>
+</ul>
+<h4 id="61121缺页率">6.11.2.1缺页率</h4>
+<p>缺页率表示“缺页次数/内存访问次数”（比率）或者“缺页的平均时间间隔的倒数”。</p>
+<h4 id="61122影响缺页率的因素">6.11.2.2影响缺页率的因素</h4>
+<ul>
+<li>页面置换算法</li>
+<li>分配给进程的物理页面数目</li>
+<li>页面本身的大小</li>
+<li>程序的编写方法</li>
+</ul>
+<p>若程序缺页率过高，则通过增加工作集来分配更多的物理页面；若运行的程序的缺页率过低，则通过减少工作集来减少它的物理页面数。力图使得运行的每个程序的缺页率保持在一个合理的范围内。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_21.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_21.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>一个交替的工作集计算明确的试图最小化页缺失</p>
+<ul>
+<li>当缺页率高的时候，增加工作集</li>
+<li>当缺页率低的时候，减少工作集</li>
+</ul>
+<h4 id="61123算法--保持追踪缺失发生概率">6.11.2.3算法&ndash;保持追踪缺失发生概率</h4>
+<ul>
+<li>
+<p>当缺失发生时，从上次页缺失起计算这个时间记录这个时间，tlast是上次的页缺失的时间</p>
+</li>
+<li>
+<p>如果发生页缺失之间的时间是“大”的，之后减少工作集</p>
+<p>如果tcurrent - tlast &gt; T时，之后从内存中移除所有在[tlast, tcurrent]时间内没有被引用的页</p>
+</li>
+<li>
+<p>如果这个发生页缺失的时间是“小”的，之后增加工作集</p>
+<p>如果tcurrent - tlast &lt;= T时，之后增加缺失页到工作集中</p>
+</li>
+</ul>
+<p>举例说明</p>
+<blockquote>
+<p>假设window size大小为2，指的是两次中断发生的间隔</p>
+<p>如果tcurrent - tlast &gt; 2，从工作集中移除没有在[tlast, tcurrent]被引用的页面</p>
+<p>如果tcurrent - tlast &lt;= 2，仅增加缺失页到工作集中</p>
+<p>跟刚才类似，在第一时刻访问c，发生一次缺页中断，没有上一次，所以这里不考虑算法。直到第四个时刻的时候访问b，这个时候发生缺页中断，tcurrent - tlast大小为3，需要动态调整<strong>工作集</strong>，在时刻1到时刻4之间访问的页可以放到工作集中，所以调整完之后，还剩下bcd。</p>
+<p>第五个时候没有变化，第六个时刻又发生一次缺页中断，tcurrent - tlast大小为2，因为这需要把缺页的这个页加入到<strong>工作集</strong>中，调整完之后是bcde。同理可知9和10时刻的中断，原理类似。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_22.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_22.png" >
+  
+    </a>
+  
+  
+</div>
+
+</blockquote>
+<h4 id="61124与工作集置换算法区别">6.11.2.4与工作集置换算法区别</h4>
+<p><strong>对页的调整时机</strong>不一样。每一次<strong>访问页</strong>的时候都需要判断一下，是否需要把这个页清除出去或者是加进来，缺页率页面置换算法只有在<strong>发生缺页中断</strong>的时候才需要判断</p>
+<p>但都是和之前的局部页面置换算法有区别，这里是根据工作集的大小和缺页率大小动态的调整内存中需要把哪些放进来，这样做能够使得经常访问的页能够驻留到内存中。对操作系统而言，多个正在运行的程序，采用全局页面置换算法效果会好于局部页面置换算法。</p>
 <h2 id="612抖动问题">6.12抖动问题</h2>
+<h3 id="6121抖动">6.12.1抖动</h3>
+<p>如果分配给一个进程的物理页面太少，不能包含整个的工作集，即常驻集小于等于工作集，那么进程将会造成很多的缺页中断，需要频繁地在内存与外存之间替换页面，从而使进程的运行速度变的很慢</p>
+<h3 id="6122原因">6.12.2原因</h3>
+<p>随着主流内存的进程数目增加，分配给每个进程的物理页面数不断减少，缺页率不断上升。所以OS要选择一个适当的进程数目和进程需要的帧数，以便在并发水平和缺页率之间达到一个平衡。</p>
+<h3 id="6123抖动问题量化方式">6.12.3抖动问题量化方式</h3>
+<p>如下图6-12所示，横坐标是程序运行的数量，纵坐标是CPU的利用率，一般情况下CPU的利用率会很高，但是频繁的对页面换入换出使得CPU的利用率会比较低。</p>
+<p>我们从CPU角度可以找到一个最优值，即<code>Nmax</code>，这个点对应的CPU的使用率是最好的，是一个极值点。</p>
+<p>操作系统希望达到的目标，第一跑的程序尽量多，第二系统的利用率很高。为此，找到这个平衡点，两个缺页产生的平均时间和完成一次中断服务时间尽量相等。蓝色的线代表两个缺页产生的平均时间和完成一次中断服务时间的比值。比值越大，意味着缺页频率很低，大部分时间花在程序跑上面，CPU的利用率会很高。随着程序的增加，缺页频率很高，完成一次中断服务时间不变，CPU的利用率会变低。在比值为1的交汇点，对应的点为<code>NI/O-BALANCE</code>，这个时候的CPU利用率也是很高的。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os6_23.png" title="图6-12 程序运行数量和CPU利用率图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os6_23.png"  alt="图6-12 程序运行数量和CPU利用率图">
+  
+    </a>
+  
+   
+    <span class="caption">图6-12 程序运行数量和CPU利用率图</span>
+  
+</div>
+
+<p>但是这里面存在一个程序，消耗了很大的内存，依然会产生内存抖动现象。</p>
+<p>内存抖动现象是一个综合的因素，<strong>需要的内存大量都在外存，导致不停的发生缺页中断</strong>，从而使得整个操作系统的CPU利用率变得很低的状态。</p>
               
             </div>
           </div>
