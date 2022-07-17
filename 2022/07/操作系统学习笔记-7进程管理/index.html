@@ -270,7 +270,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">400 Words|Read in about 2 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">500 Words|Read in about 3 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -1465,9 +1465,9 @@
 <h3 id="742需要做上下文切换的进程">7.4.2需要做上下文切换的进程</h3>
 <p>操作系统为活跃进程准备了PCB，操作系统将PCB放置到一个合适的队列里</p>
 <ul>
-<li>就绪队列，能够在CPU上执行的进程它们会存放在就绪队列中，我们需要将就绪态进程放置到链表中，便于操作系统去寻址</li>
-<li>等待I/O队列（每个设备的队列）</li>
-<li>僵尸队列</li>
+<li><strong>就绪队列</strong>，能够在CPU上执行的进程它们会存放在就绪队列中，我们需要将就绪态进程放置到链表中，便于操作系统去寻址</li>
+<li><strong>等待I/O队列</strong>（每个设备的队列）</li>
+<li><strong>僵尸队列</strong></li>
 </ul>
 
 
@@ -1497,6 +1497,381 @@
   
   
 </div>
+
+<h2 id="75进程控制">7.5进程控制</h2>
+<h3 id="751创建进程">7.5.1创建进程</h3>
+<h4 id="7511createprocessfilename">7.5.1.1CreateProcess(filename)</h4>
+<p>Windows进程创建的API</p>
+<ul>
+<li>创建时关闭所有在子进程里的文件描述符<code>CreateProcess(filename, CLOSE_FD)</code></li>
+<li>创建时改变子进程的环境<code>CreateProcess(filename, CLOSE_FD, new_envp)</code></li>
+</ul>
+<h4 id="7512forkexec">7.5.1.2fork/exec</h4>
+<p>Unix进程创建系统调用</p>
+<ul>
+<li><code>fork()</code>把一个进程复制成两个进程，<code>parent(old PID)</code>, <code>child(new PID)</code></li>
+<li><code>exec()</code>用新程序来重写当前进程，PID没有改变</li>
+</ul>
+<p>用fork和exec创建进程的示例</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">int</span> <span class="n">pid</span> <span class="o">=</span> <span class="n">fork</span><span class="p">();</span>	<span class="c1">//创建子进程
+</span><span class="ln">2</span><span class="c1"></span><span class="k">if</span><span class="p">(</span><span class="n">pid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>		<span class="c1">//子进程在这里继续
+</span><span class="ln">3</span><span class="c1"></span><span class="p">{</span>
+<span class="ln">4</span>    <span class="c1">//Do angthing(unmap memory, close net connections...)
+</span><span class="ln">5</span><span class="c1"></span>    <span class="n">exec</span><span class="p">(</span><span class="s">&#34;program&#34;</span><span class="p">,</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv0</span><span class="p">,</span> <span class="n">argv1</span><span class="p">,</span> <span class="p">...);</span>
+<span class="ln">6</span><span class="p">}</span>
+</code></pre></div><p>其中，fork()创建一个继承的子进程</p>
+<ul>
+<li>复制父进程的所有变量和内存</li>
+<li>复制父进程的所有CPU寄存器（有一个寄存器例外，是用来识别父进程和子进程的）</li>
+</ul>
+<p>fork()的返回值</p>
+<ul>
+<li>子进程的fork()返回0</li>
+<li>父进程的fork()返回子进程标识符</li>
+<li>fork()返回值可方便后续使用，子进程可使用getpid()获取PID值</li>
+</ul>
+<p>fork()的地址空间复制</p>
+<ul>
+<li>
+<p>fork()执行过程对于子进程而言，是在调用时间对父进程地址空间的一次复制</p>
+</li>
+<li>
+<p>对于父进程fork()返回child PID，对于子进程返回值为0</p>
+</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os7_28.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os7_28.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="752加载和执行进程">7.5.2加载和执行进程</h3>
+<p>首先看一个例子，系统调用exec会加载程序取代当前运行的程序</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln"> 2</span><span class="p">{</span>
+<span class="ln"> 3</span>    <span class="p">...</span>
+<span class="ln"> 4</span>    <span class="kt">int</span> <span class="n">pid</span> <span class="o">=</span> <span class="n">fork</span><span class="p">();</span>
+<span class="ln"> 5</span>    <span class="k">if</span><span class="p">(</span><span class="n">pid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="c1">//子进程
+</span><span class="ln"> 6</span><span class="c1"></span>    <span class="p">{</span>
+<span class="ln"> 7</span>        <span class="n">exec_status</span> <span class="o">=</span> <span class="n">exec</span><span class="p">(</span><span class="s">&#34;calc&#34;</span><span class="p">,</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv0</span><span class="p">,</span> <span class="n">argv1</span><span class="p">,</span> <span class="p">...);</span>
+<span class="ln"> 8</span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;Why would I execute?&#34;</span><span class="p">);</span><span class="c1">//正常不可能执行到，起到提醒作用，子进程去执行另一个程序了，不可能在切回来
+</span><span class="ln"> 9</span><span class="c1"></span>    <span class="p">}</span><span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="n">pid</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="c1">//父进程
+</span><span class="ln">10</span><span class="c1"></span>    <span class="p">{</span>
+<span class="ln">11</span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;Whose your daddy?&#34;</span><span class="p">);</span>
+<span class="ln">12</span>        <span class="p">...</span>
+<span class="ln">13</span>        <span class="c1">//wait代表子进程结束了
+</span><span class="ln">14</span><span class="c1"></span>        <span class="n">child_status</span> <span class="o">=</span> <span class="n">wait</span><span class="p">(</span><span class="n">pid</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="p">}</span><span class="k">else</span>
+<span class="ln">16</span>    <span class="p">{</span>
+<span class="ln">17</span>        <span class="cm">/*error occurred*/</span>
+<span class="ln">18</span>    <span class="p">}</span>
+<span class="ln">19</span><span class="p">}</span>
+</code></pre></div><p>这里可以直观的看出执行fork和exec的变化</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os7_29.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os7_29.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>当执行exec的时候，程序和代码都会复制一份，</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os7_30.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os7_30.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>里面的pid没变，执行的代码会发生变化，如下图7-7所示，从本来的sh变成了calc程序</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os7_31.png" title="图7-7 sh变成了calc程序图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os7_31.png"  alt="图7-7 sh变成了calc程序图">
+  
+    </a>
+  
+   
+    <span class="caption">图7-7 sh变成了calc程序图</span>
+  
+</div>
+
+<p>内存中的布局图，用户空间存入一些信息，shell的代码段和数据段（包含堆栈），在内核空间内放在PID和进程控制块的信息</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os7_32.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os7_32.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>fork会创建一个新的进程，子进程的地址是完全复制父进程的</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os7_33.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os7_33.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>执行exec之后，PCB信息发生变化，用户内存空间发生变化，代码段被新的程序calc替换，整个控制流发生变化</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os7_34.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os7_34.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><strong>Exec()</strong></p>
+<ul>
+<li>
+<p>调用允许一个进程“加载”一个不同的程序并且在main开始执行（事实上_start）</p>
+</li>
+<li>
+<p>它允许一个进程指定参数的数量（argc）和它字符串参数数组（argv）</p>
+</li>
+<li>
+<p>如果调用成功</p>
+<p>它是相同进程，但是它运行了一个不同的程序</p>
+</li>
+<li>
+<p>代码，stack(栈) &amp; heap(堆)重写</p>
+</li>
+</ul>
+<p><strong>fork的简单实现</strong></p>
+<ul>
+<li>对子进程分配内存</li>
+<li>复制父进程的内存和CPU寄存器到子进程里</li>
+<li>开销昂贵（复制父进程的代码段和数据段）</li>
+</ul>
+<p><strong>在99%的情况里，我们调用fork()之后调用exec()</strong></p>
+<ul>
+<li>在fork()操作中内存复制是没有作用的</li>
+<li>子进程可能关闭打开文件和连接</li>
+<li>开销因此是高的</li>
+</ul>
+<p><strong>vfork</strong></p>
+<ul>
+<li>一个创建进程的系统调用，不需要创建一个同样的内存映像</li>
+<li>一些时候称为轻量级fork</li>
+<li>子进程应该几乎立刻调用exec</li>
+<li>现在不在使用，使用Copy On Write技术（COW）</li>
+</ul>
+<h3 id="753等待和终止进程">7.5.3等待和终止进程</h3>
+<h4 id="7531wait">7.5.3.1wait</h4>
+<p>1）系统调用是被父进程用来等待子进程的结束</p>
+<p>2）一个子进程向父进程返回一个值，所以父进程必须接受这个值并处理</p>
+<p>3）wait系统调用担任这个要求</p>
+<ul>
+<li>它使父进程去睡眠来等待子进程的结束</li>
+<li>当一个子进程调用exec时候，操作系统解锁父进程，并且将通过exit传递得到的返回值作为wait调用的一个结果（连同子进程呢个的pid一起）。如果这里没有子进程存活，wait立刻返回。</li>
+<li>当然，如果这里有为父进程的僵尸等待，wait立刻返回其中一个值（并且解除僵尸状态）</li>
+</ul>
+<h4 id="7532调用exit进程结束执行之后">7.5.3.2调用exit（进程结束执行之后）</h4>
+<p><strong>这个系统调用</strong></p>
+<ul>
+<li>
+<p>将这程序的结果作为一个参数</p>
+</li>
+<li>
+<p>关闭所有打开的文件，连接等</p>
+</li>
+<li>
+<p>释放内容</p>
+</li>
+<li>
+<p>释放大部分支持进程的操作系统</p>
+</li>
+<li>
+<p>检查是否父进程是存活着的</p>
+<p>如果是的话，它保留结果的直到父进程需要它；在这种情况里，进程没有真正死亡，但是它进入了僵尸状态</p>
+<p>如果没有，它释放所有的数据结构，这个进程死亡（<strong>Root进程会定期扫描僵尸队列</strong> 判断僵尸状态的子进程的父进程是否存在）</p>
+</li>
+<li>
+<p>清除所有等待的僵尸进程</p>
+</li>
+</ul>
+<p><strong>进程终止是最终的垃圾收集（资源回收）</strong></p>
+<p>子进程被fork出来，在执行exit退出的时候，会处于一个僵尸进程状态，PCB没有被回收。直到父进程执行wait状态，可以回收子进程的僵尸状态的PCB，最终退出程序。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os7_35.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os7_35.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>执行exec的时候，在整个系统执行过程中，可能处于不同状态。首先执行exec，进程会进入running状态，exec会加载运行程序和执行运行程序。在加载的时候，程序在磁盘上，把磁盘读到内存中来，这个过程花的时间比较长。也就是会从running状态到blocked状态切换。</p>
               
             </div>
           </div>
