@@ -270,18 +270,18 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">100 Words|Read in about 1 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">500 Words|Read in about 3 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
               <p>熟悉完操作系统的第七篇章，开始学习第八篇章，关于操作系统的CPU调度。</p>
 <h1 id="8cpu调度">8CPU调度</h1>
-<ul>
-<li>
-<p>背景</p>
+<ol>
+<li>背景</li>
+</ol>
 <p>CPU调度</p>
 <p>CPU调度时间</p>
-</li>
+<ol start="2">
 <li>
 <p>调度准则</p>
 </li>
@@ -297,7 +297,7 @@
 <li>
 <p>优先级反转</p>
 </li>
-</ul>
+</ol>
 <h2 id="81背景">8.1背景</h2>
 <h3 id="811cpu调度含义">8.1.1CPU调度含义</h3>
 <p><strong>上下文切换</strong></p>
@@ -499,9 +499,875 @@
 </ul>
 <p>公平通常会增加平均响应时间</p>
 <h2 id="83调度算法">8.3调度算法</h2>
+<p>6种常用算法</p>
+<ol>
+<li>
+<p><strong>FCFS（先来先服务）</strong></p>
+<p>First Come， Frist Served</p>
+</li>
+<li>
+<p><strong>SPN（SJF）SRT（短进程优先（短作业优先）短剩余时间优先）</strong></p>
+<p>Shortest Process Next（Shortest Job Frist）Shortest Remaining Time</p>
+</li>
+<li>
+<p><strong>HRRN（最高响应比优先）</strong></p>
+<p>Highest Response Ratio Next</p>
+</li>
+<li>
+<p><strong>Round Robin（轮询）</strong></p>
+<p>使用时间切片和抢占来轮流执行任务</p>
+</li>
+<li>
+<p><strong>Multilevel Feedback Queues（多级反馈队列）</strong></p>
+<p>优先级队列中的轮询</p>
+</li>
+<li>
+<p><strong>Fair Share Scheduling（公平共享调度）</strong></p>
+</li>
+</ol>
+<h3 id="831fcfs">8.3.1FCFS</h3>
+<p>FCFS队列的规定</p>
+<ul>
+<li>如果进程在执行中阻塞，队列中的下一个会得到CPU</li>
+</ul>
+<p>举例说明</p>
+<blockquote>
+<p>如下图8-1上边所示，三个进程，P1进程执行时间12，P2执行时间3，P3执行时间3。</p>
+<p>周转时间：一个进程从初始化到结束，包括所有等待时间所花费的时间</p>
+<p>这里除了本身三个进程的总时间，还需要加上P2和P3的等待总时间Average response time = (12 + 15 +18) / 3 = 15</p>
+<p>如下图8-1下边所示，如果把P2和P3这两个花费时间少的进程放到前面执行，这个时候的周转时间会发生变化。</p>
+<p>Average response time = (3 + 6 +18) / 3 = 9</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os8_3.png" title="图8-1 FCFS调度算法示例图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os8_3.png"  alt="图8-1 FCFS调度算法示例图">
+  
+    </a>
+  
+   
+    <span class="caption">图8-1 FCFS调度算法示例图</span>
+  
+</div>
+
+</blockquote>
+<p>优点</p>
+<ul>
+<li>简单</li>
+</ul>
+<p>缺点</p>
+<ul>
+<li>平均等待时间波动较大</li>
+<li>花费时间少的任务可能排在花费时间长的任务后面</li>
+<li>可能导致I/O和CPU之间的重叠处理。CPU密集型进程会导致IO设备闲置时，IO密集型进程也在等待</li>
+</ul>
+<h3 id="832spnsjfsrt">8.3.2SPN（SJF）SRT</h3>
+<p>选择下一个最短的进程（短任务优先）</p>
+<ul>
+<li>按照预测的完成时间来将任务入队</li>
+</ul>
+<p>这里有四个进程，会通过执行时间排序。按照执行时间的长短排序，执行时间短的排在前面。</p>
+<p>在执行P~w~进程的时候，又来了一个进程，且进程时间比P~w~短。</p>
+<p>有两种方案：</p>
+<ol>
+<li>
+<p><strong>SPN和SJF</strong></p>
+<p>一种是不打断当前进程P~w~，且将新进程放到就绪队列的队头。</p>
+</li>
+<li>
+<p><strong>SRT</strong></p>
+<p>另一种是<strong>抢占式</strong>的，当前正在运行的进程P~w~从运行态到就绪态，新进程占用CPU执行</p>
+</li>
+</ol>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os8_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os8_4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>举例说明</p>
+<blockquote>
+<p>如下图8-2上边所示，一共有6个进程，分别为P1，P2，P3，P4，P5，P6，按照段任务优先方式，直接计算可得到周转时间</p>
+<p>Average response time = (r1 + r2 +r3 + r4 + r5 + r6) / 6</p>
+<p>如果这个时候P3进程排列到P5进程后面，且每个进程执行时间都用c~i~表示，直接计算周转时间</p>
+<p>Average response time = (r1 + r2 +r4 - c3 + r5 -c3 + r4 + c4 + c5 + r6) / 6 = (r1 + r2 +r3 + r4 + r5 + r6 + (c4 + c5 -2c3)) / 6</p>
+<p>很明显，c4，c5要大于c3所以下面的值会比上面的值大</p>
+</blockquote>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os8_5.png" title="图8-2 SJF调度算法示例图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os8_5.png"  alt="图8-2 SJF调度算法示例图">
+  
+    </a>
+  
+   
+    <span class="caption">图8-2 SJF调度算法示例图</span>
+  
+</div>
+
+<p>缺点</p>
+<p><strong>可能导致饥饿</strong></p>
+<ul>
+<li>连续的短任务流会使长任务饥饿</li>
+<li>短任务可用时间的任何长任务的CPU时间都会增加平均等待时间</li>
+</ul>
+<p><strong>需要预知未来</strong></p>
+<ul>
+<li>怎么预估下一个CPU突发的持续时间</li>
+<li>简单的解决方法：询问用户</li>
+<li>如果用户欺骗就杀死进程</li>
+<li>如果用户不知道怎么办</li>
+</ul>
+<p>计算历史预估执行时间</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os8_6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os8_6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>τ~n+1~ = αt~n~ + (1 - α)τ~n~</p>
+<p>其中t~n~指的是t这个时间段中大约占多少执行时间，τ~n~是通过算法估计的t这个时间段中大约占多少执行时间，τ~n+1~是下一时间段中大约占多少执行时间的预估。</p>
+<p>得到下一时刻预估的值，可以对进程按执行时间大小进行排序。</p>
+<p>通过过去，预测未来。下图所示是大致估计的情况。可以看到蓝色的曲线在逼近黑色的数据。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os8_7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os8_7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="833hrrn最高响应比优先">8.3.3HRRN（最高响应比优先）</h3>
+<p>相比之前SPN的算法，多考虑了等待时间，有效地缓解了饥饿现象</p>
+<ul>
+<li>在SPN调度基础上改进</li>
+<li>不可抢占</li>
+<li>关注进程等待了多长时间</li>
+<li>防止无限期推迟</li>
+</ul>
+<p>R = (w + s) / s</p>
+<p>其中w是waiting time，等待时间</p>
+<p>其中s是service time，执行时间</p>
+<p>选择R值最高的进程，<strong>R越高等待时间越长</strong></p>
+<h3 id="834round-robin轮询">8.3.4Round Robin（轮询）</h3>
+<p><strong>轮询</strong></p>
+<ul>
+<li>在叫作量子（或时间切片）的离散单元中分配处理器</li>
+<li>时间片结束时，切换到下一个准备好的进程</li>
+</ul>
+<p>各个进程轮流占用CPU去执行。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os8_8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os8_8.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>举例说明</p>
+<blockquote>
+<p>如下图8-3所示。这里有四个进程P1，P2，P3，P4，设定每个时间切片为20，那么四个进程会轮流分享这20个时间片，这种方式每个进程都有机会去执行。</p>
+<p>等待时间计算</p>
+<p>P1 = (68 - 20) + (112 - 88) = 72</p>
+<p>P2 = (20 - 0) = 20</p>
+<p>P3 = (28- 0) + (88 - 48) + (125 - 108) = 85</p>
+<p>P4 = (48 - 0) + (106 - 68) = 88</p>
+<p>平均等待时间ave = (72 + 20 + 85 + 88) / 4 = 66.25</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os8_9.png" title="图8-3 Round Robin调度算法示例图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os8_9.png"  alt="图8-3 Round Robin调度算法示例图">
+  
+    </a>
+  
+   
+    <span class="caption">图8-3 Round Robin调度算法示例图</span>
+  
+</div>
+
+</blockquote>
+<p><strong>RR</strong></p>
+<ul>
+<li>
+<p><strong>花销存在额外的上下文切换</strong></p>
+</li>
+<li>
+<p><strong>时间量子太大</strong></p>
+<p>等待时间过长</p>
+<p>极限情况退化成FCFS</p>
+</li>
+<li>
+<p><strong>时间量子太小</strong></p>
+<p>反应迅速，但是吞吐量由于大量的上下文切换开销受到影响</p>
+</li>
+<li>
+<p><strong>目标</strong></p>
+<p>选择一个是和的时间量子</p>
+<p>经验规则：维持上下文切换开销处于1%以内</p>
+</li>
+</ul>
+<p>如下图8-3所示。可以看到设置不同的时间量子会有不同的时间开销。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os8_10.png" title="图8-3 不同的时间量子平均等待时间图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os8_10.png"  alt="图8-3 不同的时间量子平均等待时间图">
+  
+    </a>
+  
+   
+    <span class="caption">图8-3 不同的时间量子平均等待时间图</span>
+  
+</div>
+
+<h3 id="835multilevel-feedback-queues多级反馈队列">8.3.5Multilevel Feedback Queues（多级反馈队列）</h3>
+<h4 id="8351多级队列调度算法mq">8.3.5.1多级队列调度算法（MQ）</h4>
+<ul>
+<li>
+<p>就绪队列被划分成独立的队列</p>
+<p>E.g. 前台交互，后台处理</p>
+</li>
+<li>
+<p>每个队列拥有自己的调度策略</p>
+<p>E.g. 前台RR，后台FCFS</p>
+</li>
+<li>
+<p>调度必须在队列间进行</p>
+</li>
+<li>
+<p><strong>固定优先级</strong></p>
+<p>先处理前台，后处理后台</p>
+<p>可能导致饥饿</p>
+</li>
+<li>
+<p><strong>时间切片</strong></p>
+<p>每个队列都得到一个确定的能够调度其进程的CPU总时间</p>
+<p>E.g. 80%给使用RR的前台，20%给使用FCFS的后台</p>
+</li>
+</ul>
+<h4 id="8352多级反馈队列mfq">8.3.5.2多级反馈队列(MFQ)</h4>
+<p><strong>可以根据情况（反馈）调整进程的优先级、队列。</strong></p>
+<p>一个进程可以在不同的队列中移动</p>
+<ul>
+<li>RR在每个级别中，时间量子大小随<strong>优先级级别增加而增加</strong></li>
+<li>RR在每个级别中，如果任务在当前的时间量子中没有完成，则降到下一个优先级。</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os8_11.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os8_11.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="836fair-share-scheduling公平共享调度">8.3.6Fair Share Scheduling（公平共享调度）</h3>
+<p>从用户这个级别中，实现资源公平的共享。</p>
+<p><strong>Linux采用FSS这种调度策略</strong>。</p>
+<p>FSS控制用户对系统资源的访问</p>
+<ul>
+<li>一些用户组比其他客户组更重要</li>
+<li>保证不重要的组无法垄断资源</li>
+<li>未使用的资源按照每个组所分配的资源的比例来分配</li>
+<li>没有达到资源使用率目前的组获得更高的优先级</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os8_13.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os8_13.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="837评价算法">8.3.7评价算法</h3>
+<ul>
+<li>
+<p><strong>确定性建模</strong></p>
+<p>确定一个工作量，然后计算每个算法的表现</p>
+</li>
+<li>
+<p><strong>队列模型</strong></p>
+<p>用来处理随机工作负载的数学方法</p>
+</li>
+<li>
+<p><strong>实现/模拟</strong></p>
+<p>建立一个允许算法运行实际数据的系统</p>
+<p>最灵活/具有一般性</p>
+</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os8_12.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os8_12.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="838总结">8.3.8总结</h3>
+<p>上述六种算法，跟实际上的调度算法是会有差异的。但是上述算法中的<strong>公平性</strong>、<strong>最小等待时间</strong>、<strong>最小响应时间</strong>等，也是实际操作系统中必须考虑的事情。</p>
+<table>
+<thead>
+<tr>
+<th>简单调度算法</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FCFS 先来先服务</td>
+<td>不公平<!-- raw HTML omitted -->平均等待时间较差</td>
+</tr>
+<tr>
+<td>SPN/SRT 短进程优先</td>
+<td>不公平<!-- raw HTML omitted -->需要精确预测计算时间<!-- raw HTML omitted -->可能导致饥饿</td>
+</tr>
+<tr>
+<td>HRRN 最高响应比优先</td>
+<td>基于SPN调度改进<!-- raw HTML omitted -->不可抢占</td>
+</tr>
+<tr>
+<td>Round Robin 轮询</td>
+<td>公平，但是平均等待时间较差</td>
+</tr>
+<tr>
+<td>MLFQ 多级反馈队列</td>
+<td>和SPN类似</td>
+</tr>
+<tr>
+<td>Fair-share scheduling公平共享调度</td>
+<td>公平第一要素</td>
+</tr>
+</tbody>
+</table>
 <h2 id="84实时调度">8.4实时调度</h2>
+<p>上述更多的调度的算法是通用性的，而实时调度更多用在工业控制上。比如火车、机床、或者是嵌入式设备等，规定需要在某一段时间内必须完成。</p>
+<ul>
+<li>
+<p><strong>定义</strong></p>
+<p>正确性依赖于其时间和功能两方面的一种操作系统</p>
+</li>
+<li>
+<p><strong>性能指标</strong></p>
+<p>时间约束的及时性</p>
+<p>速度和平均性能相对不重要</p>
+</li>
+<li>
+<p><strong>主要特性</strong></p>
+<p>时间约束的可预测性</p>
+</li>
+</ul>
+<h3 id="841实时系统">8.4.1实时系统</h3>
+<ul>
+<li>
+<p><strong>强实时系统</strong></p>
+<p>需要在保证的时间内完成重要的任务，<strong>必须完成</strong></p>
+</li>
+<li>
+<p><strong>弱实时系统</strong></p>
+<p>要求重要的进程的优先级更高，尽量完成，<strong>并非必须</strong></p>
+</li>
+</ul>
+<h3 id="842实时任务">8.4.2实时任务</h3>
+<p>ReleasedTime：让进程处于就绪态的时间</p>
+<p>Relative deadline：相对最后期限，任务是一个一个间隔完成的，每个时间完成特定的任务</p>
+<p>Execution time：任务是蓝色区域表示</p>
+<p>Absolute deadline：绝对最后期限，任务的时间不能超过这个时间点</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os8_14.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os8_14.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>举例说明</p>
+<blockquote>
+<p>如下图8-4所示，有一系列相似的任务</p>
+<p>其中公式使用率U = e / p</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os8_15.png" title="图8-4 实时任务使用率图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os8_15.png"  alt="图8-4 实时任务使用率图">
+  
+    </a>
+  
+   
+    <span class="caption">图8-4 实时任务使用率图</span>
+  
+</div>
+
+</blockquote>
+<h3 id="843时限">8.4.3时限</h3>
+<ul>
+<li>
+<p><strong>硬时限</strong></p>
+<p>如果错过了最后期限，可能会发生灾难性或非常严重的后果</p>
+<p>必须验证：在最坏的情况下也能够满足时限</p>
+<p>保证<strong>确定性</strong></p>
+</li>
+<li>
+<p><strong>软时限</strong></p>
+<p>理想情况下，时限应该被最大满足。如果有时限没有被满足，那么相应地降低要求</p>
+<p>尽量大努力去保证</p>
+</li>
+</ul>
+<p>表示一个实时系统是否能够满足deadline 要求</p>
+<ul>
+<li>决定实时任务执行的顺序</li>
+<li>静态优先级调度，比如先进先服务算法</li>
+<li>动态优先级调度，比如循环调度算法</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os8_16.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os8_16.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="844实际中的两类算法">8.4.4实际中的两类算法</h3>
+<p><strong>RM（Rate Monotonic）速率单调算法</strong></p>
+<ul>
+<li>最佳<strong>静态</strong>优先级调度</li>
+<li>通过<strong>周期</strong>安排优先级</li>
+<li>周期越短优先级越高</li>
+<li>执行周期最短的任务</li>
+</ul>
+<p><strong>EDF（Earliest Deadline First）最早期限调度</strong></p>
+<ul>
+<li>最佳的<strong>动态</strong>优先级调度</li>
+<li>Deadline最早优先级越高</li>
+<li>执行Deadline最早的任务</li>
+</ul>
 <h2 id="85多处理器调度">8.5多处理器调度</h2>
+<p>多处理器重点考虑的两个问题：<strong>系统的确定性调度</strong>和<strong>负载均衡</strong></p>
+<ul>
+<li>
+<p><strong>多处理器的CPU调度更加复杂</strong></p>
+<p>多个相同的但处理器组成一个多处理器</p>
+<p>优点：负载共享</p>
+</li>
+<li>
+<p><strong>对称对处理器（SMP）</strong></p>
+<p>每个处理器运行自己的调度程序</p>
+<p>需要在调度程序中同步</p>
+</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os8_17.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os8_17.png" >
+  
+    </a>
+  
+  
+</div>
+
 <h2 id="86优先级反转">8.6优先级反转</h2>
+<p>火星探路者的操作系统不断重启。发生优先级反转现象</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os8_18.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os8_18.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>正常情况下，有三个进程正在执行，分别是T1，T2和T3，且优先级T1&gt;T2&gt;T3。</p>
+<h3 id="861优先级反转现象">8.6.1优先级反转现象</h3>
+<p>T1在执行的过程中，它跟T3一样也需要访问共享资源，需要等T3执行完毕。那么T3的优先级又比T2低，所以T3的执行需要等待T2执行完成，即T1执行也需要等待T2执行完毕，但实际上T1的优先级会比T2大。这个时候系统检测T1进程得不到执行，就会进行重启。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os8_19.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os8_19.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="862解决方式">8.6.2解决方式</h3>
+<p>1）<strong>优先级继承</strong></p>
+<p>T1在执行的过程中，它跟T3一样也需要访问共享资源，需要等T3执行完毕。那么T3的优先级会提升到跟T1一样，这个时候就不会被T2进程打断，直到T3共享资源部分执行完毕。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os8_20.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os8_20.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>2）<strong>优先级天花板协议</strong></p>
+<ul>
+<li>资源的优先级和所有可以锁定该资源的任务中优先级最高的那个任务的优先级相同（T1和T3的共享资源优先级最高）</li>
+<li>除非优先级高于系统中所有被锁定的资源的优先级上限，否则任务尝试执行临界区的时候会被阻塞（T2会被阻塞）</li>
+<li>持有最高优先级上限信号量锁的任务，会继承被该锁所阻塞的任务的优先级（T3会直接继承T1的优先级）</li>
+</ul>
               
             </div>
           </div>
