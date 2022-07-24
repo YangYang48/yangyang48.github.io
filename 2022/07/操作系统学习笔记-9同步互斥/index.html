@@ -270,7 +270,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">200 Words|Read in about 1 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">600 Words|Read in about 3 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -463,6 +463,798 @@
 <ul>
 <li>一个可执行的进程，被调度器持续忽略，以至于虽然处于可执行状态却不执行</li>
 </ul>
+<p>操作系统中的问题和现实生活中的问题的类比</p>
+<ul>
+<li>更好地帮助理解现实生活的问题</li>
+<li>但是，计算机比人更蠢</li>
+</ul>
+<p>例如，一个寝室一个冰箱，两个室友共享一个冰箱。冰箱里面放有面包，如果没有面包就会有人去买面包。但是会出现A室友买面包的过程中，B室友也会去买面包，最终发现两个人都会去买面包。</p>
+<p>两个室友好比两个线程，这个逻辑过程中就会出现面包买到两次操作的现象，这个并不是我们想要的。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os9_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os9_3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>什么是面包太多的问题的正确性质</p>
+<ul>
+<li>最多有一个人去买面包</li>
+</ul>
+<p>如果需要，有人会去买面包</p>
+<ul>
+<li>例如，在冰箱上设置一个锁和要是</li>
+<li>去买面包之前锁住冰箱并拿走钥匙</li>
+<li>修复了太多的问题，钥匙有人想要果汁怎么办</li>
+<li>可以改变锁的含义</li>
+<li>锁包含等待</li>
+</ul>
+<p><strong>锁</strong></p>
+<ul>
+<li>在门、抽屉等物体上加上保护性装置，使得外人无法访问物体内的东西，只能等待解锁后才能访问</li>
+</ul>
+<p><strong>解锁</strong></p>
+<ul>
+<li>打开保护性装置，使得可以访问之前被锁保护的物体类的东西</li>
+</ul>
+<p><strong>死锁</strong></p>
+<ul>
+<li>A拿到锁1，B拿到锁2，A想继续拿到锁2后在继续执行，B想继续拿到锁1之后再继续执行，导致A和B谁也无法继续执行。</li>
+</ul>
+<h3 id="923方式1使用便签">9.2.3方式1使用便签</h3>
+<p>使用<strong>便签</strong>来避免购买太多面包</p>
+<ul>
+<li>购买之前留下一张标签（一种锁）</li>
+<li>买完后移除标签（一种解锁）</li>
+<li>如果存在便签就不需要购买面包（在便签被移除以前一直等待）</li>
+</ul>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">//程序样例
+</span><span class="ln">2</span><span class="c1"></span><span class="k">if</span><span class="p">(</span><span class="n">nobread</span><span class="p">){</span>
+<span class="ln">3</span>    <span class="k">if</span><span class="p">(</span><span class="n">noNote</span><span class="p">){</span>
+<span class="ln">4</span>        <span class="n">leave</span> <span class="n">Note</span><span class="p">;</span>
+<span class="ln">5</span>        <span class="n">buy</span> <span class="n">bread</span><span class="p">;</span>
+<span class="ln">6</span>        <span class="n">remove</span> <span class="n">Note</span><span class="p">;</span>
+<span class="ln">7</span>    <span class="p">}</span>
+<span class="ln">8</span><span class="p">}</span>
+</code></pre></div><p>如果两个进程一起执行，会出现问题，因为会存在线程的上下文切换的操作。如下图9-2所示，如果A线程执行到2的时候，发生上下文切换，这个时候线程B也会执行到4，这样就会出现重复买面包的操作。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os9_4.png" title="图9-2 上下文切换的两个线程图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os9_4.png"  alt="图9-2 上下文切换的两个线程图">
+  
+    </a>
+  
+   
+    <span class="caption">图9-2 上下文切换的两个线程图</span>
+  
+</div>
+
+<p><strong>结果</strong></p>
+<ul>
+<li>偶尔情况下还是会购买太多面包</li>
+<li>线程可以得到检查面包和便签之后，购买面包之前切换的上下文</li>
+</ul>
+<p><strong>该解决方案由于会间歇性地失败，使得问题更糟了</strong></p>
+<ul>
+<li>使问题更加难以调试</li>
+<li>必须做调度器所做的事情</li>
+</ul>
+<h3 id="924把便签放放在第一位">9.2.4把便签放放在第一位</h3>
+<p>如果把便签放在第一位，会造成线程A和线程B都不会去买面包。</p>
+<p>因为在一个线程中，已经贴标签里后面看到自己贴的标签也还是不会去买面包。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os9_5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os9_5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="925为便签增加标签">9.2.5为便签增加标签</h3>
+<ul>
+<li>可以在检查之前留下便签</li>
+</ul>
+<p>如下图9-3所示，这个时候线执行线程A会贴一个1的便签，然后发生上下文切换，这个时候执行B线程页会贴一个2的便签，这使得A和B线程都不会购买面包。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os9_6.png" title="图9-3 为便签增加标签的算法图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os9_6.png"  alt="图9-3 为便签增加标签的算法图">
+  
+    </a>
+  
+   
+    <span class="caption">图9-3 为便签增加标签的算法图</span>
+  
+</div>
+
+<p><strong>可能导致没有现成去买面包</strong></p>
+<ul>
+<li>错误时间的上下文切换可能会导致每个线程都认为另一个线程会去买面包</li>
+</ul>
+<p><strong>最难处理的</strong></p>
+<ul>
+<li>极其不可能发生的事情也会发生在糟糕的时间</li>
+<li>就像UNIX中的一些事情</li>
+</ul>
+<p><strong>这种锁定状态叫做饥饿</strong></p>
+<h3 id="926更加复杂的两种便签方案">9.2.6更加复杂的两种便签方案</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os9_7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os9_7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>现在有效吗</p>
+<ul>
+<li>当然有效，或者能够去买面包，或者有别人去买了，可以离开了</li>
+</ul>
+<p><strong>结论</strong></p>
+<ul>
+<li>
+<p>它有效，但是真的不够好</p>
+</li>
+<li>
+<p>太复杂了，即使对这个简单的例子而言</p>
+<p>难以说服你自己它真的有效</p>
+</li>
+<li>
+<p>A和B的代码不同</p>
+<p>每个线程的代码会略不同，如果线程过多怎么办</p>
+</li>
+<li>
+<p>当A等待的时候，其实在消耗CPU的时间</p>
+<p>这种情况叫做忙等待</p>
+</li>
+</ul>
+<h3 id="927临界区">9.2.7临界区</h3>
+<p>假设我们有一些锁的实现</p>
+<ul>
+<li>
+<p><strong>Lock Acquire</strong></p>
+<p>在锁释放前一直等待，然后获得锁</p>
+</li>
+<li>
+<p><strong>Lock Release</strong></p>
+<p>解锁并唤醒任何等待中的进程</p>
+</li>
+<li>
+<p>这些一定是<strong>原子</strong>操作</p>
+</li>
+</ul>
+<p>如果两个线程都在等待同一个锁，并且同时发现锁被释放了，那么只有一个能够获得锁</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="n">breadlock</span><span class="p">.</span><span class="n">Acquire</span><span class="p">();</span><span class="c1">//进入临界区
+</span><span class="ln">2</span><span class="c1"></span><span class="k">if</span> <span class="p">(</span><span class="n">nobread</span><span class="p">)</span>
+<span class="ln">3</span><span class="p">{</span>
+<span class="ln">4</span>    <span class="n">buy</span> <span class="n">bread</span><span class="p">;</span>
+<span class="ln">5</span><span class="p">}</span>
+<span class="ln">6</span><span class="n">breadlock</span><span class="p">.</span><span class="n">Release</span><span class="p">();</span><span class="c1">//退出临界区
+</span></code></pre></div><h2 id="93临界区">9.3临界区</h2>
+<ul>
+<li>
+<p><strong>互斥</strong></p>
+<p>同一时间临界区中最多存在一个线程</p>
+</li>
+<li>
+<p><strong>Progress</strong></p>
+<p>如果一个线程想要进入临界区，那么它最终会成功</p>
+</li>
+<li>
+<p><strong>有限等待</strong></p>
+<p>如果一个线程i处于入口区，那么i的请求被接受前，其他进程进入临界区的时间是有限制的</p>
+</li>
+<li>
+<p><strong>无忙等待（可选）</strong></p>
+<p>如果一个进程在等待进入临界区，那么在他可以进入之前会被挂起</p>
+</li>
+</ul>
+<p><strong>进入和离开临界区的代码</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="n">ENTER_CRITICAL_SECTION</span>
+<span class="ln">2</span><span class="n">EXIT_CRITICAL_SECTION</span>
+</code></pre></div><p><strong>基本的机制</strong></p>
+<ol>
+<li>基于硬件中断</li>
+<li>基于软件的解决方法</li>
+<li>更高级的抽象</li>
+</ol>
+<p><strong>比较不同的机制</strong></p>
+<ul>
+<li>性能：并发级别</li>
+</ul>
+<h2 id="94方法1基于硬件中断">9.4方法1：基于硬件中断</h2>
+<p><strong>没有中断，没有上下文切换，因此没有并发</strong></p>
+<ul>
+<li>硬件将中断处理延时到中断被启用之后</li>
+<li>大多数现代计算机体系结构都提供指令完成</li>
+</ul>
+<p><strong>进入临界区</strong></p>
+<ul>
+<li>禁用中断</li>
+</ul>
+<p><strong>离开临界区</strong></p>
+<ul>
+<li>开始中断</li>
+</ul>
+<p><strong>缺点</strong></p>
+<ul>
+<li>
+<p><strong>一旦中断被禁用，线程就无法被停止</strong></p>
+<p>整个系统都会为你停下来</p>
+<p>可能导致其他线程处于饥饿状态</p>
+</li>
+<li>
+<p><strong>要是临界区可以任意长怎么办</strong></p>
+<p>无法限制响应中断所需的时间（可能存在硬件影响）</p>
+</li>
+<li>
+<p><strong>要小心使用</strong></p>
+<p>多CPU只能屏蔽单个CPU，其他CPU是无法屏蔽的</p>
+</li>
+</ul>
+<h2 id="95方法2基于软件的解决方法">9.5方法2：基于软件的解决方法</h2>
+<p>这种软件方式除了应用在操作系统，还被用在了分布式系统中，依靠软件能够完成有效的互斥。</p>
+<h3 id="951举例1">9.5.1举例1</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os9_8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os9_8.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os9_9.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os9_9.png" >
+  
+    </a>
+  
+  
+</div>
+
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//Thread i
+</span><span class="ln"> 2</span><span class="c1">//turn的取值只能为0,1，线程0的初始化为0，线程1初始化为1
+</span><span class="ln"> 3</span><span class="c1">//turn为共享变量
+</span><span class="ln"> 4</span><span class="c1"></span><span class="kt">int</span> <span class="n">turn</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 5</span><span class="c1">//如果是线程0，i=0，j=1，反之线程1，i=1，j=0
+</span><span class="ln"> 6</span><span class="c1"></span><span class="k">do</span> <span class="p">{</span>
+<span class="ln"> 7</span>    <span class="k">while</span><span class="p">(</span><span class="n">turn</span> <span class="o">!=</span> <span class="n">i</span><span class="p">);</span>
+<span class="ln"> 8</span>    <span class="n">critical</span> <span class="n">section</span>
+<span class="ln"> 9</span>    <span class="n">turn</span> <span class="o">=</span> <span class="n">j</span><span class="p">;</span>
+<span class="ln">10</span>    <span class="n">reminder</span> <span class="n">section</span>
+<span class="ln">11</span><span class="p">}</span><span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span> 
+</code></pre></div><p><strong>结论</strong></p>
+<ul>
+<li>能够满足互斥，但是有时不满足progress</li>
+</ul>
+<h3 id="952举例2">9.5.2举例2</h3>
+<p>改变共享变量，改成flag值，flag[0]=1代表0线程想进入临界区，初始化flag[0]和flag[1]都为0。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os9_10.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os9_10.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><strong>结论</strong></p>
+<ul>
+<li>这种情况是不存在互斥的，由于上下文切换有可能两个线程会同时进入临界区</li>
+</ul>
+<h3 id="953举例3">9.5.3举例3</h3>
+<p>改变共享变量的顺序</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os9_11.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os9_11.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><strong>结论</strong></p>
+<ul>
+<li>虽然能够满足互斥，但是存在死锁</li>
+</ul>
+<h3 id="954正确的方法">9.5.4正确的方法</h3>
+<h4 id="9541peteron算法">9.5.4.1<code>Peteron</code>算法</h4>
+<p>定义了三个共享变量</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">int</span> <span class="n">turn</span><span class="p">;</span><span class="c1">//指示该谁进入临界区
+</span><span class="ln">2</span><span class="c1"></span><span class="n">boolean</span> <span class="n">flag</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span><span class="c1">//指示进程是否准备好进入临界区
+</span></code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os9_12.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os9_12.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>完整代码如下所示</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">//线程Pi算法
+</span><span class="ln">2</span><span class="c1"></span><span class="k">do</span><span class="p">{</span>
+<span class="ln">3</span>    <span class="n">flag</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">4</span>    <span class="n">turn</span> <span class="o">=</span> <span class="n">j</span><span class="p">;</span>
+<span class="ln">5</span>    <span class="k">while</span><span class="p">(</span><span class="n">flag</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">&amp;&amp;</span> <span class="n">turn</span> <span class="o">==</span> <span class="n">j</span><span class="p">)</span>
+<span class="ln">6</span>        <span class="n">CRITICAL</span> <span class="n">SECTION</span>
+<span class="ln">7</span>        <span class="n">flag</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">8</span>        <span class="n">REMINDER</span> <span class="n">SECTION</span>
+<span class="ln">9</span><span class="p">}</span><span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</code></pre></div><p><strong>结论</strong></p>
+<ul>
+<li>能够满足<strong>互斥，有限等待，前进</strong>三个条件。</li>
+</ul>
+<h4 id="9542dekker算法">9.5.4.2<code>Dekker</code>算法</h4>
+<p>定义了三个共享变量，比上述的<code>Peteron</code>算法要复杂些</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//线程Pi的算法
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">do</span><span class="p">{</span>
+<span class="ln"> 3</span>    <span class="n">flag</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln"> 4</span>    <span class="k">while</span><span class="p">(</span><span class="n">flag</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="nb">true</span><span class="p">)</span>
+<span class="ln"> 5</span>    <span class="p">{</span>
+<span class="ln"> 6</span>        <span class="k">if</span><span class="p">(</span><span class="n">turn</span> <span class="o">!=</span> <span class="n">i</span><span class="p">)</span>
+<span class="ln"> 7</span>        <span class="p">{</span>
+<span class="ln"> 8</span>            <span class="n">flag</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln"> 9</span>            <span class="k">while</span><span class="p">(</span><span class="n">turn</span> <span class="o">!=</span> <span class="n">i</span><span class="p">){}</span>
+<span class="ln">10</span>            <span class="n">flag</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">11</span>        <span class="p">}</span>
+<span class="ln">12</span>    <span class="p">}</span>
+<span class="ln">13</span>    <span class="n">CRITCAL</span> <span class="n">SECTION</span>
+<span class="ln">14</span>    <span class="n">turn</span> <span class="o">=</span> <span class="n">j</span><span class="p">;</span>
+<span class="ln">15</span>    <span class="n">flag</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">16</span>    <span class="n">REMINDER</span> <span class="n">SECTION</span>
+<span class="ln">17</span><span class="p">}</span><span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</code></pre></div><h4 id="9543eisnberg-and-mcguires-algorithm">9.5.4.3Eisnberg and McGuire&rsquo;s Algorithm</h4>
+<p>针对于多个线程处理</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os9_13.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os9_13.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h4 id="9544bakery算法">9.5.4.4<code>Bakery</code>算法</h4>
+<ul>
+<li>N个进程的临界区</li>
+<li>进入临界区之前，进程接收一个数字</li>
+<li>得到的数字最小的进入临界区</li>
+<li>如果进程<code>Pi</code>和<code>Pj</code>收到相同的数字，那么如果<code>i</code>&lt;<code>j</code>，<code>Pi</code>先进入临界区，<code>Pj</code>后进入临界区</li>
+<li>编号方案总是按照枚举的增加顺序生成数字</li>
+</ul>
+<h3 id="955总结">9.5.5<strong>总结</strong></h3>
+<ul>
+<li>
+<p><code>Dekker</code>算法：第一个针对双线程例子的正确解决方案</p>
+</li>
+<li>
+<p><code>Bakery</code>算法：针对n线程的临界区问题解决方案</p>
+</li>
+<li>
+<p>复杂</p>
+<p>需要两个进程间的共享数据项</p>
+</li>
+<li>
+<p>需要忙等待</p>
+<p>浪费CPU时间</p>
+</li>
+<li>
+<p>没有硬件保证的情况下无真正的软件解决方案</p>
+<p>Peterson算法需要原子的LOAD和STORE指令</p>
+</li>
+</ul>
+<h2 id="96方法3更高级的抽象">9.6方法3：更高级的抽象</h2>
+<h3 id="961更高级的抽象介绍">9.6.1更高级的抽象介绍</h3>
+<p><strong>硬件提供了一些原语</strong></p>
+<ul>
+<li>像中断禁用，原子操作指令等</li>
+<li>大多数现代体系结构都这样</li>
+</ul>
+<p><strong>操作系统提供更高级的编程抽象来简化并行编程</strong></p>
+<ul>
+<li>例如：锁，信号量</li>
+<li>从硬件原语中构建</li>
+</ul>
+<p><strong>锁是一个抽象的数据结构</strong></p>
+<ul>
+<li>一个二进制状态（锁定/解锁），两种方法</li>
+<li>Lock::Acquire()，锁被释放前一直等待，然后得到锁</li>
+<li>Lock::Release()，释放锁，唤醒任何等待的进程</li>
+</ul>
+<p><strong>使用锁来编写临界区</strong></p>
+<ul>
+<li>前面的例子变得简单起来</li>
+</ul>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="n">lock_next_pid</span><span class="o">-&gt;</span><span class="n">Acquire</span><span class="p">();</span>
+<span class="ln">2</span><span class="n">new_pid</span> <span class="o">=</span> <span class="n">next_pid</span><span class="o">++</span><span class="p">;</span>
+<span class="ln">3</span><span class="n">lock_next_pid</span><span class="o">-&gt;</span><span class="n">Release</span><span class="p">();</span>
+</code></pre></div><p><strong>大多数现代体系结构都提供特殊的原子操作指令</strong></p>
+<ul>
+<li>通过特殊的内存访问电路</li>
+<li>针对但处理器和多处理器</li>
+</ul>
+<ol>
+<li>
+<p><strong>Test-and-Set测试和置位</strong></p>
+<p>从内存中读取值</p>
+<p>测试该值是否为1（然后返回真或者假）</p>
+<p>内存值设置为1</p>
+</li>
+<li>
+<p><strong>交换</strong></p>
+<p>交换内存中的两个值</p>
+</li>
+</ol>
+<p>下面的语句是不能被中途打断的，要不全部执行，不要不执行</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="kt">bool</span> <span class="nf">TestAndSet</span><span class="p">(</span><span class="kt">bool</span> <span class="o">*</span><span class="n">target</span><span class="p">){</span>
+<span class="ln"> 2</span>    <span class="n">boolean</span> <span class="n">rv</span> <span class="o">=</span> <span class="o">*</span><span class="n">target</span><span class="p">;</span>
+<span class="ln"> 3</span>    <span class="o">*</span><span class="n">target</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln"> 4</span>    <span class="k">return</span> <span class="n">rv</span><span class="p">;</span>
+<span class="ln"> 5</span><span class="p">}</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span><span class="kt">void</span> <span class="nf">Exchange</span><span class="p">(</span><span class="kt">bool</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="kt">bool</span> <span class="o">*</span><span class="n">b</span><span class="p">){</span>
+<span class="ln"> 8</span>    <span class="kt">bool</span> <span class="n">temp</span> <span class="o">=</span> <span class="o">*</span><span class="n">a</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="o">*</span><span class="n">a</span> <span class="o">=</span> <span class="o">*</span><span class="n">b</span><span class="p">;</span>
+<span class="ln">10</span>    <span class="o">*</span><span class="n">b</span> <span class="o">=</span> <span class="n">temp</span><span class="p">;</span>
+<span class="ln">11</span><span class="p">}</span>
+</code></pre></div><h3 id="962test-and-set测试和置位">9.6.2Test-and-Set测试和置位</h3>
+<p>当一个进程进入临界区，执行Lock::Acquire，内部的value则为1，如果这时候又有另外一个进程出现，那么再次进入临界区，执行执行Lock::Acquire，只能自旋等待。这种方式，即便是多个进程的操作也不会受到影响。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os9_14.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os9_14.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><strong>使用忙等待的锁</strong></p>
+<ul>
+<li>就像上面使用test-and-set实现的锁一样</li>
+<li>线程在等待的时候消耗CPU周期</li>
+</ul>
+<p>下图9-4所示，虽然被挂起，但是依然在内存里面，已经放入到等待队列中，等待唤醒。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//无忙等待
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">class</span> <span class="nc">Lock</span><span class="p">{</span>
+<span class="ln"> 3</span>    <span class="kt">int</span> <span class="n">value</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 4</span>    <span class="n">WaitQueue</span> <span class="n">q</span><span class="p">;</span>
+<span class="ln"> 5</span><span class="p">};</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span><span class="n">Lock</span><span class="o">::</span><span class="n">Acquire</span><span class="p">(){</span>
+<span class="ln"> 8</span>    <span class="k">while</span><span class="p">(</span><span class="n">test</span><span class="o">-</span><span class="n">and</span><span class="o">-</span><span class="n">set</span><span class="p">(</span><span class="n">value</span><span class="p">)){</span>
+<span class="ln"> 9</span>        <span class="n">add</span> <span class="k">this</span> <span class="n">TCB</span> <span class="n">to</span> <span class="n">wait</span> <span class="n">queue</span> <span class="n">q</span><span class="p">;</span>
+<span class="ln">10</span>        <span class="n">schedule</span><span class="p">();</span>
+<span class="ln">11</span>    <span class="p">}</span>
+<span class="ln">12</span><span class="p">}</span>
+<span class="ln">13</span>
+<span class="ln">14</span><span class="n">Lock</span><span class="o">::</span><span class="n">Release</span><span class="p">(){</span>
+<span class="ln">15</span>    <span class="n">value</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">16</span>    <span class="n">remove</span> <span class="n">one</span> <span class="kr">thread</span> <span class="n">t</span> <span class="n">frome</span> <span class="n">q</span><span class="p">;</span>
+<span class="ln">17</span>    <span class="n">wakeup</span><span class="p">(</span><span class="n">t</span><span class="p">);</span>
+<span class="ln">18</span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os9_15.png" title="图9-4 test-and-set实现的锁图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os9_15.png"  alt="图9-4 test-and-set实现的锁图">
+  
+    </a>
+  
+   
+    <span class="caption">图9-4 test-and-set实现的锁图</span>
+  
+</div>
+
+<h3 id="963交换">9.6.3交换</h3>
+<p>共享数据(初始化为0)</p>
+<p>当一个线程A执行时，key=1，lock=0，然后交换一次之后。lock=1，key=0，打破循环进入临界区。如果其他线程B执行时，由于key=lock=1，无限交换轮询，直到线程A退出临界区的时候，线程B才可以进入临界区，保证了互斥。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//线程Ti
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="n">lock</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="kt">int</span> <span class="n">key</span><span class="p">;</span>
+<span class="ln"> 4</span><span class="k">do</span> <span class="p">{</span>
+<span class="ln"> 5</span>    <span class="n">key</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="k">while</span><span class="p">(</span><span class="n">key</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="n">exchange</span><span class="p">(</span><span class="n">lock</span><span class="p">,</span> <span class="n">key</span><span class="p">);</span>
+<span class="ln"> 7</span>        <span class="n">critical</span> <span class="n">section</span>
+<span class="ln"> 8</span>    <span class="n">lock</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 9</span>        <span class="n">reminder</span> <span class="n">section</span>
+<span class="ln">10</span><span class="p">}</span><span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</code></pre></div><h3 id="964总结">9.6.4总结</h3>
+<p><strong>锁</strong>是更高级的编程抽象</p>
+<ul>
+<li>互斥可以使用锁来实现</li>
+<li>通常需要一定等级的硬件支持</li>
+</ul>
+<p><strong>常用的三种实现方法</strong></p>
+<ol>
+<li>禁用中断（仅限但处理器）</li>
+<li>软件方法（复杂）</li>
+<li>原子操作指令（多处理器或单处理器均可）</li>
+</ol>
+<p><strong>可选的实现内容</strong></p>
+<ul>
+<li>有忙等待</li>
+<li>无忙等待</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>更高级的抽象（锁）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>优点</td>
+<td>适用于单处理器或者共享主存的<strong>多处理器</strong>中<strong>任意数量的进程</strong><!-- raw HTML omitted -->简单并且容易证明<!-- raw HTML omitted -->可以用于支持多临界区</td>
+</tr>
+<tr>
+<td>缺点</td>
+<td>忙等待消耗处理器时间<!-- raw HTML omitted -->当进程离开临界区并且多个进程在等待的时候可能导致<strong>饥饿</strong><!-- raw HTML omitted -->死锁。如果有一个低优先级的进程拥有临界区并且一个高优先级的进程也需求，那么高优先级进程会获得处理器并且等待临界区</td>
+</tr>
+</tbody>
+</table>
               
             </div>
           </div>
