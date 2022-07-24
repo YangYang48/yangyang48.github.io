@@ -276,13 +276,510 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">100 Words|Read in about 1 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">1600 Words|Read in about 8 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
               <p>我们通常用ioctl函数直接访问到内核，在内核执行操作，执行读写操作。那么这个函数指令的原理是什么，本文就展开介绍和使用一下ioctl。</p>
-<h1 id="ioctl简介">ioctl简介</h1>
-<p>ioctl(input/output control)是一个专用于设备输入输出操作的系统调用,该调用传入一个跟设备有关的请求码，系统调用的功能完全取决于请求码。</p>
+<h1 id="1ioctl简介">1ioctl简介</h1>
+<p>2.1 ioctl通信方式</p>
+<p>2.1.1 概述</p>
+<p>从ioctl这个名称上看,它是设备驱动程序中对设备的I/O通道进行管理的函数。所谓对I/O通道进行管理，就是对设备的一些特性进行控制。例如串口的传输波特率、马达的转速等等, 但实际上ioctl所处理的对象并不限制是真正的I/O设备，还可以是其它任何一个内核设备。</p>
+<p>ioctl以系统调用的形式提供了一条用户与内核交互的便捷途径。ioctl 这种方式的特点是用户层为主动，当用户层通过ioctl下发指令，内核给出相应的操作，具体的细节由自己实现的代码决定。</p>
+<p>2.1.2 基本原理</p>
+<p>内核实现ioctl()函数的是sys_ioctl().在内核中主要调用框架图如下,它清晰地给我们展示了ioctl的控制传递框架</p>
+<p>kernel3.0之前，叫ioctl，之后改名为unlocked_ioctl。功能和接口基本相同，名字发生了变化</p>
+<p>ioctl既可以往内核读也可以写，read/write在执行大数据量读/写时比较有优势。</p>
+<p>在应用层调用ioctl函数时，内核会调用对应驱动中的ublocked_ioctl函数，向内核读写数据。</p>
+<p>笔者这里的kernel直接参考<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/?h=v5.19-rc7">最新</a>的kernel-v5.19源码来分析。</p>
+<h1 id="2通信流程">2通信流程</h1>
+<h2 id="21调用用户态的ioctl函数">2.1调用用户态的ioctl函数</h2>
+<h2 id="22在系统调用表中找到ioctl函数对应的函数名">2.2在系统调用表中找到ioctl函数对应的函数名</h2>
+<p>首先找到定义的位置</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//kernel/include/uapi/asm-generic/unistd.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#ifndef __SYSCALL
+</span><span class="ln"> 3</span><span class="cp">#define __SYSCALL(x, y)
+</span><span class="ln"> 4</span><span class="cp">#endif
+</span><span class="ln"> 5</span><span class="cp"></span>
+<span class="ln"> 6</span><span class="cp">#if __BITS_PER_LONG == 32 || defined(__SYSCALL_COMPAT)
+</span><span class="ln"> 7</span><span class="cp">#define __SC_3264(_nr, _32, _64) __SYSCALL(_nr, _32)
+</span><span class="ln"> 8</span><span class="cp">#else
+</span><span class="ln"> 9</span><span class="cp">#define __SC_3264(_nr, _32, _64) __SYSCALL(_nr, _64)
+</span><span class="ln">10</span><span class="cp">#endif
+</span><span class="ln">11</span><span class="cp"></span>
+<span class="ln">12</span><span class="cp">#ifdef __SYSCALL_COMPAT
+</span><span class="ln">13</span><span class="cp">#define __SC_COMP(_nr, _sys, _comp) __SYSCALL(_nr, _comp)
+</span><span class="ln">14</span><span class="cp">#define __SC_COMP_3264(_nr, _32, _64, _comp) __SYSCALL(_nr, _comp)
+</span><span class="ln">15</span><span class="cp">#else
+</span><span class="ln">16</span><span class="cp">#define __SC_COMP(_nr, _sys, _comp) __SYSCALL(_nr, _sys)
+</span><span class="ln">17</span><span class="cp">#define __SC_COMP_3264(_nr, _32, _64, _comp) __SC_3264(_nr, _32, _64)
+</span><span class="ln">18</span><span class="cp">#endif
+</span><span class="ln">19</span><span class="cp"></span>
+<span class="ln">20</span><span class="cm">/* fs/ioctl.c */</span>
+<span class="ln">21</span><span class="cp">#define __NR_ioctl 29
+</span><span class="ln">22</span><span class="cp"></span><span class="n">__SC_COMP</span><span class="p">(</span><span class="n">__NR_ioctl</span><span class="p">,</span> <span class="n">sys_ioctl</span><span class="p">,</span> <span class="n">compat_sys_ioctl</span><span class="p">)</span>
+</code></pre></div><p>因为这里边的宏定义比较多，直接替换掉宏定义</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">//kernel/include/uapi/asm-generic/unistd.h
+</span><span class="ln">2</span><span class="c1"></span><span class="n">__SYSCALL</span><span class="p">(</span><span class="mi">29</span><span class="p">,</span> <span class="n">sys_ioctl</span><span class="p">)</span>
+</code></pre></div><p>系统调用表如下，如何解读可以参考<a href="https://www.cnblogs.com/hazir/p/array_initialization.html">这里</a>。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">//kernel/arch/arc/kernel/sys.c
+</span><span class="ln">2</span><span class="c1"></span><span class="cp">#define __SYSCALL(nr, call) [nr] = (call),
+</span><span class="ln">3</span><span class="cp"></span>
+<span class="ln">4</span><span class="kt">void</span><span class="o">*</span> <span class="n">sys_call_table</span><span class="p">[</span><span class="n">NR_syscalls</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln">5</span>    <span class="p">[</span><span class="mi">0</span> <span class="p">...</span> <span class="n">NR_syscalls</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">sys_ni_syscall</span><span class="p">,</span>
+<span class="ln">6</span>    <span class="cp">#include</span><span class="cpf">&lt;asm/unistd.h&gt;</span><span class="cp">
+</span><span class="ln">7</span><span class="cp"></span><span class="p">};</span>
+</code></pre></div><p>这里用的是c99的语法规则，其中数组初始化可以用[0 &hellip; n]，这种写法。举例如下</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">int</span> <span class="n">my_array</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="mi">29</span><span class="p">,</span> <span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">15</span> <span class="p">};</span>
+<span class="ln">2</span><span class="c1">//或者写成：
+</span><span class="ln">3</span><span class="c1">//省略到索引与值之间的=，GCC 2.5 之后该用法已经过时了，但 GCC 仍然支持
+</span><span class="ln">4</span><span class="c1"></span><span class="kt">int</span> <span class="n">my_array</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="mi">29</span><span class="p">,</span> <span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="mi">15</span> <span class="p">};</span>     
+<span class="ln">5</span><span class="c1">//两者均等价于：
+</span><span class="ln">6</span><span class="c1"></span><span class="kt">int</span> <span class="n">my_array</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">29</span><span class="p">,</span> <span class="mi">0</span><span class="p">};</span>
+</code></pre></div><p>直到对应的语法之后，其中#include&lt;asm/unistd.h&gt;就是罗列了所有的系统调用函数名。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//所以得到的ioctl函数就是下面这个宏定义
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">__SYSCALL</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">sys_io_setup</span><span class="p">)</span>
+<span class="ln"> 3</span><span class="n">__SYSCALL</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">sys_io_destroy</span><span class="p">)</span>
+<span class="ln"> 4</span><span class="n">__SYSCALL</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">sys_io_submit</span><span class="p">)</span>
+<span class="ln"> 5</span><span class="p">...</span>
+<span class="ln"> 6</span><span class="n">__SYSCALL</span><span class="p">(</span><span class="mi">29</span><span class="p">,</span> <span class="n">sys_ioctl</span><span class="p">)</span>
+<span class="ln"> 7</span><span class="p">...</span>
+<span class="ln"> 8</span><span class="c1">//展开上述的宏定义
+</span><span class="ln"> 9</span><span class="c1"></span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">sys_io_setup</span><span class="p">,</span>
+<span class="ln">10</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">sys_io_destroy</span><span class="p">,</span>
+<span class="ln">11</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">sys_io_submit</span><span class="p">,</span>
+<span class="ln">12</span><span class="p">...</span>
+<span class="ln">13</span><span class="p">[</span><span class="mi">29</span><span class="p">]</span> <span class="o">=</span> <span class="n">sys_ioctl</span><span class="p">,</span>
+<span class="ln">14</span><span class="p">...</span>
+</code></pre></div><p>那么现在替换之后再来看系统调用表</p>
+<p>其中，NR_syscalls这个数是在#include&lt;asm/unistd.h&gt;中实际的系统调用函数名数量，比如435。那么NR_syscalls就会被435替换。</p>
+<p>这个sys_call_table数组中的[0 &hellip; 434]是用于初始化的操作，其中这个sys_ni_syscall函数名返回的是-ENOSYS，说明如果没有找到#include&lt;asm/unistd.h&gt;中对应的函数，直接返回系统调用表初始化错误。</p>
+<p>后面的操作，是相当于对其重新赋值，让每一个系统调用表数组都能够对应一个函数名，那么在找这个函数名的过程，只需要记住这个函数名在表中对应的序号即可，这里的ioctl函数，对应的就是29序号。即在系统调用表中找到ioctl函数对应的函数名为sys_ioctl。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//kernel/arch/arc/kernel/sys.c
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#define __SYSCALL(nr, call) [nr] = (call),
+</span><span class="ln"> 3</span><span class="cp"></span>
+<span class="ln"> 4</span><span class="kt">void</span><span class="o">*</span> <span class="n">sys_call_table</span><span class="p">[</span><span class="mi">435</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln"> 5</span>    <span class="p">[</span><span class="mi">0</span> <span class="p">...</span> <span class="mi">434</span><span class="p">]</span> <span class="o">=</span> <span class="n">sys_ni_syscall</span><span class="p">,</span>
+<span class="ln"> 6</span>    <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">sys_restart_syscall</span><span class="p">,</span>
+<span class="ln"> 7</span>    <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">sys_exit</span><span class="p">,</span>
+<span class="ln"> 8</span>    <span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">sys_fork</span><span class="p">,</span>
+<span class="ln"> 9</span>    <span class="p">...</span>
+<span class="ln">10</span>    <span class="p">[</span><span class="mi">29</span><span class="p">]</span> <span class="o">=</span> <span class="n">sys_ioctl</span><span class="p">,</span>
+<span class="ln">11</span>    <span class="p">...</span>
+<span class="ln">12</span><span class="p">};</span>
+</code></pre></div><p>应用程序告诉内核自己需要执行一个系统调用时，通知内核的机制是靠软中断实现的：通过引发一个异常促使系统切换到内核去执行异常处理程序。该异常处理程序实际就是系统调用处理程序。在x86系统上。通过int$0x80指令触发该中断。这条指令会触发一个异常导致系统切换到内核态并执行第128号异常处理程序&mdash;-系统调用处理程序。系统调用处理程序叫system_call()，它与硬件体系结构紧密相关，在x86-64位系统上在entry_64.S文件中，用汇编语言编写。</p>
+<p>system_call函数通过将给定的系统调用号（eax的值）与NR_syscalls做比较来检查其有效性。如果它大于或等于NR_syscalls，该函数返回-ENOSYS。否则执行相应的系统调用：call *sys_call_table(,%rax,4)。由于系统调用表中的表项是以32位（4字节）类型存放的，所以内核需要将给定的系统调用号乘以4。</p>
+<p>除了系统调用号以外，大部分系统调用都还需要一些外部的参数输入，所以需要把这些参数从用户空间传给内核。最简单的方法就是像传递系统调用参数那样也存放在寄存器里。在x83-32系统上，ebx,ecx,edx,esi,edi按照顺序存放前五个参数。需要六个或者以上的参数，应该用一个单独的寄存器存放指向所有这些参数在用户空间地址的指针。给用户空间的返回值也通过寄存器传递。在x86系统上存放在eax寄存器里。</p>
+<p>对应的系统调用流程如下</p>
+<p><img src="D:%5Chugo%5CMyBlog%5Cstatic%5Cioctl%5Cioctl_1.png" alt="ioctl_1"></p>
+<h2 id="23找到内核中对应的函数指针">2.3找到内核中对应的函数指针</h2>
+<p>找到了函数名sys_ioctl，就要去找对应的定义和实现</p>
+<p>定义</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">//kernel/include/linux/syscalls.h
+</span><span class="ln">2</span><span class="c1"></span><span class="n">asmlinkage</span> <span class="kt">long</span> <span class="nf">sys_ioctl</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">cmd</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span> <span class="kt">long</span><span class="p">);</span>
+</code></pre></div><p>找到了这个定义之后，去找到实现</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//kernel/fs/ioctl.c
+</span><span class="ln"> 2</span><span class="c1">//实际上SYSCALL_DEFINE3就是sys_ioctl
+</span><span class="ln"> 3</span><span class="c1"></span><span class="n">SYSCALL_DEFINE3</span><span class="p">(</span><span class="n">ioctl</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span><span class="p">,</span> <span class="n">arg</span><span class="p">)</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span>	<span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">;</span>
+<span class="ln"> 6</span>	<span class="kt">int</span> <span class="n">error</span> <span class="o">=</span> <span class="o">-</span><span class="n">EBADF</span><span class="p">;</span>
+<span class="ln"> 7</span>	<span class="kt">int</span> <span class="n">fput_needed</span><span class="p">;</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span>	<span class="n">filp</span> <span class="o">=</span> <span class="n">fget_light</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">fput_needed</span><span class="p">);</span><span class="c1">//由fd得带filp指针
+</span><span class="ln">10</span><span class="c1"></span>	<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">filp</span><span class="p">)</span>
+<span class="ln">11</span>		<span class="k">goto</span> <span class="n">out</span><span class="p">;</span>
+<span class="ln">12</span>
+<span class="ln">13</span>	<span class="n">error</span> <span class="o">=</span> <span class="n">security_file_ioctl</span><span class="p">(</span><span class="n">filp</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">arg</span><span class="p">);</span>
+<span class="ln">14</span>	<span class="k">if</span> <span class="p">(</span><span class="n">error</span><span class="p">)</span>
+<span class="ln">15</span>		<span class="k">goto</span> <span class="n">out_fput</span><span class="p">;</span>
+<span class="ln">16</span>
+<span class="ln">17</span>	<span class="n">error</span> <span class="o">=</span> <span class="n">do_vfs_ioctl</span><span class="p">(</span><span class="n">filp</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">arg</span><span class="p">);</span>
+<span class="ln">18</span> <span class="nl">out_fput</span><span class="p">:</span>
+<span class="ln">19</span>	<span class="n">fput_light</span><span class="p">(</span><span class="n">filp</span><span class="p">,</span> <span class="n">fput_needed</span><span class="p">);</span>
+<span class="ln">20</span> <span class="nl">out</span><span class="p">:</span>
+<span class="ln">21</span>	<span class="k">return</span> <span class="n">error</span><span class="p">;</span>
+<span class="ln">22</span><span class="p">}</span>
+</code></pre></div><blockquote>
+<p>补充说明</p>
+<p>为什么SYSCALL_DEFINE3就是sys_ioctl。实际上这里的3代表有三个参数的意思，具体拆解可以点击<a href="https://blog.csdn.net/weixin_43798887/article/details/118930476">这里</a>，找到宏定义是如何一步步展开的，这里简单阐述。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">//include/linux/syscalls.h
+</span><span class="ln">2</span><span class="c1"></span><span class="cp">#define SYSCALL_DEFINE3(name, ...)  SYSCALL_DEFINEx(3, _##name, __VA_ARGS__)
+</span><span class="ln">3</span><span class="cp">#define SYSCALL_DEFINEx(x, sname, ...)	__SYSCALL_DEFINEx(x, sname, __VA_ARGS__)
+</span><span class="ln">4</span><span class="cp">#define __SYSCALL_DEFINEx(x, name, ...)	asmlinkage long sys##name(__SC_DECL##x(__VA_ARGS__))
+</span></code></pre></div><p><code>__SYSCALL_DEFINEx</code>宏定义</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//include/linux/syscalls.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#define __SYSCALL_DEFINEx(x, name, ...)					\
+</span><span class="ln"> 3</span><span class="cp">	asmlinkage long sys##name(__SC_DECL##x(__VA_ARGS__));		\
+</span><span class="ln"> 4</span><span class="cp">	static inline long SYSC##name(__SC_DECL##x(__VA_ARGS__));	\
+</span><span class="ln"> 5</span><span class="cp">	asmlinkage long SyS##name(__SC_LONG##x(__VA_ARGS__))		\
+</span><span class="ln"> 6</span><span class="cp">	{								\
+</span><span class="ln"> 7</span><span class="cp">		__SC_TEST##x(__VA_ARGS__);				\
+</span><span class="ln"> 8</span><span class="cp">		return (long) SYSC##name(__SC_CAST##x(__VA_ARGS__));	\
+</span><span class="ln"> 9</span><span class="cp">	}								\
+</span><span class="ln">10</span><span class="cp">	SYSCALL_ALIAS(sys##name, SyS##name);				\
+</span><span class="ln">11</span><span class="cp">	static inline long SYSC##name(__SC_DECL##x(__VA_ARGS__))
+</span></code></pre></div><p><code>SYSCALL_ALIAS</code>定义</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">//include/linux/syscalls.h
+</span><span class="ln">2</span><span class="c1"></span><span class="cp">#define SYSCALL_ALIAS(alias, name)					\
+</span><span class="ln">3</span><span class="cp">	asm (&#34;\t.globl &#34; #alias &#34;\n\t.set &#34; #alias &#34;, &#34; #name &#34;\n&#34;	\
+</span><span class="ln">4</span><span class="cp">	     &#34;\t.globl .&#34; #alias &#34;\n\t.set .&#34; #alias &#34;, .&#34; #name)
+</span></code></pre></div><p><code>__SC_DECL3</code>定义</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">//include/linux/syscalls.h
+</span><span class="ln">2</span><span class="c1"></span><span class="cp">#define __SC_DECL1(t1, a1)      t1 a1
+</span><span class="ln">3</span><span class="cp">#define __SC_DECL2(t2, a2, ...) t2 a2, __SC_DECL1(__VA_ARGS__)
+</span><span class="ln">4</span><span class="cp">#define __SC_DECL3(t3, a3, ...) t3 a3, __SC_DECL2(__VA_ARGS__)
+</span></code></pre></div><p>展开所有的宏定义之后，得到结果</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="n">asmlinkage</span> <span class="kt">long</span> <span class="nf">sys_ioctl</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">cmd</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">arg</span><span class="p">);</span>		\
+<span class="ln"> 2</span><span class="k">static</span> <span class="kr">inline</span> <span class="kt">long</span> <span class="nf">SYSC_ioctl</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">fd</span><span class="p">,</span>  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">cmd</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">arg</span><span class="p">);</span>	\
+<span class="ln"> 3</span><span class="n">asmlinkage</span> <span class="kt">long</span> <span class="nf">SyS_ioctl</span><span class="p">(</span><span class="kt">long</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">long</span> <span class="n">cmd</span><span class="p">,</span> <span class="kt">long</span> <span class="n">arg</span><span class="p">)</span>		\
+<span class="ln"> 4</span><span class="p">{</span>								\
+<span class="ln"> 5</span>    <span class="n">BUILD_BUG_ON</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="o">&gt;</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">long</span><span class="p">));</span> <span class="n">BUILD_BUG_ON</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="o">&gt;</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">long</span><span class="p">));</span>               <span class="n">BUILD_BUG_ON</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="o">&gt;</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">long</span><span class="p">));</span>				\
+<span class="ln"> 6</span>    <span class="k">return</span> <span class="p">(</span><span class="kt">long</span><span class="p">)</span> <span class="n">SYSC_ioctl</span><span class="p">((</span><span class="kt">unsigned</span> <span class="kt">int</span><span class="p">)</span> <span class="n">fd</span><span class="p">,</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span><span class="p">)</span> <span class="n">cmd</span><span class="p">,</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="n">arg</span><span class="p">);</span>	\
+<span class="ln"> 7</span><span class="p">}</span>								\
+<span class="ln"> 8</span>    <span class="n">SYSCALL_ALIAS</span><span class="p">(</span><span class="n">sys_ioctl</span><span class="p">,</span> <span class="n">SyS_ioctl</span><span class="p">);</span>				\
+<span class="ln"> 9</span>    <span class="k">static</span> <span class="kr">inline</span> <span class="kt">long</span> <span class="nf">SYSC_ioctl</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">fd</span><span class="p">,</span>  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">cmd</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">arg</span><span class="p">)</span>
+<span class="ln">10</span><span class="p">{</span>
+<span class="ln">11</span>    <span class="n">code</span><span class="p">...</span>
+<span class="ln">12</span><span class="p">}</span>
+</code></pre></div><p>其实里面做的工作，就是将系统调用的参数统一变为了<strong>使用long类型来接收，然后再强转为本来参数类型</strong>。据说这样折腾是为了修复一个漏洞来的。</p>
+</blockquote>
+<h2 id="24与自定义的ioctl函数对应">2.4与自定义的ioctl函数对应</h2>
+<p><strong>do_vfs_ioctl</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//kernel/fs/ioctl.c
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="nf">do_vfs_ioctl</span><span class="p">(</span><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">cmd</span><span class="p">,</span>
+<span class="ln"> 3</span>	     <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">arg</span><span class="p">)</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span>	<span class="kt">int</span> <span class="n">error</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 6</span>	<span class="kt">int</span> <span class="n">__user</span> <span class="o">*</span><span class="n">argp</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span> <span class="n">__user</span> <span class="o">*</span><span class="p">)</span><span class="n">arg</span><span class="p">;</span>
+<span class="ln"> 7</span>	<span class="k">struct</span> <span class="n">inode</span> <span class="o">*</span><span class="n">inode</span> <span class="o">=</span> <span class="n">filp</span><span class="o">-&gt;</span><span class="n">f_path</span><span class="p">.</span><span class="n">dentry</span><span class="o">-&gt;</span><span class="n">d_inode</span><span class="p">;</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span>	<span class="k">switch</span> <span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">10</span>	<span class="k">case</span> <span class="nl">FIOCLEX</span><span class="p">:</span>
+<span class="ln">11</span>		<span class="n">set_close_on_exec</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+<span class="ln">12</span>		<span class="k">break</span><span class="p">;</span>
+<span class="ln">13</span>
+<span class="ln">14</span>	<span class="k">case</span> <span class="nl">FIONCLEX</span><span class="p">:</span>
+<span class="ln">15</span>		<span class="n">set_close_on_exec</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="ln">16</span>		<span class="k">break</span><span class="p">;</span>
+<span class="ln">17</span>
+<span class="ln">18</span>	<span class="k">case</span> <span class="nl">FIONBIO</span><span class="p">:</span>
+<span class="ln">19</span>		<span class="n">error</span> <span class="o">=</span> <span class="n">ioctl_fionbio</span><span class="p">(</span><span class="n">filp</span><span class="p">,</span> <span class="n">argp</span><span class="p">);</span>
+<span class="ln">20</span>		<span class="k">break</span><span class="p">;</span>
+<span class="ln">21</span>
+<span class="ln">22</span>	<span class="k">case</span> <span class="nl">FIOASYNC</span><span class="p">:</span>
+<span class="ln">23</span>		<span class="n">error</span> <span class="o">=</span> <span class="n">ioctl_fioasync</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">filp</span><span class="p">,</span> <span class="n">argp</span><span class="p">);</span>
+<span class="ln">24</span>		<span class="k">break</span><span class="p">;</span>
+<span class="ln">25</span>
+<span class="ln">26</span>	<span class="k">case</span> <span class="nl">FIOQSIZE</span><span class="p">:</span>
+<span class="ln">27</span>		<span class="k">if</span> <span class="p">(</span><span class="n">S_ISDIR</span><span class="p">(</span><span class="n">inode</span><span class="o">-&gt;</span><span class="n">i_mode</span><span class="p">)</span> <span class="o">||</span> <span class="n">S_ISREG</span><span class="p">(</span><span class="n">inode</span><span class="o">-&gt;</span><span class="n">i_mode</span><span class="p">)</span> <span class="o">||</span>
+<span class="ln">28</span>		    <span class="n">S_ISLNK</span><span class="p">(</span><span class="n">inode</span><span class="o">-&gt;</span><span class="n">i_mode</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">29</span>			<span class="n">loff_t</span> <span class="n">res</span> <span class="o">=</span> <span class="n">inode_get_bytes</span><span class="p">(</span><span class="n">inode</span><span class="p">);</span>
+<span class="ln">30</span>			<span class="n">error</span> <span class="o">=</span> <span class="n">copy_to_user</span><span class="p">(</span><span class="n">argp</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">res</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">res</span><span class="p">))</span> <span class="o">?</span>
+<span class="ln">31</span>					<span class="o">-</span><span class="nl">EFAULT</span> <span class="p">:</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">32</span>		<span class="p">}</span> <span class="k">else</span>
+<span class="ln">33</span>			<span class="n">error</span> <span class="o">=</span> <span class="o">-</span><span class="n">ENOTTY</span><span class="p">;</span>
+<span class="ln">34</span>		<span class="k">break</span><span class="p">;</span>
+<span class="ln">35</span>
+<span class="ln">36</span>	<span class="k">case</span> <span class="nl">FIFREEZE</span><span class="p">:</span>
+<span class="ln">37</span>		<span class="n">error</span> <span class="o">=</span> <span class="n">ioctl_fsfreeze</span><span class="p">(</span><span class="n">filp</span><span class="p">);</span>
+<span class="ln">38</span>		<span class="k">break</span><span class="p">;</span>
+<span class="ln">39</span>
+<span class="ln">40</span>	<span class="k">case</span> <span class="nl">FITHAW</span><span class="p">:</span>
+<span class="ln">41</span>		<span class="n">error</span> <span class="o">=</span> <span class="n">ioctl_fsthaw</span><span class="p">(</span><span class="n">filp</span><span class="p">);</span>
+<span class="ln">42</span>		<span class="k">break</span><span class="p">;</span>
+<span class="ln">43</span>
+<span class="ln">44</span>	<span class="k">case</span> <span class="nl">FS_IOC_FIEMAP</span><span class="p">:</span>
+<span class="ln">45</span>		<span class="k">return</span> <span class="n">ioctl_fiemap</span><span class="p">(</span><span class="n">filp</span><span class="p">,</span> <span class="n">arg</span><span class="p">);</span>
+<span class="ln">46</span>
+<span class="ln">47</span>	<span class="k">case</span> <span class="nl">FIGETBSZ</span><span class="p">:</span>
+<span class="ln">48</span>		<span class="k">return</span> <span class="n">put_user</span><span class="p">(</span><span class="n">inode</span><span class="o">-&gt;</span><span class="n">i_sb</span><span class="o">-&gt;</span><span class="n">s_blocksize</span><span class="p">,</span> <span class="n">argp</span><span class="p">);</span>
+<span class="ln">49</span>
+<span class="ln">50</span>	<span class="k">default</span><span class="o">:</span>
+<span class="ln">51</span>		<span class="k">if</span> <span class="p">(</span><span class="n">S_ISREG</span><span class="p">(</span><span class="n">inode</span><span class="o">-&gt;</span><span class="n">i_mode</span><span class="p">))</span><span class="c1">//是否为常规文件若是常规文件
+</span><span class="ln">52</span><span class="c1"></span>			<span class="n">error</span> <span class="o">=</span> <span class="n">file_ioctl</span><span class="p">(</span><span class="n">filp</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">arg</span><span class="p">);</span>
+<span class="ln">53</span>		<span class="k">else</span>
+<span class="ln">54</span>			<span class="n">error</span> <span class="o">=</span> <span class="n">vfs_ioctl</span><span class="p">(</span><span class="n">filp</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">arg</span><span class="p">);</span><span class="c1">//调用vfs_ioctl
+</span><span class="ln">55</span><span class="c1"></span>		<span class="k">break</span><span class="p">;</span>
+<span class="ln">56</span>	<span class="p">}</span>
+<span class="ln">57</span>	<span class="k">return</span> <span class="n">error</span><span class="p">;</span>
+<span class="ln">58</span><span class="p">}</span>
+</code></pre></div><p><strong>vfs_ioctl</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//kernel/fs/ioctl.c
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="kt">long</span> <span class="nf">vfs_ioctl</span><span class="p">(</span><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">cmd</span><span class="p">,</span>
+<span class="ln"> 3</span>		      <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">arg</span><span class="p">)</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span>	<span class="kt">int</span> <span class="n">error</span> <span class="o">=</span> <span class="o">-</span><span class="n">ENOTTY</span><span class="p">;</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span>	<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">filp</span><span class="o">-&gt;</span><span class="n">f_op</span> <span class="o">||</span> <span class="o">!</span><span class="n">filp</span><span class="o">-&gt;</span><span class="n">f_op</span><span class="o">-&gt;</span><span class="n">unlocked_ioctl</span><span class="p">)</span>
+<span class="ln"> 8</span>		<span class="k">goto</span> <span class="n">out</span><span class="p">;</span>
+<span class="ln"> 9</span><span class="n">unlocked_ioctl</span>
+<span class="ln">10</span>	<span class="n">error</span> <span class="o">=</span> <span class="n">filp</span><span class="o">-&gt;</span><span class="n">f_op</span><span class="o">-&gt;</span><span class="n">unlocked_ioctl</span><span class="p">(</span><span class="n">filp</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">arg</span><span class="p">);</span><span class="c1">//调用unlocked_ioctl()
+</span><span class="ln">11</span><span class="c1"></span>	<span class="k">if</span> <span class="p">(</span><span class="n">error</span> <span class="o">==</span> <span class="o">-</span><span class="n">ENOIOCTLCMD</span><span class="p">)</span>
+<span class="ln">12</span>		<span class="n">error</span> <span class="o">=</span> <span class="o">-</span><span class="n">EINVAL</span><span class="p">;</span>
+<span class="ln">13</span> <span class="nl">out</span><span class="p">:</span>
+<span class="ln">14</span>	<span class="k">return</span> <span class="n">error</span><span class="p">;</span>
+<span class="ln">15</span><span class="p">}</span>	
+</code></pre></div><p>//补充部分unlocked_ioctl到my_ioctl</p>
+<h2 id="25-ioctl-用户与驱动之间的协议">2.5 ioctl 用户与驱动之间的协议</h2>
+<p>前文提到 ioctl 方法第二个参数 cmd 为用户与驱动的 “协议”，理论上可以为任意 int 型数据，可以为 0、1、2、3……，但是为了确保该 “协议” 的唯一性，ioctl 命令应该使用更科学严谨的方法赋值，在linux中，提供了一种 ioctl 命令的统一格式，将 32 位 int 型数据划分为四个位段，如下图所示：</p>
+<div class="highlight"><pre class="chroma"><code class="language-txt" data-lang="txt"><span class="ln">1</span>第一个分区：0-7，命令的编号，范围是0-255
+<span class="ln">2</span>第二个分区：8-15，命令的幻数
+<span class="ln">3</span>第三个分区：16-29，表示传递的数据的大小
+<span class="ln">4</span>第四分区：30-31，代表读写的方向
+<span class="ln">5</span>
+<span class="ln">6</span>
+<span class="ln">7</span>第一和第二分区，主要用来区分命令，不能有两个完全一样的“一+二”
+<span class="ln">8</span>第四分区：00：没有数据传递；10：用户从驱动读数据；01：用户向驱动写数据；11：先写数据到驱动再把数据读出来
+</code></pre></div><p><img src="D:%5Chugo%5CMyBlog%5Cstatic%5Cioctl%5Cioctl_3.png" alt="ioctl_3"></p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="cp">#define _IOC(dir,type,nr,size) \
+</span><span class="ln">2</span><span class="cp">    (((dir)  &lt;&lt; _IOC_DIRSHIFT) | \
+</span><span class="ln">3</span><span class="cp">     ((type) &lt;&lt; _IOC_TYPESHIFT) | \
+</span><span class="ln">4</span><span class="cp">     ((nr)   &lt;&lt; _IOC_NRSHIFT) | \
+</span><span class="ln">5</span><span class="cp">     ((size) &lt;&lt; _IOC_SIZESHIFT))
+</span></code></pre></div><p>dir（direction），ioctl 命令访问模式（数据传输方向），占据 2 bit，可以为 _IOC_NONE、_IOC_READ、_IOC_WRITE、_IOC_READ | _IOC_WRITE，分别指示了四种访问模式：无数据、读数据、写数据、读写数据；
+size，涉及到 ioctl 函数第三个参数 arg ，占据14bit，指定了 arg 的数据类型及长度；
+type（device type），设备类型，占据 8 bit，可以为任意 char 型字符，例如
+‘a’、’b’、’c’ 等等，其主要作用是使 ioctl 命令有唯一的设备标识；
+nr（number），命令编号/序数，占据 8 bit，可以为任意 unsigned char 型数据，取值范围 0~255，如果定义了多个 ioctl 命令，通常从 0 开始编号递增；</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//ioctl.h
+</span><span class="ln"> 2</span><span class="c1"></span>
+<span class="ln"> 3</span><span class="cm">/* used to create numbers */</span>
+<span class="ln"> 4</span><span class="cp">#define _IO(type,nr)        _IOC(_IOC_NONE,(type),(nr),0)
+</span><span class="ln"> 5</span><span class="cp">#define _IOR(type,nr,size)  _IOC(_IOC_READ,(type),(nr),(_IOC_TYPECHECK(size)))
+</span><span class="ln"> 6</span><span class="cp">#define _IOW(type,nr,size)  _IOC(_IOC_WRITE,(type),(nr),(_IOC_TYPECHECK(size)))
+</span><span class="ln"> 7</span><span class="cp">#define _IOWR(type,nr,size) _IOC(_IOC_READ|_IOC_WRITE,(type),(nr),(_IOC_TYPECHECK(size)))
+</span><span class="ln"> 8</span><span class="cp"></span>
+<span class="ln"> 9</span><span class="n">_IOC_NONE</span><span class="err">：值为</span><span class="mi">0</span><span class="err">，无数据传输。</span>
+<span class="ln">10</span><span class="n">_IOC_READ</span><span class="err">：值为</span><span class="mi">1</span><span class="err">，从设备驱动读取数据。</span>
+<span class="ln">11</span><span class="n">_IOC_WRITE</span><span class="err">：值为</span><span class="mi">2</span><span class="err">，往设备驱动写入数据。</span>
+<span class="ln">12</span><span class="n">_IOC_READ</span><span class="o">|</span><span class="n">_IOC_WRITE</span><span class="err">：双向数据传输。</span>
+<span class="ln">13</span>
+<span class="ln">14</span><span class="n">_IO</span><span class="p">(</span><span class="n">type</span><span class="p">,</span><span class="n">nr</span><span class="p">)</span><span class="err">：</span>       <span class="err">定义不带参数的</span> <span class="n">ioctl</span> <span class="err">命令</span>
+<span class="ln">15</span><span class="n">_IOR</span><span class="p">(</span><span class="n">type</span><span class="p">,</span><span class="n">nr</span><span class="p">,</span><span class="n">size</span><span class="p">)</span><span class="err">：</span>      <span class="err">定义带写参数的</span> <span class="n">ioctl</span> <span class="err">命令（</span><span class="n">copy_from_user</span><span class="err">）</span>
+<span class="ln">16</span><span class="n">_IOW</span><span class="p">(</span><span class="n">type</span><span class="p">,</span><span class="n">nr</span><span class="p">,</span><span class="n">size</span><span class="p">)</span><span class="err">：</span>      <span class="err">定义带读参数的</span><span class="n">ioctl命令</span><span class="err">（</span><span class="n">copy_to_user</span><span class="err">）</span>
+<span class="ln">17</span><span class="n">_IOWR</span><span class="p">(</span><span class="n">type</span><span class="p">,</span><span class="n">nr</span><span class="p">,</span><span class="n">size</span><span class="p">)</span><span class="err">：</span>     <span class="err">定义带读写参数的</span> <span class="n">ioctl</span> <span class="err">命令</span>
+<span class="ln">18</span>
+<span class="ln">19</span><span class="c1">//同时，内核还提供了反向解析 ioctl 命令的宏接口：
+</span><span class="ln">20</span><span class="c1"></span>
+<span class="ln">21</span><span class="cm">/* used to decode ioctl numbers */</span>
+<span class="ln">22</span><span class="cp">#define _IOC_DIR(nr)        (((nr) &gt;&gt; _IOC_DIRSHIFT) &amp; _IOC_DIRMASK)
+</span><span class="ln">23</span><span class="cp">#define _IOC_TYPE(nr)       (((nr) &gt;&gt; _IOC_TYPESHIFT) &amp; _IOC_TYPEMASK)
+</span><span class="ln">24</span><span class="cp">#define _IOC_NR(nr)     (((nr) &gt;&gt; _IOC_NRSHIFT) &amp; _IOC_NRMASK)
+</span><span class="ln">25</span><span class="cp">#define _IOC_SIZE(nr)       (((nr) &gt;&gt; _IOC_SIZESHIFT) &amp; _IOC_SIZEMASK)
+</span><span class="ln">26</span><span class="cp"></span>    
+<span class="ln">27</span><span class="n">_IOC_DIR</span><span class="p">(</span><span class="n">nr</span><span class="p">)</span>   <span class="err">方向</span>
+<span class="ln">28</span><span class="n">_IOC_TYPE</span><span class="p">(</span><span class="n">nr</span><span class="p">)</span>  <span class="err">幻数</span>
+<span class="ln">29</span><span class="n">_IOC_NR</span><span class="p">(</span><span class="n">nr</span><span class="p">)</span>    <span class="err">编号</span>
+<span class="ln">30</span><span class="n">_IOC_SIZE</span><span class="p">(</span><span class="n">nr</span><span class="p">)</span>   <span class="err">大小</span>
+<span class="ln">31</span>
+<span class="ln">32</span><span class="c1">//nr要分解的命令
+</span></code></pre></div><h1 id="3举例说明">3举例说明</h1>
+<h2 id="31应用层部分">3.1应用层部分</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//external/ioctl_test/ioctl_test.c
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#include</span><span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp">#include</span><span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span><span class="ln"> 4</span><span class="cp">#include</span><span class="cpf">&lt;fcntl.h&gt;</span><span class="cp">
+</span><span class="ln"> 5</span><span class="cp">#include</span><span class="cpf">&lt;string.h&gt;</span><span class="cp">
+</span><span class="ln"> 6</span><span class="cp">#include</span><span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span><span class="ln"> 7</span><span class="cp">#include</span><span class="cpf">&lt;sys/ioctl.h&gt;</span><span class="cp">
+</span><span class="ln"> 8</span><span class="cp"></span>
+<span class="ln"> 9</span><span class="cp">#define CMD_TEST_0 _IO(&#39;A&#39;, 0)
+</span><span class="ln">10</span><span class="cp">#define CMD_TEST_1 _IOR(&#39;A&#39;, 1, int)
+</span><span class="ln">11</span><span class="cp">#define CMD_TEST_2 _IOW(&#39;A&#39;, 2, int)
+</span><span class="ln">12</span><span class="cp">#define CMD_TEST_3 _IOWR(&#39;A&#39;, 3, int)
+</span><span class="ln">13</span><span class="cp"></span>
+<span class="ln">14</span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[]){</span>
+<span class="ln">15</span>    <span class="kt">int</span> <span class="n">fd</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">16</span>    <span class="kt">int</span> <span class="n">revData</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">17</span>
+<span class="ln">18</span>    <span class="n">fd</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="s">&#34;/dev/ioctl_test&#34;</span><span class="p">,</span> <span class="n">O_RDWR</span><span class="p">);</span>
+<span class="ln">19</span>    <span class="k">if</span><span class="p">(</span><span class="n">fd</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">){</span>
+<span class="ln">20</span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;open failed</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">21</span>        <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln">22</span>    <span class="p">}</span>
+<span class="ln">23</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;open success</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">24</span>
+<span class="ln">25</span>    <span class="cm">/*依次调用四个命令*/</span>
+<span class="ln">26</span>    <span class="n">ioctl</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">CMD_TEST_0</span><span class="p">);</span>
+<span class="ln">27</span>    
+<span class="ln">28</span>    <span class="n">revData</span> <span class="o">=</span> <span class="n">ioctl</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">CMD_TEST_1</span><span class="p">);</span>
+<span class="ln">29</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;receive 1 data=%d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">revData</span><span class="p">);</span>
+<span class="ln">30</span>
+<span class="ln">31</span>    <span class="n">ioctl</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">CMD_TEST_2</span><span class="p">,</span> <span class="mi">99</span><span class="p">);</span>
+<span class="ln">32</span>
+<span class="ln">33</span>    <span class="n">revData</span> <span class="o">=</span> <span class="n">ioctl</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">CMD_TEST_3</span><span class="p">,</span> <span class="mi">101</span><span class="p">);</span>
+<span class="ln">34</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;receive 3 data=%d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">revData</span><span class="p">);</span>
+<span class="ln">35</span>
+<span class="ln">36</span>    <span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
+<span class="ln">37</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">38</span><span class="p">}</span>
+</code></pre></div><h2 id="32驱动层部分">3.2驱动层部分</h2>
+<p>在 Linux 内核的include/linux目录下有miscdevice.h文件，要把自己定义的misc device从设备定义在这里。定义一个 MISC 设备(miscdevice 类型)以后我们需要设置 minor、name 和 fops 这三个成员变量。minor 表示子设备号，MISC 设备的主设备号为 10，这个是固定的，需要用户指定子设备号，Linux 系统已经预定义了一些 MISC 设备的子设备号。</p>
+<p>name 就是此 MISC 设备名字，当此设备注册成功以后就会在/dev 目录下生成一个名为 name的设备文件。fops 就是<a href="https://so.csdn.net/so/search?q=%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87&amp;spm=1001.2101.3001.7020">字符设备</a>的操作集合，MISC 设备驱动最终是需要使用用户提供的 fops操作集合。</p>
+<p>函数接口</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">//完成misc设备注册。
+</span><span class="ln">2</span><span class="c1"></span><span class="kt">int</span> <span class="nf">misc_register</span><span class="p">(</span><span class="k">struct</span> <span class="n">miscdevice</span> <span class="o">*</span> <span class="n">misc</span><span class="p">);</span>
+<span class="ln">3</span><span class="c1">//完成misc设备注销。
+</span><span class="ln">4</span><span class="c1"></span><span class="kt">int</span> <span class="nf">misc_deregister</span><span class="p">(</span><span class="k">struct</span> <span class="n">miscdevice</span> <span class="o">*</span><span class="n">misc</span><span class="p">);</span>
+</code></pre></div><p>驱动部分钟的<code>_init</code>，<code>_exit</code>，关键字实际上也是宏定义，可以点击<a href="https://blog.csdn.net/maopig/article/details/7409870">这里</a>。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//kernel/drivers/soc/xxx/sdmmc_ioctl_test.c
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#include</span> <span class="cpf">&lt;linux/init.h&gt;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp">#include</span> <span class="cpf">&lt;linux/module.h&gt;</span><span class="cp">
+</span><span class="ln"> 4</span><span class="cp">#include</span> <span class="cpf">&lt;linux/miscdevice.h&gt;</span><span class="cp">
+</span><span class="ln"> 5</span><span class="cp">#include</span> <span class="cpf">&lt;linux/fs.h&gt;</span><span class="cp">
+</span><span class="ln"> 6</span><span class="cp">#include</span> <span class="cpf">&lt;linux/uaccess.h&gt;</span><span class="cp">
+</span><span class="ln"> 7</span><span class="cp">#include</span> <span class="cpf">&lt;linux/io.h&gt;</span><span class="cp">
+</span><span class="ln"> 8</span><span class="cp"></span>
+<span class="ln"> 9</span><span class="cp">#define CMD_TEST_0 _IO(&#39;A&#39;, 0)       </span><span class="c1">//不需要读写的命令
+</span><span class="ln">10</span><span class="c1"></span><span class="cp">#define CMD_TEST_1 _IOR(&#39;A&#39;, 1, int) </span><span class="c1">//从内核读取一个int的命令
+</span><span class="ln">11</span><span class="c1"></span><span class="cp">#define CMD_TEST_2 _IOW(&#39;A&#39;, 2, int) </span><span class="c1">//向内核写入一个int的命令
+</span><span class="ln">12</span><span class="c1"></span><span class="cp">#define CMD_TEST_3 _IOWR(&#39;A&#39;, 3, int) </span><span class="c1">//读写一个int的命令
+</span><span class="ln">13</span><span class="c1"></span>
+<span class="ln">14</span><span class="kt">int</span> <span class="nf">misc_open</span><span class="p">(</span><span class="k">struct</span> <span class="n">inode</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">b</span><span class="p">){</span>
+<span class="ln">15</span>    <span class="n">printk</span><span class="p">(</span><span class="s">&#34;misc open </span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">16</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">17</span><span class="p">}</span>
+<span class="ln">18</span>
+<span class="ln">19</span><span class="kt">int</span> <span class="nf">misc_release</span> <span class="p">(</span><span class="k">struct</span> <span class="n">inode</span> <span class="o">*</span> <span class="n">a</span><span class="p">,</span> <span class="k">struct</span> <span class="n">file</span> <span class="o">*</span> <span class="n">b</span><span class="p">){</span>
+<span class="ln">20</span>    <span class="n">printk</span><span class="p">(</span><span class="s">&#34;misc file release</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">21</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">22</span><span class="p">}</span>
+<span class="ln">23</span>
+<span class="ln">24</span><span class="kt">long</span> <span class="nf">my_ioctl</span><span class="p">(</span><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">fd</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">cmd</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">b</span><span class="p">){</span>
+<span class="ln">25</span>    <span class="cm">/*将命令按内容分解，打印出来*/</span>
+<span class="ln">26</span>    <span class="n">printk</span><span class="p">(</span><span class="s">&#34;cmd type=(%c)</span><span class="se">\t</span><span class="s"> nr=(%d)</span><span class="se">\t</span><span class="s"> dir=(%d)</span><span class="se">\t</span><span class="s"> size=(%d)</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">_IOC_TYPE</span><span class="p">(</span><span class="n">cmd</span><span class="p">),</span> <span class="n">_IOC_NR</span><span class="p">(</span><span class="n">cmd</span><span class="p">),</span> <span class="n">_IOC_DIR</span><span class="p">(</span><span class="n">cmd</span><span class="p">),</span> <span class="n">_IOC_SIZE</span><span class="p">(</span><span class="n">cmd</span><span class="p">));</span>
+<span class="ln">27</span>
+<span class="ln">28</span>    <span class="k">switch</span><span class="p">(</span><span class="n">cmd</span><span class="p">){</span>
+<span class="ln">29</span>        <span class="k">case</span> <span class="nl">CMD_TEST_0</span><span class="p">:</span>
+<span class="ln">30</span>            <span class="n">printk</span><span class="p">(</span><span class="s">&#34;CMD_TEST_0</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">31</span>            <span class="k">break</span><span class="p">;</span>
+<span class="ln">32</span>        <span class="k">case</span> <span class="nl">CMD_TEST_1</span><span class="p">:</span>
+<span class="ln">33</span>            <span class="n">printk</span><span class="p">(</span><span class="s">&#34;CMD_TEST_1</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">34</span>            <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">35</span>            <span class="k">break</span><span class="p">;</span>
+<span class="ln">36</span>        <span class="k">case</span> <span class="nl">CMD_TEST_2</span><span class="p">:</span>
+<span class="ln">37</span>            <span class="n">printk</span><span class="p">(</span><span class="s">&#34;CMD_TEST_2 date=(%d)</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span><span class="n">b</span><span class="p">);</span>
+<span class="ln">38</span>            <span class="k">break</span><span class="p">;</span>
+<span class="ln">39</span>        <span class="k">case</span> <span class="nl">CMD_TEST_3</span><span class="p">:</span>
+<span class="ln">40</span>            <span class="n">printk</span><span class="p">(</span><span class="s">&#34;CMD_TEST_3 date=(%d)</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span><span class="n">b</span><span class="p">);</span>
+<span class="ln">41</span>            <span class="k">return</span> <span class="n">b</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">42</span>            <span class="k">break</span><span class="p">;</span>
+<span class="ln">43</span>    <span class="p">}</span>
+<span class="ln">44</span>
+<span class="ln">45</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">46</span><span class="p">}</span>
+<span class="ln">47</span>
+<span class="ln">48</span><span class="c1">//文件操作集
+</span><span class="ln">49</span><span class="c1"></span><span class="k">struct</span> <span class="n">file_operations</span> <span class="n">misc_fops</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln">50</span>    <span class="p">.</span><span class="n">owner</span> <span class="o">=</span> <span class="n">THIS_MODULE</span><span class="p">,</span>
+<span class="ln">51</span>    <span class="p">.</span><span class="n">open</span> <span class="o">=</span> <span class="n">misc_open</span><span class="p">,</span>
+<span class="ln">52</span>    <span class="p">.</span><span class="n">release</span> <span class="o">=</span> <span class="n">misc_release</span><span class="p">,</span>
+<span class="ln">53</span>    <span class="p">.</span><span class="n">unlocked_ioctl</span> <span class="o">=</span> <span class="n">my_ioctl</span>
+<span class="ln">54</span>    <span class="p">.</span><span class="n">compat_ioctl</span> <span class="o">=</span> <span class="n">my_ioctl</span>
+<span class="ln">55</span><span class="p">};</span>
+<span class="ln">56</span>
+<span class="ln">57</span><span class="c1">//ioctl_test，设备节点名,添加了这个语句可以在设备中ls找到这个设备节点，并且是c开头的
+</span><span class="ln">58</span><span class="c1"></span><span class="k">struct</span> <span class="n">miscdevice</span> <span class="n">misc_dev</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln">59</span>    <span class="p">.</span><span class="n">minor</span> <span class="o">=</span> <span class="n">MISC_DYNAMIC_MINOR</span><span class="p">,</span>
+<span class="ln">60</span>    <span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#34;ioctl_test&#34;</span><span class="p">,</span>   
+<span class="ln">61</span>    <span class="p">.</span><span class="n">fops</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">misc_fops</span>
+<span class="ln">62</span><span class="p">};</span>
+<span class="ln">63</span>
+<span class="ln">64</span><span class="c1">//这里的__exit,这是一个宏定义,同下面的__init类似
+</span><span class="ln">65</span><span class="c1"></span><span class="k">static</span> <span class="n">__exit</span> <span class="kt">int</span> <span class="nf">ioctl_init</span><span class="p">(</span><span class="kt">void</span><span class="p">){</span>
+<span class="ln">66</span>    <span class="kt">int</span> <span class="n">ret</span><span class="p">;</span>
+<span class="ln">67</span>
+<span class="ln">68</span>    <span class="n">ret</span> <span class="o">=</span> <span class="n">misc_register</span><span class="p">(</span><span class="o">&amp;</span><span class="n">misc_dev</span><span class="p">);</span>  <span class="c1">//注册杂项设备
+</span><span class="ln">69</span><span class="c1"></span>    <span class="k">if</span><span class="p">(</span><span class="n">ret</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">){</span>
+<span class="ln">70</span>        <span class="n">printk</span><span class="p">(</span><span class="s">&#34;misc regist failed</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">71</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">72</span>    <span class="p">}</span>
+<span class="ln">73</span>
+<span class="ln">74</span>    <span class="n">printk</span><span class="p">(</span><span class="s">&#34;misc regist succeed</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">75</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">76</span><span class="p">}</span>
+<span class="ln">77</span>
+<span class="ln">78</span><span class="c1">//这里的__init，这是一个宏定义
+</span><span class="ln">79</span><span class="c1">//最常用的地方是驱动模块初始化函数的定义处，其目的是将驱动模块的初始化函数放入名叫.init.text的输入段
+</span><span class="ln">80</span><span class="c1"></span><span class="k">static</span> <span class="n">__init</span> <span class="kt">void</span> <span class="nf">ioctl_exit</span><span class="p">(</span><span class="kt">void</span><span class="p">){</span>
+<span class="ln">81</span>    <span class="n">misc_deregister</span><span class="p">(</span><span class="o">&amp;</span><span class="n">misc_dev</span><span class="p">);</span>
+<span class="ln">82</span><span class="p">}</span>
+<span class="ln">83</span>
+<span class="ln">84</span><span class="n">MODULE_LICENSE</span><span class="p">(</span><span class="s">&#34;Dual BSD/GPL&#34;</span><span class="p">);</span>
+<span class="ln">85</span><span class="n">MODULE_AUTHOR</span><span class="p">(</span><span class="s">&#34;TAXUE&#34;</span><span class="p">);</span>
+<span class="ln">86</span>
+<span class="ln">87</span><span class="c1">//这里可以改成module_init
+</span><span class="ln">88</span><span class="c1"></span><span class="n">device_initcall_sync</span><span class="p">(</span><span class="n">ioctl_init</span><span class="p">);</span> 
+<span class="ln">89</span><span class="n">module_exit</span><span class="p">(</span><span class="n">ioctl_exit</span><span class="p">);</span>  
+</code></pre></div><p>驱动的校验部分</p>
+<p>//补充https://blog.csdn.net/dongxianfei/article/details/118256267</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="cm">/* 检查设备类型 */</span>
+<span class="ln"> 2</span><span class="k">if</span> <span class="p">(</span><span class="n">_IOC_TYPE</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">!=</span> <span class="n">IOC_MAGIC</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="n">pr_err</span><span class="p">(</span><span class="s">&#34;[%s] command type [%c] error!</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> \
+<span class="ln"> 4</span>           <span class="n">__func__</span><span class="p">,</span> <span class="n">_IOC_TYPE</span><span class="p">(</span><span class="n">cmd</span><span class="p">));</span>
+<span class="ln"> 5</span>    <span class="k">return</span> <span class="o">-</span><span class="n">ENOTTY</span><span class="p">;</span> 
+<span class="ln"> 6</span><span class="p">}</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span><span class="cm">/* 检查序数 */</span>
+<span class="ln"> 9</span><span class="k">if</span> <span class="p">(</span><span class="n">_IOC_NR</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">IOC_MAXNR</span><span class="p">)</span> <span class="p">{</span> 
+<span class="ln">10</span>    <span class="n">pr_err</span><span class="p">(</span><span class="s">&#34;[%s] command numer [%d] exceeded!</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> 
+<span class="ln">11</span>           <span class="n">__func__</span><span class="p">,</span> <span class="n">_IOC_NR</span><span class="p">(</span><span class="n">cmd</span><span class="p">));</span>
+<span class="ln">12</span>    <span class="k">return</span> <span class="o">-</span><span class="n">ENOTTY</span><span class="p">;</span>
+<span class="ln">13</span><span class="p">}</span>    
+<span class="ln">14</span>
+<span class="ln">15</span><span class="cm">/* 检查访问模式 */</span>
+<span class="ln">16</span><span class="k">if</span> <span class="p">(</span><span class="n">_IOC_DIR</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">_IOC_READ</span><span class="p">)</span>
+<span class="ln">17</span>    <span class="n">ret</span><span class="o">=</span> <span class="o">!</span><span class="n">access_ok</span><span class="p">(</span><span class="n">VERIFY_WRITE</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span> <span class="n">__user</span> <span class="o">*</span><span class="p">)</span><span class="n">arg</span><span class="p">,</span> \
+<span class="ln">18</span>                    <span class="n">_IOC_SIZE</span><span class="p">(</span><span class="n">cmd</span><span class="p">));</span>
+<span class="ln">19</span><span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">_IOC_DIR</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">_IOC_WRITE</span><span class="p">)</span>
+<span class="ln">20</span>    <span class="n">ret</span><span class="o">=</span> <span class="o">!</span><span class="n">access_ok</span><span class="p">(</span><span class="n">VERIFY_READ</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span> <span class="n">__user</span> <span class="o">*</span><span class="p">)</span><span class="n">arg</span><span class="p">,</span> \
+<span class="ln">21</span>                    <span class="n">_IOC_SIZE</span><span class="p">(</span><span class="n">cmd</span><span class="p">));</span>
+<span class="ln">22</span><span class="k">if</span> <span class="p">(</span><span class="n">ret</span><span class="p">)</span>
+<span class="ln">23</span>    <span class="k">return</span> <span class="o">-</span><span class="n">EFAULT</span><span class="p">;</span>
+</code></pre></div><p>最终得到的调用流程如下所示，通过用户态调用的ioctl函数设备节点/dev/ioctl_test最终在内核态的my_ioctl实现这个流程。</p>
+<p><img src="D:%5Chugo%5CMyBlog%5Cstatic%5Cioctl%5Cioctl_2.png" alt="ioctl_2"></p>
+<h2 id="33编译">3.3编译</h2>
+<p>kernel在驱动层的编译，需要依赖于Kconfig和Makefile文件；在应用层的编译，需要依赖于Android.mk。</p>
+<h3 id="331驱动层的编译">3.3.1驱动层的编译</h3>
+<ul>
+<li>Kconfig
+每个源码目录下提供选项</li>
+<li>.config
+源码顶层目录下保存选择结果</li>
+<li>Makefile
+每个源码目录下根据.config中的内容来告知编译系统如何编译</li>
+</ul>
+<p>从这里可以看到，这里也是有一定的语法规则。其中Kconfig用来配置内核，它就是各种配置界面的源文件，内核的配置工具读取各个Kconfig文件，生成配置界面供开发人员配置内核，最后<strong>生成配置文件.config</strong>。</p>
+<p><code>config</code>是关键字，表示一个配置选项的开始；紧跟着的<code>IOCTL_TEST</code>是配置选项的名称，省略了前缀<code>CONFIG_</code>
+bool表示变量类型，即<code>CONFIG_IOCTL_TEST </code>的类型。</p>
+<p><strong>字符串“This is IOCTL_TEST”是提示信息</strong>，在配置界面中上下移动光标选中它时，就可以通过按空格或回车键来设置<code>CONFIG_IOCTL_TEST </code>的值</p>
+<p>default代表tristate变量的值，一共有三个值y、n和m。如果是n代表所需要的文件不需要被编译进去，这里笔者需要编译进入所有使得，<code>CONFIG_IOCTL_TEST </code>的值为y。</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>config IOCTL_TEST
+<span class="ln">2</span>    bool &#34;This is IOCTL_TEST&#34;
+<span class="ln">3</span>    default y
+<span class="ln">4</span>    help
+<span class="ln">5</span>      IOCTL TEST support permissions for users and groups beyond the owner/group/world scheme.
+<span class="ln">6</span>      If you don&#39;t know what Access Control Lists are, say N.
+</code></pre></div><p>然后在Makefile文件中添加这个需要编译的二进制文件</p>
+<div class="highlight"><pre class="chroma"><code class="language-makefile" data-lang="makefile"><span class="ln">1</span><span class="nv">obj-y</span> <span class="o">+=</span> sdmmc_ioctl_test.o
+<span class="ln">2</span><span class="err">//可以写成上述的样子</span>
+<span class="ln">3</span><span class="nv">obj-$(CONFIG_IOCTL_TEST)</span> <span class="o">+=</span> sdmmc_ioctl_test.o
+</code></pre></div><h3 id="332应用层编译">3.3.2应用层编译</h3>
+<p>这个比较简单，就是单纯的Android.mk文件即可</p>
+<div class="highlight"><pre class="chroma"><code class="language-makefile" data-lang="makefile"><span class="ln">1</span><span class="nv">LOCAL_PATH</span> <span class="o">:=</span> <span class="k">$(</span>call my-dir<span class="k">)</span>
+<span class="ln">2</span><span class="err">include</span> <span class="k">$(</span><span class="nv">CLEAR_VARS</span><span class="k">)</span>
+<span class="ln">3</span><span class="nv">LOCAL_MODULE</span> <span class="o">:=</span> ioctl_test
+<span class="ln">4</span><span class="nv">LOCAL_SRC_FILES</span> <span class="o">+=</span> ioctl_test.c
+<span class="ln">5</span><span class="nv">LOCAL_C_INCLUDE</span> <span class="o">+=</span> <span class="k">$(</span>LOCAL_PATH<span class="k">)</span>/
+<span class="ln">6</span><span class="nv">LOCAL_C_FLAG</span> <span class="o">:=</span> -Wreturn-local-addr -Wwriting_strings -fpermissive -fexceptions -Wall -Wno-unused-variable -lgcc_s -std<span class="o">=</span>c99
+<span class="ln">7</span><span class="c">#编译生成动态文件so
+</span><span class="ln">8</span><span class="c"></span><span class="err">include</span> <span class="k">$(</span><span class="nv">BUILD_SHARE_LIBRARY</span><span class="k">)</span>
+<span class="ln">9</span><span class="err">include</span> <span class="k">$(</span><span class="nv">call</span> <span class="nv">all_makefiles_under</span>, <span class="k">$(</span><span class="nv">LOCAL_PATH</span><span class="k">))</span>
+</code></pre></div><h1 id="4总结">4总结</h1>
+<p>ioctl 面向硬件驱动</p>
+<p>ioctl是内核比较早的一种用户态内核态的交互方式，侧重于文件系统，方便添加对硬件驱动的处理。</p>
+<p>ioctl机制可以在驱动中扩展特定的ioctl消息，用于将一些状态从内核反应到用户态。ioctl有很好的数据同步保护机制，不用担心内核和用户层的数据访问冲突，但是ioctl不适合传输大量的数据。</p>
 <h1 id="两个可以参考的源码网站">两个可以参考的源码网站</h1>
 <p><a href="http://aospxref.com/android-11.0.0_r21/">aospxref.com</a></p>
 <p><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/?h=v5.19-rc7">kernel.org</a></p>
