@@ -276,25 +276,64 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">1600 Words|Read in about 8 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">1900 Words|Read in about 9 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
               <p>我们通常用ioctl函数直接访问到内核，在内核执行操作，执行读写操作。那么这个函数指令的原理是什么，本文就展开介绍和使用一下ioctl。</p>
 <h1 id="1ioctl简介">1ioctl简介</h1>
-<p>2.1 ioctl通信方式</p>
-<p>2.1.1 概述</p>
-<p>从ioctl这个名称上看,它是设备驱动程序中对设备的I/O通道进行管理的函数。所谓对I/O通道进行管理，就是对设备的一些特性进行控制。例如串口的传输波特率、马达的转速等等, 但实际上ioctl所处理的对象并不限制是真正的I/O设备，还可以是其它任何一个内核设备。</p>
-<p>ioctl以系统调用的形式提供了一条用户与内核交互的便捷途径。ioctl 这种方式的特点是用户层为主动，当用户层通过ioctl下发指令，内核给出相应的操作，具体的细节由自己实现的代码决定。</p>
-<p>2.1.2 基本原理</p>
-<p>内核实现ioctl()函数的是sys_ioctl().在内核中主要调用框架图如下,它清晰地给我们展示了ioctl的控制传递框架</p>
+<h2 id="11什么是ioctl">1.1什么是ioctl</h2>
+<blockquote>
+<p>从ioctl这个名称上看，它是设备驱动程序中对设备的I/O通道进行管理的函数。</p>
+<p>所谓对I/O通道进行管理，就是对设备的一些特性进行控制。例如串口的传输波特率、马达的转速等等, 但实际上<strong>ioctl所处理的对象并不限制是真正的I/O设备</strong>，还可以是其它任何一个内核设备。</p>
+</blockquote>
+<p>说白了，ioctl以系统调用的形式提供了一<strong>条用户与内核交互的便捷途径</strong>。ioctl 这种方式的特点是用户层为主动，当用户层通过ioctl下发指令，内核给出相应的操作，具体的细节由自己实现的代码决定。</p>
+<h2 id="12-基本原理">1.2 基本原理</h2>
 <p>kernel3.0之前，叫ioctl，之后改名为unlocked_ioctl。功能和接口基本相同，名字发生了变化</p>
 <p>ioctl既可以往内核读也可以写，read/write在执行大数据量读/写时比较有优势。</p>
-<p>在应用层调用ioctl函数时，内核会调用对应驱动中的ublocked_ioctl函数，向内核读写数据。</p>
+<p>在应用层调用ioctl函数时，内核会调用对应驱动中的unlocked_ioctl函数，向内核读写数据。</p>
 <p>笔者这里的kernel直接参考<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/?h=v5.19-rc7">最新</a>的kernel-v5.19源码来分析。</p>
+<p>内核实现ioctl()函数的是sys_ioctl()。内核中主要调用框架图如下图所示</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ioctl/ioctl_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ioctl/ioctl_4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<blockquote>
+<p>至于为什么在驱动层中还会看到<code>compat_ioctl</code></p>
+<p>这是因为为了<strong>相容性</strong>而出现的<code>compat_ioctl</code>。为了让32-bit的进程可以在64-bit上的system来执行ioctl这个函数。</p>
+</blockquote>
 <h1 id="2通信流程">2通信流程</h1>
 <h2 id="21调用用户态的ioctl函数">2.1调用用户态的ioctl函数</h2>
-<h2 id="22在系统调用表中找到ioctl函数对应的函数名">2.2在系统调用表中找到ioctl函数对应的函数名</h2>
+<p>在用户态只有函数的声明，最终的实现是在内核态，也就是内核态封装了一个函数可以用于用户态的调用。</p>
+<p>驱动程序中的ioctl属于内核空间，然而应用程序属于用户空间，没有权限访问内核空间，那么需要系统需要从用户态转为内核态，在系统调用中，是通过**<code>SWI</code>(Software Interrupt)的方式**陷入内核态的，这里实际上是一个靠**软中断**实现的。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">//development/ndk/platforms/android-30/include/sys/ioctl.h
+</span><span class="ln">2</span><span class="c1"></span><span class="kt">int</span> <span class="nf">ioctl</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">cmd</span><span class="p">,</span> <span class="p">...)</span> <span class="p">;</span>
+</code></pre></div><h2 id="22在系统调用表中找到ioctl函数对应的函数名">2.2在系统调用表中找到ioctl函数对应的函数名</h2>
 <p>首先找到定义的位置</p>
 <div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//kernel/include/uapi/asm-generic/unistd.h
 </span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#ifndef __SYSCALL
@@ -336,7 +375,7 @@
 </span><span class="ln">4</span><span class="c1"></span><span class="kt">int</span> <span class="n">my_array</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="mi">29</span><span class="p">,</span> <span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="mi">15</span> <span class="p">};</span>     
 <span class="ln">5</span><span class="c1">//两者均等价于：
 </span><span class="ln">6</span><span class="c1"></span><span class="kt">int</span> <span class="n">my_array</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">29</span><span class="p">,</span> <span class="mi">0</span><span class="p">};</span>
-</code></pre></div><p>直到对应的语法之后，其中#include&lt;asm/unistd.h&gt;就是罗列了所有的系统调用函数名。</p>
+</code></pre></div><p>直到对应的语法之后，其中<code>#include&lt;asm/unistd.h&gt;</code>就是罗列了所有的系统调用函数名。</p>
 <div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//所以得到的ioctl函数就是下面这个宏定义
 </span><span class="ln"> 2</span><span class="c1"></span><span class="n">__SYSCALL</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">sys_io_setup</span><span class="p">)</span>
 <span class="ln"> 3</span><span class="n">__SYSCALL</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">sys_io_destroy</span><span class="p">)</span>
@@ -352,8 +391,8 @@
 <span class="ln">13</span><span class="p">[</span><span class="mi">29</span><span class="p">]</span> <span class="o">=</span> <span class="n">sys_ioctl</span><span class="p">,</span>
 <span class="ln">14</span><span class="p">...</span>
 </code></pre></div><p>那么现在替换之后再来看系统调用表</p>
-<p>其中，NR_syscalls这个数是在#include&lt;asm/unistd.h&gt;中实际的系统调用函数名数量，比如435。那么NR_syscalls就会被435替换。</p>
-<p>这个sys_call_table数组中的[0 &hellip; 434]是用于初始化的操作，其中这个sys_ni_syscall函数名返回的是-ENOSYS，说明如果没有找到#include&lt;asm/unistd.h&gt;中对应的函数，直接返回系统调用表初始化错误。</p>
+<p>其中，<code>NR_syscall</code>s这个数是在<code>#include&lt;asm/unistd.h&gt;</code>中实际的系统调用函数名数量，比如435。那么<code>NR_syscalls</code>就会被435替换。</p>
+<p>这个<code>sys_call_table</code>数组中的[0 &hellip; 434]是用于初始化的操作，其中这个<code>sys_ni_syscall</code>函数名返回的是<code>-ENOSYS</code>，说明如果没有找到<code>#include&lt;asm/unistd.h&gt;</code>中对应的函数，直接返回系统调用表初始化错误。</p>
 <p>后面的操作，是相当于对其重新赋值，让每一个系统调用表数组都能够对应一个函数名，那么在找这个函数名的过程，只需要记住这个函数名在表中对应的序号即可，这里的ioctl函数，对应的就是29序号。即在系统调用表中找到ioctl函数对应的函数名为sys_ioctl。</p>
 <div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//kernel/arch/arc/kernel/sys.c
 </span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#define __SYSCALL(nr, call) [nr] = (call),
@@ -367,13 +406,45 @@
 <span class="ln">10</span>    <span class="p">[</span><span class="mi">29</span><span class="p">]</span> <span class="o">=</span> <span class="n">sys_ioctl</span><span class="p">,</span>
 <span class="ln">11</span>    <span class="p">...</span>
 <span class="ln">12</span><span class="p">};</span>
-</code></pre></div><p>应用程序告诉内核自己需要执行一个系统调用时，通知内核的机制是靠软中断实现的：通过引发一个异常促使系统切换到内核去执行异常处理程序。该异常处理程序实际就是系统调用处理程序。在x86系统上。通过int$0x80指令触发该中断。这条指令会触发一个异常导致系统切换到内核态并执行第128号异常处理程序&mdash;-系统调用处理程序。系统调用处理程序叫system_call()，它与硬件体系结构紧密相关，在x86-64位系统上在entry_64.S文件中，用汇编语言编写。</p>
-<p>system_call函数通过将给定的系统调用号（eax的值）与NR_syscalls做比较来检查其有效性。如果它大于或等于NR_syscalls，该函数返回-ENOSYS。否则执行相应的系统调用：call *sys_call_table(,%rax,4)。由于系统调用表中的表项是以32位（4字节）类型存放的，所以内核需要将给定的系统调用号乘以4。</p>
-<p>除了系统调用号以外，大部分系统调用都还需要一些外部的参数输入，所以需要把这些参数从用户空间传给内核。最简单的方法就是像传递系统调用参数那样也存放在寄存器里。在x83-32系统上，ebx,ecx,edx,esi,edi按照顺序存放前五个参数。需要六个或者以上的参数，应该用一个单独的寄存器存放指向所有这些参数在用户空间地址的指针。给用户空间的返回值也通过寄存器传递。在x86系统上存放在eax寄存器里。</p>
+</code></pre></div><blockquote>
+<p>关于<code>system_call</code>系统调用</p>
+<p>因为上述得到的是系统调用表，而系统调用需要在这个系统调用表中查询。</p>
+<p>通过软中断引发一个异常促使系统切换到内核去执行异常处理程序。该异常处理程序实际就是系统调用处理程序。这条指令会触发一个异常导致系统切换到内核态并执行第128号异常处理程序&mdash;-系统调用处理程序。系统调用处理程序叫<code>system_call()</code>，它与硬件体系结构紧密相关，用汇编语言编写。</p>
+<p>应用程序告诉内核自己需要执行一个系统调用时，通知内核的机制是靠<code>system_call</code>函数通过将给定的系统调用号（<code>eax</code>的值）与<code>NR_syscalls</code>做比较来检查其有效性（<code>eax</code>代表寄存器）。如果它大于或等于<code>NR_syscalls</code>，该函数返回<code>-ENOSYS</code>。否则执行相应的系统调用：<code>call *sys_call_table(,%eax,4)</code>。由于系统调用表中的表项是以32位（4字节）类型存放的，所以内核需要将给定的系统调用号乘以4。</p>
+<p>除了系统调用号以外，大部分系统调用都还需要一些外部的参数输入，所以需要把<strong>这些参数从用户空间传给内核</strong>。最简单的方法就是像传递系统调用参数那样也存放在寄存器里。</p>
+</blockquote>
 <p>对应的系统调用流程如下</p>
-<p><img src="D:%5Chugo%5CMyBlog%5Cstatic%5Cioctl%5Cioctl_1.png" alt="ioctl_1"></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ioctl/ioctl_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ioctl/ioctl_1.png" >
+  
+    </a>
+  
+  
+</div>
+
 <h2 id="23找到内核中对应的函数指针">2.3找到内核中对应的函数指针</h2>
-<p>找到了函数名sys_ioctl，就要去找对应的定义和实现</p>
+<p>找到了函数名<code>sys_ioctl</code>，就要去找对应的定义和实现</p>
 <p>定义</p>
 <div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">//kernel/include/linux/syscalls.h
 </span><span class="ln">2</span><span class="c1"></span><span class="n">asmlinkage</span> <span class="kt">long</span> <span class="nf">sys_ioctl</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">cmd</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span> <span class="kt">long</span><span class="p">);</span>
@@ -402,7 +473,7 @@
 <span class="ln">22</span><span class="p">}</span>
 </code></pre></div><blockquote>
 <p>补充说明</p>
-<p>为什么SYSCALL_DEFINE3就是sys_ioctl。实际上这里的3代表有三个参数的意思，具体拆解可以点击<a href="https://blog.csdn.net/weixin_43798887/article/details/118930476">这里</a>，找到宏定义是如何一步步展开的，这里简单阐述。</p>
+<p>为什么<code>SYSCALL_DEFINE3</code>就是<code>sys_ioctl</code>。实际上这里的3代表有三个参数的意思，具体拆解可以点击<a href="https://blog.csdn.net/weixin_43798887/article/details/118930476">这里</a>，找到宏定义是如何一步步展开的，这里简单阐述。</p>
 <div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">//include/linux/syscalls.h
 </span><span class="ln">2</span><span class="c1"></span><span class="cp">#define SYSCALL_DEFINE3(name, ...)  SYSCALL_DEFINEx(3, _##name, __VA_ARGS__)
 </span><span class="ln">3</span><span class="cp">#define SYSCALL_DEFINEx(x, sname, ...)	__SYSCALL_DEFINEx(x, sname, __VA_ARGS__)
@@ -520,8 +591,73 @@
 <span class="ln">13</span> <span class="nl">out</span><span class="p">:</span>
 <span class="ln">14</span>	<span class="k">return</span> <span class="n">error</span><span class="p">;</span>
 <span class="ln">15</span><span class="p">}</span>	
-</code></pre></div><p>//补充部分unlocked_ioctl到my_ioctl</p>
-<h2 id="25-ioctl-用户与驱动之间的协议">2.5 ioctl 用户与驱动之间的协议</h2>
+</code></pre></div><p>这里先关注以下filp-&gt;f_op-&gt;unlocked_ioctl，很明显这里有两个结构体，一个是struct file，另外一个是struct file_operations</p>
+<p><strong>struct file</strong></p>
+<p>这里的结构体相对比较复杂，我们只关注相关的结构体即可</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//kernel/include/linux/fs.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">struct</span> <span class="n">file</span> <span class="p">{</span>
+<span class="ln"> 3</span>	<span class="k">union</span> <span class="p">{</span>
+<span class="ln"> 4</span>		<span class="k">struct</span> <span class="n">llist_node</span>	<span class="n">fu_llist</span><span class="p">;</span>
+<span class="ln"> 5</span>		<span class="k">struct</span> <span class="n">rcu_head</span> 	<span class="n">fu_rcuhead</span><span class="p">;</span>
+<span class="ln"> 6</span>	<span class="p">}</span> <span class="n">f_u</span><span class="p">;</span>
+<span class="ln"> 7</span>	<span class="k">struct</span> <span class="n">path</span>		<span class="n">f_path</span><span class="p">;</span>
+<span class="ln"> 8</span>	<span class="k">struct</span> <span class="n">inode</span>		<span class="o">*</span><span class="n">f_inode</span><span class="p">;</span>	<span class="cm">/* cached value */</span>
+<span class="ln"> 9</span>	<span class="k">const</span> <span class="k">struct</span> <span class="n">file_operations</span>	<span class="o">*</span><span class="n">f_op</span><span class="p">;</span>
+<span class="ln">10</span>
+<span class="ln">11</span>	<span class="cm">/*
+</span><span class="ln">12</span><span class="cm">	 * Protects f_ep, f_flags.
+</span><span class="ln">13</span><span class="cm">	 * Must not be taken from IRQ context.
+</span><span class="ln">14</span><span class="cm">	 */</span>
+<span class="ln">15</span>	<span class="n">spinlock_t</span>		<span class="n">f_lock</span><span class="p">;</span>
+<span class="ln">16</span>	<span class="n">atomic_long_t</span>		<span class="n">f_count</span><span class="p">;</span>
+<span class="ln">17</span>	<span class="kt">unsigned</span> <span class="kt">int</span> 		<span class="n">f_flags</span><span class="p">;</span>
+<span class="ln">18</span>	<span class="n">fmode_t</span>			<span class="n">f_mode</span><span class="p">;</span>
+<span class="ln">19</span>	<span class="k">struct</span> <span class="n">mutex</span>		<span class="n">f_pos_lock</span><span class="p">;</span>
+<span class="ln">20</span>	<span class="n">loff_t</span>			<span class="n">f_pos</span><span class="p">;</span>
+<span class="ln">21</span>	<span class="k">struct</span> <span class="n">fown_struct</span>	<span class="n">f_owner</span><span class="p">;</span>
+<span class="ln">22</span>	<span class="k">const</span> <span class="k">struct</span> <span class="n">cred</span>	<span class="o">*</span><span class="n">f_cred</span><span class="p">;</span>
+<span class="ln">23</span>	<span class="k">struct</span> <span class="n">file_ra_state</span>	<span class="n">f_ra</span><span class="p">;</span>
+<span class="ln">24</span>
+<span class="ln">25</span>	<span class="n">u64</span>			<span class="n">f_version</span><span class="p">;</span>
+<span class="ln">26</span><span class="cp">#ifdef CONFIG_SECURITY
+</span><span class="ln">27</span><span class="cp"></span>	<span class="kt">void</span>			<span class="o">*</span><span class="n">f_security</span><span class="p">;</span>
+<span class="ln">28</span><span class="cp">#endif
+</span><span class="ln">29</span><span class="cp"></span>	<span class="cm">/* needed for tty driver, and maybe others */</span>
+<span class="ln">30</span>	<span class="kt">void</span>			<span class="o">*</span><span class="n">private_data</span><span class="p">;</span>
+<span class="ln">31</span>
+<span class="ln">32</span><span class="cp">#ifdef CONFIG_EPOLL
+</span><span class="ln">33</span><span class="cp"></span>	<span class="cm">/* Used by fs/eventpoll.c to link all the hooks to this file */</span>
+<span class="ln">34</span>	<span class="k">struct</span> <span class="n">hlist_head</span>	<span class="o">*</span><span class="n">f_ep</span><span class="p">;</span>
+<span class="ln">35</span><span class="cp">#endif </span><span class="cm">/* #ifdef CONFIG_EPOLL */</span><span class="cp">
+</span><span class="ln">36</span><span class="cp"></span>	<span class="k">struct</span> <span class="n">address_space</span>	<span class="o">*</span><span class="n">f_mapping</span><span class="p">;</span>
+<span class="ln">37</span>	<span class="n">errseq_t</span>		<span class="n">f_wb_err</span><span class="p">;</span>
+<span class="ln">38</span>	<span class="n">errseq_t</span>		<span class="n">f_sb_err</span><span class="p">;</span> <span class="cm">/* for syncfs */</span>
+<span class="ln">39</span><span class="p">}</span> <span class="n">__randomize_layout</span>
+<span class="ln">40</span>  <span class="n">__attribute__</span><span class="p">((</span><span class="n">aligned</span><span class="p">(</span><span class="mi">4</span><span class="p">)));</span>	<span class="cm">/* lest something weird decides that 2 is OK */</span>
+</code></pre></div><p><strong>struct file_operations</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//kernel/include/linux/fs.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">struct</span>  <span class="n">file_operations</span> <span class="p">{</span> 
+<span class="ln"> 3</span>	<span class="k">struct</span> <span class="n">module</span> <span class="o">*</span> <span class="n">owner</span><span class="p">;</span>
+<span class="ln"> 4</span>	<span class="n">loff_t</span> <span class="p">(</span><span class="o">*</span> <span class="n">llseek</span> <span class="p">)</span> <span class="p">(</span><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="p">,</span> <span class="n">loff_t</span> <span class="p">,</span> <span class="kt">int</span> <span class="p">);</span> 
+<span class="ln"> 5</span>	<span class="n">ssize_t</span> <span class="p">(</span><span class="o">*</span> <span class="n">read</span> <span class="p">)</span> <span class="p">(</span><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="p">,</span> <span class="kt">char</span> <span class="n">__user</span> <span class="o">*</span><span class="p">,</span> <span class="n">size_t</span> <span class="p">,</span> <span class="n">loff_t</span> <span class="o">*</span><span class="p">);</span> 
+<span class="ln"> 6</span>	<span class="n">ssize_t</span> <span class="p">(</span><span class="o">*</span> <span class="n">write</span> <span class="p">)</span> <span class="p">(</span><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="n">__user</span> <span class="o">*</span><span class="p">,</span> <span class="n">size_t</span> <span class="p">,</span> <span class="n">loff_t</span> <span class="o">*</span><span class="p">);</span> 
+<span class="ln"> 7</span>	<span class="n">ssize_t</span> <span class="p">(</span><span class="o">*</span><span class="n">read_iter</span><span class="p">)</span> <span class="p">(</span><span class="k">struct</span> <span class="n">kiocb</span> <span class="o">*</span><span class="p">,</span> <span class="k">struct</span> <span class="n">iov_iter</span> <span class="o">*</span><span class="p">);</span> 
+<span class="ln"> 8</span>	<span class="n">ssize_t</span><span class="p">(</span><span class="o">*</span><span class="n">write_iter</span><span class="p">)</span> <span class="p">(</span><span class="k">struct</span> <span class="n">kiocb</span> <span class="o">*</span><span class="p">,</span> <span class="k">struct</span> <span class="n">iov_iter</span> <span class="o">*</span><span class="p">);</span> 
+<span class="ln"> 9</span>	<span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">iterate</span><span class="p">)</span> <span class="p">(</span><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="p">,</span> <span class="k">struct</span> <span class="n">dir_context</span> <span class="o">*</span><span class="p">);</span> 
+<span class="ln">10</span>	<span class="kt">unsigned</span> <span class="nf">int</span> <span class="p">(</span><span class="o">*</span><span class="n">poll</span><span class="p">)</span> <span class="p">(</span><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="p">,</span> <span class="k">struct</span> <span class="n">poll_table_struct</span> <span class="o">*</span><span class="p">)</span> <span class="p">;</span> 
+<span class="ln">11</span>	<span class="kt">long</span> <span class="p">(</span><span class="o">*</span><span class="n">unlocked_ioctl</span><span class="p">)</span> <span class="p">(</span><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span> <span class="p">);</span> 
+<span class="ln">12</span>	<span class="kt">long</span> <span class="p">(</span><span class="o">*</span><span class="n">compat_ioctl</span><span class="p">)</span> <span class="p">(</span><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span> <span class="p">);</span> 
+<span class="ln">13</span>	<span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">mmap</span><span class="p">)</span> <span class="p">(</span><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="p">,</span> <span class="k">struct</span> <span class="n">vm_area_struct</span> <span class="o">*</span><span class="p">);</span> 
+<span class="ln">14</span>	<span class="p">...</span>
+<span class="ln">15</span><span class="p">}</span>
+</code></pre></div><p>可以自定义在文件操作集中，那么函数指针实际调用的就是<code>unlocked_ioctl</code>赋值的函数名，直到这里才真正意义上的把ioctl的流程完整的对应起来了。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">//文件操作集
+</span><span class="ln">2</span><span class="c1"></span><span class="k">struct</span> <span class="n">file_operations</span> <span class="n">misc_fops</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln">3</span>    <span class="p">...</span>
+<span class="ln">4</span>    <span class="p">.</span><span class="n">unlocked_ioctl</span> <span class="o">=</span> <span class="n">my_ioctl</span>
+<span class="ln">5</span>    <span class="p">...</span>
+<span class="ln">6</span><span class="p">};</span>
+</code></pre></div><h2 id="25-ioctl-用户与驱动之间的协议">2.5 ioctl 用户与驱动之间的协议</h2>
 <p>前文提到 ioctl 方法第二个参数 cmd 为用户与驱动的 “协议”，理论上可以为任意 int 型数据，可以为 0、1、2、3……，但是为了确保该 “协议” 的唯一性，ioctl 命令应该使用更科学严谨的方法赋值，在linux中，提供了一种 ioctl 命令的统一格式，将 32 位 int 型数据划分为四个位段，如下图所示：</p>
 <div class="highlight"><pre class="chroma"><code class="language-txt" data-lang="txt"><span class="ln">1</span>第一个分区：0-7，命令的编号，范围是0-255
 <span class="ln">2</span>第二个分区：8-15，命令的幻数
@@ -531,7 +667,35 @@
 <span class="ln">6</span>
 <span class="ln">7</span>第一和第二分区，主要用来区分命令，不能有两个完全一样的“一+二”
 <span class="ln">8</span>第四分区：00：没有数据传递；10：用户从驱动读数据；01：用户向驱动写数据；11：先写数据到驱动再把数据读出来
-</code></pre></div><p><img src="D:%5Chugo%5CMyBlog%5Cstatic%5Cioctl%5Cioctl_3.png" alt="ioctl_3"></p>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ioctl/ioctl_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ioctl/ioctl_3.png" >
+  
+    </a>
+  
+  
+</div>
+
 <div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="cp">#define _IOC(dir,type,nr,size) \
 </span><span class="ln">2</span><span class="cp">    (((dir)  &lt;&lt; _IOC_DIRSHIFT) | \
 </span><span class="ln">3</span><span class="cp">     ((type) &lt;&lt; _IOC_TYPESHIFT) | \
@@ -738,7 +902,35 @@ nr（number），命令编号/序数，占据 8 bit，可以为任意 unsigned c
 <span class="ln">22</span><span class="k">if</span> <span class="p">(</span><span class="n">ret</span><span class="p">)</span>
 <span class="ln">23</span>    <span class="k">return</span> <span class="o">-</span><span class="n">EFAULT</span><span class="p">;</span>
 </code></pre></div><p>最终得到的调用流程如下所示，通过用户态调用的ioctl函数设备节点/dev/ioctl_test最终在内核态的my_ioctl实现这个流程。</p>
-<p><img src="D:%5Chugo%5CMyBlog%5Cstatic%5Cioctl%5Cioctl_2.png" alt="ioctl_2"></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ioctl/ioctl_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ioctl/ioctl_2.png" >
+  
+    </a>
+  
+  
+</div>
+
 <h2 id="33编译">3.3编译</h2>
 <p>kernel在驱动层的编译，需要依赖于Kconfig和Makefile文件；在应用层的编译，需要依赖于Android.mk。</p>
 <h3 id="331驱动层的编译">3.3.1驱动层的编译</h3>
