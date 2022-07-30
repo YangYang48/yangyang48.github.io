@@ -276,7 +276,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">2100 Words|Read in about 10 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">2700 Words|Read in about 13 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -293,7 +293,7 @@
 <p>ioctl既可以往内核读也可以写，read/write在执行大数据量读/写时比较有优势。</p>
 <p>在应用层调用ioctl函数时，内核会调用对应驱动中的unlocked_ioctl函数，向内核读写数据。</p>
 <p>笔者这里的kernel直接参考<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/?h=v5.19-rc7">最新</a>的kernel-v5.19源码来分析。</p>
-<p>内核实现ioctl()函数的是sys_ioctl()。内核中主要调用框架图如下图所示</p>
+<p>内核实现ioctl()函数的是sys_ioctl()。内核中主要调用框架图如下图1所示</p>
 
 
  
@@ -314,12 +314,14 @@
 
 <div class="figure center fig-100" >
   
-    <a class="fancybox" href="https://yangyang48.github.io/ioctl/ioctl_4.png" data-fancybox-group="">
+    <a class="fancybox" href="https://yangyang48.github.io/ioctl/ioctl_4.png" title="图1 内核中主要调用框架图" data-fancybox-group="">
   
-    <img class="fig-img" src="https://yangyang48.github.io/ioctl/ioctl_4.png" >
+    <img class="fig-img" src="https://yangyang48.github.io/ioctl/ioctl_4.png"  alt="图1 内核中主要调用框架图">
   
     </a>
   
+   
+    <span class="caption">图1 内核中主要调用框架图</span>
   
 </div>
 
@@ -574,18 +576,6 @@
 <h2 id="24与自定义的ioctl函数对应">2.4与自定义的ioctl函数对应</h2>
 <h3 id="241do_vfs_ioctl">2.4.1do_vfs_ioctl</h3>
 <p><code>sys_ioctl</code>函数调用之后，会走到最关键的函数<code>do_vfs_ioctl</code>。这里面会对传入的cmd进行拆解，默认的cmd有下面几种，这些都是<strong>预定义的</strong>，这些命令会被当作预定义命令被内核处理而不是被<strong>设备驱动</strong>处理。</p>
-<p>以下的ioctl命令对任何文件都是预定义的:
-<strong>FIOCLEX</strong>
-设置执行时关闭标志(File IOctl CLose on Exec)。设置了这个标志之后，当调用进程执行一个新程序时，文件描述符将被关闭
-<strong>FIONCLEX</strong>
-清除执行时关闭标志(File IOctl Not CLose on EXec)。该命令将恢复通常的文件行为，并撤销上述FIOCLEX命令所做的工作。
-<strong>FIOASYNC</strong>
-设置或复位文件异步通知，注意知道Linux 2.2.4 内核都不正确使用这个命令修改O_SYNC标志。因为这两个动作可以通过fcntl完成，所以实际上没人使用这个命令。
-<strong>FIOQSIZE</strong>
-该命令返回文件或者目录的大小。不过当用于设备文件时，会导致ENOTTY错误的返回
-<strong>FIONBIO</strong>
-&ldquo;File IOctl Non-Blocking I/O&rdquo;,文件ioctl非阻塞型I/O。改调用秀阿贵filp-&gt;f_flags中的O_NONBLOCK标志。传递系统调用的第三个参数指明了是设置还是清除该标准。修改该标志的常用方法是由fcntl系统调用使用F_SETFL命令来完成。</p>
-<p><a href="https://www.jianshu.com/p/2f092e81cbc1?utm_campaign=maleskine&amp;utm_content=note&amp;utm_medium=seo_notes&amp;utm_source=recommendation">https://www.jianshu.com/p/2f092e81cbc1?utm_campaign=maleskine&amp;utm_content=note&amp;utm_medium=seo_notes&amp;utm_source=recommendation</a></p>
 <div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//kernel/fs/ioctl.c
 </span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="nf">do_vfs_ioctl</span><span class="p">(</span><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">cmd</span><span class="p">,</span>
 <span class="ln"> 3</span>	     <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">arg</span><span class="p">)</span>
@@ -644,6 +634,187 @@
 <span class="ln">56</span>	<span class="p">}</span>
 <span class="ln">57</span>	<span class="k">return</span> <span class="n">error</span><span class="p">;</span>
 <span class="ln">58</span><span class="p">}</span>
+</code></pre></div><blockquote>
+<p>补充说明</p>
+<p>以下的ioctl命令对任何文件都是预定义的(<strong>属于内核系统级的预定义</strong>)</p>
+<p>前面的五个预定义根据下面的2.5的协议，可以知道，实际上是0x54代表type为**‘T’**</p>
+<ul>
+<li><strong>FIOCLEX</strong></li>
+</ul>
+<p>设置执行时关闭标志(File IOctl CLose on Exec)。设置了这个标志之后，当调用进程执行一个新程序时，文件描述符将被关闭</p>
+<ul>
+<li><strong>FIONCLEX</strong></li>
+</ul>
+<p>清除执行时关闭标志(File IOctl Not CLose on EXec)。该命令将恢复通常的文件行为，并撤销上述FIOCLEX命令所做的工作。</p>
+<ul>
+<li><strong>FIOASYNC</strong></li>
+</ul>
+<p>设置或复位文件异步通知，注意知道Linux 2.2.4 内核都不正确使用这个命令修改O_SYNC标志。因为这两个动作可以通过fcntl完成，所以实际上没人使用这个命令。</p>
+<ul>
+<li><strong>FIOQSIZE</strong></li>
+</ul>
+<p>该命令返回文件或者目录的大小。不过当用于设备文件时，会导致ENOTTY错误的返回</p>
+<ul>
+<li><strong>FIONBIO</strong></li>
+</ul>
+<p>&ldquo;File IOctl Non-Blocking I/O&rdquo;,文件ioctl非阻塞型I/O。改调用秀阿贵filp-&gt;f_flags中的O_NONBLOCK标志。传递系统调用的第三个参数指明了是设置还是清除该标准。修改该标志的常用方法是由fcntl系统调用使用F_SETFL命令来完成。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">//kernel/include/uapi/asm-generic/ioctls.h
+</span><span class="ln">2</span><span class="c1"></span><span class="cp">#define FIONBIO		0x5421
+</span><span class="ln">3</span><span class="cp">#define FIONCLEX	0x5450
+</span><span class="ln">4</span><span class="cp">#define FIOCLEX		0x5451
+</span><span class="ln">5</span><span class="cp">#define FIOASYNC	0x5452
+</span><span class="ln">6</span><span class="cp">#ifndef FIOQSIZE
+</span><span class="ln">7</span><span class="cp"># define FIOQSIZE	0x5460
+</span><span class="ln">8</span><span class="cp">#endif
+</span></code></pre></div><p>另外，还有几个预定义</p>
+<p>其实内核cmd有一个格式，使用户cmd不与系统cmd冲突，解决办法就是用<code>_IO</code>、<code>_IOW</code>、<code>_IOR</code>和<code>_IOWR</code>产生cmd。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">//kernel/include/uapi/linux/fs.h
+</span><span class="ln">2</span><span class="c1"></span><span class="cp">#define FIGETBSZ   _IO(0x00,2)	</span><span class="cm">/* get the block size used for bmap */</span><span class="cp">
+</span><span class="ln">3</span><span class="cp">#define FIFREEZE	_IOWR(&#39;X&#39;, 119, int)	</span><span class="cm">/* Freeze */</span><span class="cp">
+</span><span class="ln">4</span><span class="cp">#define FITHAW		_IOWR(&#39;X&#39;, 120, int)	</span><span class="cm">/* Thaw */</span><span class="cp">
+</span><span class="ln">5</span><span class="cp">#define FS_IOC_FIEMAP			_IOWR(&#39;f&#39;, 11, struct fiemap)
+</span></code></pre></div></blockquote>
+<h4 id="2411inode结构体">2.4.1.1inode结构体</h4>
+<p>这里的函数有一个inode结构体。整个结构是比较复杂的数据结构，我们这里只关注<code>i_mode</code>，这个实际上是用于查看是否是可读可写的标志位。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//kernel/include/linux/fs.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">struct</span> <span class="n">inode</span> <span class="p">{</span>
+<span class="ln"> 3</span>	<span class="n">umode_t</span>			<span class="n">i_mode</span><span class="p">;</span>
+<span class="ln"> 4</span>	<span class="kt">unsigned</span> <span class="kt">short</span>		<span class="n">i_opflags</span><span class="p">;</span>
+<span class="ln"> 5</span>	<span class="n">kuid_t</span>			<span class="n">i_uid</span><span class="p">;</span>
+<span class="ln"> 6</span>	<span class="n">kgid_t</span>			<span class="n">i_gid</span><span class="p">;</span>
+<span class="ln"> 7</span>	<span class="kt">unsigned</span> <span class="kt">int</span>		<span class="n">i_flags</span><span class="p">;</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span>	<span class="k">const</span> <span class="k">struct</span> <span class="n">inode_operations</span>	<span class="o">*</span><span class="n">i_op</span><span class="p">;</span>
+<span class="ln">10</span>	<span class="k">struct</span> <span class="n">super_block</span>	<span class="o">*</span><span class="n">i_sb</span><span class="p">;</span>
+<span class="ln">11</span>	<span class="k">struct</span> <span class="n">address_space</span>	<span class="o">*</span><span class="n">i_mapping</span><span class="p">;</span>
+<span class="ln">12</span>
+<span class="ln">13</span>	<span class="kt">unsigned</span> <span class="kt">long</span>		<span class="n">i_ino</span><span class="p">;</span>
+<span class="ln">14</span>	<span class="k">union</span> <span class="p">{</span>
+<span class="ln">15</span>		<span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">i_nlink</span><span class="p">;</span>
+<span class="ln">16</span>		<span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">__i_nlink</span><span class="p">;</span>
+<span class="ln">17</span>	<span class="p">};</span>
+<span class="ln">18</span>	<span class="n">dev_t</span>			<span class="n">i_rdev</span><span class="p">;</span>
+<span class="ln">19</span>	<span class="n">loff_t</span>			<span class="n">i_size</span><span class="p">;</span>
+<span class="ln">20</span>	<span class="k">struct</span> <span class="n">timespec64</span>	<span class="n">i_atime</span><span class="p">;</span>
+<span class="ln">21</span>	<span class="k">struct</span> <span class="n">timespec64</span>	<span class="n">i_mtime</span><span class="p">;</span>
+<span class="ln">22</span>	<span class="k">struct</span> <span class="n">timespec64</span>	<span class="n">i_ctime</span><span class="p">;</span>
+<span class="ln">23</span>	<span class="n">spinlock_t</span>		<span class="n">i_lock</span><span class="p">;</span>	<span class="cm">/* i_blocks, i_bytes, maybe i_size */</span>
+<span class="ln">24</span>	<span class="kt">unsigned</span> <span class="kt">short</span>          <span class="n">i_bytes</span><span class="p">;</span>
+<span class="ln">25</span>	<span class="n">u8</span>			<span class="n">i_blkbits</span><span class="p">;</span>
+<span class="ln">26</span>	<span class="n">u8</span>			<span class="n">i_write_hint</span><span class="p">;</span>
+<span class="ln">27</span>	<span class="n">blkcnt_t</span>		<span class="n">i_blocks</span><span class="p">;</span>
+<span class="ln">28</span>
+<span class="ln">29</span>	<span class="cm">/* Misc */</span>
+<span class="ln">30</span>	<span class="kt">unsigned</span> <span class="kt">long</span>		<span class="n">i_state</span><span class="p">;</span>
+<span class="ln">31</span>	<span class="k">struct</span> <span class="n">rw_semaphore</span>	<span class="n">i_rwsem</span><span class="p">;</span>
+<span class="ln">32</span>
+<span class="ln">33</span>	<span class="kt">unsigned</span> <span class="kt">long</span>		<span class="n">dirtied_when</span><span class="p">;</span>	<span class="cm">/* jiffies of first dirtying */</span>
+<span class="ln">34</span>	<span class="kt">unsigned</span> <span class="kt">long</span>		<span class="n">dirtied_time_when</span><span class="p">;</span>
+<span class="ln">35</span>
+<span class="ln">36</span>	<span class="k">struct</span> <span class="n">hlist_node</span>	<span class="n">i_hash</span><span class="p">;</span>
+<span class="ln">37</span>	<span class="k">struct</span> <span class="n">list_head</span>	<span class="n">i_io_list</span><span class="p">;</span>	<span class="cm">/* backing dev IO list */</span>
+<span class="ln">38</span><span class="cp">#ifdef CONFIG_CGROUP_WRITEBACK
+</span><span class="ln">39</span><span class="cp"></span>	<span class="k">struct</span> <span class="n">bdi_writeback</span>	<span class="o">*</span><span class="n">i_wb</span><span class="p">;</span>		<span class="cm">/* the associated cgroup wb */</span>
+<span class="ln">40</span>
+<span class="ln">41</span>	<span class="cm">/* foreign inode detection, see wbc_detach_inode() */</span>
+<span class="ln">42</span>	<span class="kt">int</span>			<span class="n">i_wb_frn_winner</span><span class="p">;</span>
+<span class="ln">43</span>	<span class="n">u16</span>			<span class="n">i_wb_frn_avg_time</span><span class="p">;</span>
+<span class="ln">44</span>	<span class="n">u16</span>			<span class="n">i_wb_frn_history</span><span class="p">;</span>
+<span class="ln">45</span><span class="cp">#endif
+</span><span class="ln">46</span><span class="cp"></span>	<span class="k">struct</span> <span class="n">list_head</span>	<span class="n">i_lru</span><span class="p">;</span>		<span class="cm">/* inode LRU list */</span>
+<span class="ln">47</span>	<span class="k">struct</span> <span class="n">list_head</span>	<span class="n">i_sb_list</span><span class="p">;</span>
+<span class="ln">48</span>	<span class="k">struct</span> <span class="n">list_head</span>	<span class="n">i_wb_list</span><span class="p">;</span>	<span class="cm">/* backing dev writeback list */</span>
+<span class="ln">49</span>	<span class="k">union</span> <span class="p">{</span>
+<span class="ln">50</span>		<span class="k">struct</span> <span class="n">hlist_head</span>	<span class="n">i_dentry</span><span class="p">;</span>
+<span class="ln">51</span>		<span class="k">struct</span> <span class="n">rcu_head</span>		<span class="n">i_rcu</span><span class="p">;</span>
+<span class="ln">52</span>	<span class="p">};</span>
+<span class="ln">53</span>	<span class="n">atomic64_t</span>		<span class="n">i_version</span><span class="p">;</span>
+<span class="ln">54</span>	<span class="n">atomic64_t</span>		<span class="n">i_sequence</span><span class="p">;</span> <span class="cm">/* see futex */</span>
+<span class="ln">55</span>	<span class="n">atomic_t</span>		<span class="n">i_count</span><span class="p">;</span>
+<span class="ln">56</span>	<span class="n">atomic_t</span>		<span class="n">i_dio_count</span><span class="p">;</span>
+<span class="ln">57</span>	<span class="n">atomic_t</span>		<span class="n">i_writecount</span><span class="p">;</span>
+<span class="ln">58</span>	<span class="k">union</span> <span class="p">{</span>
+<span class="ln">59</span>		<span class="k">const</span> <span class="k">struct</span> <span class="n">file_operations</span>	<span class="o">*</span><span class="n">i_fop</span><span class="p">;</span>	<span class="cm">/* former -&gt;i_op-&gt;default_file_ops */</span>
+<span class="ln">60</span>		<span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">free_inode</span><span class="p">)(</span><span class="k">struct</span> <span class="n">inode</span> <span class="o">*</span><span class="p">);</span>
+<span class="ln">61</span>	<span class="p">};</span>
+<span class="ln">62</span>	<span class="k">struct</span> <span class="n">file_lock_context</span>	<span class="o">*</span><span class="n">i_flctx</span><span class="p">;</span>
+<span class="ln">63</span>	<span class="k">struct</span> <span class="n">address_space</span>	<span class="n">i_data</span><span class="p">;</span>
+<span class="ln">64</span>	<span class="k">struct</span> <span class="n">list_head</span>	<span class="n">i_devices</span><span class="p">;</span>
+<span class="ln">65</span>	<span class="k">union</span> <span class="p">{</span>
+<span class="ln">66</span>		<span class="k">struct</span> <span class="n">pipe_inode_info</span>	<span class="o">*</span><span class="n">i_pipe</span><span class="p">;</span>
+<span class="ln">67</span>		<span class="k">struct</span> <span class="n">cdev</span>		<span class="o">*</span><span class="n">i_cdev</span><span class="p">;</span>
+<span class="ln">68</span>		<span class="kt">char</span>			<span class="o">*</span><span class="n">i_link</span><span class="p">;</span>
+<span class="ln">69</span>		<span class="kt">unsigned</span>		<span class="n">i_dir_seq</span><span class="p">;</span>
+<span class="ln">70</span>	<span class="p">};</span>
+<span class="ln">71</span>
+<span class="ln">72</span>	<span class="n">__u32</span>			<span class="n">i_generation</span><span class="p">;</span>
+<span class="ln">73</span>
+<span class="ln">74</span>	<span class="kt">void</span>			<span class="o">*</span><span class="n">i_private</span><span class="p">;</span> <span class="cm">/* fs or device private pointer */</span>
+<span class="ln">75</span><span class="p">}</span> <span class="n">__randomize_layout</span><span class="p">;</span>
+</code></pre></div><h4 id="2412-常见的几个文件宏">2.4.1.2 常见的几个文件宏</h4>
+<p>关于几个宏定义，可以见下表所示</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">文件宏</th>
+<th style="text-align:center">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">S_ISLNK(st_mode)</td>
+<td style="text-align:center">是否是一个连接</td>
+</tr>
+<tr>
+<td style="text-align:center">S_ISREG</td>
+<td style="text-align:center">是否是一个常规文件</td>
+</tr>
+<tr>
+<td style="text-align:center">S_ISDIR</td>
+<td style="text-align:center">是否是一个目录</td>
+</tr>
+<tr>
+<td style="text-align:center">S_ISCHR</td>
+<td style="text-align:center">是否是一个字符设备</td>
+</tr>
+<tr>
+<td style="text-align:center">S_ISBLK</td>
+<td style="text-align:center">是否是一个块设备</td>
+</tr>
+<tr>
+<td style="text-align:center">S_ISFIFO</td>
+<td style="text-align:center">是否是一个FIFO文件</td>
+</tr>
+<tr>
+<td style="text-align:center">S_ISSOCK</td>
+<td style="text-align:center">是否是一个SOCKET文件</td>
+</tr>
+</tbody>
+</table>
+<p>下面所示的数据结构定义了stat节点，包含了linux的文件所有的属性</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//kernel/include/uapi/asm-generic/stat.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">struct</span> <span class="n">stat</span> <span class="p">{</span>
+<span class="ln"> 3</span>	<span class="kt">unsigned</span> <span class="kt">long</span>	<span class="n">st_dev</span><span class="p">;</span>		 <span class="c1">//文件的设备编号
+</span><span class="ln"> 4</span><span class="c1"></span>	<span class="kt">unsigned</span> <span class="kt">long</span>	<span class="n">st_ino</span><span class="p">;</span>		 <span class="c1">//节点
+</span><span class="ln"> 5</span><span class="c1"></span>	<span class="kt">unsigned</span> <span class="kt">int</span>	<span class="n">st_mode</span><span class="p">;</span>	<span class="c1">//文件的类型和存取的权限
+</span><span class="ln"> 6</span><span class="c1"></span>	<span class="kt">unsigned</span> <span class="kt">int</span>	<span class="n">st_nlink</span><span class="p">;</span>	 <span class="c1">//连到该文件的硬连接数目，刚建立的文件值为1
+</span><span class="ln"> 7</span><span class="c1"></span>	<span class="kt">unsigned</span> <span class="kt">int</span>	<span class="n">st_uid</span><span class="p">;</span>		 <span class="c1">//用户ID
+</span><span class="ln"> 8</span><span class="c1"></span>	<span class="kt">unsigned</span> <span class="kt">int</span>	<span class="n">st_gid</span><span class="p">;</span>		  <span class="c1">//组ID
+</span><span class="ln"> 9</span><span class="c1"></span>	<span class="kt">unsigned</span> <span class="kt">long</span>	<span class="n">st_rdev</span><span class="p">;</span>	 <span class="c1">//(设备类型)若此文件为设备文件，则为其设备编号
+</span><span class="ln">10</span><span class="c1"></span>	<span class="kt">unsigned</span> <span class="kt">long</span>	<span class="n">__pad1</span><span class="p">;</span>
+<span class="ln">11</span>	<span class="kt">long</span>		<span class="n">st_size</span><span class="p">;</span>	<span class="c1">//文件字节数(文件大小)
+</span><span class="ln">12</span><span class="c1"></span>	<span class="kt">int</span>		<span class="n">st_blksize</span><span class="p">;</span>	 <span class="c1">//块大小(文件系统的I/O 缓冲区大小)
+</span><span class="ln">13</span><span class="c1"></span>	<span class="kt">int</span>		<span class="n">__pad2</span><span class="p">;</span>
+<span class="ln">14</span>	<span class="kt">long</span>		<span class="n">st_blocks</span><span class="p">;</span>	 <span class="c1">//块数
+</span><span class="ln">15</span><span class="c1"></span>	<span class="kt">long</span>		<span class="n">st_atime</span><span class="p">;</span>	 <span class="c1">//最后一次访问时间
+</span><span class="ln">16</span><span class="c1"></span>	<span class="kt">unsigned</span> <span class="kt">long</span>	<span class="n">st_atime_nsec</span><span class="p">;</span>
+<span class="ln">17</span>	<span class="kt">long</span>		<span class="n">st_mtime</span><span class="p">;</span>	 <span class="c1">//最后一次修改时间
+</span><span class="ln">18</span><span class="c1"></span>	<span class="kt">unsigned</span> <span class="kt">long</span>	<span class="n">st_mtime_nsec</span><span class="p">;</span>
+<span class="ln">19</span>	<span class="kt">long</span>		<span class="n">st_ctime</span><span class="p">;</span>	<span class="c1">//最后一次改变时间(指属性)
+</span><span class="ln">20</span><span class="c1"></span>	<span class="kt">unsigned</span> <span class="kt">long</span>	<span class="n">st_ctime_nsec</span><span class="p">;</span>
+<span class="ln">21</span>	<span class="kt">unsigned</span> <span class="kt">int</span>	<span class="n">__unused4</span><span class="p">;</span>
+<span class="ln">22</span>	<span class="kt">unsigned</span> <span class="kt">int</span>	<span class="n">__unused5</span><span class="p">;</span>
+<span class="ln">23</span><span class="p">};</span>
 </code></pre></div><h3 id="242vfs_ioctl">2.4.2vfs_ioctl</h3>
 <p>根据上述调用，来到了下面的<code>vfs_ioctl</code>，这里开始就没有<code>fd</code>这个句柄的参数，只需要<code>file</code>结构体指针</p>
 <div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//kernel/fs/ioctl.c
@@ -689,14 +860,44 @@
 <span class="ln">6</span><span class="p">};</span>
 </code></pre></div><h2 id="25-ioctl-用户与驱动之间的协议">2.5 ioctl 用户与驱动之间的协议</h2>
 <p>可以看到下面这个宏定义，这个宏定义包含了协议</p>
-<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">//ioctl.h
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">//kernel/include/uapi/asm-generic/ioctl.h
 </span><span class="ln">2</span><span class="c1"></span><span class="cp">#define _IOC(dir,type,nr,size) \
 </span><span class="ln">3</span><span class="cp">    (((dir)  &lt;&lt; _IOC_DIRSHIFT) | \
 </span><span class="ln">4</span><span class="cp">     ((type) &lt;&lt; _IOC_TYPESHIFT) | \
 </span><span class="ln">5</span><span class="cp">     ((nr)   &lt;&lt; _IOC_NRSHIFT) | \
 </span><span class="ln">6</span><span class="cp">     ((size) &lt;&lt; _IOC_SIZESHIFT))
-</span></code></pre></div><p>这个协议就是 ioctl 方法第二个参数<code>cmd</code> 。理论上可以为任意 int 型数据，考虑到4个字节，正好是32位。在linux中，提供了一种 ioctl 命令的统一格式，将 32 位 int 型数据划分为四个位段，如下图所示</p>
-<p><img src="D:%5Chugo%5CMyBlog%5Cstatic%5Cioctl%5Cioctl_3.png" alt="ioctl_3"></p>
+</span></code></pre></div><p>这个协议就是 ioctl 方法第二个参数<code>cmd</code> 。理论上可以为任意 int 型数据，考虑到4个字节，正好是32位。在linux中，提供了一种 ioctl 命令的统一格式，将 32 位 int 型数据划分为四个位段，如下图2所示</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/ioctl/ioctl_3.png" title="图2 用户与驱动之间的协议图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/ioctl/ioctl_3.png"  alt="图2 用户与驱动之间的协议图">
+  
+    </a>
+  
+   
+    <span class="caption">图2 用户与驱动之间的协议图</span>
+  
+</div>
+
 <table>
 <thead>
 <tr>
@@ -747,7 +948,7 @@
 <p>可以为 _IOC_NONE、_IOC_READ、_IOC_WRITE、_IOC_READ | _IOC_WRITE，分别指示了四种访问模式：<strong>无数据0x00、读数据0x01、写数据0x11、读写数据0x11</strong></p>
 </li>
 </ol>
-<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//ioctl.h
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//kernel/include/uapi/asm-generic/ioctl.h
 </span><span class="ln"> 2</span><span class="c1"></span><span class="cm">/* used to create numbers */</span>
 <span class="ln"> 3</span><span class="c1">//定义不带参数的 ioctl 命令
 </span><span class="ln"> 4</span><span class="c1"></span><span class="cp">#define _IO(type,nr)        _IOC(_IOC_NONE,(type),(nr),0)
@@ -806,12 +1007,12 @@
 </code></pre></div><h2 id="32驱动层部分">3.2驱动层部分</h2>
 <p>在 Linux 内核的include/linux目录下有miscdevice.h文件，要把自己定义的misc device从设备定义在这里。定义一个 MISC 设备(miscdevice 类型)以后我们需要设置 minor、name 和 fops 这三个成员变量。minor 表示子设备号，MISC 设备的主设备号为 10，这个是固定的，需要用户指定子设备号，Linux 系统已经预定义了一些 MISC 设备的子设备号。</p>
 <p>name 就是此 MISC 设备名字，当此设备注册成功以后就会在/dev 目录下生成一个名为 name的设备文件。fops 就是<a href="https://so.csdn.net/so/search?q=%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87&amp;spm=1001.2101.3001.7020">字符设备</a>的操作集合，MISC 设备驱动最终是需要使用用户提供的 fops操作集合。</p>
-<p>函数接口</p>
+<h3 id="321函数接口">3.2.1函数接口</h3>
 <div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">//完成misc设备注册。
 </span><span class="ln">2</span><span class="c1"></span><span class="kt">int</span> <span class="nf">misc_register</span><span class="p">(</span><span class="k">struct</span> <span class="n">miscdevice</span> <span class="o">*</span> <span class="n">misc</span><span class="p">);</span>
 <span class="ln">3</span><span class="c1">//完成misc设备注销。
 </span><span class="ln">4</span><span class="c1"></span><span class="kt">int</span> <span class="nf">misc_deregister</span><span class="p">(</span><span class="k">struct</span> <span class="n">miscdevice</span> <span class="o">*</span><span class="n">misc</span><span class="p">);</span>
-</code></pre></div><p>驱动部分钟的<code>_init</code>，<code>_exit</code>，关键字实际上也是宏定义，可以点击<a href="https://blog.csdn.net/maopig/article/details/7409870">这里</a>。</p>
+</code></pre></div><p>驱动部分中的<code>_init</code>，<code>_exit</code>，关键字实际上也是宏定义，可以点击<a href="https://blog.csdn.net/maopig/article/details/7409870">这里</a>。</p>
 <div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">  1</span><span class="c1">//kernel/drivers/soc/xxx/sdmmc_ioctl_test.c
 </span><span class="ln">  2</span><span class="c1"></span><span class="cp">#include</span> <span class="cpf">&lt;linux/init.h&gt;</span><span class="cp">
 </span><span class="ln">  3</span><span class="cp">#include</span> <span class="cpf">&lt;linux/module.h&gt;</span><span class="cp">
@@ -929,23 +1130,24 @@
 </code></pre></div><blockquote>
 <p>MODULE_AUTHOR和MODULE_LICENSE宏定义</p>
 <p>这部分其实就是许多宏定义的嵌套，具体可以点击<a href="https://blog.csdn.net/qq_36412526/article/details/82885631">这里</a>，可以详细的宏定义的展开说明</p>
-<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="cp">#define MODULE_AUTHOR(_author) MODULE_INFO(author, _author)
-</span><span class="ln"> 2</span><span class="cp">#define MODULE_INFO(tag, info) __MODULE_INFO(tag, tag, info)
-</span><span class="ln"> 3</span><span class="cp"></span>
-<span class="ln"> 4</span><span class="c1">// 连接形参的宏
-</span><span class="ln"> 5</span><span class="c1"></span><span class="cp">#define ___module_cat(a,b) __mod_ ## a ## b 
-</span><span class="ln"> 6</span><span class="cp">#define __module_cat(a,b) ___module_cat(a,b)
-</span><span class="ln"> 7</span><span class="cp"></span>
-<span class="ln"> 8</span><span class="cp">#ifdef MODULE
-</span><span class="ln"> 9</span><span class="cp">#define __MODULE_INFO(tag, name, info)					  \
-</span><span class="ln">10</span><span class="cp">static const char __module_cat(name,__LINE__)[]				  \
-</span><span class="ln">11</span><span class="cp">  __used __attribute__((section(&#34;.modinfo&#34;), unused, aligned(1)))	  \
-</span><span class="ln">12</span><span class="cp">  = __stringify(tag) &#34;=&#34; info
-</span><span class="ln">13</span><span class="cp">#else  </span><span class="cm">/* !MODULE */</span><span class="cp">
-</span><span class="ln">14</span><span class="cp"></span><span class="cm">/* This struct is here for syntactic coherency, it is not used */</span>
-<span class="ln">15</span><span class="cp">#define __MODULE_INFO(tag, name, info)					  \
-</span><span class="ln">16</span><span class="cp">  struct __module_cat(name,__LINE__) {}
-</span><span class="ln">17</span><span class="cp">#endif
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//kernel/include/linux/module.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#define MODULE_AUTHOR(_author) MODULE_INFO(author, _author)
+</span><span class="ln"> 3</span><span class="cp">#define MODULE_INFO(tag, info) __MODULE_INFO(tag, tag, info)
+</span><span class="ln"> 4</span><span class="cp"></span>
+<span class="ln"> 5</span><span class="c1">// 连接形参的宏
+</span><span class="ln"> 6</span><span class="c1"></span><span class="cp">#define ___module_cat(a,b) __mod_ ## a ## b 
+</span><span class="ln"> 7</span><span class="cp">#define __module_cat(a,b) ___module_cat(a,b)
+</span><span class="ln"> 8</span><span class="cp"></span>
+<span class="ln"> 9</span><span class="cp">#ifdef MODULE
+</span><span class="ln">10</span><span class="cp">#define __MODULE_INFO(tag, name, info)					  \
+</span><span class="ln">11</span><span class="cp">static const char __module_cat(name,__LINE__)[]				  \
+</span><span class="ln">12</span><span class="cp">  __used __attribute__((section(&#34;.modinfo&#34;), unused, aligned(1)))	  \
+</span><span class="ln">13</span><span class="cp">  = __stringify(tag) &#34;=&#34; info
+</span><span class="ln">14</span><span class="cp">#else  </span><span class="cm">/* !MODULE */</span><span class="cp">
+</span><span class="ln">15</span><span class="cp"></span><span class="cm">/* This struct is here for syntactic coherency, it is not used */</span>
+<span class="ln">16</span><span class="cp">#define __MODULE_INFO(tag, name, info)					  \
+</span><span class="ln">17</span><span class="cp">  struct __module_cat(name,__LINE__) {}
+</span><span class="ln">18</span><span class="cp">#endif
 </span></code></pre></div><p>MODULE_AUTHOR这部分其实可以直接展开</p>
 <div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span> <span class="k">static</span> <span class="k">const</span> <span class="kt">char</span> <span class="n">__mod_authorXX</span><span class="p">[]</span>  \
 <span class="ln">2</span> <span class="n">__used</span>  <span class="n">__attribute__</span><span class="p">((</span><span class="n">section</span><span class="p">(</span><span class="s">&#34;.modinfo&#34;</span><span class="p">),</span><span class="n">unused</span><span class="p">,</span><span class="n">aligned</span><span class="p">(</span><span class="mi">1</span><span class="p">)))</span>  \
@@ -955,32 +1157,51 @@
 <span class="ln">2</span> <span class="n">__used</span>  <span class="n">__attribute__</span><span class="p">((</span><span class="n">section</span><span class="p">(</span><span class="s">&#34;.modinfo&#34;</span><span class="p">),</span><span class="n">unused</span><span class="p">,</span><span class="n">aligned</span><span class="p">(</span><span class="mi">1</span><span class="p">)))</span>  \
 <span class="ln">3</span> <span class="o">=</span> <span class="s">&#34;license= Dual BSD/GPL&#34;</span>
 </code></pre></div></blockquote>
-<p>驱动的校验部分</p>
-<p>//补充https://blog.csdn.net/dongxianfei/article/details/118256267</p>
+<h3 id="322驱动的校验部分">3.2.2驱动的校验部分</h3>
+<p>上面有一段内容是检验的部分，主要用于对用户自定义的协议进行校验。</p>
+<ul>
+<li>如果是cmd中的dir为读取模式，那么是用户空间向内核空间读取数据，那么需要检查用户空间的可写空间地址。</li>
+<li>如果是cmd中的dir为可写模式，那么是用户空间向内核空间写数据，那么需要检查用户空间的可写空间地址。</li>
+</ul>
 <div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="cm">/* 检查设备类型 */</span>
-<span class="ln"> 2</span><span class="k">if</span> <span class="p">(</span><span class="n">_IOC_TYPE</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">!=</span> <span class="n">IOC_MAGIC</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln"> 3</span>    <span class="n">pr_err</span><span class="p">(</span><span class="s">&#34;[%s] command type [%c] error!</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> \
-<span class="ln"> 4</span>           <span class="n">__func__</span><span class="p">,</span> <span class="n">_IOC_TYPE</span><span class="p">(</span><span class="n">cmd</span><span class="p">));</span>
-<span class="ln"> 5</span>    <span class="k">return</span> <span class="o">-</span><span class="n">ENOTTY</span><span class="p">;</span> 
-<span class="ln"> 6</span><span class="p">}</span>
-<span class="ln"> 7</span>
-<span class="ln"> 8</span><span class="cm">/* 检查序数 */</span>
-<span class="ln"> 9</span><span class="k">if</span> <span class="p">(</span><span class="n">_IOC_NR</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">IOC_MAXNR</span><span class="p">)</span> <span class="p">{</span> 
-<span class="ln">10</span>    <span class="n">pr_err</span><span class="p">(</span><span class="s">&#34;[%s] command numer [%d] exceeded!</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> 
-<span class="ln">11</span>           <span class="n">__func__</span><span class="p">,</span> <span class="n">_IOC_NR</span><span class="p">(</span><span class="n">cmd</span><span class="p">));</span>
-<span class="ln">12</span>    <span class="k">return</span> <span class="o">-</span><span class="n">ENOTTY</span><span class="p">;</span>
-<span class="ln">13</span><span class="p">}</span>    
-<span class="ln">14</span>
-<span class="ln">15</span><span class="cm">/* 检查访问模式 */</span>
-<span class="ln">16</span><span class="k">if</span> <span class="p">(</span><span class="n">_IOC_DIR</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">_IOC_READ</span><span class="p">)</span>
-<span class="ln">17</span>    <span class="n">ret</span><span class="o">=</span> <span class="o">!</span><span class="n">access_ok</span><span class="p">(</span><span class="n">VERIFY_WRITE</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span> <span class="n">__user</span> <span class="o">*</span><span class="p">)</span><span class="n">arg</span><span class="p">,</span> \
-<span class="ln">18</span>                    <span class="n">_IOC_SIZE</span><span class="p">(</span><span class="n">cmd</span><span class="p">));</span>
-<span class="ln">19</span><span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">_IOC_DIR</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">_IOC_WRITE</span><span class="p">)</span>
-<span class="ln">20</span>    <span class="n">ret</span><span class="o">=</span> <span class="o">!</span><span class="n">access_ok</span><span class="p">(</span><span class="n">VERIFY_READ</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span> <span class="n">__user</span> <span class="o">*</span><span class="p">)</span><span class="n">arg</span><span class="p">,</span> \
-<span class="ln">21</span>                    <span class="n">_IOC_SIZE</span><span class="p">(</span><span class="n">cmd</span><span class="p">));</span>
-<span class="ln">22</span><span class="k">if</span> <span class="p">(</span><span class="n">ret</span><span class="p">)</span>
-<span class="ln">23</span>    <span class="k">return</span> <span class="o">-</span><span class="n">EFAULT</span><span class="p">;</span>
-</code></pre></div><p>最终得到的调用流程如下所示，通过用户态调用的ioctl函数设备节点/dev/ioctl_test最终在内核态的my_ioctl实现这个流程。</p>
+<span class="ln"> 2</span><span class="c1">//这里定义的type是&#39;A&#39;
+</span><span class="ln"> 3</span><span class="c1"></span><span class="k">if</span> <span class="p">(</span><span class="n">_IOC_TYPE</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">!=</span> <span class="n">IOC_MAGIC</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="n">pr_err</span><span class="p">(</span><span class="s">&#34;[%s] command type [%c] error!</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> \
+<span class="ln"> 5</span>           <span class="n">__func__</span><span class="p">,</span> <span class="n">_IOC_TYPE</span><span class="p">(</span><span class="n">cmd</span><span class="p">));</span>
+<span class="ln"> 6</span>    <span class="k">return</span> <span class="o">-</span><span class="n">ENOTTY</span><span class="p">;</span> 
+<span class="ln"> 7</span><span class="p">}</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span><span class="cm">/* 检查序数 */</span>
+<span class="ln">10</span><span class="c1">//这里定义的序数为4
+</span><span class="ln">11</span><span class="c1"></span><span class="k">if</span> <span class="p">(</span><span class="n">_IOC_NR</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">IOC_MAXNR</span><span class="p">)</span> <span class="p">{</span> 
+<span class="ln">12</span>    <span class="n">pr_err</span><span class="p">(</span><span class="s">&#34;[%s] command numer [%d] exceeded!</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> 
+<span class="ln">13</span>           <span class="n">__func__</span><span class="p">,</span> <span class="n">_IOC_NR</span><span class="p">(</span><span class="n">cmd</span><span class="p">));</span>
+<span class="ln">14</span>    <span class="k">return</span> <span class="o">-</span><span class="n">ENOTTY</span><span class="p">;</span>
+<span class="ln">15</span><span class="p">}</span>    
+<span class="ln">16</span>
+<span class="ln">17</span><span class="cm">/* 检查访问模式 */</span>
+<span class="ln">18</span><span class="k">if</span> <span class="p">(</span><span class="n">_IOC_DIR</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">_IOC_READ</span><span class="p">)</span>
+<span class="ln">19</span>    <span class="n">ret</span><span class="o">=</span> <span class="o">!</span><span class="n">access_ok</span><span class="p">(</span><span class="n">VERIFY_WRITE</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span> <span class="n">__user</span> <span class="o">*</span><span class="p">)</span><span class="n">arg</span><span class="p">,</span> \
+<span class="ln">20</span>                    <span class="n">_IOC_SIZE</span><span class="p">(</span><span class="n">cmd</span><span class="p">));</span>
+<span class="ln">21</span><span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">_IOC_DIR</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">_IOC_WRITE</span><span class="p">)</span>
+<span class="ln">22</span>    <span class="n">ret</span><span class="o">=</span> <span class="o">!</span><span class="n">access_ok</span><span class="p">(</span><span class="n">VERIFY_READ</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span> <span class="n">__user</span> <span class="o">*</span><span class="p">)</span><span class="n">arg</span><span class="p">,</span> \
+<span class="ln">23</span>                    <span class="n">_IOC_SIZE</span><span class="p">(</span><span class="n">cmd</span><span class="p">));</span>
+<span class="ln">24</span><span class="k">if</span> <span class="p">(</span><span class="n">ret</span><span class="p">)</span>
+<span class="ln">25</span>    <span class="k">return</span> <span class="o">-</span><span class="n">EFAULT</span><span class="p">;</span>
+</code></pre></div><blockquote>
+<p>补充</p>
+<p>这里的access_ok函数，主要是防止内核被外部攻击</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">//返回值：布尔值，1表示成功，0表示失败
+</span><span class="ln">2</span><span class="c1">//type:检查用户空间地址的权限；VERIFY_READ或者VERIFY_WRITE；
+</span><span class="ln">3</span><span class="c1">//&lt;1&gt;VERIFY_READ：驱动是否可以读取用户空间的指定地址；
+</span><span class="ln">4</span><span class="c1">//&lt;2&gt;VERIFY_WRITE：驱动是否可以读取用户空间的指定地址；
+</span><span class="ln">5</span><span class="c1">//&lt;3&gt;VERIFY_WRITE：驱动在指定用户空间地址既要读取也要写入，也是填这个；
+</span><span class="ln">6</span><span class="c1">//addr：用户空间地址；
+</span><span class="ln">7</span><span class="c1">//size:要操作的字节数；例如驱动要从指定用户空间地址读取一个int型整数，则size就是sizeof(int)；
+</span><span class="ln">8</span><span class="c1"></span><span class="kt">int</span> <span class="nf">access_ok</span><span class="p">(</span><span class="kt">int</span> <span class="n">type</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span> <span class="n">__user</span> <span class="o">*</span><span class="n">addr</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">size</span><span class="p">);</span>
+</code></pre></div></blockquote>
+<h3 id="323调用流程总结">3.2.3调用流程总结</h3>
+<p>最终得到的调用流程如下所示，通过用户态调用的ioctl函数设备节点/dev/ioctl_test最终在内核态的my_ioctl实现这个流程。</p>
 
 
  
@@ -1054,6 +1275,8 @@ bool表示变量类型，即<code>CONFIG_IOCTL_TEST </code>的类型。</p>
 <h1 id="两个可以参考的源码网站">两个可以参考的源码网站</h1>
 <p><a href="http://aospxref.com/android-11.0.0_r21/">aospxref.com</a></p>
 <p><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/?h=v5.19-rc7">kernel.org</a></p>
+<h1 id="5下载">5下载</h1>
+<p>本文源码下载，点击<a href="https://github.com/YangYang48/project/tree/master/ioctl">这里</a></p>
 <h1 id="参考">参考</h1>
 <p><a href="https://mp.weixin.qq.com/s/8zoa7Ywftm4TmLdf8PAPFg">[1]酷派技术团队, Linux用户态与内核态通信方式介绍及选型参考, 2022.</a></p>
 <p><a href="https://www.cnblogs.com/TaXueWuYun/p/15315594.html">[2] WuYunTaXue, ioctl使用方法, 2021.</a></p>
@@ -1071,6 +1294,10 @@ bool表示变量类型，即<code>CONFIG_IOCTL_TEST </code>的类型。</p>
 <p><a href="https://blog.csdn.net/wojiaowoen/article/details/107938455">[14] Felix_8_, Kconfig文件的用途及解析, 2020.</a></p>
 <p><a href="https://blog.csdn.net/weixin_42817735/article/details/122982569">[15] 无棱, Kconfig, 2022.</a></p>
 <p><a href="https://blog.csdn.net/qq_36412526/article/details/82885631">[16] qq_36412526, MODULE_AUTHOR宏(一), 2018.</a></p>
+<p><a href="https://www.jianshu.com/p/2f092e81cbc1?utm_campaign=maleskine&amp;utm_content=note&amp;utm_medium=seo_notes&amp;utm_source=recommendation">[17] c枫_撸码的日子, [读书笔记]高级字符驱动程序（第六章）, 2018.</a></p>
+<p><a href="https://blog.csdn.net/bytxl/article/details/8215116">[18] bytxl, S_ISDIR S_ISREG等常见的几个宏, 2012.</a></p>
+<p><a href="https://blog.csdn.net/weixin_42817735/article/details/122982569">[19] 正在起飞的蜗牛, access_ok()函数介绍, 2022.</a></p>
+<p><a href="https://zhuanlan.zhihu.com/p/94020714">[20] 宋宝华, 为什么内核访问用户数据之前，要做access_ok?, 2019.</a></p>
               
             </div>
           </div>
