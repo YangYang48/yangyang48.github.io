@@ -270,7 +270,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">600 Words|Read in about 3 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">1000 Words|Read in about 5 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -1155,6 +1155,234 @@
 <span class="ln">22</span>    <span class="n">lock</span><span class="p">.</span><span class="n">Release</span><span class="p">();</span>
 <span class="ln">23</span><span class="p">}</span>
 </code></pre></div><h3 id="1062哲学家就餐问题">10.6.2哲学家就餐问题</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os10_16.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os10_16.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h4 id="10621方案一">10.6.2.1方案一</h4>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="cp">#define N 5					</span><span class="c1">//哲学家个数
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span> <span class="nf">philosopher</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="p">)</span>		<span class="c1">//哲学家编号0-4
+</span><span class="ln"> 3</span><span class="c1"></span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="k">while</span><span class="p">(</span><span class="nb">true</span><span class="p">)</span>
+<span class="ln"> 5</span>    <span class="p">{</span>
+<span class="ln"> 6</span>        <span class="n">think</span><span class="p">();</span>			<span class="c1">//哲学家在思考
+</span><span class="ln"> 7</span><span class="c1"></span>        <span class="n">take_fork</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>		<span class="c1">//去拿左边的叉子
+</span><span class="ln"> 8</span><span class="c1"></span>        <span class="n">take_fork</span><span class="p">((</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">%</span><span class="n">N</span><span class="p">);</span>	<span class="c1">//去拿右边的叉子
+</span><span class="ln"> 9</span><span class="c1"></span>        <span class="n">eat</span><span class="p">();</span>				<span class="c1">//吃面条
+</span><span class="ln">10</span><span class="c1"></span>        <span class="n">put_fork</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>		<span class="c1">//放下左边的叉子
+</span><span class="ln">11</span><span class="c1"></span>        <span class="n">put_fork</span><span class="p">((</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">%</span><span class="n">N</span><span class="p">);</span>	<span class="c1">//放下右边的叉子
+</span><span class="ln">12</span><span class="c1"></span>    <span class="p">}</span>
+<span class="ln">13</span><span class="p">}</span>
+</code></pre></div><p><strong>结果</strong></p>
+<ul>
+<li>不正确，可能导致死锁</li>
+</ul>
+<h4 id="10622方案二">10.6.2.2方案二</h4>
+<p>针对方案一进行改进</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="cp">#define N 5						</span><span class="c1">//哲学家个数
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span> <span class="nf">philosopher</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="p">)</span>			<span class="c1">//哲学家编号0-4
+</span><span class="ln"> 3</span><span class="c1"></span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="k">while</span><span class="p">(</span><span class="nb">true</span><span class="p">)</span>
+<span class="ln"> 5</span>    <span class="p">{</span>
+<span class="ln"> 6</span>        <span class="n">think</span><span class="p">();</span>				<span class="c1">//哲学家在思考
+</span><span class="ln"> 7</span><span class="c1"></span>        <span class="k">if</span><span class="p">(</span><span class="n">take_fork</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>		<span class="c1">//去拿左边的叉子
+</span><span class="ln"> 8</span><span class="c1"></span>        <span class="p">{</span>
+<span class="ln"> 9</span>            <span class="n">take_fork</span><span class="p">((</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">%</span><span class="n">N</span><span class="p">);</span>	<span class="c1">//去拿右边的叉子       
+</span><span class="ln">10</span><span class="c1"></span>            <span class="n">eat</span><span class="p">();</span>				<span class="c1">//吃面条
+</span><span class="ln">11</span><span class="c1"></span>            <span class="n">put_fork</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>		<span class="c1">//放下左边的叉子
+</span><span class="ln">12</span><span class="c1"></span>            <span class="n">put_fork</span><span class="p">((</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">%</span><span class="n">N</span><span class="p">);</span>	<span class="c1">//放下右边的叉子
+</span><span class="ln">13</span><span class="c1"></span>            <span class="k">break</span><span class="p">;</span>
+<span class="ln">14</span>        <span class="p">}</span><span class="k">else</span>
+<span class="ln">15</span>        <span class="p">{</span>
+<span class="ln">16</span>            <span class="n">put_fork</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>		<span class="c1">//放下左边的叉子
+</span><span class="ln">17</span><span class="c1"></span>            <span class="n">waitsome_time</span><span class="p">();</span>
+<span class="ln">18</span>        <span class="p">}</span>
+<span class="ln">19</span>    <span class="p">}</span>
+<span class="ln">20</span><span class="p">}</span>
+</code></pre></div><p><strong>结果</strong></p>
+<ul>
+<li>对拿叉子的过程进行了改进，但仍不正确</li>
+</ul>
+<h4 id="10623方案三">10.6.2.3方案三</h4>
+<p>针对方案二继续改进</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="cp">#define N 5						</span><span class="c1">//哲学家个数
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span> <span class="nf">philosopher</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="p">)</span>			<span class="c1">//哲学家编号0-4
+</span><span class="ln"> 3</span><span class="c1"></span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="k">while</span><span class="p">(</span><span class="nb">true</span><span class="p">)</span>
+<span class="ln"> 5</span>    <span class="p">{</span>
+<span class="ln"> 6</span>        <span class="n">think</span><span class="p">();</span>				<span class="c1">//哲学家在思考
+</span><span class="ln"> 7</span><span class="c1"></span>        <span class="k">if</span><span class="p">(</span><span class="n">take_fork</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>		<span class="c1">//去拿左边的叉子
+</span><span class="ln"> 8</span><span class="c1"></span>        <span class="p">{</span>
+<span class="ln"> 9</span>            <span class="n">take_fork</span><span class="p">((</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">%</span><span class="n">N</span><span class="p">);</span>	<span class="c1">//去拿右边的叉子       
+</span><span class="ln">10</span><span class="c1"></span>            <span class="n">eat</span><span class="p">();</span>				<span class="c1">//吃面条
+</span><span class="ln">11</span><span class="c1"></span>            <span class="n">put_fork</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>		<span class="c1">//放下左边的叉子
+</span><span class="ln">12</span><span class="c1"></span>            <span class="n">put_fork</span><span class="p">((</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">%</span><span class="n">N</span><span class="p">);</span>	<span class="c1">//放下右边的叉子
+</span><span class="ln">13</span><span class="c1"></span>            <span class="k">break</span><span class="p">;</span>
+<span class="ln">14</span>        <span class="p">}</span><span class="k">else</span>
+<span class="ln">15</span>        <span class="p">{</span>
+<span class="ln">16</span>            <span class="n">put_fork</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>		<span class="c1">//放下左边的叉子
+</span><span class="ln">17</span><span class="c1"></span>            <span class="n">wait_random_time</span><span class="p">();</span>	<span class="c1">//等待随机长时间
+</span><span class="ln">18</span><span class="c1"></span>        <span class="p">}</span>
+<span class="ln">19</span>    <span class="p">}</span>
+<span class="ln">20</span><span class="p">}</span>
+</code></pre></div><p><strong>结果</strong></p>
+<ul>
+<li>等待时间随机变化。可行，但非万全之策。</li>
+</ul>
+<h4 id="10624方案四">10.6.2.4方案四</h4>
+<p>通过互斥访问</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="n">semaphore</span> <span class="n">mutex</span>				<span class="c1">//互斥信号量，初始值为1
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span> <span class="n">philosopher</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="p">)</span>		<span class="c1">//哲学家编号0-4
+</span><span class="ln"> 3</span><span class="c1"></span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="k">while</span><span class="p">(</span><span class="nb">true</span><span class="p">)</span>
+<span class="ln"> 5</span>    <span class="p">{</span>
+<span class="ln"> 6</span>        <span class="n">think</span><span class="p">();</span>			<span class="c1">//哲学家在思考
+</span><span class="ln"> 7</span><span class="c1"></span>        <span class="n">P</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>			<span class="c1">//进入临界区
+</span><span class="ln"> 8</span><span class="c1"></span>        <span class="n">take_fork</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>		<span class="c1">//去拿左边的叉子
+</span><span class="ln"> 9</span><span class="c1"></span>        <span class="n">take_fork</span><span class="p">((</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">%</span><span class="n">N</span><span class="p">);</span>	<span class="c1">//去拿右边的叉子
+</span><span class="ln">10</span><span class="c1"></span>        <span class="n">eat</span><span class="p">();</span>				<span class="c1">//吃面条
+</span><span class="ln">11</span><span class="c1"></span>        <span class="n">put_fork</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>		<span class="c1">//放下左边的叉子
+</span><span class="ln">12</span><span class="c1"></span>        <span class="n">put_fork</span><span class="p">((</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">%</span><span class="n">N</span><span class="p">);</span>	<span class="c1">//放下右边的叉子
+</span><span class="ln">13</span><span class="c1"></span>        <span class="n">V</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>			<span class="c1">//退出临界区
+</span><span class="ln">14</span><span class="c1"></span>    <span class="p">}</span>
+<span class="ln">15</span><span class="p">}</span>
+</code></pre></div><ul>
+<li>
+<p>结果</p>
+<p>互斥访问。正确，<strong>但每次只允许一人进餐，浪费资源</strong>。</p>
+</li>
+<li>
+<p>方案四的缺点</p>
+<p>把就餐（而不是叉子）看成是必须互斥访问的临界资源，因此造成（叉子）资源浪费。</p>
+<p>从理论上说，如果有五把叉子，应允许两个不相邻的哲学家同时进餐。</p>
+</li>
+</ul>
+<h4 id="10625思路1哲学家自己怎么来解决这个问题">10.6.2.5思路（1）哲学家自己怎么来解决这个问题？</h4>
+<p>指导原则：要么不拿，要不就拿两把叉子。</p>
+<ul>
+<li>S1 思考中</li>
+<li>S2 进入饥饿状态</li>
+<li>S3 如果左邻居或右邻居正在进餐，等待；否则转到S4</li>
+<li>S4 拿起两把叉子</li>
+<li>S5 吃面条。。</li>
+<li>S6 放下左边的叉子</li>
+<li>S7 放下右边的叉子</li>
+<li>S8 新的循环又开始了，转S1</li>
+</ul>
+<h4 id="10626思考2计算机程序怎么来解决这个问题">10.6.2.6思考（2）计算机程序怎么来解决这个问题？</h4>
+<p>指导原则：不能浪费CPU时间：进程间相互通信</p>
+<ul>
+<li>S1 思考中</li>
+<li>S2 进入饥饿状态</li>
+<li>S3 如果左邻居或右邻居正在进餐，进程进入阻塞态；否则转到S4</li>
+<li>S4 拿起两把叉子</li>
+<li>S5 吃面条。。</li>
+<li>S6 放下左边的叉子，看着左邻居现在能否进餐（饥饿状态，两把叉子都在），若能则唤醒左邻居</li>
+<li>S7 放下右边的叉子，看着右邻居现在能否进餐（饥饿状态，两把叉子都在），若能则唤醒右邻居</li>
+<li>S8 新的循环又开始了，转S1</li>
+</ul>
+<h4 id="10627思考3怎么样来编写程序">10.6.2.7思考（3）怎么样来编写程序？</h4>
+<ol>
+<li>必须有数据结构，来描述每个哲学家的当前状态</li>
+<li>该状态是一个临界资源，各个哲学家对它的访问应该互斥地进行（<strong>进程互斥</strong>）</li>
+<li>一个哲学家吃饱饭后，可能要唤醒它的左邻右舍，两者之间存在这同步关系（<strong>进程同步</strong>）</li>
+</ol>
+<h4 id="10628实例">10.6.2.8实例</h4>
+<ol>
+<li>
+<p>必须有一个数据结构，来描述每个哲学家的当前状态</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="cp">#define N 			5			</span><span class="c1">//哲学家个数
+</span><span class="ln">2</span><span class="c1"></span><span class="cp">#define LEFT 		(i-1+N)%N	</span><span class="c1">//第i个哲学家的左邻居
+</span><span class="ln">3</span><span class="c1"></span><span class="cp">#define RIGHT 		(i+1)%N		</span><span class="c1">//第i个哲学家的右邻居
+</span><span class="ln">4</span><span class="c1"></span><span class="cp">#define THINKING 	0			</span><span class="c1">//思考状态
+</span><span class="ln">5</span><span class="c1"></span><span class="cp">#define HUNGRY 		1			</span><span class="c1">//饥饿状态
+</span><span class="ln">6</span><span class="c1"></span><span class="cp">#define EATING 		2			</span><span class="c1">//进餐状态
+</span><span class="ln">7</span><span class="c1"></span><span class="kt">int</span> <span class="n">state</span><span class="p">[</span><span class="n">N</span><span class="p">];</span>					<span class="c1">//记录每个人的状态
+</span></code></pre></div></li>
+<li>
+<p>该状态是一个临界资源，对他的访问应该互斥地进行</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="n">semaphore</span> <span class="n">mutex</span><span class="p">;</span>		<span class="c1">//互斥信号量，初值1
+</span></code></pre></div></li>
+<li>
+<p>一个哲学家吃饱后，可能要唤醒邻居，存在同步关系</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="n">semaphore</span> <span class="n">S</span><span class="p">[</span><span class="n">N</span><span class="p">];</span>			<span class="c1">//同步信号量，初值0
+</span></code></pre></div></li>
+<li>
+<p>函数<code>philosopher</code>定义</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="kt">void</span> <span class="nf">philosopher</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="p">)</span>
+<span class="ln"> 2</span><span class="p">{</span>
+<span class="ln"> 3</span>    <span class="k">while</span><span class="p">(</span><span class="nb">true</span><span class="p">)</span>
+<span class="ln"> 4</span>    <span class="p">{</span>
+<span class="ln"> 5</span>        <span class="n">think</span><span class="p">();</span>		<span class="c1">//s1,思考中
+</span><span class="ln"> 6</span><span class="c1"></span>        <span class="n">take_forks</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>	<span class="c1">//s2-s4，拿到两把叉子
+</span><span class="ln"> 7</span><span class="c1"></span>        <span class="n">eat</span><span class="p">();</span>			<span class="c1">//s5，吃面条中
+</span><span class="ln"> 8</span><span class="c1"></span>        <span class="n">put_forks</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>	<span class="c1">//s6-s7，把两把叉子放回去
+</span><span class="ln"> 9</span><span class="c1"></span>    <span class="p">}</span>
+<span class="ln">10</span><span class="p">}</span>
+</code></pre></div></li>
+<li>
+<p>函数<code>take_forks</code>的定义</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">//功能：要么拿到两把叉子，要么被阻塞起来
+</span><span class="ln">2</span><span class="c1"></span><span class="kt">void</span> <span class="nf">take_forks</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="p">)</span>
+<span class="ln">3</span><span class="p">{</span>
+<span class="ln">4</span>    <span class="n">P</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>						<span class="c1">//进入临界区
+</span><span class="ln">5</span><span class="c1"></span>    <span class="n">state</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">HUNGRY</span><span class="p">;</span>				<span class="c1">//设置状态为饿了
+</span><span class="ln">6</span><span class="c1"></span>    <span class="n">test_take_left_right_forks</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>	<span class="c1">//尝试去拿叉子
+</span><span class="ln">7</span><span class="c1"></span>    <span class="n">V</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>						<span class="c1">//退出临界区
+</span><span class="ln">8</span><span class="c1"></span>    <span class="n">P</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>						<span class="c1">//没有叉子阻塞
+</span><span class="ln">9</span><span class="c1"></span><span class="p">}</span>
+</code></pre></div></li>
+<li>
+<p>函数<code>test_take_left_right_forks</code>的定义</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="kt">void</span> <span class="nf">test_take_left_right_forks</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="p">)</span>
+<span class="ln"> 2</span><span class="p">{</span>
+<span class="ln"> 3</span>    <span class="k">if</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">HUNGRY</span> <span class="o">&amp;&amp;</span> 
+<span class="ln"> 4</span>      <span class="n">state</span><span class="p">[</span><span class="n">LEFT</span><span class="p">]</span> <span class="o">!=</span> <span class="n">EATING</span> <span class="o">&amp;&amp;</span>
+<span class="ln"> 5</span>      <span class="n">state</span><span class="p">[</span><span class="n">RIGHT</span><span class="p">]</span> <span class="o">!=</span> <span class="n">EATING</span><span class="p">)</span>
+<span class="ln"> 6</span>    <span class="p">{</span>
+<span class="ln"> 7</span>        <span class="n">state</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">EATING</span><span class="p">;</span>		<span class="c1">//两把叉子到手
+</span><span class="ln"> 8</span><span class="c1"></span>        <span class="n">V</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>				<span class="c1">//通知第i人可以吃饭了,通知自身吃饭
+</span><span class="ln"> 9</span><span class="c1"></span>    <span class="p">}</span>
+<span class="ln">10</span><span class="p">}</span>
+</code></pre></div></li>
+<li>
+<p>函数<code>put_forks</code>的定义</p>
+<p>功能：把两个叉子放回原位，并在需要的时候去唤醒左邻右舍</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">void</span> <span class="nf">put_forks</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="p">)</span>
+<span class="ln">2</span><span class="p">{</span>
+<span class="ln">3</span>    <span class="n">P</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>							<span class="c1">//进入临界区
+</span><span class="ln">4</span><span class="c1"></span>    <span class="n">state</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">THINKING</span><span class="p">;</span>				<span class="c1">//交出两把叉子
+</span><span class="ln">5</span><span class="c1"></span>    <span class="n">test_take_left_right_forks</span><span class="p">(</span><span class="n">LEFT</span><span class="p">);</span>	<span class="c1">//看左邻居是否进餐
+</span><span class="ln">6</span><span class="c1"></span>    <span class="n">test_take_left_right_forks</span><span class="p">(</span><span class="n">RIGHT</span><span class="p">);</span>	<span class="c1">//看右邻居是否进餐
+</span><span class="ln">7</span><span class="c1"></span>    <span class="n">V</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>							<span class="c1">//退出临界区
+</span><span class="ln">8</span><span class="c1"></span><span class="p">}</span>
+</code></pre></div></li>
+</ol>
               
             </div>
           </div>
