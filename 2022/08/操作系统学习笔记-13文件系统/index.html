@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="熟悉完操作系统的第十二篇章，开始学习第十三篇章，关于操作系统的文件系统。">
+
+
+<meta property="og:description" content="熟悉完操作系统的第十二篇章，开始学习第十三篇章，关于操作系统的文件系统。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="操作系统学习笔记 13文件系统">
+<meta name="twitter:title" content="操作系统学习笔记 13文件系统">
+<meta property="og:url" content="https://yangyang48.github.io/2022/08/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-13%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2022/08/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-13%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="熟悉完操作系统的第十二篇章，开始学习第十三篇章，关于操作系统的文件系统。">
+<meta name="twitter:description" content="熟悉完操作系统的第十二篇章，开始学习第十三篇章，关于操作系统的文件系统。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2022-08-07T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2022-08-07T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="OS">
+    
+      <meta property="article:section" content="2022">
+    
+      <meta property="article:section" content="August">
+    
+  
+  
+    
+      <meta property="article:tag" content="学习笔记">
+    
+      <meta property="article:tag" content="清华大学陈渝">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/os/os13_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/os/os13_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/os/os13_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/os/os13_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>操作系统学习笔记 13文件系统</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2022/08/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-13%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/os/os13_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      操作系统学习笔记 13文件系统
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2022-08-07T00:00:00Z">
+        
+  八月 7, 2022
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/os">OS</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2022">2022</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/august">August</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">400 Words|Read in about 2 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>熟悉完操作系统的第十二篇章，开始学习第十三篇章，关于操作系统的文件系统。</p>
+<h1 id="13文件系统">13文件系统</h1>
+<ol>
+<li>基本概念</li>
+<li>虚拟文件系统</li>
+<li>数据块缓存</li>
+<li>打开文件的数据结构</li>
+<li>文件分配</li>
+<li>空闲空间列表</li>
+<li>多磁盘管理-RAID</li>
+<li>磁盘调度</li>
+</ol>
+<h2 id="131基本概念">13.1基本概念</h2>
+<ul>
+<li>文件系统和文件</li>
+<li>文件描述符</li>
+<li>目录</li>
+<li>文件别名</li>
+<li>文件系统种类</li>
+</ul>
+<h3 id="1311文件系统和文件">13.1.1文件系统和文件</h3>
+<p><strong>文件系统</strong></p>
+<p>一种用于持久性存储的<strong>系统抽象</strong></p>
+<ul>
+<li>在存储器上：组织、控制、导航、访问和检索数据</li>
+<li>大多数计算机系统包含文件系统</li>
+<li>个人电脑、服务器、笔记本电脑</li>
+<li>iPod、Tivo/机顶盒，手机/掌上电脑</li>
+<li>Google可能是由一个文件系统构成的</li>
+</ul>
+<p><strong>文件</strong></p>
+<p>文件系统中一个单元的相关数据在操作系统中的抽象</p>
+<p><strong>分配文件磁盘空间</strong></p>
+<ul>
+<li>管理<strong>文件夹</strong>（哪一块属于哪一个文件）</li>
+<li>管理<strong>空闲空间</strong>（哪一块是空闲的）</li>
+<li>分配<strong>算法</strong>（策略）</li>
+</ul>
+<p><strong>管理文件集合</strong></p>
+<ul>
+<li><strong>定位</strong>：文件及其内容</li>
+<li><strong>命令</strong>：通过名字找到文件的接口</li>
+<li><strong>最常见</strong>：分层文件系统</li>
+<li>文件系统类型（组织文件的不同方式）</li>
+</ul>
+<p><strong>提供的便利及特征</strong></p>
+<ul>
+<li><strong>保护</strong>：分层来保护数据安全</li>
+<li><strong>可靠性/持久性</strong>：保持文件的持久即使发生崩溃、媒体错误、攻击等</li>
+</ul>
+<p><strong>文件属性</strong></p>
+<ul>
+<li>名称、类型、位置、大小、保护、创建者、创建时间、最近修改时间。。。</li>
+</ul>
+<p><strong>文件头</strong></p>
+<ul>
+<li>在存储数据中保存了每个文件的信息</li>
+<li>保存文件的属性</li>
+<li>跟踪哪一块存储块属于逻辑上文件结构的哪个偏移</li>
+</ul>
+<h3 id="1312文件描述符">13.1.2文件描述符</h3>
+<h4 id="13121文件使用模式">13.1.2.1文件使用模式</h4>
+<p>实用程序必须在使用前先“打开”文件</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="n">f</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">flag</span><span class="p">);</span>
+<span class="ln">2</span><span class="p">...</span>
+<span class="ln">3</span><span class="p">...</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">...);</span>
+<span class="ln">4</span><span class="p">...</span>
+<span class="ln">5</span><span class="n">close</span><span class="p">(</span><span class="n">f</span><span class="p">);</span>
+</code></pre></div><p>内核跟踪每个进程打开的文件</p>
+<ul>
+<li>操作系统为每个进程<strong>维护一个打开文件表</strong></li>
+<li>一个打开文件描述符是这个表中的<strong>索引</strong></li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h4 id="13122需要元数据来管理打开文件">13.1.2.2需要元数据来管理打开文件</h4>
+<ul>
+<li><strong>文件指针</strong>：指向最近的一次读写为止，每个打开了这个文件的进程都这个指针</li>
+<li><strong>文件打开计数</strong>：记录文件打开的次数。当最后一个进程关闭了文件时，允许将其从打开文件表中移除</li>
+<li><strong>文件磁盘位置</strong>：缓存数据访问信息</li>
+<li><strong>访问权限</strong>：每个程序访问模式信息</li>
+</ul>
+<p>总结：</p>
+<p>文件描述符是个概念，具体包括步骤是通过索引找到文件位置，查文件具体属性，比如owner，权限，创建日期等等。</p>
+<h4 id="13123不同角度">13.1.2.3不同角度</h4>
+<ul>
+<li>从用户角度，文件是一种持久的数据结构</li>
+<li>从系统角度，文件是字节的集合（<code>unix</code>），不会关心你想存储在磁盘上的任何数据结构</li>
+<li>从操作系统角度，文件是块的集合（块是逻辑转换单元，而扇区是物理转换单元），块大小和扇区大小，块的大小是4KB</li>
+</ul>
+<p>举例说明</p>
+<p><strong>当用户说：给我2-12字节空间时会发生什么</strong></p>
+<ul>
+<li>获取字节所在的块</li>
+<li>返回块内对应部分</li>
+</ul>
+<p><strong>如果说要写2-12字节呢</strong></p>
+<ul>
+<li>获取块</li>
+<li>修改块内对应部分</li>
+<li>写回块</li>
+</ul>
+<p><strong>在文件系统中的所有操作都是在整个块空间上进行的</strong></p>
+<ul>
+<li>举个例子，<code>getc()</code>,<code>putc()</code>：即使每次只访问1字节数据，也会缓存目标数据4096字节</li>
+</ul>
+<h4 id="13124用户怎么访问文件">13.1.2.4用户怎么访问文件</h4>
+<p>在系统层面需要知道用户的访问模式</p>
+<ul>
+<li>
+<p><strong>顺序访问</strong>：按字节依次读取</p>
+<p>几乎所有的访问都是这种方式</p>
+</li>
+<li>
+<p><strong>随记访问</strong>：从中间读写</p>
+<p>不常用，但仍然重要。例如，虚拟内存支持文件：内存页存储在文件中</p>
+<p>更加快速-不希望获取文件中间的内容的时候也必须先获取块内所有字节</p>
+</li>
+<li>
+<p><strong>基于内容访问</strong>：通过特征</p>
+<p>许多系统不提供此种访问方式，相反，数据库是建立在索引内容的磁盘访问上（需要高效的随机访问）</p>
+<p>基于内容访问有两个文件，一个是index文件，一个是关系文件，这是典型的数据库。通过index找到对应的关系文件的记录项，数据库通过不同功能的文件来完成基于内容的查找。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_2.png" >
+  
+    </a>
+  
+  
+</div>
+
+</li>
+</ul>
+<h4 id="13125文件内部结构">13.1.2.5文件内部结构</h4>
+<p><strong>无结构</strong></p>
+<ul>
+<li>单词、比特的队列</li>
+</ul>
+<p><strong>简单记录结构</strong></p>
+<ul>
+<li>列</li>
+<li>固定长度</li>
+<li>可变长度</li>
+</ul>
+<p><strong>复杂结构</strong></p>
+<ul>
+<li>格式化的文档（如MS Word）</li>
+<li>可执行文件</li>
+<li>。。。</li>
+</ul>
+<p><strong>多用户系统</strong>中的文件共享是很有必要的</p>
+<p><strong>访问控制</strong></p>
+<ul>
+<li>谁能够获得哪些文件的哪些访问权限</li>
+<li>访问模式：读、写、执行、删除、列举等</li>
+</ul>
+<p><strong>文件访问控制列表（ACL）</strong></p>
+<ul>
+<li>&lt;文件实体， 权限&gt;</li>
+</ul>
+<p><strong>Unix模式</strong></p>
+<ul>
+<li>&lt; 用户|组|所有人， 读|写|可执行&gt;</li>
+<li>用户ID识别用户，表明每个用户所允许的权限及保护模式</li>
+<li>组ID允许用户组成组，并指定了组访问权限</li>
+</ul>
+<p><strong>指定多用户/客户如何同时访问共享文件</strong></p>
+<ul>
+<li>和进程同步算法相似</li>
+<li>因磁盘I/O和网络延迟而设计简单</li>
+</ul>
+<p><strong>Unix文件系统（UFS）语义</strong></p>
+<ul>
+<li>对打开文件的写入内容立即对其他打开同一文件的其他用户可见</li>
+<li>共享文件指针允许多用户同时读取和写入文件</li>
+</ul>
+<p><strong>会话语义</strong></p>
+<ul>
+<li>写入内容只有当文件关闭时可见</li>
+</ul>
+<p><strong>锁</strong></p>
+<ul>
+<li>一些操作系统和文件系统提供该功能</li>
+</ul>
+<h3 id="1313-目录">13.1.3 目录</h3>
+<h4 id="13131目录">13.1.3.1目录</h4>
+<p>文件是以<strong>目录</strong>的方式组织起来</p>
+<ul>
+<li>
+<p><strong>目录</strong>是一种特殊的文件</p>
+<p>每个目录都包含了一张表&lt;name, pointer to the header&gt;</p>
+</li>
+<li>
+<p>目录和文件的<strong>树型</strong>结构</p>
+<p>早期的文件系统是扁平的（只有一层目录）</p>
+</li>
+<li>
+<p>层次名称空间</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_3.png" >
+  
+    </a>
+  
+  
+</div>
+
+</li>
+</ul>
+<h4 id="13132典型操作">13.1.3.2典型操作</h4>
+<ul>
+<li>搜索文件</li>
+<li>创建文件</li>
+<li>删除文件</li>
+<li>每局文件</li>
+<li>重命名文件</li>
+<li>在文件系统中遍历一个路径</li>
+</ul>
+<p><strong>操作系统应该只允许内核模式修改目录</strong></p>
+<ul>
+<li>确保映射的完整性</li>
+<li>应用程序能够读取目录（如<code>ls</code>）</li>
+</ul>
+<h4 id="13133目录存储文件的数据结构">13.1.3.3目录存储文件的数据结构</h4>
+<p><strong>文件名的线性列表，包含了指向数据块的指针</strong></p>
+<ul>
+<li>编程简单</li>
+<li>执行耗时</li>
+</ul>
+<p><strong>Hash表-hash数据结构的线性表</strong></p>
+<ul>
+<li>减少目录搜索时间</li>
+<li>碰撞-两个文件名的hash值相同</li>
+<li>固定大小</li>
+</ul>
+<h4 id="13134路径遍历">13.1.3.4路径遍历</h4>
+<p><strong>名字解析：逻辑名字转换成物理资源（如文件）的过程</strong></p>
+<ul>
+<li>在文件系统中：到实际文件的文件名（路径）</li>
+<li>遍历文件目录直到找到目标文件</li>
+</ul>
+<p><strong>举例：解析“/bin/ls”</strong></p>
+<ul>
+<li>读取root的文件头（在磁盘固定位置）</li>
+<li>读取root的数据块：搜索“bin”项</li>
+<li>读取bin的文件头</li>
+<li>读取bin的数据块：搜索“ls”项</li>
+<li>读取ls的文件头</li>
+</ul>
+<p><strong>当前工作目录</strong></p>
+<ul>
+<li>每个进程都会指向一个文件目录用于解析文件名</li>
+<li>允许用户指定相对路径来代替绝对路径</li>
+</ul>
+<h4 id="13135文件挂载">13.1.3.5文件挂载</h4>
+<p>一个文件系统需要先<strong>挂载</strong>在才能被访问</p>
+<p>一个未挂载的文件系统被挂载在<strong>挂载点</strong>上</p>
+<blockquote>
+<p>Linux挂载，指的就是将设备文件中的顶级目录连接到 Linux 根目录下的某一目录（最好是空目录），访问此目录就等同于访问设备文件。</p>
+<p>纠正一个误区，并不是根目录下任何一个目录都可以作为挂载点，由于挂载操作会使得<strong>原有目录中文件被隐藏</strong>，因此根目录以及系统原有目录都不要作为挂载点，会造成系统异常甚至崩溃，挂载点最好是新建的空目录。</p>
+</blockquote>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="1314文件别名">13.1.4文件别名</h3>
+<ul>
+<li>
+<p>两个或多个文件名关联同一个文件</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_5.png" >
+  
+    </a>
+  
+  
+</div>
+
+</li>
+<li>
+<p><strong>硬链接</strong>：多个文件项指向同一个文件</p>
+</li>
+<li>
+<p><strong>软链接</strong>：以“快捷方式”指向其他文件</p>
+</li>
+<li>
+<p>通过存储真实文件的逻辑名称来实现</p>
+</li>
+</ul>
+<p>如果删除一个有别名的文件会如何呢</p>
+<p><strong>软链接方案（软链接）</strong></p>
+<ul>
+<li>这个别名将成为一个“悬空指针”</li>
+</ul>
+<p><strong><code>Backpointers</code>方案</strong>（硬链接）</p>
+<ul>
+<li>每个文件有一个包含多个<code>Backpointers</code>的列表，用于删除所有的<code>Backpointers</code></li>
+<li><code>Backpointers</code>使用<strong>菊花链管理</strong></li>
+</ul>
+<p><strong>添加一个间接层，目录项数据结构</strong></p>
+<ul>
+<li>链接-已存在文件的另外一个名字（指针）</li>
+<li>链接处理-跟随指针来定位文件</li>
+</ul>
+<p>目录循环</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>如何保障没有循环呢</p>
+<ul>
+<li>只允许到文件的链接，不允许在子目录的链接</li>
+<li>每增加一个新的链接都用循环检测算法确定是否合理</li>
+<li>限制路径可遍历文件<strong>目录的数量</strong></li>
+</ul>
+<h3 id="1315文件系统种类">13.1.5文件系统种类</h3>
+<ul>
+<li>
+<p><strong>磁盘文件系统</strong></p>
+<p>文件存储在数据存储设备上，比如磁盘</p>
+<p>例如：<code>FAT</code>，<code>NTFS</code>(windows)，<code>ext2/3</code>，<code>ISO9660</code>等</p>
+</li>
+<li>
+<p><strong>数据库文件系统</strong></p>
+<p>文件根据其特征是可被寻址（辨识）的</p>
+<p>例如：<code>WinFs</code></p>
+</li>
+<li>
+<p><strong>日志文件系统</strong></p>
+<p>记录文件系统的修改/时间</p>
+<p>例如：<code>journaling file system</code></p>
+</li>
+<li>
+<p><strong>网络/分布式文件系统</strong></p>
+<p>例如：<code>NFS</code>，<code>SMB</code>，<code>AFS</code>，<code>GFS</code></p>
+</li>
+<li>
+<p><strong>特殊/虚拟文件系统</strong></p>
+<p>目的不是为了存数据，以文件的方式展示读写的接口，用于交互访问内核中的数据，例如<code>/proc</code>。多大内存，多少次中断，当前打开进程是多少，通过读写控制一些参数，用于操作系统的内核交互。</p>
+</li>
+</ul>
+<p><strong>网络 / 分布式文件系统</strong></p>
+<table>
+<thead>
+<tr>
+<th>文件可以通过网络内共享</th>
+<th>分布是文件系统的问题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>文件位于远程服务器</td>
+<td>客户端和客户端上的用户辨别起来很复杂</td>
+</tr>
+<tr>
+<td>客户端远程挂载服务器文件系统</td>
+<td>例如：<code>NFS</code>是不安全的</td>
+</tr>
+<tr>
+<td>标准系统文件访问被转换成远程访问</td>
+<td><strong>一致性</strong>问题</td>
+</tr>
+<tr>
+<td>标准文件共享协议：<code>NFS for Uinx</code>，<code>CIFS for Windows</code></td>
+<td>错误处理模式</td>
+</tr>
+</tbody>
+</table>
+<h2 id="132虚拟文件系统">13.2虚拟文件系统</h2>
+<p>分层结构</p>
+<ul>
+<li>上层：虚拟（逻辑）文件系统</li>
+<li>底层：特定文件系统模块</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><strong>目的</strong></p>
+<p>对所有不同文件系统的抽象</p>
+<p><strong>功能</strong></p>
+<ul>
+<li>提供相同的文件和文件系统的<strong>接口</strong></li>
+<li>管理所有文件和文件系统关联的<strong>数据结构</strong></li>
+<li>高效查询<strong>例程</strong>，遍历文件系统</li>
+<li>与特定文件系统模块的<strong>交互</strong></li>
+</ul>
+<p><strong>卷控制块（Unix:&quot;<code>superblock</code>&quot;）</strong></p>
+<ul>
+<li>每个文件系统一个</li>
+<li>文件系统详细信息</li>
+<li>块、块大小、空余块、计数/指针等</li>
+</ul>
+<p><strong>文件控制块（Unix ：“<code>vnode</code>” or “<code>inode</code>”）</strong></p>
+<ul>
+<li>每个文件一个</li>
+<li>文件详细信息</li>
+<li>许可、拥有者、大小、数据库位置等</li>
+</ul>
+<p><strong>目录节点（Linux “<code>dentry</code>”）</strong></p>
+<ul>
+<li>每个目录项一个（目录和文件）</li>
+<li>将目录项数据结构及树型布局编码成树型数据结构</li>
+<li>指向文件控制块、父节点，项目列表等</li>
+</ul>
+<p><strong>文件系统数据结构</strong></p>
+<ul>
+<li>卷控制块（每个文件系统一个）</li>
+<li>文件控制块（每个文件一个）</li>
+<li>目录节点（每个目录项一个）</li>
+</ul>
+<p><strong>持续存储在二级存储中</strong></p>
+<ul>
+<li>在分配在存储设备中的数据块中</li>
+</ul>
+<p><strong>当需要时加载进内存</strong></p>
+<ul>
+<li>卷控制块：当文件系统<strong>挂载时</strong>进入内存</li>
+<li>文件控制块：当文件<strong>被访问</strong>是进入每次</li>
+<li>目录节点：在<strong>遍历</strong>一个文件路径是进入内存</li>
+</ul>
+<p>在操作系统访问文件系统前，数据存储在硬盘上面。硬盘的头几个扇区存储的是卷控制块（Unix:&quot;<code>superblock</code>&quot;），接下来的扇区存的是目录节点（Linux “<code>dentry</code>”），之后的扇区是文件控制块（Unix ：“<code>vnode</code>” or “<code>inode</code>”），最后的是数据块。可以通过文件控制块找到对应的数据块，最终可以实现对文件的读或者写的操作。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_8.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="133数据块缓存">13.3数据块缓存</h2>
+<p>访问CPU和访问硬盘的速度不是一个数量级的。我们会在内存中放入一个缓存，把当前正在用到的或者经常用到的数据，从硬盘放到缓存中来。接下来的访问都可以到内存中来，可以提高效率。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_9.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_9.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><strong>数据块按需读入内存</strong></p>
+<ul>
+<li>提供<code>read</code>操作</li>
+<li>预读：预选读取后面的数据块</li>
+</ul>
+<p><strong>数据块使用后被缓存</strong></p>
+<ul>
+<li>假设数据将会再次被使用</li>
+<li>写操作可能被缓存和延迟写入</li>
+</ul>
+<p><strong>两种数据块缓存方式</strong></p>
+<ul>
+<li>普通缓冲区缓存</li>
+<li>页缓存：统一缓存数据块和内存块</li>
+</ul>
+<p><strong>分页要求</strong></p>
+<ul>
+<li>当需要一个页时才将其载入内存</li>
+</ul>
+<p><strong>支持存储</strong></p>
+<ul>
+<li>一个页（在虚拟地址空间中）可以被映射到一个本地文件中（在耳机存储中）</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_10.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_10.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><strong>文件数据块的页缓存</strong></p>
+<ul>
+<li>在虚拟内存中文件数据块被映射成页</li>
+<li>文件的读/写操作被转换成堆内存的访问</li>
+<li>可能导致缺页和/或设置为脏页</li>
+<li>问题：页置换-从进程或者文件页缓存中</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_11.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_11.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="134打开文件的数据结构">13.4打开文件的数据结构</h2>
+<p><strong>打开文件描述</strong></p>
+<ul>
+<li>每个被打开的文件一个</li>
+<li>文件状态信息</li>
+<li>目录项、当前文件指针、文件操作设置等</li>
+</ul>
+<p><strong>打开文件表</strong></p>
+<ul>
+<li>一个进程一个</li>
+<li>一个系统级的</li>
+<li>每个卷控制块也会保存一个列表</li>
+<li>所以如果有文件被打开将不能被卸载</li>
+</ul>
+<p>当一个进程有一个打开文件操作的时候，它会返回一个index，它会指出进程打开文件表中的位置，基于这个位置会找到对应系统打开文件表。因为很可能，不同的进程会打开同一个文件，在系统打开文件表仅会记录一个。如果这个操作是打开目录或者打开文件，这个系统表就会找到对应的<code>inode</code>，这个文件会具体在那个地方。读写操作的时候会有一个偏移量，来处理哪个位置起的数据。这个偏移会经过<strong>文件控制块</strong>的转换，会转换成一个扇区的编号，实际上的操作就是访问对应的扇区。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_12.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_12.png" >
+  
+    </a>
+  
+  
+</div>
+
+<ul>
+<li>
+<p>一些操作系统和文件系统提供该功能</p>
+</li>
+<li>
+<p>调节对文件的访问</p>
+</li>
+<li>
+<p>强制和劝告</p>
+<p><strong>强制</strong>：根据锁保持情况和需求拒绝访问</p>
+<p><strong>劝告</strong>：进程可以查找锁的状态来决定怎么做</p>
+</li>
+</ul>
+<h2 id="135文件分配">13.5文件分配</h2>
+<p><strong>大多数文件都很小</strong></p>
+<ul>
+<li>需要对小文件提供强力的支持</li>
+<li>块空间不能太大</li>
+</ul>
+<p><strong>一些文件非常大</strong></p>
+<ul>
+<li>必须支持大文件（64-bit文件偏移）</li>
+<li>大文件访问需要相当高效</li>
+</ul>
+<h3 id="1351如何为一个文件分配数据块">13.5.1如何为一个文件分配数据块</h3>
+<p><strong>分配方式</strong></p>
+<ul>
+<li>连续分配</li>
+<li>链式分配</li>
+<li>索引分配</li>
+</ul>
+<p><strong>指标</strong></p>
+<ul>
+<li>高效：如存储利用（外部碎片）</li>
+<li>表现：如访问速度</li>
+</ul>
+<h3 id="1352连续分配">13.5.2连续分配</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_13.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_13.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="1353链式分配">13.5.3链式分配</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_14.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_14.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="1354索引分配">13.5.4索引分配</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_15.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_15.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>大文件一般会有多级索引，一级索引二级索引三级索引。<strong>多级索引块</strong>对于大文件和小文件管理会更加的合适。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_16.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_16.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>早期的Unix系统，采用了多级索引的方式</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_17.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_17.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>多级索引方式的特点</p>
+<table>
+<thead>
+<tr>
+<th>文件头包含13个指针</th>
+<th>影响</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>10个指针指向数据块</td>
+<td>提高了文件大小限制阈值</td>
+</tr>
+<tr>
+<td>第11个指针指向间接数据块</td>
+<td>动态分配数据块，文件扩展很容易</td>
+</tr>
+<tr>
+<td>第12个指针指向二重间接数据块</td>
+<td>小文件开销小</td>
+</tr>
+<tr>
+<td>第13个指针指向三重间接数据块</td>
+<td>只为大文件分配间接数据块，大文件在访问间接数据块是<strong>需要大量的查询</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="136空闲空间列表">13.6空闲空间列表</h2>
+<ul>
+<li>跟踪在存储中的所有未分配的数据块</li>
+<li>空闲空间列表存在哪里</li>
+<li>空闲空间列表的最佳数据结构是怎么样的</li>
+</ul>
+<h3 id="1361用简单的方式">13.6.1用简单的方式</h3>
+<ul>
+<li>
+<p><strong>用位图代表空闲数据块列表：</strong></p>
+<p>111111111111110101010011&hellip;</p>
+<p>如果<code>i = 0</code>表明数据块<code>i</code>是空闲，反之则已分配</p>
+</li>
+<li>
+<p><strong>使用简单但是可能会使一个big vector</strong></p>
+<p><code>160GB</code>的磁盘-&gt;<code>40M blocks</code>-&gt;<code>5MB worth of bits</code></p>
+<p>然而，如果空闲空间在磁盘中均匀分布，那么在找到0之前需要扫描<code>n/r</code>，其中<code>n</code>为磁盘上数据块的总数，<code>r</code>为空闲块的数目</p>
+</li>
+</ul>
+<h3 id="1362需要保护">13.6.2需要保护</h3>
+<ul>
+<li>
+<p><strong>指向空闲列表的指针</strong></p>
+</li>
+<li>
+<p><strong>位图</strong></p>
+<p>必须保存在磁盘上</p>
+<p>在内存和磁盘拷贝可能有所不同</p>
+<p>不允许<code>block[i]</code>在内存中的状态为<code>bit[i] = 1</code>，而在磁盘中<code>bit[i] = 0</code></p>
+</li>
+<li>
+<p><strong>解决</strong></p>
+<p>在磁盘上设置<code>bit[i] = 1</code></p>
+<p>分配<code>block[i]</code></p>
+<p>在内存中设置<code>bit[i] = 1</code></p>
+</li>
+</ul>
+<p>除了上述的位图方式，还有<strong>链式列表</strong>和<strong>分组列表</strong>，也可以快速查找空闲空间列表</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_18.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_18.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="137多磁盘管理-raid">13.7多磁盘管理-RAID</h2>
+<h2 id="138磁盘调度">13.8磁盘调度</h2>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%B8%85%E5%8D%8E%E5%A4%A7%E5%AD%A6%E9%99%88%E6%B8%9D/">清华大学陈渝</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/08/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-12%E8%BF%9B%E7%A8%8B%E9%97%B4%E9%80%9A%E4%BF%A1/" data-tooltip="操作系统学习笔记 12进程间通信">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2022 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/08/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-12%E8%BF%9B%E7%A8%8B%E9%97%B4%E9%80%9A%E4%BF%A1/" data-tooltip="操作系统学习笔记 12进程间通信">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2022%2F08%2F%25E6%2593%258D%25E4%25BD%259C%25E7%25B3%25BB%25E7%25BB%259F%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25AC%2594%25E8%25AE%25B0-13%25E6%2596%2587%25E4%25BB%25B6%25E7%25B3%25BB%25E7%25BB%259F%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2022%2F08%2F%25E6%2593%258D%25E4%25BD%259C%25E7%25B3%25BB%25E7%25BB%259F%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25AC%2594%25E8%25AE%25B0-13%25E6%2596%2587%25E4%25BB%25B6%25E7%25B3%25BB%25E7%25BB%259F%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2022%2F08%2F%25E6%2593%258D%25E4%25BD%259C%25E7%25B3%25BB%25E7%25BB%259F%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25AC%2594%25E8%25AE%25B0-13%25E6%2596%2587%25E4%25BB%25B6%25E7%25B3%25BB%25E7%25BB%259F%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2022\/08\/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-13%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F\/';
+          
+            this.page.identifier = '\/2022\/08\/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-13%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
