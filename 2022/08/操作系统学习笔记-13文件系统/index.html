@@ -270,7 +270,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">400 Words|Read in about 2 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">500 Words|Read in about 3 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -1331,7 +1331,704 @@
 </div>
 
 <h2 id="137多磁盘管理-raid">13.7多磁盘管理-RAID</h2>
+<h3 id="1371基本概念">13.7.1基本概念</h3>
+<p>通常磁盘通过<strong>分区</strong>来最大限度减小寻道时间</p>
+<ul>
+<li>一个分区是一个柱面的集合</li>
+<li>每个分区都是逻辑上独立的磁盘</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_19.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_19.png" >
+  
+    </a>
+  
+  
+</div>
+
+<ul>
+<li>
+<p><strong>分区</strong></p>
+<p>硬件磁盘的一种适合操作系统指定格式的划分</p>
+</li>
+<li>
+<p><strong>卷</strong></p>
+<p>一个拥有一个文件系统实例的可访问的存储空间（多个disk变成一个卷来管理）</p>
+</li>
+</ul>
+<p>磁盘有不同的分区，不同的分区有不同的文件系统组成。</p>
+<p>如下图13-1左边所示，<code>disk1</code>分为2个分区，<code>partA</code>和<code>partB</code>，用于分别放置不同的文件系统。</p>
+<p>可以让一个文件系统扩展到多个磁盘中去。下图右边13-1所示，可以看到文件系统位于不同的磁盘上，一个磁盘就是一个<code>device</code></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_20.png" title="图13-1 不同的分区的不同的文件系统图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_20.png"  alt="图13-1 不同的分区的不同的文件系统图">
+  
+    </a>
+  
+   
+    <span class="caption">图13-1 不同的分区的不同的文件系统图</span>
+  
+</div>
+
+<p><strong>使用多个并行磁盘来增加</strong></p>
+<ul>
+<li>吞吐量（通过并行）</li>
+<li>可靠性和可用性（通过冗余）</li>
+</ul>
+<p><strong><code>RAID</code>-冗余磁盘阵列</strong></p>
+<ul>
+<li>各种磁盘管理技术</li>
+<li><code>RAID levels</code>：不同<code>RAID</code>分类（如<code>RAID-0</code>，<code>RAID-1</code>，<code>RAID-5</code>）</li>
+</ul>
+<p><strong>实现</strong></p>
+<ul>
+<li>在操作系统内核：存储/卷管理</li>
+<li>RAID硬件控制器（I/O）</li>
+</ul>
+<h3 id="1372raid提升访问速度效率的原因">13.7.2<code>RAID</code>提升访问速度、效率的原因</h3>
+<ul>
+<li>
+<p>数据块分成多个子块，存储在独立的磁盘中（和内存交叉相似）</p>
+</li>
+<li>
+<p>通过更大的有效块大小来提供更大的磁盘带宽（存不同的数据）</p>
+<p>图RAID-0</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_21.png" title="RAID-0图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_21.png"  alt="RAID-0图">
+  
+    </a>
+  
+   
+    <span class="caption">RAID-0图</span>
+  
+</div>
+
+</li>
+<li>
+<p>可靠性成倍增长</p>
+</li>
+<li>
+<p>读取性能线性增加（存相同的数据，向两个磁盘写入，从任何一个读取）</p>
+<p>图RAID-1</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_22.png" title="RAID-1图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_22.png"  alt="RAID-1图">
+  
+    </a>
+  
+   
+    <span class="caption">RAID-1图</span>
+  
+</div>
+
+</li>
+<li>
+<p>数据块级磁带配有专用奇偶检验磁盘</p>
+<p>允许任意一个故障磁盘中恢复（提高可靠性的同时，又能提高性能）</p>
+<p>例如：存储8,9,10,11,12,13,14,15,0,1,2,3</p>
+<p>图RAID-4</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_23.png" title="RAID-4图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_23.png"  alt="RAID-4图">
+  
+    </a>
+  
+   
+    <span class="caption">RAID-4图</span>
+  
+</div>
+
+</li>
+<li>
+<p>通过四个盘的数据，反推出坏的那个盘的数据，从而使得在<code>Parity Disk</code>去恢复这个数据。<code>Parity Disk</code>存的是纠错码，可以使用前面几个没错的<code>Disk</code>恢复错了的那个<code>Disk</code>。</p>
+<p>无论<code>Disk1-4</code>，写一个数据，对应的Parity Disk也要做写操作，这里有一个瓶颈Parity Disk的读写很频繁。Parity Disk的开销平摊到不同的磁盘中，而不是只在一个磁盘来做奇偶校验，这个时候就出现了RAID-5。RAID-5把奇偶校验块均匀的分布在每个磁盘中，这样每个磁盘的开销都是类似的。开销是均匀的，访问是并行的，高端磁盘阵列常用的方式。</p>
+<p>图RAID-5</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_24.png" title="RAID-5图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_24.png"  alt="RAID-5图">
+  
+    </a>
+  
+   
+    <span class="caption">RAID-5图</span>
+  
+</div>
+
+</li>
+</ul>
+<h3 id="1373其他的raid方式">13.7.3其他的<code>RAID</code>方式</h3>
+<p><strong>条带化和奇偶校验按<code>byte-by-byte</code>或者<code>bit-by-bit</code></strong></p>
+<ul>
+<li>RAID-0/4/5：<code>block-wise</code>（使用比较多）</li>
+<li>RAID-3：<code>bit-wise</code>（细粒度太细，不实用）</li>
+<li>例如在RAID-3系统中存储<code>bit-string</code> 101</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_25.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_25.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><strong>RAID-5：每个条带块有一个奇偶校验块</strong></p>
+<ul>
+<li>允许一个磁盘错误</li>
+</ul>
+<p><strong>RAID-6：两个冗余块</strong></p>
+<ul>
+<li>
+<p>有一种特殊的编码方式</p>
+</li>
+<li>
+<p>允许两个磁盘错误</p>
+</li>
+</ul>
+<p><strong>还有分层的形式</strong></p>
+<ul>
+<li>
+<p><code>RAID 0+1</code>和<code>RAID 1+0</code>，既保证效率，也能保证冗错的简单方式，相比<code>RAID-5</code>和<code>RAID-6</code>要更加简单。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_26.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_26.png" >
+  
+    </a>
+  
+  
+</div>
+
+</li>
+</ul>
 <h2 id="138磁盘调度">13.8磁盘调度</h2>
+<p>首先，进一步了解一下磁盘结构。旋转来寻道，磁头来前后移动找到位置，读取相应的扇区。一个硬盘来说，会有多个盘片，每个盘片会有1-2个磁头。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_27.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_27.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="1381磁盘性能表示">13.8.1磁盘性能表示</h3>
+<p>读取或写入时，磁头必须被定位在<strong>期望的磁道</strong>，并从所<strong>期望的扇区</strong>的开始</p>
+<ul>
+<li>
+<p><strong>寻道时间</strong></p>
+<p>定位到期望的磁道所花费的时间</p>
+</li>
+<li>
+<p><strong>旋转延迟</strong></p>
+<p>从扇区的开始处到到达目的处花费的时间</p>
+</li>
+</ul>
+<p><strong>平均旋转延迟时间=磁盘旋转一周时间的一半</strong></p>
+<h3 id="1382io时间分类">13.8.2<code>I/O</code>时间分类</h3>
+<p>访问数据<code>I/O</code>的开销=寻道时间+旋转延迟时间+寻道数据访问时间</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_28.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_28.png" >
+  
+    </a>
+  
+  
+</div>
+
+<ul>
+<li><strong>寻道时间</strong>是性能上区别的原因（时间是最慢的）</li>
+<li>对单个磁盘，会有一个<strong>IO请求数目</strong></li>
+<li>如果请求是随机的，那么会表现很差</li>
+</ul>
+<h3 id="1383磁盘调度策略">13.8.3磁盘调度策略</h3>
+<h4 id="13831先进先出fifo">13.8.3.1先进先出（<code>FIFO</code>）</h4>
+<ul>
+<li>按顺序处理请求</li>
+<li>公平对待所有进程</li>
+<li>在有很多进程的情况下，接近随机调度的性能</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_29.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_29.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>应用程序发出的<code>I/O</code>访问请求，按照发出的顺序，操作系统按照顺序交给磁盘去访问。因为应用程序本身<code>I/O</code>访问的随机性，所以会发现磁头会存在反复横跳的现象。总的磁头距离移动长，意味着磁盘访问开销越大。</p>
+<p><code>FIFO</code>示例</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_30.png" title="FIFO示例图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_30.png"  alt="FIFO示例图">
+  
+    </a>
+  
+   
+    <span class="caption">FIFO示例图</span>
+  
+</div>
+
+<h4 id="13832最短服务优先sstf">13.8.3.2最短服务优先（<code>SSTF</code>）</h4>
+<ul>
+<li>选择<strong>从磁臂当前位置需要移动最少</strong>的<code>I/O</code>请求</li>
+<li>总是选择最短寻道时间</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_31.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_31.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>如果<code>I/O</code>请求频繁出现当前的位置，而另外的<code>I/O</code>请求离当前位置较远，那么当前磁头只会的当前位置附近来回移动，而远处请求会持续得不到服务，就会出现饥饿现象。这使得磁盘移动不公平性，不均匀性。</p>
+<p><code>SSTF</code>示例</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_32.png" title="SSTF示例图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_32.png"  alt="SSTF示例图">
+  
+    </a>
+  
+   
+    <span class="caption">SSTF示例图</span>
+  
+</div>
+
+<h4 id="13833扫描算法scan">13.8.3.3扫描算法（<code>SCAN</code>）</h4>
+<ul>
+<li>磁臂在<strong>一个方向上移动</strong>，满足所有未完成的请求，直到磁臂达到该方向上最后的磁道</li>
+<li>调换方向</li>
+<li>有时被称为<code>elevator algorithm</code>（电梯算法）</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_33.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_33.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><code>SCAN</code>算法示例</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_34.png" title="SCAN算法示例图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_34.png"  alt="SCAN算法示例图">
+  
+    </a>
+  
+   
+    <span class="caption">SCAN算法示例图</span>
+  
+</div>
+
+<h4 id="13834循环扫描算法c-scan">13.8.3.4循环扫描算法（<code>C-SCAN</code>）</h4>
+<p>在上面的扫描算法的基础上，进行改进</p>
+<ul>
+<li>限制了<strong>仅在一个方向上</strong>扫描</li>
+<li>当最后一个磁道也被访问过了后，磁臂返回到磁盘的<strong>另外一端</strong>再次进行扫描</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_35.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_35.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h4 id="13835c-look算法">13.8.3.5<code>C-LOOK</code>算法</h4>
+<p>在<code>C-SCAN</code>的基础上改进</p>
+<ul>
+<li>磁臂先到达该方向上<strong>最后一个请求处</strong>，然后立即反转</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/os/os13_36.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/os/os13_36.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>离终点最接近的请求服务完成之后，再往上走没有新的请求点，所以到了最后一个请求处，会重新从0开始走。</p>
+<p>在<code>SSTF</code>、<code>SCAN</code>及<code>CSCAN</code>集中调度算法中，都可能出现磁臂停留在某处不动的情况，例如进程反复请求对某一磁道的<code>I/O</code>操作。我们把这一现象称为“磁臂粘着”（<code>arm stickiness</code>）。</p>
+<h4 id="13836n-step-scan算法">13.8.3.6<code>N-Step-SCAN</code>算法</h4>
+<ul>
+<li>将磁盘请求队列分成若干个长度为N的子队列，磁盘调度将按<code>FCFS</code>算法依次处理这些子队列。</li>
+<li>而每处理一个队列时又是按<code>SCAN</code>算法，对一个队列处理完后，再处理其他队列。</li>
+<li>当正在处理某子队列时，如果又出现新的磁盘<code>I/O</code>请求，便将新请求进程放入其他队列，这样就可以避免出现粘着现象。</li>
+</ul>
+<p>如果N=2，那么就是<code>FSCAN</code>算法</p>
+<h4 id="13837fscan算法">13.8.3.7<code>FSCAN</code>算法</h4>
+<ul>
+<li>实质上是N步<code>SCAN</code>算法的简化，即<code>FSCAN</code>只将磁盘请求队列分成两个子队列。（结合公平性，均匀性，高效性）</li>
+<li>一个是由当前所有请求磁盘<code>I/O</code>的进程形成的队列，有磁盘调度按<code>SCAN</code>算法进行处理。</li>
+<li>在处理某队列期间，将新出现的所有请求磁盘<code>I/O</code>的进程，放入另一个等待处理的请求队列</li>
+</ul>
+<p>这样，所有的新请求都将被推迟到下一次扫描时处理。</p>
               
             </div>
           </div>
