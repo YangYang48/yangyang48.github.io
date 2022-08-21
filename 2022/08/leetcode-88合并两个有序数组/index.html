@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="leetcode第88题，合并两个有序数组。采用双指针的算法来完成。">
+
+
+<meta property="og:description" content="leetcode第88题，合并两个有序数组。采用双指针的算法来完成。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Leetcode 88合并两个有序数组">
+<meta name="twitter:title" content="Leetcode 88合并两个有序数组">
+<meta property="og:url" content="https://yangyang48.github.io/2022/08/leetcode-88%E5%90%88%E5%B9%B6%E4%B8%A4%E4%B8%AA%E6%9C%89%E5%BA%8F%E6%95%B0%E7%BB%84/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2022/08/leetcode-88%E5%90%88%E5%B9%B6%E4%B8%A4%E4%B8%AA%E6%9C%89%E5%BA%8F%E6%95%B0%E7%BB%84/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="leetcode第88题，合并两个有序数组。采用双指针的算法来完成。">
+<meta name="twitter:description" content="leetcode第88题，合并两个有序数组。采用双指针的算法来完成。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2022-08-15T08:00:00">
+  
+  
+    <meta property="article:modified_time" content="2022-08-15T08:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="数据结构">
+    
+      <meta property="article:section" content="算法">
+    
+      <meta property="article:section" content="2022">
+    
+      <meta property="article:section" content="August">
+    
+  
+  
+    
+      <meta property="article:tag" content="leetcode">
+    
+      <meta property="article:tag" content="C&#43;&#43;">
+    
+      <meta property="article:tag" content="Java">
+    
+      <meta property="article:tag" content="双指针">
+    
+      <meta property="article:tag" content="数组">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/leetcode/leetcode_88/leetcode88_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/leetcode/leetcode_88/leetcode88_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/leetcode/leetcode_88/leetcode88_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/leetcode/leetcode_88/leetcode88_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>Leetcode 88合并两个有序数组</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2022/08/leetcode-88%E5%90%88%E5%B9%B6%E4%B8%A4%E4%B8%AA%E6%9C%89%E5%BA%8F%E6%95%B0%E7%BB%84/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/leetcode/leetcode_88/leetcode88_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      Leetcode 88合并两个有序数组
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2022-08-15T08:00:00Z">
+        
+  八月 15, 2022
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/%e6%95%b0%e6%8d%ae%e7%bb%93%e6%9e%84">数据结构</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/%e7%ae%97%e6%b3%95">算法</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2022">2022</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/august">August</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">500 Words|Read in about 2 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>leetcode第88题，合并两个有序数组。采用双指针的算法来完成。</p>
+<h1 id="leetcode-88合并两个有序数组">Leetcode 88合并两个有序数组</h1>
+<p>给你两个按 <strong>非递减顺序</strong> 排列的整数数组 <code>nums1</code> 和 <code>nums2</code>，另有两个整数 <code>m</code> 和<code> n</code> ，分别表示 <code>nums1</code> 和 <code>nums2</code> 中的元素数目。</p>
+<p>请你 合并 <code>nums2</code> 到 <code>nums1</code> 中，使合并后的数组同样按 <strong>非递减顺序</strong> 排列。</p>
+<p>注意：最终，合并后数组不应由函数返回，而是存储在数组 <code>nums1</code> 中。为了应对这种情况，<code>nums1</code> 的初始长度为 <code>m + n</code>，其中前 <code>m</code> 个元素表示应合并的元素，后<code> n</code> 个元素为 0 ，应忽略。<code>nums2</code> 的长度为 <code>n</code> 。</p>
+<p><strong>示例 1：</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>输入：nums1 = [1,2,3,0,0,0], m = 3, nums2 = [2,5,6], n = 3
+<span class="ln">2</span>输出：[1,2,2,3,5,6]
+<span class="ln">3</span>解释：需要合并 [1,2,3] 和 [2,5,6] 。
+<span class="ln">4</span>合并结果是 [1,2,2,3,5,6] ，其中斜体加粗标注的为 nums1 中的元素。
+</code></pre></div><p><strong>示例 2：</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>输入：nums1 = [1], m = 1, nums2 = [], n = 0
+<span class="ln">2</span>输出：[1]
+<span class="ln">3</span>解释：需要合并 [1] 和 [] 。
+<span class="ln">4</span>合并结果是 [1] 。
+</code></pre></div><p><strong>示例 3：</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>输入：nums1 = [0], m = 0, nums2 = [1], n = 1
+<span class="ln">2</span>输出：[1]
+<span class="ln">3</span>解释：需要合并的数组是 [] 和 [1] 。
+<span class="ln">4</span>合并结果是 [1] 。
+<span class="ln">5</span>注意，因为 m = 0 ，所以 nums1 中没有元素。nums1 中仅存的 0 仅仅是为了确保合并结果可以顺利存放到 nums1 中。
+</code></pre></div><p><strong>提示：</strong></p>
+<ul>
+<li><code>nums1.length</code> == <code>m</code> + <code>n</code></li>
+<li><code>nums2.length</code> == <code>n</code></li>
+<li>0 &lt;= <code>m</code>, <code>n</code> &lt;= 200</li>
+<li>1 &lt;= <code>m</code> + <code>n</code> &lt;= 200</li>
+<li>-109 &lt;= <code>nums1[i]</code>, <code>nums2[j]</code> &lt;= 109</li>
+</ul>
+<p>**进阶：**你可以设计实现一个时间复杂度为 <code>O(m + n)</code> 的算法解决此问题吗？</p>
+<h1 id="思路">思路</h1>
+<p>可以直接利用函数的快速排序。</p>
+<ol>
+<li>将<code>nums2</code>的元素放到<code>nums1</code>中，形成一个新的只有<code>nums1</code>的序列</li>
+<li>然后对<code>nums</code>的序列快速排序</li>
+</ol>
+<h1 id="解题">解题</h1>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="kd">class</span> <span class="nc">Solution</span> <span class="o">{</span>
+<span class="ln"> 2</span>    <span class="c1">//合并成一个数组，然后快速排序
+</span><span class="ln"> 3</span><span class="c1"></span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">merge</span><span class="o">(</span><span class="kt">int</span><span class="o">[]</span> <span class="n">nums1</span><span class="o">,</span> <span class="kt">int</span> <span class="n">m</span><span class="o">,</span> <span class="kt">int</span><span class="o">[]</span> <span class="n">nums2</span><span class="o">,</span> <span class="kt">int</span> <span class="n">n</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 4</span>        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span>
+<span class="ln"> 5</span>        <span class="o">{</span>
+<span class="ln"> 6</span>            <span class="n">nums1</span><span class="o">[</span><span class="n">m</span> <span class="o">+</span> <span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">nums2</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+<span class="ln"> 7</span>        <span class="o">}</span>
+<span class="ln"> 8</span>        <span class="n">Arrays</span><span class="o">.</span><span class="na">sort</span><span class="o">(</span><span class="n">nums1</span><span class="o">);</span>
+<span class="ln"> 9</span>    <span class="o">}</span>
+<span class="ln">10</span><span class="o">}</span>
+</code></pre></div><p>其实还可以利用递增的关系（双指针）</p>
+<ol>
+<li>每个数组头部头有一个指针指向第一位，创建一个临时数组</li>
+<li>比较双指针所在的值，会出现三种结果。如果相等，默认取<code>nums2</code>的元素，并且指针往后移动一位；如果不相等，取指针指向小的那位，并且指针往后移动一位。</li>
+<li>直到两个指针全部移动完成</li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="kd">class</span> <span class="nc">Solution</span> <span class="o">{</span>
+<span class="ln"> 2</span>    <span class="c1">//双指针做法，增加一个临时数组
+</span><span class="ln"> 3</span><span class="c1"></span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">merge</span><span class="o">(</span><span class="kt">int</span><span class="o">[]</span> <span class="n">nums1</span><span class="o">,</span> <span class="kt">int</span> <span class="n">m</span><span class="o">,</span> <span class="kt">int</span><span class="o">[]</span> <span class="n">nums2</span><span class="o">,</span> <span class="kt">int</span> <span class="n">n</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 4</span>        <span class="kt">int</span> <span class="n">k</span> <span class="o">=</span> <span class="n">m</span> <span class="o">+</span> <span class="n">n</span><span class="o">;</span>
+<span class="ln"> 5</span>        <span class="kt">int</span><span class="o">[]</span> <span class="n">tmp</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span><span class="o">[</span><span class="n">k</span><span class="o">];</span>
+<span class="ln"> 6</span>        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">index</span> <span class="o">=</span> <span class="n">0</span><span class="o">,</span> <span class="n">nums1Index</span> <span class="o">=</span> <span class="n">0</span><span class="o">,</span> <span class="n">nums2Index</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="n">k</span><span class="o">;</span> <span class="n">index</span><span class="o">++)</span>
+<span class="ln"> 7</span>        <span class="o">{</span>
+<span class="ln"> 8</span>            <span class="k">if</span><span class="o">(</span><span class="n">nums1Index</span> <span class="o">&gt;=</span> <span class="n">m</span><span class="o">)</span><span class="c1">//nums1数组元素取完
+</span><span class="ln"> 9</span><span class="c1"></span>            <span class="o">{</span>
+<span class="ln">10</span>                <span class="n">tmp</span><span class="o">[</span><span class="n">index</span><span class="o">]</span> <span class="o">=</span> <span class="n">nums2</span><span class="o">[</span><span class="n">nums2Index</span><span class="o">++];</span>
+<span class="ln">11</span>            <span class="o">}</span><span class="k">else</span> <span class="k">if</span><span class="o">(</span><span class="n">nums2Index</span> <span class="o">&gt;=</span> <span class="n">n</span><span class="o">)</span><span class="c1">//nums2数组元素取完
+</span><span class="ln">12</span><span class="c1"></span>            <span class="o">{</span>
+<span class="ln">13</span>                <span class="n">tmp</span><span class="o">[</span><span class="n">index</span><span class="o">]</span> <span class="o">=</span> <span class="n">nums1</span><span class="o">[</span><span class="n">nums1Index</span><span class="o">++];</span>
+<span class="ln">14</span>            <span class="o">}</span><span class="k">else</span> <span class="k">if</span><span class="o">(</span><span class="n">nums1</span><span class="o">[</span><span class="n">nums1Index</span><span class="o">]</span> <span class="o">&lt;</span> <span class="n">nums2</span><span class="o">[</span><span class="n">nums2Index</span><span class="o">])</span>
+<span class="ln">15</span>            <span class="c1">//nums1元素小于nums2元素
+</span><span class="ln">16</span><span class="c1"></span>            <span class="o">{</span>
+<span class="ln">17</span>                <span class="n">tmp</span><span class="o">[</span><span class="n">index</span><span class="o">]</span> <span class="o">=</span> <span class="n">nums1</span><span class="o">[</span><span class="n">nums1Index</span><span class="o">++];</span>
+<span class="ln">18</span>            <span class="o">}</span><span class="k">else</span><span class="c1">//nums2元素小于nums1元素
+</span><span class="ln">19</span><span class="c1"></span>            <span class="o">{</span>
+<span class="ln">20</span>                <span class="n">tmp</span><span class="o">[</span><span class="n">index</span><span class="o">]</span> <span class="o">=</span> <span class="n">nums2</span><span class="o">[</span><span class="n">nums2Index</span><span class="o">++];</span>
+<span class="ln">21</span>            <span class="o">}</span>
+<span class="ln">22</span>        <span class="o">}</span>
+<span class="ln">23</span>        <span class="c1">//重新赋值给nums1
+</span><span class="ln">24</span><span class="c1"></span>        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">k</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span>
+<span class="ln">25</span>        <span class="o">{</span>
+<span class="ln">26</span>            <span class="n">nums1</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+<span class="ln">27</span>        <span class="o">}</span>
+<span class="ln">28</span>    <span class="o">}</span>
+<span class="ln">29</span>
+<span class="ln">30</span><span class="o">}</span>
+</code></pre></div><p>由于这里<code>nums1</code>存在一个<code>m</code>+<code>n</code>的元素存放，那么其实可以利用上这个空间，不需要临时<code>tmp</code>数组</p>
+<p>还是利用双指针做法</p>
+<ol>
+<li>每个数组头尾部有一个指针指向最后一位</li>
+<li>比较双指针所在的值，会出现三种结果。如果相等，默认取<code>nums2</code>的元素，并且指针往前移动一位；如果不相等，取指针指向大的那位，并且指针往前移动一位。把元素存放到<code>nums1</code>的数组中</li>
+<li>直到两个指针全部移动完成</li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="kd">class</span> <span class="nc">Solution</span> <span class="o">{</span>
+<span class="ln"> 2</span>    <span class="c1">//双指针做法，利用nums1的空间，从后往前降序排列
+</span><span class="ln"> 3</span><span class="c1"></span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">merge</span><span class="o">(</span><span class="kt">int</span><span class="o">[]</span> <span class="n">nums1</span><span class="o">,</span> <span class="kt">int</span> <span class="n">m</span><span class="o">,</span> <span class="kt">int</span><span class="o">[]</span> <span class="n">nums2</span><span class="o">,</span> <span class="kt">int</span> <span class="n">n</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 4</span>        <span class="kt">int</span> <span class="n">k</span> <span class="o">=</span> <span class="n">m</span> <span class="o">+</span> <span class="n">n</span><span class="o">;</span>
+<span class="ln"> 5</span>        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">index</span> <span class="o">=</span> <span class="n">k</span><span class="o">-</span><span class="n">1</span><span class="o">,</span> <span class="n">nums1Index</span> <span class="o">=</span> <span class="n">m</span> <span class="o">-</span> <span class="n">1</span><span class="o">,</span> <span class="n">nums2Index</span> <span class="o">=</span> <span class="n">n</span> <span class="o">-</span><span class="n">1</span><span class="o">;</span>
+<span class="ln"> 6</span>            <span class="n">index</span> <span class="o">&gt;=</span> <span class="n">0</span><span class="o">;</span> <span class="n">index</span><span class="o">--)</span>
+<span class="ln"> 7</span>        <span class="o">{</span>
+<span class="ln"> 8</span>            <span class="k">if</span><span class="o">(</span><span class="n">nums1Index</span> <span class="o">&lt;</span> <span class="n">0</span><span class="o">)</span><span class="c1">//nums1元素已经取完
+</span><span class="ln"> 9</span><span class="c1"></span>            <span class="o">{</span>
+<span class="ln">10</span>                <span class="n">nums1</span><span class="o">[</span><span class="n">index</span><span class="o">]</span> <span class="o">=</span> <span class="n">nums2</span><span class="o">[</span><span class="n">nums2Index</span><span class="o">--];</span>
+<span class="ln">11</span>            <span class="o">}</span><span class="k">else</span> <span class="k">if</span><span class="o">(</span><span class="n">nums2Index</span> <span class="o">&lt;</span> <span class="n">0</span><span class="o">)</span><span class="c1">//nums2元素已经取完
+</span><span class="ln">12</span><span class="c1"></span>            <span class="o">{</span>
+<span class="ln">13</span>                <span class="k">break</span><span class="o">;</span>
+<span class="ln">14</span>            <span class="o">}</span><span class="k">else</span> <span class="k">if</span><span class="o">(</span><span class="n">nums1</span><span class="o">[</span><span class="n">nums1Index</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">nums2</span><span class="o">[</span><span class="n">nums2Index</span><span class="o">])</span>
+<span class="ln">15</span>            <span class="c1">//nums1元素值大于nums2,取nums1值
+</span><span class="ln">16</span><span class="c1"></span>            <span class="o">{</span>
+<span class="ln">17</span>                <span class="n">nums1</span><span class="o">[</span><span class="n">index</span><span class="o">]</span> <span class="o">=</span> <span class="n">nums1</span><span class="o">[</span><span class="n">nums1Index</span><span class="o">--];</span>
+<span class="ln">18</span>            <span class="o">}</span><span class="k">else</span>
+<span class="ln">19</span>            <span class="o">{</span>
+<span class="ln">20</span>                <span class="c1">//nums2元素值大于等于nums1，取nums2值
+</span><span class="ln">21</span><span class="c1"></span>                <span class="n">nums1</span><span class="o">[</span><span class="n">index</span><span class="o">]</span> <span class="o">=</span> <span class="n">nums2</span><span class="o">[</span><span class="n">nums2Index</span><span class="o">--];</span>
+<span class="ln">22</span>            <span class="o">}</span>
+<span class="ln">23</span>        <span class="o">}</span>
+<span class="ln">24</span>    <span class="o">}</span>
+<span class="ln">25</span>
+<span class="ln">26</span><span class="o">}</span>
+</code></pre></div>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/leetcode/">leetcode</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/c&#43;&#43;/">C&#43;&#43;</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/java/">Java</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E5%8F%8C%E6%8C%87%E9%92%88/">双指针</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%95%B0%E7%BB%84/">数组</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/08/leetcode-283%E7%A7%BB%E5%8A%A8%E9%9B%B6/" data-tooltip="LeetCode 283移动零">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/08/leetcode-1%E4%B8%A4%E6%95%B0%E4%B9%8B%E5%92%8C/" data-tooltip="LeetCode 1两数之和">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2022 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/08/leetcode-283%E7%A7%BB%E5%8A%A8%E9%9B%B6/" data-tooltip="LeetCode 283移动零">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/08/leetcode-1%E4%B8%A4%E6%95%B0%E4%B9%8B%E5%92%8C/" data-tooltip="LeetCode 1两数之和">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2022%2F08%2Fleetcode-88%25E5%2590%2588%25E5%25B9%25B6%25E4%25B8%25A4%25E4%25B8%25AA%25E6%259C%2589%25E5%25BA%258F%25E6%2595%25B0%25E7%25BB%2584%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2022%2F08%2Fleetcode-88%25E5%2590%2588%25E5%25B9%25B6%25E4%25B8%25A4%25E4%25B8%25AA%25E6%259C%2589%25E5%25BA%258F%25E6%2595%25B0%25E7%25BB%2584%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2022%2F08%2Fleetcode-88%25E5%2590%2588%25E5%25B9%25B6%25E4%25B8%25A4%25E4%25B8%25AA%25E6%259C%2589%25E5%25BA%258F%25E6%2595%25B0%25E7%25BB%2584%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2022\/08\/leetcode-88%E5%90%88%E5%B9%B6%E4%B8%A4%E4%B8%AA%E6%9C%89%E5%BA%8F%E6%95%B0%E7%BB%84\/';
+          
+            this.page.identifier = '\/2022\/08\/leetcode-88%E5%90%88%E5%B9%B6%E4%B8%A4%E4%B8%AA%E6%9C%89%E5%BA%8F%E6%95%B0%E7%BB%84\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
