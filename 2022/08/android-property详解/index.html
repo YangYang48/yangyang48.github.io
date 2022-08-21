@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="Android系统中的属性，我们可以通过get和set去获取，但是有时候App获取修改属性的操作被拒绝了，这个就需要深入了解属性系统。">
+
+
+<meta property="og:description" content="Android系统中的属性，我们可以通过get和set去获取，但是有时候App获取修改属性的操作被拒绝了，这个就需要深入了解属性系统。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android Property详解">
+<meta name="twitter:title" content="Android Property详解">
+<meta property="og:url" content="https://yangyang48.github.io/2022/08/android-property%E8%AF%A6%E8%A7%A3/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2022/08/android-property%E8%AF%A6%E8%A7%A3/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="Android系统中的属性，我们可以通过get和set去获取，但是有时候App获取修改属性的操作被拒绝了，这个就需要深入了解属性系统。">
+<meta name="twitter:description" content="Android系统中的属性，我们可以通过get和set去获取，但是有时候App获取修改属性的操作被拒绝了，这个就需要深入了解属性系统。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2022-08-21T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2022-08-21T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="Property">
+    
+      <meta property="article:section" content="2022">
+    
+      <meta property="article:section" content="August">
+    
+  
+  
+    
+      <meta property="article:tag" content="Android">
+    
+      <meta property="article:tag" content="源码">
+    
+      <meta property="article:tag" content="SElinux">
+    
+      <meta property="article:tag" content="Trie">
+    
+      <meta property="article:tag" content="socket">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/property/property_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/property/property_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/property/property_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/property/property_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>Android Property详解</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2022/08/android-property%E8%AF%A6%E8%A7%A3/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/property/property_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      Android Property详解
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2022-08-21T00:00:00Z">
+        
+  八月 21, 2022
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/property">Property</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2022">2022</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/august">August</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">800 Words|Read in about 4 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>Android系统中的属性，我们可以通过get和set去获取，但是有时候App获取修改属性的操作被拒绝了，这个就需要深入了解属性系统。</p>
+<h1 id="android-property详解">Android Property详解</h1>
+<h2 id="app读取属性流程分析">App读取属性流程分析</h2>
+<p>GetProperty函数的内部逻辑，会根据<code>__BIONIC__</code>这个宏是否定义，分两个不同的逻辑。可以看到如果该宏已定义的话，会继续调用__system_property_find, 如果该宏未定义，则从全局变量g_properties中读取。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//bionic/tools/versioner/current/sys/cdefs.h
+</span><span class="ln">2</span><span class="c1"></span><span class="cp">#define __BIONIC__ 1
+</span></code></pre></div><div class="highlight"><pre class="chroma"><code class="language-makefile" data-lang="makefile"><span class="ln"> 1</span><span class="err">//bionic/libc/Android.bp</span>
+<span class="ln"> 2</span><span class="err">cc_library_static</span> <span class="err">{</span>
+<span class="ln"> 3</span>    <span class="nf">name</span><span class="o">:</span> &#34;<span class="n">libc_init_dynamic</span>&#34;<span class="p">,</span>
+<span class="ln"> 4</span>    defaults: <span class="o">[</span><span class="s2">&#34;libc_defaults&#34;</span><span class="o">]</span>,
+<span class="ln"> 5</span>    srcs: <span class="o">[</span><span class="s2">&#34;bionic/libc_init_dynamic.cpp&#34;</span><span class="o">]</span>,
+<span class="ln"> 6</span>    cflags: <span class="o">[</span><span class="s2">&#34;-fno-stack-protector&#34;</span><span class="o">]</span>,
+<span class="ln"> 7</span><span class="err">}</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span><span class="err">//</span> <span class="err">========================================================</span>
+<span class="ln">10</span><span class="err">//</span> <span class="err">libc.a</span> <span class="err">+</span> <span class="err">libc.so</span>
+<span class="ln">11</span><span class="err">//</span> <span class="err">========================================================</span>
+<span class="ln">12</span><span class="err">cc_library</span> <span class="err">{</span>
+<span class="ln">13</span>    <span class="nf">defaults</span><span class="o">:</span> [
+<span class="ln">14</span>        <span class="s2">&#34;libc_defaults&#34;</span>,
+<span class="ln">15</span>        <span class="s2">&#34;libc_native_allocator_defaults&#34;</span>,
+<span class="ln">16</span>    <span class="o">]</span>,
+<span class="ln">17</span>    name: <span class="s2">&#34;libc&#34;</span>,
+<span class="ln">18</span>    static_ndk_lib: true,
+<span class="ln">19</span>    export_include_dirs: <span class="o">[</span><span class="s2">&#34;include&#34;</span><span class="o">]</span>,
+<span class="ln">20</span>    product_variables: <span class="o">{</span>
+<span class="ln">21</span>        platform_sdk_version: <span class="o">{</span>
+<span class="ln">22</span>            asflags: <span class="o">[</span><span class="s2">&#34;-DPLATFORM_SDK_VERSION=%d&#34;</span><span class="o">]</span>,
+<span class="ln">23</span>        <span class="o">}</span>,
+<span class="ln">24</span>    <span class="o">}</span>,
+<span class="ln">25</span>    static: <span class="o">{</span>
+<span class="ln">26</span>        srcs: <span class="o">[</span> <span class="s2">&#34;:libc_sources_static&#34;</span> <span class="o">]</span>,
+<span class="ln">27</span>        cflags: <span class="o">[</span><span class="s2">&#34;-DLIBC_STATIC&#34;</span><span class="o">]</span>,
+<span class="ln">28</span>        whole_static_libs: <span class="o">[</span>
+<span class="ln">29</span>            <span class="s2">&#34;gwp_asan&#34;</span>,
+<span class="ln">30</span>            <span class="s2">&#34;libc_init_static&#34;</span>,
+<span class="ln">31</span>            <span class="s2">&#34;libc_common_static&#34;</span>,
+<span class="ln">32</span>            <span class="s2">&#34;libc_unwind_static&#34;</span>,
+<span class="ln">33</span>        <span class="o">]</span>,
+<span class="ln">34</span>    <span class="o">}</span>,
+<span class="ln">35</span>    shared: <span class="o">{</span>
+<span class="ln">36</span>        srcs: <span class="o">[</span> <span class="s2">&#34;:libc_sources_shared&#34;</span> <span class="o">]</span>,
+<span class="ln">37</span>        whole_static_libs: <span class="o">[</span>
+<span class="ln">38</span>            <span class="s2">&#34;gwp_asan&#34;</span>,
+<span class="ln">39</span>            <span class="s2">&#34;libc_init_dynamic&#34;</span>,
+<span class="ln">40</span>            <span class="s2">&#34;libc_common_shared&#34;</span>,
+<span class="ln">41</span>        <span class="o">]</span>,
+<span class="ln">42</span>    <span class="o">}</span>,
+<span class="ln">43</span>    ...
+<span class="ln">44</span><span class="err">}</span>   
+</code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//bionic/libc/bionic/libc_init_dynamic.cpp
+</span><span class="ln">2</span><span class="c1"></span><span class="n">__attribute__</span><span class="p">((</span><span class="n">constructor</span><span class="p">(</span><span class="mi">1</span><span class="p">)))</span> <span class="k">static</span> <span class="kt">void</span> <span class="n">__libc_preinit</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">3</span>  <span class="n">__stack_chk_guard</span> <span class="o">=</span> <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">uintptr_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">__get_tls</span><span class="p">()[</span><span class="n">TLS_SLOT_STACK_GUARD</span><span class="p">]);</span>
+<span class="ln">4</span>  <span class="n">__libc_preinit_impl</span><span class="p">();</span>
+<span class="ln">5</span><span class="p">}</span>
+</code></pre></div><p>//todo 关于constructor(1)特性</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/bionic/libc_init_dynamic.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">__attribute__</span><span class="p">((</span><span class="n">noinline</span><span class="p">))</span>
+<span class="ln"> 3</span><span class="k">static</span> <span class="kt">void</span> <span class="n">__libc_preinit_impl</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 4</span>  <span class="n">TlsModules</span><span class="o">&amp;</span> <span class="n">tls_modules</span> <span class="o">=</span> <span class="n">__libc_shared_globals</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">tls_modules</span><span class="p">;</span>
+<span class="ln"> 5</span>  <span class="n">tls_modules</span><span class="p">.</span><span class="n">generation_libc_so</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">__libc_tls_generation_copy</span><span class="p">;</span>
+<span class="ln"> 6</span>  <span class="n">__libc_tls_generation_copy</span> <span class="o">=</span> <span class="n">tls_modules</span><span class="p">.</span><span class="n">generation</span><span class="p">;</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span>  <span class="n">__libc_init_globals</span><span class="p">();</span>
+<span class="ln"> 9</span>  <span class="n">__libc_init_common</span><span class="p">();</span>
+<span class="ln">10</span>  <span class="p">...</span>
+<span class="ln">11</span>  <span class="n">netdClientInit</span><span class="p">();</span>
+<span class="ln">12</span><span class="p">}</span>
+</code></pre></div><p>用于初始化一些通用的环境变量</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/bionic/libc_init_common.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span> <span class="nf">__libc_init_common</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="c1">// Initialize various globals.
+</span><span class="ln"> 4</span><span class="c1"></span>  <span class="n">environ</span> <span class="o">=</span> <span class="n">__libc_shared_globals</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">init_environ</span><span class="p">;</span>
+<span class="ln"> 5</span>  <span class="n">errno</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 6</span>  <span class="n">setprogname</span><span class="p">(</span><span class="n">__libc_shared_globals</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">init_progname</span> <span class="o">?:</span> <span class="s">&#34;&lt;unknown&gt;&#34;</span><span class="p">);</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span><span class="cp">#if !defined(__LP64__)
+</span><span class="ln"> 9</span><span class="cp"></span>  <span class="n">__check_max_thread_id</span><span class="p">();</span>
+<span class="ln">10</span><span class="cp">#endif
+</span><span class="ln">11</span><span class="cp"></span>
+<span class="ln">12</span>  <span class="n">__libc_add_main_thread</span><span class="p">();</span>
+<span class="ln">13</span>
+<span class="ln">14</span>  <span class="n">__system_properties_init</span><span class="p">();</span> <span class="c1">// Requires &#39;environ&#39;.
+</span><span class="ln">15</span><span class="c1"></span>  <span class="n">__libc_init_fdsan</span><span class="p">();</span> <span class="c1">// Requires system properties (for debug.fdsan).
+</span><span class="ln">16</span><span class="c1"></span>  <span class="n">__libc_init_fdtrack</span><span class="p">();</span>
+<span class="ln">17</span>
+<span class="ln">18</span>  <span class="n">SetDefaultHeapTaggingLevel</span><span class="p">();</span>
+<span class="ln">19</span><span class="p">}</span>
+</code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//bionic/libc/bionic/system_property_api.cpp
+</span><span class="ln">2</span><span class="c1"></span><span class="cp">#define PROP_FILENAME &#34;/dev/__properties__&#34;
+</span><span class="ln">3</span><span class="cp"></span><span class="kt">int</span> <span class="nf">__system_properties_init</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">4</span>  <span class="k">return</span> <span class="n">system_properties</span><span class="p">.</span><span class="n">Init</span><span class="p">(</span><span class="n">PROP_FILENAME</span><span class="p">)</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">5</span><span class="p">}</span>
+</code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/system_properties/system_properties.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">bool</span> <span class="n">SystemProperties</span><span class="o">::</span><span class="n">Init</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">filename</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="c1">// This is called from __libc_init_common, and should leave errno at 0 (http://b/37248982).
+</span><span class="ln"> 4</span><span class="c1"></span>  <span class="n">ErrnoRestorer</span> <span class="n">errno_restorer</span><span class="p">;</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span>  <span class="k">if</span> <span class="p">(</span><span class="n">initialized_</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 7</span>    <span class="n">contexts_</span><span class="o">-&gt;</span><span class="n">ResetAccess</span><span class="p">();</span>
+<span class="ln"> 8</span>    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln"> 9</span>  <span class="p">}</span>
+<span class="ln">10</span>
+<span class="ln">11</span>  <span class="k">if</span> <span class="p">(</span><span class="n">strlen</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">PROP_FILENAME_MAX</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">12</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">13</span>  <span class="p">}</span>
+<span class="ln">14</span>  <span class="n">strcpy</span><span class="p">(</span><span class="n">property_filename_</span><span class="p">,</span> <span class="n">filename</span><span class="p">);</span>
+<span class="ln">15</span>  <span class="c1">//最重要的从这里开始
+</span><span class="ln">16</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="n">is_dir</span><span class="p">(</span><span class="n">property_filename_</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">17</span>    <span class="k">if</span> <span class="p">(</span><span class="n">access</span><span class="p">(</span><span class="s">&#34;/dev/__properties__/property_info&#34;</span><span class="p">,</span> <span class="n">R_OK</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">18</span>      <span class="n">contexts_</span> <span class="o">=</span> <span class="k">new</span> <span class="p">(</span><span class="n">contexts_data_</span><span class="p">)</span> <span class="n">ContextsSerialized</span><span class="p">();</span>
+<span class="ln">19</span>      <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">contexts_</span><span class="o">-&gt;</span><span class="n">Initialize</span><span class="p">(</span><span class="nb">false</span><span class="p">,</span> <span class="n">property_filename_</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">20</span>        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">21</span>      <span class="p">}</span>
+<span class="ln">22</span>    <span class="p">}</span>
+<span class="ln">23</span>    <span class="p">...</span>
+<span class="ln">24</span>  <span class="p">}</span>    
+<span class="ln">25</span>  <span class="n">initialized_</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">26</span>  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">27</span><span class="p">}</span>
+</code></pre></div><p>因为是App调用到<code>Init</code>函数，这里的<code>Initialize</code>函数所传递的都为<code>false</code>，说明是没有可写入权限的。</p>
+<p>ContextsSerialized函数，是用于实例化序列化的对象，然后调用序列化对象的<code>Initialize</code>函数。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/system_properties/contexts_serialized.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">bool</span> <span class="n">ContextsSerialized</span><span class="o">::</span><span class="n">Initialize</span><span class="p">(</span><span class="kt">bool</span> <span class="n">writable</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">filename</span><span class="p">,</span> <span class="kt">bool</span><span class="o">*</span> <span class="n">fsetxattr_failed</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="n">filename_</span> <span class="o">=</span> <span class="n">filename</span><span class="p">;</span>
+<span class="ln"> 4</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">InitializeProperties</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln"> 5</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln"> 6</span>  <span class="p">}</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span>  <span class="k">if</span> <span class="p">(</span><span class="n">writable</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 9</span>      <span class="p">...</span>
+<span class="ln">10</span>  <span class="p">}</span>
+<span class="ln">11</span>  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">12</span><span class="p">}</span>
+</code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/system_properties/contexts_serialized.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">bool</span> <span class="n">ContextsSerialized</span><span class="o">::</span><span class="n">InitializeProperties</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">property_info_area_file_</span><span class="p">.</span><span class="n">LoadDefaultPath</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln"> 5</span>  <span class="p">}</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">InitializeContextNodes</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln"> 8</span>    <span class="n">FreeAndUnmap</span><span class="p">();</span>
+<span class="ln"> 9</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">10</span>  <span class="p">}</span>
+<span class="ln">11</span>
+<span class="ln">12</span>  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">13</span><span class="p">}</span>
+</code></pre></div><p>主要是两个函数<code>LoadDefaultPath</code>和<code>InitializeContextNodes</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/property_service/libpropertyinfoparser/property_info_parser.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">bool</span> <span class="n">PropertyInfoAreaFile</span><span class="o">::</span><span class="n">LoadDefaultPath</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="k">return</span> <span class="nf">LoadPath</span><span class="p">(</span><span class="s">&#34;/dev/__properties__/property_info&#34;</span><span class="p">);</span>
+<span class="ln"> 4</span><span class="p">}</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span><span class="kt">bool</span> <span class="n">PropertyInfoAreaFile</span><span class="o">::</span><span class="n">LoadPath</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">filename</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 7</span>  <span class="kt">int</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">O_CLOEXEC</span> <span class="o">|</span> <span class="n">O_NOFOLLOW</span> <span class="o">|</span> <span class="n">O_RDONLY</span><span class="p">);</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span>  <span class="k">struct</span> <span class="nc">stat</span> <span class="n">fd_stat</span><span class="p">;</span>
+<span class="ln">10</span>  <span class="k">if</span> <span class="p">(</span><span class="n">fstat</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">fd_stat</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">11</span>    <span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
+<span class="ln">12</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">13</span>  <span class="p">}</span>
+<span class="ln">14</span>
+<span class="ln">15</span>  <span class="k">if</span> <span class="p">((</span><span class="n">fd_stat</span><span class="p">.</span><span class="n">st_uid</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">||</span> <span class="p">(</span><span class="n">fd_stat</span><span class="p">.</span><span class="n">st_gid</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">||</span>
+<span class="ln">16</span>      <span class="p">((</span><span class="n">fd_stat</span><span class="p">.</span><span class="n">st_mode</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">S_IWGRP</span> <span class="o">|</span> <span class="n">S_IWOTH</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">||</span>
+<span class="ln">17</span>      <span class="p">(</span><span class="n">fd_stat</span><span class="p">.</span><span class="n">st_size</span> <span class="o">&lt;</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">off_t</span><span class="o">&gt;</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">PropertyInfoArea</span><span class="p">))))</span> <span class="p">{</span>
+<span class="ln">18</span>    <span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
+<span class="ln">19</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">20</span>  <span class="p">}</span>
+<span class="ln">21</span>
+<span class="ln">22</span>  <span class="k">auto</span> <span class="n">mmap_size</span> <span class="o">=</span> <span class="n">fd_stat</span><span class="p">.</span><span class="n">st_size</span><span class="p">;</span>
+<span class="ln">23</span>
+<span class="ln">24</span>  <span class="kt">void</span><span class="o">*</span> <span class="n">map_result</span> <span class="o">=</span> <span class="n">mmap</span><span class="p">(</span><span class="k">nullptr</span><span class="p">,</span> <span class="n">mmap_size</span><span class="p">,</span> <span class="n">PROT_READ</span><span class="p">,</span> <span class="n">MAP_SHARED</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="ln">25</span>  <span class="k">if</span> <span class="p">(</span><span class="n">map_result</span> <span class="o">==</span> <span class="n">MAP_FAILED</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">26</span>    <span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
+<span class="ln">27</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">28</span>  <span class="p">}</span>
+<span class="ln">29</span>
+<span class="ln">30</span>  <span class="k">auto</span> <span class="n">property_info_area</span> <span class="o">=</span> <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">PropertyInfoArea</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">map_result</span><span class="p">);</span>
+<span class="ln">31</span>  <span class="k">if</span> <span class="p">(</span><span class="n">property_info_area</span><span class="o">-&gt;</span><span class="n">minimum_supported_version</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="o">||</span>
+<span class="ln">32</span>      <span class="n">property_info_area</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">()</span> <span class="o">!=</span> <span class="n">mmap_size</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">33</span>    <span class="n">munmap</span><span class="p">(</span><span class="n">map_result</span><span class="p">,</span> <span class="n">mmap_size</span><span class="p">);</span>
+<span class="ln">34</span>    <span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
+<span class="ln">35</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">36</span>  <span class="p">}</span>
+<span class="ln">37</span>
+<span class="ln">38</span>  <span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
+<span class="ln">39</span>  <span class="n">mmap_base_</span> <span class="o">=</span> <span class="n">map_result</span><span class="p">;</span>
+<span class="ln">40</span>  <span class="n">mmap_size_</span> <span class="o">=</span> <span class="n">mmap_size</span><span class="p">;</span>
+<span class="ln">41</span>  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">42</span><span class="p">}</span>
+</code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/system_properties/contexts_serialized.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">bool</span> <span class="n">ContextsSerialized</span><span class="o">::</span><span class="n">InitializeContextNodes</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="k">auto</span> <span class="n">num_context_nodes</span> <span class="o">=</span> <span class="n">property_info_area_file_</span><span class="o">-&gt;</span><span class="n">num_contexts</span><span class="p">();</span>
+<span class="ln"> 4</span>  <span class="k">auto</span> <span class="n">context_nodes_mmap_size</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">ContextNode</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_context_nodes</span><span class="p">;</span>
+<span class="ln"> 5</span>  <span class="c1">// We want to avoid malloc in system properties, so we take an anonymous map instead (b/31659220).
+</span><span class="ln"> 6</span><span class="c1"></span>  <span class="kt">void</span><span class="o">*</span> <span class="k">const</span> <span class="n">map_result</span> <span class="o">=</span> <span class="n">mmap</span><span class="p">(</span><span class="k">nullptr</span><span class="p">,</span> <span class="n">context_nodes_mmap_size</span><span class="p">,</span> <span class="n">PROT_READ</span> <span class="o">|</span> <span class="n">PROT_WRITE</span><span class="p">,</span>
+<span class="ln"> 7</span>                                <span class="n">MAP_PRIVATE</span> <span class="o">|</span> <span class="n">MAP_ANONYMOUS</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="ln"> 8</span>  <span class="k">if</span> <span class="p">(</span><span class="n">map_result</span> <span class="o">==</span> <span class="n">MAP_FAILED</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 9</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">10</span>  <span class="p">}</span>
+<span class="ln">11</span>
+<span class="ln">12</span>  <span class="n">prctl</span><span class="p">(</span><span class="n">PR_SET_VMA</span><span class="p">,</span> <span class="n">PR_SET_VMA_ANON_NAME</span><span class="p">,</span> <span class="n">map_result</span><span class="p">,</span> <span class="n">context_nodes_mmap_size</span><span class="p">,</span>
+<span class="ln">13</span>        <span class="s">&#34;System property context nodes&#34;</span><span class="p">);</span>
+<span class="ln">14</span>
+<span class="ln">15</span>  <span class="n">context_nodes_</span> <span class="o">=</span> <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">ContextNode</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">map_result</span><span class="p">);</span>
+<span class="ln">16</span>  <span class="n">num_context_nodes_</span> <span class="o">=</span> <span class="n">num_context_nodes</span><span class="p">;</span>
+<span class="ln">17</span>  <span class="n">context_nodes_mmap_size_</span> <span class="o">=</span> <span class="n">context_nodes_mmap_size</span><span class="p">;</span>
+<span class="ln">18</span>
+<span class="ln">19</span>  <span class="k">for</span> <span class="p">(</span><span class="n">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">num_context_nodes</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">20</span>    <span class="k">new</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">context_nodes_</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="n">ContextNode</span><span class="p">(</span><span class="n">property_info_area_file_</span><span class="o">-&gt;</span><span class="n">context</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">filename_</span><span class="p">);</span>
+<span class="ln">21</span>  <span class="p">}</span>
+<span class="ln">22</span>
+<span class="ln">23</span>  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">24</span><span class="p">}</span>
+</code></pre></div><p>调用一次<code>prctl</code>使用<code>PR_SET_VMA</code>参数，功能是给<code>addr</code>和<code>vsize</code>指定的匿名内存区域命名了<code>&quot;System property context nodes&quot;</code></p>
+<p><img src="D:%5Chugo%5CMyBlog%5Cstatic%5Cproperty%5Cproperty_1.png" alt="property_1"></p>
+<h1 id="下载">下载</h1>
+<p>本文源码<a href="https://github.com/YangYang48/project/tree/master/property">点击这里</a></p>
+<h1 id="参考">参考</h1>
+<p><a href="https://wangzhengyi.blog.csdn.net/article/details/44999103">[1] 低调小一, Android init进程——属性服务, 2015.</a></p>
+<p><a href="https://blog.csdn.net/zhangjg_blog/article/details/122057945">[2] 昨夜星辰_zhangjg, Android是如何使用selinux来保护系统属性的, 2021.</a></p>
+<p><a href="https://blog.csdn.net/lijie2664989/article/details/107826733">[3] apigfly, 深入Android系统（二）Bionic库, 2020.</a></p>
+<p><a href="https://youranhongcha.blog.csdn.net/article/details/48379239">[4] 悠然红茶, 深入讲解Android Property机制, 2015.</a></p>
+<p><a href="https://blog.csdn.net/sanchuyayun/article/details/54944820">[5] sanchuyayun, SEAndroid策略分析, 2017.</a></p>
+<p><a href="https://haili-tian.blog.csdn.net/article/details/7014300">[6] thl789, Android属性之build.prop生成过程分析, 2011.</a></p>
+<p><a href="https://blog.csdn.net/qq_36063677/article/details/116750095">[7] 淡陌羿格, 安卓property service系统分析, 2021.</a></p>
+<p><a href="https://blog.csdn.net/u014674293/article/details/119147063">[8] BestW2Y, [Android 基础] &ndash; Android 属性系统简介, 2021.</a></p>
+<p><a href="https://blog.csdn.net/qq_33249042/article/details/122972301">[9] YJer, Notepad++ 安装 HexEditor 插件, 2022.</a></p>
+<p><a href="https://blog.csdn.net/xufei5789651/article/details/125961599">[10] 流金岁月5789651, Framework学习之旅：init 进程启动过程, 2022.</a></p>
+<p><a href="https://cloud.tencent.com/developer/article/1854375">[11] 微信终端开发团队, 快速缓解 32 位 Android 环境下虚拟内存地址空间不足的“黑科技”, 2021.</a></p>
+<p><a href="https://blog.canyie.top/2022/04/09/property-implementation-and-isolation/">[12] canyie, Android Property 实现解析与黑魔法, 2022.</a></p>
+<p><a href="https://www.cnblogs.com/bastard/archive/2012/10/11/2720314.html">[13] Dufresne, Android 系统属性SystemProperty分析, 2012.</a></p>
+<p><a href="https://wenku.baidu.com/view/b012e4c049fe04a1b0717fd5360cba1aa8118cdb?pcf=2&amp;bfetype=new&amp;bfetype=new">[14] android系统之属性系统详解.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/android/">Android</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%BA%90%E7%A0%81/">源码</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/selinux/">SElinux</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/trie/">Trie</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/socket/">socket</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/08/leetcode%E4%B9%8B%E5%89%91%E6%8C%87offer-22%E9%93%BE%E8%A1%A8%E4%B8%AD%E5%80%92%E6%95%B0%E7%AC%ACk%E4%B8%AA%E8%8A%82%E7%82%B9/" data-tooltip="LeetCode之剑指Offer 22链表中倒数第k个节点">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2022 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/08/leetcode%E4%B9%8B%E5%89%91%E6%8C%87offer-22%E9%93%BE%E8%A1%A8%E4%B8%AD%E5%80%92%E6%95%B0%E7%AC%ACk%E4%B8%AA%E8%8A%82%E7%82%B9/" data-tooltip="LeetCode之剑指Offer 22链表中倒数第k个节点">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2022%2F08%2Fandroid-property%25E8%25AF%25A6%25E8%25A7%25A3%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2022%2F08%2Fandroid-property%25E8%25AF%25A6%25E8%25A7%25A3%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2022%2F08%2Fandroid-property%25E8%25AF%25A6%25E8%25A7%25A3%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2022\/08\/android-property%E8%AF%A6%E8%A7%A3\/';
+          
+            this.page.identifier = '\/2022\/08\/android-property%E8%AF%A6%E8%A7%A3\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
