@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="Android源码中有一些经常会遇到的c&#43;&#43;基础的内容，笔者对std::move函数进行简单熟悉。">
+
+
+<meta property="og:description" content="Android源码中有一些经常会遇到的c&#43;&#43;基础的内容，笔者对std::move函数进行简单熟悉。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C&#43;&#43; std::move">
+<meta name="twitter:title" content="C&#43;&#43; std::move">
+<meta property="og:url" content="https://yangyang48.github.io/2022/08/c-stdmove/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2022/08/c-stdmove/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="Android源码中有一些经常会遇到的c&#43;&#43;基础的内容，笔者对std::move函数进行简单熟悉。">
+<meta name="twitter:description" content="Android源码中有一些经常会遇到的c&#43;&#43;基础的内容，笔者对std::move函数进行简单熟悉。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2022-08-28T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2022-08-28T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="std::move">
+    
+      <meta property="article:section" content="2022">
+    
+      <meta property="article:section" content="August">
+    
+  
+  
+    
+      <meta property="article:tag" content="c&#43;&#43;">
+    
+      <meta property="article:tag" content="c&#43;&#43;基础">
+    
+      <meta property="article:tag" content="Android">
+    
+      <meta property="article:tag" content="源码">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/c&#43;&#43;/base/base3_thumb1.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/c&#43;&#43;/base/base3_thumb1.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/c&#43;&#43;/base/base3_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/c&#43;&#43;/base/base3_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>C&#43;&#43; std::move</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2022/08/c-stdmove/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/c&#43;&#43;/base/base3_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      C&#43;&#43; std::move
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2022-08-28T00:00:00Z">
+        
+  八月 28, 2022
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/stdmove">std::move</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2022">2022</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/august">August</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">500 Words|Read in about 3 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>Android源码中有一些经常会遇到的c++基础的内容，笔者对std::move函数进行简单熟悉。</p>
+<h1 id="c-stdmove">C++ std::move</h1>
+<blockquote>
+<p>开篇三连问</p>
+<ol>
+<li>为什么会引入<code>std::move</code>这个函数</li>
+<li>另外什么是左值，什么是右值</li>
+<li>有哪些是右值引用参数的函数</li>
+</ol>
+</blockquote>
+<h1 id="0前言">0前言</h1>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="k">class</span> <span class="nc">DataClass</span> <span class="p">{</span>
+<span class="ln"> 2</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 3</span>    <span class="n">DataClass</span><span class="p">(</span><span class="kt">int</span> <span class="n">size</span><span class="p">)</span> <span class="o">:</span> <span class="n">size</span><span class="p">(</span><span class="n">size</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 4</span>        <span class="n">data</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">char</span><span class="p">[</span><span class="n">size</span><span class="p">];</span>
+<span class="ln"> 5</span>        <span class="n">memset</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">size</span><span class="p">);</span>
+<span class="ln"> 6</span>    <span class="p">}</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span>    <span class="kt">void</span> <span class="nf">setData</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">string</span><span class="p">)</span>
+<span class="ln"> 9</span>    <span class="p">{</span>
+<span class="ln">10</span>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span> <span class="s">&#34;Data len &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">strlen</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="ln">11</span>        <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">strlen</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+<span class="ln">12</span>        <span class="p">{</span>
+<span class="ln">13</span>            <span class="n">memmove</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">string</span><span class="p">,</span> <span class="n">size</span><span class="p">);</span>
+<span class="ln">14</span>        <span class="p">}</span>
+<span class="ln">15</span>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span> <span class="s">&#34;Data string &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">data</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="ln">16</span>    <span class="p">}</span>
+<span class="ln">17</span>
+<span class="ln">18</span>    <span class="c1">// 深拷贝构造
+</span><span class="ln">19</span><span class="c1"></span>    <span class="n">DataClass</span><span class="p">(</span><span class="k">const</span> <span class="n">DataClass</span><span class="o">&amp;</span> <span class="n">temp_array</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">20</span>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span> <span class="s">&#34; DataClass deep copy &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">temp_array</span><span class="p">.</span><span class="n">data</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="ln">21</span>        <span class="n">size</span> <span class="o">=</span> <span class="n">temp_array</span><span class="p">.</span><span class="n">size</span><span class="p">;</span>
+<span class="ln">22</span>        <span class="n">data</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">char</span><span class="p">[</span><span class="n">size</span><span class="p">];</span>
+<span class="ln">23</span>        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">size</span><span class="p">;</span> <span class="n">i</span> <span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">24</span>            <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp_array</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="ln">25</span>        <span class="p">}</span>
+<span class="ln">26</span>    <span class="p">}</span>
+<span class="ln">27</span>
+<span class="ln">28</span>    <span class="c1">// 深拷贝赋值
+</span><span class="ln">29</span><span class="c1"></span>    <span class="n">DataClass</span><span class="o">&amp;</span> <span class="k">operator</span><span class="o">=</span><span class="p">(</span><span class="k">const</span> <span class="n">DataClass</span><span class="o">&amp;</span> <span class="n">temp_array</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">30</span>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span> <span class="s">&#34; DataClass deep  operator &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">temp_array</span><span class="p">.</span><span class="n">data</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="ln">31</span>        <span class="k">delete</span><span class="p">[]</span> <span class="n">data</span><span class="p">;</span>
+<span class="ln">32</span>
+<span class="ln">33</span>        <span class="n">size</span> <span class="o">=</span> <span class="n">temp_array</span><span class="p">.</span><span class="n">size</span><span class="p">;</span>
+<span class="ln">34</span>        <span class="n">data</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">char</span><span class="p">[</span><span class="n">size</span><span class="p">];</span>
+<span class="ln">35</span>        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">size</span><span class="p">;</span> <span class="n">i</span> <span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">36</span>            <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp_array</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="ln">37</span>        <span class="p">}</span>
+<span class="ln">38</span>        <span class="k">return</span> <span class="o">*</span><span class="k">this</span><span class="p">;</span>
+<span class="ln">39</span>    <span class="p">}</span>
+<span class="ln">40</span>
+<span class="ln">41</span>    <span class="o">~</span><span class="n">DataClass</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">42</span>        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;start ~DataClass&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="ln">43</span>        <span class="k">delete</span><span class="p">[]</span> <span class="n">data</span><span class="p">;</span>
+<span class="ln">44</span>    <span class="p">}</span>
+<span class="ln">45</span>
+<span class="ln">46</span><span class="k">private</span><span class="o">:</span>
+<span class="ln">47</span>    <span class="kt">char</span> <span class="o">*</span><span class="n">data</span><span class="p">;</span>
+<span class="ln">48</span>    <span class="kt">int</span> <span class="n">size</span><span class="p">;</span>
+<span class="ln">49</span><span class="p">};</span>
+</code></pre></div><p>这是一个数据类，我需要一个数据类的对象直接使用之前的对象内容，这个时候往往需要一次深拷贝，比如拷贝构造函数，或者是运算符拷贝函数等。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln">2</span><span class="p">{</span>
+<span class="ln">3</span>    <span class="n">DataClass</span> <span class="n">a</span><span class="p">(</span><span class="mi">12</span><span class="p">);</span>
+<span class="ln">4</span>    <span class="n">a</span><span class="p">.</span><span class="n">setData</span><span class="p">((</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="s">&#34;Hello, Iron&#34;</span><span class="p">);</span>
+<span class="ln">5</span>    <span class="n">DataClass</span> <span class="n">b</span><span class="p">(</span><span class="n">a</span><span class="p">);</span><span class="c1">//拷贝构造,深拷贝
+</span><span class="ln">6</span><span class="c1"></span>    <span class="n">DataClass</span> <span class="n">c</span><span class="p">(</span><span class="mi">12</span><span class="p">);</span>
+<span class="ln">7</span>    <span class="n">c</span> <span class="o">=</span> <span class="n">a</span><span class="p">;</span><span class="c1">//运算符拷贝，深拷贝
+</span><span class="ln">8</span><span class="c1"></span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">9</span><span class="p">}</span>
+</code></pre></div><p>如果说需要的一个数据类的对象直接使用之前的对象内容，并且之前的对象可以释放，那么可以采用移动函数。</p>
+<p>移动函数可以将之前对象的内容移到新的对象中来。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//如果使用浅拷贝来作为移动函数，往往会有问题
+</span><span class="ln">2</span><span class="c1"></span><span class="n">DataClass</span><span class="p">(</span><span class="k">const</span> <span class="n">DataClass</span><span class="o">&amp;</span> <span class="n">temp_array</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">3</span>    <span class="n">data</span> <span class="o">=</span> <span class="n">temp_array</span><span class="p">.</span><span class="n">data</span><span class="p">;</span>
+<span class="ln">4</span>    <span class="n">size</span> <span class="o">=</span> <span class="n">temp_array</span><span class="p">.</span><span class="n">size</span><span class="p">;</span>
+<span class="ln">5</span>    <span class="c1">// 为防止temp_array析构时delete data，提前置空其data 
+</span><span class="ln">6</span><span class="c1"></span>    <span class="n">temp_array</span><span class="p">.</span><span class="n">data</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln">7</span><span class="p">}</span>
+</code></pre></div><p>会提示<code>Variable 'temp_array' declared const here cannot assign to variable 'temp_array' with const-qualified type 'const DataClass &amp;'</code>，即不能直接修改传参temp_array。</p>
+<p>无法实现！<code>temp_array</code>是个const左值引用，无法被修改，所以<code>temp_array.data_ = nullptr;</code>这行会编译不过。当然函数参数可以改成非const：<code>DataClass(DataClass &amp; temp_array){...}</code>，这样也有问题，由于左值引用不能接右值，<code>DataClass a = DataClass(DataClass());</code>这种调用方式就没法用了。</p>
+<p>这个时候需要一个右值的引用来解决这个问题。</p>
+<p>使用方式</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//左值a，用std::move转化为右值
+</span><span class="ln">2</span><span class="c1"></span><span class="n">DataClass</span> <span class="nf">c</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">a</span><span class="p">));</span>
+</code></pre></div><h1 id="1左值右值">1左值右值</h1>
+<p>左值是表达式结束后依然存在的持久对象(代表一个在内存中占有确定位置的对象)</p>
+<p>右值是表达式结束时不再存在的临时对象(不在内存中占有确定位置的表达式）</p>
+<p>便携方法：对表达式取地址，如果能，则为左值，否则为右值</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="kt">int</span> <span class="n">val</span><span class="p">;</span>
+<span class="ln">2</span><span class="n">val</span> <span class="o">=</span> <span class="mi">4</span><span class="p">;</span> <span class="c1">// 正确 ①
+</span><span class="ln">3</span><span class="c1"></span><span class="mi">4</span> <span class="o">=</span> <span class="n">val</span><span class="p">;</span> <span class="c1">// 错误 ②
+</span></code></pre></div><p>运算符=要求等号左边是可修改的左值，4是临时参与运算的值，一般在寄存器上暂存，运算结束后在寄存器上移除该值，故①是对的，②是错的。一个对象被用作右值时，使用的是它的内容(值)，被当作左值时，使用的是它的地址**。**</p>
+<p><strong>左值引用</strong></p>
+<p>左值引用的基本语法</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">TypeName</span> <span class="o">=</span> <span class="err">左值表达式；</span>
+</code></pre></div><p><strong>右值引用</strong></p>
+<p>右值引用基本语法</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="n">T</span><span class="o">&amp;&amp;</span> <span class="n">TypeName</span> <span class="o">=</span> <span class="err">左值表达式；</span>
+</code></pre></div><p>而<strong>std::move函数</strong></p>
+<p>主要可以将一个左值转换成右值引用，从而可以调用C++11右值引用的拷贝构造函数</p>
+<p><strong>剖析<code>std::move</code>源码</strong></p>
+<p>转发左值，将左值引用转化成右值引用</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">_Tp</span><span class="o">&gt;</span>
+<span class="ln">2</span><span class="k">constexpr</span> <span class="n">_Tp</span><span class="o">&amp;&amp;</span>
+<span class="ln">3</span><span class="n">forward</span><span class="p">(</span><span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">remove_reference</span><span class="o">&lt;</span><span class="n">_Tp</span><span class="o">&gt;::</span><span class="n">type</span><span class="o">&amp;</span> <span class="n">__t</span><span class="p">)</span> <span class="k">noexcept</span>
+<span class="ln">4</span><span class="p">{</span> <span class="k">return</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">_Tp</span><span class="o">&amp;&amp;&gt;</span><span class="p">(</span><span class="n">__t</span><span class="p">);</span> <span class="p">}</span>
+</code></pre></div><p>转发右值，将右值引用转化成右值引用</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">_Tp</span><span class="o">&gt;</span>
+<span class="ln">2</span><span class="k">constexpr</span> <span class="n">_Tp</span><span class="o">&amp;&amp;</span>
+<span class="ln">3</span><span class="n">forward</span><span class="p">(</span><span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">remove_reference</span><span class="o">&lt;</span><span class="n">_Tp</span><span class="o">&gt;::</span><span class="n">type</span><span class="o">&amp;&amp;</span> <span class="n">__t</span><span class="p">)</span> <span class="k">noexcept</span>
+<span class="ln">4</span><span class="p">{</span>
+<span class="ln">5</span>  <span class="k">static_assert</span><span class="p">(</span><span class="o">!</span><span class="n">std</span><span class="o">::</span><span class="n">is_lvalue_reference</span><span class="o">&lt;</span><span class="n">_Tp</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">,</span> <span class="s">&#34;template argument&#34;</span>
+<span class="ln">6</span>        <span class="s">&#34; substituting _Tp is an lvalue reference type&#34;</span><span class="p">);</span>
+<span class="ln">7</span>  <span class="k">return</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">_Tp</span><span class="o">&amp;&amp;&gt;</span><span class="p">(</span><span class="n">__t</span><span class="p">);</span>
+<span class="ln">8</span><span class="p">}</span>
+</code></pre></div><p>实际上，<code>std::move</code>被广泛用于在STL和自定义类中<strong>实现移动语义，避免拷贝，从而提升程序性能</strong>。</p>
+<h1 id="2右值引用参数的函数">2右值引用参数的函数</h1>
+<p>在STL的很多容器中，都实现了以<strong>右值引用为参数</strong>的移动构造函数和移动赋值重载函数。</p>
+<p>最常见的是vector数组中的推数据函数，<code>push_back</code>和<code>emplace_back</code>，目前更多使用的是<code>emplace_back</code>。</p>
+<p><strong>参数为左值引用意味着拷贝，为右值引用意味着移动。</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp">#include</span> <span class="cpf">&lt;vector&gt;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp"></span>
+<span class="ln"> 4</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 5</span>    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">str1</span> <span class="o">=</span> <span class="s">&#34;20220828&#34;</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">v</span><span class="p">;</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span>    <span class="n">v</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">str1</span><span class="p">);</span> <span class="c1">// 1.传统方法，copy
+</span><span class="ln"> 9</span><span class="c1"></span>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">v</span><span class="p">.</span><span class="n">back</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="ln">10</span>    <span class="n">v</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">str1</span><span class="p">));</span> <span class="c1">// 2.调用移动语义的push_back方法，避免拷贝，str1会失去原有值，变成空字符串
+</span><span class="ln">11</span><span class="c1"></span>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">v</span><span class="p">.</span><span class="n">back</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="ln">12</span>    <span class="n">v</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">str1</span><span class="p">));</span> <span class="c1">// 3.emplace_back效果相同，str1会失去原有值
+</span><span class="ln">13</span><span class="c1"></span>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">v</span><span class="p">.</span><span class="n">back</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="ln">14</span>    <span class="n">v</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">(</span><span class="s">&#34;20220829&#34;</span><span class="p">);</span> <span class="c1">// 当然可以直接接右值
+</span><span class="ln">15</span><span class="c1"></span>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">v</span><span class="p">.</span><span class="n">back</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="ln">16</span><span class="p">}</span>
+</code></pre></div><p>结果</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/c&#43;&#43;/base/base3_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/c&#43;&#43;/base/base3_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>查看源码可以得知</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//stl_vector.h
+</span><span class="ln"> 2</span><span class="c1">//第1个函数的原型，是一个左值引用
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kt">void</span> <span class="nf">push_back</span><span class="p">(</span><span class="k">const</span> <span class="n">value_type</span><span class="o">&amp;</span> <span class="n">__x</span><span class="p">)</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span>    <span class="p">...</span>
+<span class="ln"> 6</span><span class="p">}</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span><span class="c1">//第2个函数的原型，是一个右值引用，实际调用的是emplace_back
+</span><span class="ln"> 9</span><span class="c1"></span><span class="cp">#if __cplusplus &gt;= 201103L
+</span><span class="ln">10</span><span class="cp"></span><span class="kt">void</span> <span class="nf">push_back</span><span class="p">(</span><span class="n">value_type</span><span class="o">&amp;&amp;</span> <span class="n">__x</span><span class="p">)</span>
+<span class="ln">11</span><span class="p">{</span>
+<span class="ln">12</span>    <span class="n">emplace_back</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">__x</span><span class="p">));</span>
+<span class="ln">13</span><span class="p">}</span>
+<span class="ln">14</span>
+<span class="ln">15</span><span class="c1">//stl_bvector.h
+</span><span class="ln">16</span><span class="c1"></span><span class="kt">void</span> <span class="nf">emplace_back</span><span class="p">(</span><span class="n">_Args</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">__args</span><span class="p">)</span>
+<span class="ln">17</span><span class="p">{</span>
+<span class="ln">18</span>    <span class="n">push_back</span><span class="p">(</span><span class="kt">bool</span><span class="p">(</span><span class="n">__args</span><span class="p">...));</span>
+<span class="ln">19</span>    <span class="cp">#if __cplusplus &gt; 201402L
+</span><span class="ln">20</span><span class="cp"></span>    <span class="k">return</span> <span class="n">back</span><span class="p">();</span>
+<span class="ln">21</span>    <span class="cp">#endif
+</span><span class="ln">22</span><span class="cp"></span><span class="p">}</span>
+</code></pre></div><p><strong>因此，可移动对象在&lt;需要拷贝且被拷贝者之后不再被需要&gt;的场景，建议使用</strong><code>std::move</code><strong>触发移动语义，提升性能。</strong></p>
+<h1 id="3解答">3解答</h1>
+<blockquote>
+<ul>
+<li>
+<p>为什么会引入<code>std::move</code>这个函数</p>
+<p><code>STL</code>和自定义类中，左值转换成右值引用实现移动语义，避免深拷贝，从而提升程序性能</p>
+</li>
+<li>
+<p>另外什么是左值，什么是右值</p>
+<p>通俗来讲左值是位于运算符左边，右值是运算符右边的值。</p>
+<p>左值是表达式结束后依然存在的持久对象(代表一个在内存中占有确定位置的对象)</p>
+<p>右值是表达式结束时不再存在的临时对象(不在内存中占有确定位置的表达式）</p>
+</li>
+<li>
+<p>有哪些是右值引用参数的函数</p>
+<p><code>STL</code>中常见的函数都有右值引用参数的函数，比如vector里面的<code>emplace_back</code>,<code>unique_ptr</code></p>
+<p>例如</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">A</span><span class="o">&gt;</span> <span class="n">ptr_a</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">A</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="ln">2</span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">A</span><span class="o">&gt;</span> <span class="n">ptr_b</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">ptr_a</span><span class="p">);</span> <span class="c1">// unique_ptr只有移动赋值重载函数，参数是&amp;&amp; ，只能接右值，因此必须用std::move转换类型
+</span><span class="ln">3</span><span class="c1"></span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">A</span><span class="o">&gt;</span> <span class="n">ptr_b</span> <span class="o">=</span> <span class="n">ptr_a</span><span class="p">;</span> <span class="c1">// 编译不通过
+</span></code></pre></div></li>
+</ul>
+</blockquote>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/c&#43;&#43;/">c&#43;&#43;</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/c&#43;&#43;%E5%9F%BA%E7%A1%80/">c&#43;&#43;基础</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/android/">Android</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%BA%90%E7%A0%81/">源码</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/08/c-%E5%8F%98%E9%95%BF%E6%95%B0%E7%BB%84/" data-tooltip="C&#43;&#43; 变长数组">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2022 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/08/c-%E5%8F%98%E9%95%BF%E6%95%B0%E7%BB%84/" data-tooltip="C&#43;&#43; 变长数组">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2022%2F08%2Fc-stdmove%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2022%2F08%2Fc-stdmove%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2022%2F08%2Fc-stdmove%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2022\/08\/c-stdmove\/';
+          
+            this.page.identifier = '\/2022\/08\/c-stdmove\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
