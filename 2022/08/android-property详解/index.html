@@ -276,7 +276,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">7600 Words|Read in about 36 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">9600 Words|Read in about 45 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -2689,12 +2689,446 @@
 </div>
 
 <h1 id="3获取属性">3获取属性</h1>
-<p>这里主要是非<code>init</code>进程获取属性，这里有两种方式，一种是直接<code>adb</code>敲命令<code>getprop</code>，或者是在Java层或者Native层调用获取属性的方式。</p>
-<h2 id="app读取属性流程分析">App读取属性流程分析</h2>
-<p><code>GetProperty</code>函数的内部逻辑，会根据<code>__BIONIC__</code>这个宏是否定义，分两个不同的逻辑。可以看到如果该宏已定义的话，会继续调用<code>__system_property_find</code>, 如果该宏未定义，则从全局变量<code>g_properties</code>中读取。</p>
+<p>这里包括非<code>init</code>进程和<code>init</code>进程获取属性，这里非<code>init</code>进程有两种方式，一种是在<code>App</code>调用<code>Java层</code>或者<code>Native层</code>调用获取属性的方式，另一种是直接<code>adb</code>敲命令<code>getprop</code>。</p>
+<h2 id="31app读取属性流程分析java侧">3.1App读取属性流程分析（Java侧）</h2>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//App读取属性
+</span><span class="ln"> 2</span><span class="c1">//除了获取字符串属性，还有getInt、getLong、getBoolean，都可以用反射来获取，这里只说明获取字符串属性
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kn">import</span> <span class="nn">android.os.SystemProperties</span><span class="o">;</span>
+<span class="ln"> 4</span><span class="kd">public</span> <span class="kd">static</span> <span class="n">String</span> <span class="nf">getProperty</span><span class="o">(</span><span class="n">String</span> <span class="n">key</span><span class="o">,</span> <span class="n">String</span> <span class="n">defaultValue</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 5</span>    <span class="n">String</span> <span class="n">value</span> <span class="o">=</span> <span class="n">defaultValue</span><span class="o">;</span>
+<span class="ln"> 6</span>    <span class="k">try</span> <span class="o">{</span>
+<span class="ln"> 7</span>        <span class="n">Class</span><span class="o">&lt;?&gt;</span> <span class="n">c</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="s">&#34;android.os.SystemProperties&#34;</span><span class="o">);</span>
+<span class="ln"> 8</span>        <span class="n">Method</span> <span class="n">get</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="na">getMethod</span><span class="o">(</span><span class="s">&#34;get&#34;</span><span class="o">,</span> <span class="n">String</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">String</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+<span class="ln"> 9</span>        <span class="n">value</span> <span class="o">=</span> <span class="o">(</span><span class="n">String</span><span class="o">)</span> <span class="o">(</span><span class="n">get</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="n">c</span><span class="o">,</span> <span class="n">key</span><span class="o">,</span> <span class="n">defaultValue</span><span class="o">));</span>
+<span class="ln">10</span>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">11</span>        <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="ln">12</span>    <span class="o">}</span>
+<span class="ln">13</span>    <span class="k">return</span> <span class="n">value</span><span class="o">;</span>
+<span class="ln">14</span><span class="o">}</span>
+<span class="ln">15</span>
+<span class="ln">16</span><span class="n">String</span> <span class="n">strValue</span> <span class="o">=</span> <span class="n">getProperty</span><span class="o">(</span><span class="s">&#34;persist.a.b.c&#34;</span><span class="o">,</span> <span class="s">&#34;0&#34;</span><span class="o">);</span>
+</code></pre></div><h3 id="311systempropertiesget">3.1.1<code>SystemProperties.get</code></h3>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/base/core/java/android/os/SystemProperties.java
+</span><span class="ln"> 2</span><span class="c1">//这四个对外提供的接口都是隐藏的，通常需要用反射来调用
+</span><span class="ln"> 3</span><span class="c1">//onKeyAccess是用于检查查询属性名的合法性
+</span><span class="ln"> 4</span><span class="c1"></span><span class="kd">public</span> <span class="kd">static</span> <span class="n">String</span> <span class="nf">get</span><span class="o">(</span><span class="nd">@NonNull</span> <span class="n">String</span> <span class="n">key</span><span class="o">,</span> <span class="nd">@Nullable</span> <span class="n">String</span> <span class="n">def</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 5</span>    <span class="k">if</span> <span class="o">(</span><span class="n">TRACK_KEY_ACCESS</span><span class="o">)</span> <span class="n">onKeyAccess</span><span class="o">(</span><span class="n">key</span><span class="o">);</span>
+<span class="ln"> 6</span>    <span class="k">return</span> <span class="n">native_get</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">def</span><span class="o">);</span>
+<span class="ln"> 7</span><span class="o">}</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span><span class="kd">public</span> <span class="kd">static</span> <span class="kt">int</span> <span class="nf">getInt</span><span class="o">(</span><span class="nd">@NonNull</span> <span class="n">String</span> <span class="n">key</span><span class="o">,</span> <span class="kt">int</span> <span class="n">def</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">10</span>    <span class="k">if</span> <span class="o">(</span><span class="n">TRACK_KEY_ACCESS</span><span class="o">)</span> <span class="n">onKeyAccess</span><span class="o">(</span><span class="n">key</span><span class="o">);</span>
+<span class="ln">11</span>    <span class="k">return</span> <span class="n">native_get_int</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">def</span><span class="o">);</span>
+<span class="ln">12</span><span class="o">}</span>
+<span class="ln">13</span>
+<span class="ln">14</span><span class="kd">public</span> <span class="kd">static</span> <span class="kt">long</span> <span class="nf">getLong</span><span class="o">(</span><span class="nd">@NonNull</span> <span class="n">String</span> <span class="n">key</span><span class="o">,</span> <span class="kt">long</span> <span class="n">def</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">15</span>    <span class="k">if</span> <span class="o">(</span><span class="n">TRACK_KEY_ACCESS</span><span class="o">)</span> <span class="n">onKeyAccess</span><span class="o">(</span><span class="n">key</span><span class="o">);</span>
+<span class="ln">16</span>    <span class="k">return</span> <span class="n">native_get_long</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">def</span><span class="o">);</span>
+<span class="ln">17</span><span class="o">}</span>
+<span class="ln">18</span>
+<span class="ln">19</span><span class="kd">public</span> <span class="kd">static</span> <span class="kt">boolean</span> <span class="nf">getBoolean</span><span class="o">(</span><span class="nd">@NonNull</span> <span class="n">String</span> <span class="n">key</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">def</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">20</span>    <span class="k">if</span> <span class="o">(</span><span class="n">TRACK_KEY_ACCESS</span><span class="o">)</span> <span class="n">onKeyAccess</span><span class="o">(</span><span class="n">key</span><span class="o">);</span>
+<span class="ln">21</span>    <span class="k">return</span> <span class="n">native_get_boolean</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">def</span><span class="o">);</span>
+<span class="ln">22</span><span class="o">}</span>   
+</code></pre></div><h3 id="312native_get">3.1.2<code>native_get</code></h3>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks\base\core\jni\android_os_SystemProperties.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="nf">register_android_os_SystemProperties</span><span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">)</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="k">const</span> <span class="n">JNINativeMethod</span> <span class="n">method_table</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln"> 5</span>        <span class="c1">//字符串就是对应SystemProperties_getSS这个函数名
+</span><span class="ln"> 6</span><span class="c1"></span>        <span class="p">{</span> <span class="s">&#34;native_get&#34;</span><span class="p">,</span>
+<span class="ln"> 7</span>          <span class="s">&#34;(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;&#34;</span><span class="p">,</span>
+<span class="ln"> 8</span>          <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span> <span class="n">SystemProperties_getSS</span> <span class="p">},</span>
+<span class="ln"> 9</span>        <span class="p">{</span> <span class="s">&#34;native_get_int&#34;</span><span class="p">,</span> <span class="s">&#34;(Ljava/lang/String;I)I&#34;</span><span class="p">,</span>
+<span class="ln">10</span>          <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span> <span class="n">SystemProperties_get_integral</span><span class="o">&lt;</span><span class="n">jint</span><span class="o">&gt;</span> <span class="p">},</span>
+<span class="ln">11</span>        <span class="p">{</span> <span class="s">&#34;native_get_long&#34;</span><span class="p">,</span> <span class="s">&#34;(Ljava/lang/String;J)J&#34;</span><span class="p">,</span>
+<span class="ln">12</span>          <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span> <span class="n">SystemProperties_get_integral</span><span class="o">&lt;</span><span class="n">jlong</span><span class="o">&gt;</span> <span class="p">},</span>
+<span class="ln">13</span>        <span class="p">{</span> <span class="s">&#34;native_get_boolean&#34;</span><span class="p">,</span> <span class="s">&#34;(Ljava/lang/String;Z)Z&#34;</span><span class="p">,</span>
+<span class="ln">14</span>          <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span> <span class="n">SystemProperties_get_boolean</span> <span class="p">},</span>
+<span class="ln">15</span>        <span class="p">{</span> <span class="s">&#34;native_find&#34;</span><span class="p">,</span>
+<span class="ln">16</span>          <span class="s">&#34;(Ljava/lang/String;)J&#34;</span><span class="p">,</span>
+<span class="ln">17</span>          <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span> <span class="n">SystemProperties_find</span> <span class="p">},</span>
+<span class="ln">18</span>        <span class="p">...</span>
+<span class="ln">19</span>    <span class="p">};</span>
+<span class="ln">20</span>    <span class="k">return</span> <span class="n">RegisterMethodsOrDie</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s">&#34;android/os/SystemProperties&#34;</span><span class="p">,</span>
+<span class="ln">21</span>                                <span class="n">method_table</span><span class="p">,</span> <span class="n">NELEM</span><span class="p">(</span><span class="n">method_table</span><span class="p">));</span>
+<span class="ln">22</span><span class="p">}</span>
+<span class="ln">23</span><span class="c1">//最终根据传入不同的函数指针来完成不同类型的属性获取
+</span><span class="ln">24</span><span class="c1"></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">Functor</span><span class="o">&gt;</span>
+<span class="ln">25</span><span class="kt">void</span> <span class="n">ReadProperty</span><span class="p">(</span><span class="n">JNIEnv</span><span class="o">*</span> <span class="n">env</span><span class="p">,</span> <span class="n">jstring</span> <span class="n">keyJ</span><span class="p">,</span> <span class="n">Functor</span><span class="o">&amp;&amp;</span> <span class="n">functor</span><span class="p">)</span>
+<span class="ln">26</span><span class="p">{</span>
+<span class="ln">27</span>    <span class="n">ScopedUtfChars</span> <span class="nf">key</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">keyJ</span><span class="p">);</span>
+<span class="ln">28</span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">key</span><span class="p">.</span><span class="n">c_str</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln">29</span>        <span class="k">return</span><span class="p">;</span>
+<span class="ln">30</span>    <span class="p">}</span>
+<span class="ln">31</span><span class="c1">//下面这个__BIONIC__，在一开始编译bionic的时候就已经编译进去了    
+</span><span class="ln">32</span><span class="c1"></span><span class="cp">#if defined(__BIONIC__)
+</span><span class="ln">33</span><span class="cp"></span>    <span class="c1">//1.寻找到属性名对应的Selinux的域名
+</span><span class="ln">34</span><span class="c1"></span>    <span class="k">const</span> <span class="n">prop_info</span><span class="o">*</span> <span class="n">prop</span> <span class="o">=</span> <span class="n">__system_property_find</span><span class="p">(</span><span class="n">key</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+<span class="ln">35</span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">prop</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">36</span>        <span class="k">return</span><span class="p">;</span>
+<span class="ln">37</span>    <span class="p">}</span>
+<span class="ln">38</span>    <span class="n">ReadProperty</span><span class="p">(</span><span class="n">prop</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">Functor</span><span class="o">&gt;</span><span class="p">(</span><span class="n">functor</span><span class="p">));</span>
+<span class="ln">39</span><span class="cp">#else
+</span><span class="ln">40</span><span class="cp"></span>    <span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">Functor</span><span class="o">&gt;</span><span class="p">(</span><span class="n">functor</span><span class="p">)(</span>
+<span class="ln">41</span>        <span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">GetProperty</span><span class="p">(</span><span class="n">key</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="s">&#34;&#34;</span><span class="p">).</span><span class="n">c_str</span><span class="p">());</span>
+<span class="ln">42</span><span class="cp">#endif
+</span><span class="ln">43</span><span class="cp"></span><span class="p">}</span>
+<span class="ln">44</span>
+<span class="ln">45</span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">Functor</span><span class="o">&gt;</span>
+<span class="ln">46</span><span class="kt">void</span> <span class="n">ReadProperty</span><span class="p">(</span><span class="k">const</span> <span class="n">prop_info</span><span class="o">*</span> <span class="n">prop</span><span class="p">,</span> <span class="n">Functor</span><span class="o">&amp;&amp;</span> <span class="n">functor</span><span class="p">)</span>
+<span class="ln">47</span><span class="p">{</span>
+<span class="ln">48</span><span class="cp">#if defined(__BIONIC__)
+</span><span class="ln">49</span><span class="cp"></span>    <span class="k">auto</span> <span class="n">thunk</span> <span class="o">=</span> <span class="p">[](</span><span class="kt">void</span><span class="o">*</span> <span class="n">cookie</span><span class="p">,</span>
+<span class="ln">50</span>                    <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="cm">/*name*/</span><span class="p">,</span>
+<span class="ln">51</span>                    <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">value</span><span class="p">,</span>
+<span class="ln">52</span>                    <span class="kt">uint32_t</span> <span class="cm">/*serial*/</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">53</span>        <span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">Functor</span><span class="o">&gt;</span><span class="p">(</span><span class="o">*</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">Functor</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">cookie</span><span class="p">))(</span><span class="n">value</span><span class="p">);</span>
+<span class="ln">54</span>    <span class="p">};</span>
+<span class="ln">55</span>    <span class="c1">//2.进行属性名的读取
+</span><span class="ln">56</span><span class="c1"></span>    <span class="n">__system_property_read_callback</span><span class="p">(</span><span class="n">prop</span><span class="p">,</span> <span class="n">thunk</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">functor</span><span class="p">);</span>
+<span class="ln">57</span><span class="cp">#else
+</span><span class="ln">58</span><span class="cp"></span>    <span class="n">LOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;fast property access supported only on device&#34;</span><span class="p">;</span>
+<span class="ln">59</span><span class="cp">#endif
+</span><span class="ln">60</span><span class="cp"></span><span class="p">}</span>
+<span class="ln">61</span>
+<span class="ln">62</span><span class="c1">//这个是字符串的属性获取
+</span><span class="ln">63</span><span class="c1"></span><span class="n">jstring</span> <span class="nf">SystemProperties_getSS</span><span class="p">(</span><span class="n">JNIEnv</span><span class="o">*</span> <span class="n">env</span><span class="p">,</span> <span class="n">jclass</span> <span class="n">clazz</span><span class="p">,</span> <span class="n">jstring</span> <span class="n">keyJ</span><span class="p">,</span>
+<span class="ln">64</span>                               <span class="n">jstring</span> <span class="n">defJ</span><span class="p">)</span>
+<span class="ln">65</span><span class="p">{</span>
+<span class="ln">66</span>    <span class="n">jstring</span> <span class="n">ret</span> <span class="o">=</span> <span class="n">defJ</span><span class="p">;</span>
+<span class="ln">67</span>    <span class="n">ReadProperty</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">keyJ</span><span class="p">,</span> <span class="p">[</span><span class="o">&amp;</span><span class="p">](</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">68</span>        <span class="k">if</span> <span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="p">{</span>
+<span class="ln">69</span>            <span class="n">ret</span> <span class="o">=</span> <span class="n">env</span><span class="o">-&gt;</span><span class="n">NewStringUTF</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
+<span class="ln">70</span><span class="p">}</span>
+<span class="ln">71</span>    <span class="p">});</span>
+<span class="ln">72</span>    <span class="k">if</span> <span class="p">(</span><span class="n">ret</span> <span class="o">==</span> <span class="k">nullptr</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">env</span><span class="o">-&gt;</span><span class="n">ExceptionCheck</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln">73</span>      <span class="n">ret</span> <span class="o">=</span> <span class="n">env</span><span class="o">-&gt;</span><span class="n">NewStringUTF</span><span class="p">(</span><span class="s">&#34;&#34;</span><span class="p">);</span>  <span class="c1">// Legacy behavior
+</span><span class="ln">74</span><span class="c1"></span>    <span class="p">}</span>
+<span class="ln">75</span>    <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+<span class="ln">76</span><span class="p">}</span>
+<span class="ln">77</span><span class="c1">//这个是Int和Long的属性获取
+</span><span class="ln">78</span><span class="c1"></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="ln">79</span><span class="n">T</span> <span class="n">SystemProperties_get_integral</span><span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jclass</span><span class="p">,</span> <span class="n">jstring</span> <span class="n">keyJ</span><span class="p">,</span>
+<span class="ln">80</span>                                       <span class="n">T</span> <span class="n">defJ</span><span class="p">)</span>
+<span class="ln">81</span><span class="p">{</span>
+<span class="ln">82</span>    <span class="n">T</span> <span class="n">ret</span> <span class="o">=</span> <span class="n">defJ</span><span class="p">;</span>
+<span class="ln">83</span>    <span class="n">ReadProperty</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">keyJ</span><span class="p">,</span> <span class="p">[</span><span class="o">&amp;</span><span class="p">](</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">84</span>        <span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">ParseInt</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ret</span><span class="p">);</span>
+<span class="ln">85</span>    <span class="p">});</span>
+<span class="ln">86</span>    <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+<span class="ln">87</span><span class="p">}</span>
+<span class="ln">88</span><span class="c1">//这个是boolean的属性获取
+</span><span class="ln">89</span><span class="c1"></span><span class="n">jboolean</span> <span class="nf">SystemProperties_get_boolean</span><span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jclass</span><span class="p">,</span> <span class="n">jstring</span> <span class="n">keyJ</span><span class="p">,</span>
+<span class="ln">90</span>                                      <span class="n">jboolean</span> <span class="n">defJ</span><span class="p">)</span>
+<span class="ln">91</span><span class="p">{</span>
+<span class="ln">92</span>    <span class="n">ParseBoolResult</span> <span class="n">parseResult</span> <span class="o">=</span> <span class="n">ParseBoolResult</span><span class="o">::</span><span class="n">kError</span><span class="p">;</span>
+<span class="ln">93</span>    <span class="n">ReadProperty</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">keyJ</span><span class="p">,</span> <span class="p">[</span><span class="o">&amp;</span><span class="p">](</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">94</span>        <span class="n">parseResult</span> <span class="o">=</span> <span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">ParseBool</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
+<span class="ln">95</span>    <span class="p">});</span>
+<span class="ln">96</span>    <span class="k">return</span> <span class="n">jbooleanFromParseBoolResult</span><span class="p">(</span><span class="n">parseResult</span><span class="p">,</span> <span class="n">defJ</span><span class="p">);</span>
+<span class="ln">97</span><span class="p">}</span>
+</code></pre></div><p>上面的逻辑就是如果定义了<code>__BIONIC__</code>，那么直接就是先调用<code>__system_property_find</code>，后调用<code>__system_property_read_callback</code>。没有定义<code>__BIONIC__</code>的话，只能调用<code>GetProperty</code>。</p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//bionic/tools/versioner/current/sys/cdefs.h
-</span><span class="ln">2</span><span class="c1"></span><span class="cp">#define __BIONIC__ 1
-</span></code></pre></div><div class="highlight"><pre class="chroma"><code class="language-makefile" data-lang="makefile"><span class="ln"> 1</span><span class="err">//bionic/libc/Android.bp</span>
+</span><span class="ln">2</span><span class="c1"></span><span class="cp">#define __BIONIC__ 1	</span><span class="c1">//默认已经定义
+</span></code></pre></div><h4 id="3121__system_property_find">3.1.2.1<code>__system_property_find</code></h4>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//bionic/libc/bionic/system_property_api.cpp
+</span><span class="ln">2</span><span class="c1"></span><span class="n">__BIONIC_WEAK_FOR_NATIVE_BRIDGE</span>
+<span class="ln">3</span><span class="k">const</span> <span class="n">prop_info</span><span class="o">*</span> <span class="nf">__system_property_find</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">4</span>  <span class="k">return</span> <span class="n">system_properties</span><span class="p">.</span><span class="n">Find</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+<span class="ln">5</span><span class="p">}</span>
+</code></pre></div><p><code>system_properties.Find</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/system_properties/system_properties.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">const</span> <span class="n">prop_info</span><span class="o">*</span> <span class="n">SystemProperties</span><span class="o">::</span><span class="n">Find</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">initialized_</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="k">return</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln"> 5</span>  <span class="p">}</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span>  <span class="n">prop_area</span><span class="o">*</span> <span class="n">pa</span> <span class="o">=</span> <span class="n">contexts_</span><span class="o">-&gt;</span><span class="n">GetPropAreaForName</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+<span class="ln"> 8</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">pa</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 9</span>    <span class="n">async_safe_format_log</span><span class="p">(</span><span class="n">ANDROID_LOG_ERROR</span><span class="p">,</span> <span class="s">&#34;libc&#34;</span><span class="p">,</span> <span class="s">&#34;Access denied finding property </span><span class="se">\&#34;</span><span class="s">%s</span><span class="se">\&#34;</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
+<span class="ln">10</span>    <span class="k">return</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln">11</span>  <span class="p">}</span>
+<span class="ln">12</span>
+<span class="ln">13</span>  <span class="k">return</span> <span class="n">pa</span><span class="o">-&gt;</span><span class="n">find</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+<span class="ln">14</span><span class="p">}</span>
+</code></pre></div><h4 id="3122__system_property_read_callback">3.1.2.2<code>__system_property_read_callback</code></h4>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//bionic/libc/bionic/system_property_api.cpp
+</span><span class="ln">2</span><span class="c1"></span><span class="n">__BIONIC_WEAK_FOR_NATIVE_BRIDGE</span>
+<span class="ln">3</span><span class="kt">void</span> <span class="nf">__system_property_read_callback</span><span class="p">(</span><span class="k">const</span> <span class="n">prop_info</span><span class="o">*</span> <span class="n">pi</span><span class="p">,</span>
+<span class="ln">4</span>                                     <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">callback</span><span class="p">)(</span><span class="kt">void</span><span class="o">*</span> <span class="n">cookie</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span><span class="p">,</span>
+<span class="ln">5</span>                                                      <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">value</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">serial</span><span class="p">),</span>
+<span class="ln">6</span>                                     <span class="kt">void</span><span class="o">*</span> <span class="n">cookie</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">7</span>  <span class="k">return</span> <span class="n">system_properties</span><span class="p">.</span><span class="n">ReadCallback</span><span class="p">(</span><span class="n">pi</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">cookie</span><span class="p">);</span>
+<span class="ln">8</span><span class="p">}</span>
+</code></pre></div><p><code>system_properties.ReadCallback</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/system_properties/system_properties.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span> <span class="n">SystemProperties</span><span class="o">::</span><span class="n">ReadCallback</span><span class="p">(</span><span class="k">const</span> <span class="n">prop_info</span><span class="o">*</span> <span class="n">pi</span><span class="p">,</span>
+<span class="ln"> 3</span>                                    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">callback</span><span class="p">)(</span><span class="kt">void</span><span class="o">*</span> <span class="n">cookie</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span><span class="p">,</span>
+<span class="ln"> 4</span>                                                     <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">value</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">serial</span><span class="p">),</span>
+<span class="ln"> 5</span>                                    <span class="kt">void</span><span class="o">*</span> <span class="n">cookie</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 6</span>  <span class="p">...</span>
+<span class="ln"> 7</span>  <span class="kt">char</span> <span class="n">value_buf</span><span class="p">[</span><span class="n">PROP_VALUE_MAX</span><span class="p">];</span>
+<span class="ln"> 8</span>  <span class="kt">uint32_t</span> <span class="n">serial</span> <span class="o">=</span> <span class="n">ReadMutablePropertyValue</span><span class="p">(</span><span class="n">pi</span><span class="p">,</span> <span class="n">value_buf</span><span class="p">);</span>
+<span class="ln"> 9</span>  <span class="n">callback</span><span class="p">(</span><span class="n">cookie</span><span class="p">,</span> <span class="n">pi</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">,</span> <span class="n">value_buf</span><span class="p">,</span> <span class="n">serial</span><span class="p">);</span>
+<span class="ln">10</span>  <span class="p">}</span>
+<span class="ln">11</span>
+<span class="ln">12</span><span class="kt">uint32_t</span> <span class="n">SystemProperties</span><span class="o">::</span><span class="n">ReadMutablePropertyValue</span><span class="p">(</span><span class="k">const</span> <span class="n">prop_info</span><span class="o">*</span> <span class="n">pi</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">13</span>  <span class="kt">uint32_t</span> <span class="n">new_serial</span> <span class="o">=</span> <span class="n">load_const_atomic</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pi</span><span class="o">-&gt;</span><span class="n">serial</span><span class="p">,</span> <span class="n">memory_order_acquire</span><span class="p">);</span>
+<span class="ln">14</span>  <span class="kt">uint32_t</span> <span class="n">serial</span><span class="p">;</span>
+<span class="ln">15</span>  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">len</span><span class="p">;</span>
+<span class="ln">16</span>  <span class="k">for</span> <span class="p">(;;)</span> <span class="p">{</span>
+<span class="ln">17</span>    <span class="n">serial</span> <span class="o">=</span> <span class="n">new_serial</span><span class="p">;</span>
+<span class="ln">18</span>    <span class="n">len</span> <span class="o">=</span> <span class="n">SERIAL_VALUE_LEN</span><span class="p">(</span><span class="n">serial</span><span class="p">);</span>
+<span class="ln">19</span>    <span class="k">if</span> <span class="p">(</span><span class="n">__predict_false</span><span class="p">(</span><span class="n">SERIAL_DIRTY</span><span class="p">(</span><span class="n">serial</span><span class="p">)))</span> <span class="p">{</span>
+<span class="ln">20</span>      <span class="p">...</span>
+<span class="ln">21</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">22</span>      <span class="n">memcpy</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">pi</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">,</span> <span class="n">len</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+<span class="ln">23</span>  <span class="p">}</span>
+<span class="ln">24</span>    <span class="n">atomic_thread_fence</span><span class="p">(</span><span class="n">memory_order_acquire</span><span class="p">);</span>
+<span class="ln">25</span>    <span class="n">new_serial</span> <span class="o">=</span> <span class="n">load_const_atomic</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pi</span><span class="o">-&gt;</span><span class="n">serial</span><span class="p">,</span> <span class="n">memory_order_relaxed</span><span class="p">);</span>
+<span class="ln">26</span>    <span class="k">if</span> <span class="p">(</span><span class="n">__predict_true</span><span class="p">(</span><span class="n">serial</span> <span class="o">==</span> <span class="n">new_serial</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">27</span>      <span class="k">break</span><span class="p">;</span>
+<span class="ln">28</span>      <span class="p">}</span>
+<span class="ln">29</span>    <span class="n">atomic_thread_fence</span><span class="p">(</span><span class="n">memory_order_acquire</span><span class="p">);</span>
+<span class="ln">30</span>    <span class="p">}</span>
+<span class="ln">31</span>  <span class="k">return</span> <span class="n">serial</span><span class="p">;</span>
+<span class="ln">32</span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/property/property_27.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/property/property_27.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="32app读取属性流程分析native侧">3.2App读取属性流程分析（native侧）</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//App通过封装的so进行读取属性
+</span><span class="ln">2</span><span class="c1"></span><span class="cp">#include</span> <span class="cpf">&lt;cutils/properties.h&gt;</span><span class="cp">
+</span><span class="ln">3</span><span class="cp">#define PROPERTY_KEY_MAX   32
+</span><span class="ln">4</span><span class="cp">#define PROPERTY_VALUE_MAX  92
+</span><span class="ln">5</span><span class="cp"></span><span class="kt">char</span> <span class="o">*</span><span class="n">value</span><span class="o">=</span> <span class="k">new</span> <span class="kt">char</span><span class="p">[</span><span class="n">PROPERTY_VALUE_MAX</span><span class="p">];</span>
+<span class="ln">6</span><span class="n">property_get</span><span class="p">(</span><span class="s">&#34;persist.a.b.c&#34;</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="s">&#34;0&#34;</span><span class="p">);</span>
+<span class="ln">7</span><span class="n">property_get_int32</span><span class="p">(</span><span class="s">&#34;persist.a.b.c.int&#34;</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="ln">8</span><span class="n">property_get_int64</span><span class="p">(</span><span class="s">&#34;persist.a.b.c.long&#34;</span><span class="p">,</span> <span class="mi">0L</span><span class="p">);</span>
+<span class="ln">9</span><span class="n">property_get_bool</span><span class="p">(</span><span class="s">&#34;persist.a.b.c.boolean&#34;</span><span class="p">,</span> <span class="nb">false</span><span class="p">);</span>
+</code></pre></div><h3 id="321property_get">3.2.1<code>property_get</code></h3>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libcutils/properties.cpp
+</span><span class="ln"> 2</span><span class="c1">//获取bool类型的属性，其实也是间接调用property_get，然后自己在封装成bool类型
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kt">int8_t</span> <span class="nf">property_get_bool</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="kt">int8_t</span> <span class="n">default_value</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">key</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 5</span>        <span class="k">return</span> <span class="n">default_value</span><span class="p">;</span>
+<span class="ln"> 6</span>  <span class="p">}</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span>    <span class="kt">int8_t</span> <span class="n">result</span> <span class="o">=</span> <span class="n">default_value</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="n">PROPERTY_VALUE_MAX</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="sc">&#39;\0&#39;</span><span class="p">};</span>
+<span class="ln">10</span>
+<span class="ln">11</span>    <span class="kt">int</span> <span class="n">len</span> <span class="o">=</span> <span class="n">property_get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">);</span>
+<span class="ln">12</span>    <span class="k">if</span> <span class="p">(</span><span class="n">len</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">13</span>        <span class="kt">char</span> <span class="n">ch</span> <span class="o">=</span> <span class="n">buf</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+<span class="ln">14</span>        <span class="k">if</span> <span class="p">(</span><span class="n">ch</span> <span class="o">==</span> <span class="sc">&#39;0&#39;</span> <span class="o">||</span> <span class="n">ch</span> <span class="o">==</span> <span class="sc">&#39;n&#39;</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">15</span>            <span class="n">result</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">16</span>        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">ch</span> <span class="o">==</span> <span class="sc">&#39;1&#39;</span> <span class="o">||</span> <span class="n">ch</span> <span class="o">==</span> <span class="sc">&#39;y&#39;</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">17</span>            <span class="n">result</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">18</span>        <span class="p">}</span>
+<span class="ln">19</span>    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">len</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">20</span>        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">strcmp</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="s">&#34;no&#34;</span><span class="p">)</span> <span class="o">||</span> <span class="o">!</span><span class="n">strcmp</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="s">&#34;false&#34;</span><span class="p">)</span> <span class="o">||</span> <span class="o">!</span><span class="n">strcmp</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="s">&#34;off&#34;</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">21</span>            <span class="n">result</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">22</span>        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">strcmp</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="s">&#34;yes&#34;</span><span class="p">)</span> <span class="o">||</span> <span class="o">!</span><span class="n">strcmp</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="s">&#34;true&#34;</span><span class="p">)</span> <span class="o">||</span> <span class="o">!</span><span class="n">strcmp</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="s">&#34;on&#34;</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">23</span>            <span class="n">result</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">24</span>  <span class="p">}</span>
+<span class="ln">25</span><span class="p">}</span>
+<span class="ln">26</span>
+<span class="ln">27</span>    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="ln">28</span><span class="p">}</span>
+<span class="ln">29</span><span class="c1">//获取Long和Int类型的属性，核心的内容是property_get，然后自己在封装成Long和Int类型
+</span><span class="ln">30</span><span class="c1"></span><span class="k">static</span> <span class="n">intmax_t</span> <span class="nf">property_get_imax</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="n">intmax_t</span> <span class="n">lower_bound</span><span class="p">,</span> <span class="n">intmax_t</span> <span class="n">upper_bound</span><span class="p">,</span>
+<span class="ln">31</span>                                  <span class="n">intmax_t</span> <span class="n">default_value</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">32</span>    <span class="p">...</span>
+<span class="ln">33</span>    <span class="kt">int</span> <span class="n">len</span> <span class="o">=</span> <span class="n">property_get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">);</span>
+<span class="ln">34</span>    <span class="k">if</span> <span class="p">(</span><span class="n">len</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">35</span>        <span class="kt">int</span> <span class="n">tmp</span> <span class="o">=</span> <span class="n">errno</span><span class="p">;</span>
+<span class="ln">36</span>        <span class="n">errno</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">37</span>
+<span class="ln">38</span>        <span class="c1">// Infer base automatically
+</span><span class="ln">39</span><span class="c1"></span>        <span class="n">result</span> <span class="o">=</span> <span class="n">strtoimax</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">end</span><span class="p">,</span> <span class="cm">/*base*/</span> <span class="mi">0</span><span class="p">);</span>
+<span class="ln">40</span>        <span class="k">if</span> <span class="p">((</span><span class="n">result</span> <span class="o">==</span> <span class="n">INTMAX_MIN</span> <span class="o">||</span> <span class="n">result</span> <span class="o">==</span> <span class="n">INTMAX_MAX</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">errno</span> <span class="o">==</span> <span class="n">ERANGE</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">41</span>            <span class="c1">// Over or underflow
+</span><span class="ln">42</span><span class="c1"></span>            <span class="n">result</span> <span class="o">=</span> <span class="n">default_value</span><span class="p">;</span>
+<span class="ln">43</span>            <span class="n">ALOGV</span><span class="p">(</span><span class="s">&#34;%s(%s,%&#34;</span> <span class="n">PRIdMAX</span> <span class="s">&#34;) - overflow&#34;</span><span class="p">,</span> <span class="n">__FUNCTION__</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">default_value</span><span class="p">);</span>
+<span class="ln">44</span>        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">result</span> <span class="o">&lt;</span> <span class="n">lower_bound</span> <span class="o">||</span> <span class="n">result</span> <span class="o">&gt;</span> <span class="n">upper_bound</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">45</span>            <span class="c1">// Out of range of requested bounds
+</span><span class="ln">46</span><span class="c1"></span>            <span class="n">result</span> <span class="o">=</span> <span class="n">default_value</span><span class="p">;</span>
+<span class="ln">47</span>            <span class="n">ALOGV</span><span class="p">(</span><span class="s">&#34;%s(%s,%&#34;</span> <span class="n">PRIdMAX</span> <span class="s">&#34;) - out of range&#34;</span><span class="p">,</span> <span class="n">__FUNCTION__</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">default_value</span><span class="p">);</span>
+<span class="ln">48</span>        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">end</span> <span class="o">==</span> <span class="n">buf</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">49</span>            <span class="c1">// Numeric conversion failed
+</span><span class="ln">50</span><span class="c1"></span>            <span class="n">result</span> <span class="o">=</span> <span class="n">default_value</span><span class="p">;</span>
+<span class="ln">51</span>            <span class="n">ALOGV</span><span class="p">(</span><span class="s">&#34;%s(%s,%&#34;</span> <span class="n">PRIdMAX</span> <span class="s">&#34;) - numeric conversion failed&#34;</span><span class="p">,</span> <span class="n">__FUNCTION__</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span>
+<span class="ln">52</span>                  <span class="n">default_value</span><span class="p">);</span>
+<span class="ln">53</span>        <span class="p">}</span>
+<span class="ln">54</span>
+<span class="ln">55</span>        <span class="n">errno</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">;</span>
+<span class="ln">56</span>  <span class="p">}</span>
+<span class="ln">57</span>
+<span class="ln">58</span>    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="ln">59</span>  <span class="p">}</span>
+<span class="ln">60</span>
+<span class="ln">61</span><span class="c1">//获取Long类型的属性
+</span><span class="ln">62</span><span class="c1"></span><span class="kt">int64_t</span> <span class="nf">property_get_int64</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="kt">int64_t</span> <span class="n">default_value</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">63</span>    <span class="k">return</span> <span class="p">(</span><span class="kt">int64_t</span><span class="p">)</span><span class="n">property_get_imax</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">INT64_MIN</span><span class="p">,</span> <span class="n">INT64_MAX</span><span class="p">,</span> <span class="n">default_value</span><span class="p">);</span>
+<span class="ln">64</span><span class="p">}</span>
+<span class="ln">65</span><span class="c1">//获取Int类型的属性
+</span><span class="ln">66</span><span class="c1"></span><span class="kt">int32_t</span> <span class="nf">property_get_int32</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="kt">int32_t</span> <span class="n">default_value</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">67</span>    <span class="k">return</span> <span class="p">(</span><span class="kt">int32_t</span><span class="p">)</span><span class="n">property_get_imax</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">INT32_MIN</span><span class="p">,</span> <span class="n">INT32_MAX</span><span class="p">,</span> <span class="n">default_value</span><span class="p">);</span>
+<span class="ln">68</span><span class="p">}</span>
+<span class="ln">69</span><span class="c1">//获取字符串类型的属性
+</span><span class="ln">70</span><span class="c1"></span><span class="kt">int</span> <span class="nf">property_get</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">value</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">default_value</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">71</span>    <span class="c1">//最终调用的就是__system_property_get函数
+</span><span class="ln">72</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">len</span> <span class="o">=</span> <span class="n">__system_property_get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">);</span>
+<span class="ln">73</span>    <span class="k">if</span> <span class="p">(</span><span class="n">len</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">74</span>        <span class="k">return</span> <span class="n">len</span><span class="p">;</span>
+<span class="ln">75</span>    <span class="p">}</span>
+<span class="ln">76</span>    <span class="k">if</span> <span class="p">(</span><span class="n">default_value</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">77</span>        <span class="n">len</span> <span class="o">=</span> <span class="n">strnlen</span><span class="p">(</span><span class="n">default_value</span><span class="p">,</span> <span class="n">PROPERTY_VALUE_MAX</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
+<span class="ln">78</span>        <span class="n">memcpy</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">default_value</span><span class="p">,</span> <span class="n">len</span><span class="p">);</span>
+<span class="ln">79</span>        <span class="n">value</span><span class="p">[</span><span class="n">len</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;\0&#39;</span><span class="p">;</span>
+<span class="ln">80</span>    <span class="p">}</span>
+<span class="ln">81</span>    <span class="k">return</span> <span class="n">len</span><span class="p">;</span>
+<span class="ln">82</span><span class="p">}</span>
+</code></pre></div><h3 id="322__system_property_get">3.2.2<code>__system_property_get</code></h3>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//bionic/libc/bionic/system_property_api.cpp
+</span><span class="ln">2</span><span class="c1"></span> <span class="n">__BIONIC_WEAK_FOR_NATIVE_BRIDGE</span>
+<span class="ln">3</span><span class="kt">int</span> <span class="nf">__system_property_get</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">4</span>    <span class="k">return</span> <span class="n">system_properties</span><span class="p">.</span><span class="n">Get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">);</span>
+<span class="ln">5</span><span class="p">}</span>
+</code></pre></div><h3 id="323system_propertiesget">3.2.3<code>system_properties.Get</code></h3>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/system_properties/system_properties.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="n">SystemProperties</span><span class="o">::</span><span class="n">Get</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="k">const</span> <span class="n">prop_info</span><span class="o">*</span> <span class="n">pi</span> <span class="o">=</span> <span class="n">Find</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+<span class="ln"> 4</span>
+<span class="ln"> 5</span>  <span class="k">if</span> <span class="p">(</span><span class="n">pi</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 6</span>    <span class="k">return</span> <span class="nf">Read</span><span class="p">(</span><span class="n">pi</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">,</span> <span class="n">value</span><span class="p">);</span>
+<span class="ln"> 7</span>  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln"> 8</span>    <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">10</span>  <span class="p">}</span>
+<span class="ln">11</span>  <span class="p">}</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="k">const</span> <span class="n">prop_info</span><span class="o">*</span> <span class="n">SystemProperties</span><span class="o">::</span><span class="n">Find</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">14</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">initialized_</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">15</span>    <span class="k">return</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln">16</span>  <span class="p">}</span>
+<span class="ln">17</span>
+<span class="ln">18</span>  <span class="n">prop_area</span><span class="o">*</span> <span class="n">pa</span> <span class="o">=</span> <span class="n">contexts_</span><span class="o">-&gt;</span><span class="n">GetPropAreaForName</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+<span class="ln">19</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">pa</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">20</span>    <span class="n">async_safe_format_log</span><span class="p">(</span><span class="n">ANDROID_LOG_ERROR</span><span class="p">,</span> <span class="s">&#34;libc&#34;</span><span class="p">,</span> <span class="s">&#34;Access denied finding property </span><span class="se">\&#34;</span><span class="s">%s</span><span class="se">\&#34;</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
+<span class="ln">21</span>    <span class="k">return</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln">22</span>  <span class="p">}</span>
+<span class="ln">23</span>
+<span class="ln">24</span>  <span class="k">return</span> <span class="n">pa</span><span class="o">-&gt;</span><span class="n">find</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+<span class="ln">25</span>  <span class="p">}</span>
+<span class="ln">26</span>
+<span class="ln">27</span><span class="kt">int</span> <span class="n">SystemProperties</span><span class="o">::</span><span class="n">Read</span><span class="p">(</span><span class="k">const</span> <span class="n">prop_info</span><span class="o">*</span> <span class="n">pi</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">28</span>  <span class="kt">uint32_t</span> <span class="n">serial</span> <span class="o">=</span> <span class="n">ReadMutablePropertyValue</span><span class="p">(</span><span class="n">pi</span><span class="p">,</span> <span class="n">value</span><span class="p">);</span>
+<span class="ln">29</span>  <span class="k">if</span> <span class="p">(</span><span class="n">name</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">30</span>    <span class="n">size_t</span> <span class="n">namelen</span> <span class="o">=</span> <span class="n">strlcpy</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">pi</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">,</span> <span class="n">PROP_NAME_MAX</span><span class="p">);</span>
+<span class="ln">31</span>    <span class="k">if</span> <span class="p">(</span><span class="n">namelen</span> <span class="o">&gt;=</span> <span class="n">PROP_NAME_MAX</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">32</span>      <span class="n">async_safe_format_log</span><span class="p">(</span><span class="n">ANDROID_LOG_ERROR</span><span class="p">,</span> <span class="s">&#34;libc&#34;</span><span class="p">,</span>
+<span class="ln">33</span>                            <span class="s">&#34;The property name length for </span><span class="se">\&#34;</span><span class="s">%s</span><span class="se">\&#34;</span><span class="s"> is &gt;= %d;&#34;</span>
+<span class="ln">34</span>                            <span class="s">&#34; please use __system_property_read_callback&#34;</span>
+<span class="ln">35</span>                            <span class="s">&#34; to read this property. (the name is truncated to </span><span class="se">\&#34;</span><span class="s">%s</span><span class="se">\&#34;</span><span class="s">)&#34;</span><span class="p">,</span>
+<span class="ln">36</span>                            <span class="n">pi</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">,</span> <span class="n">PROP_NAME_MAX</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
+<span class="ln">37</span>    <span class="p">}</span>
+<span class="ln">38</span>  <span class="p">}</span>
+<span class="ln">39</span>  <span class="k">if</span> <span class="p">(</span><span class="n">is_read_only</span><span class="p">(</span><span class="n">pi</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">pi</span><span class="o">-&gt;</span><span class="n">is_long</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln">40</span>    <span class="n">async_safe_format_log</span><span class="p">(</span>
+<span class="ln">41</span>        <span class="n">ANDROID_LOG_ERROR</span><span class="p">,</span> <span class="s">&#34;libc&#34;</span><span class="p">,</span>
+<span class="ln">42</span>        <span class="s">&#34;The property </span><span class="se">\&#34;</span><span class="s">%s</span><span class="se">\&#34;</span><span class="s"> has a value with length %zu that is too large for&#34;</span>
+<span class="ln">43</span>        <span class="s">&#34; __system_property_get()/__system_property_read(); use&#34;</span>
+<span class="ln">44</span>        <span class="s">&#34; __system_property_read_callback() instead.&#34;</span><span class="p">,</span>
+<span class="ln">45</span>        <span class="n">pi</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">,</span> <span class="n">strlen</span><span class="p">(</span><span class="n">pi</span><span class="o">-&gt;</span><span class="n">long_value</span><span class="p">()));</span>
+<span class="ln">46</span>  <span class="p">}</span>
+<span class="ln">47</span>  <span class="k">return</span> <span class="nf">SERIAL_VALUE_LEN</span><span class="p">(</span><span class="n">serial</span><span class="p">);</span>
+<span class="ln">48</span>  <span class="p">}</span>
+<span class="ln">49</span>
+<span class="ln">50</span><span class="kt">uint32_t</span> <span class="n">SystemProperties</span><span class="o">::</span><span class="n">ReadMutablePropertyValue</span><span class="p">(</span><span class="k">const</span> <span class="n">prop_info</span><span class="o">*</span> <span class="n">pi</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">51</span>  <span class="c1">// We assume the memcpy below gets serialized by the acquire fence.
+</span><span class="ln">52</span><span class="c1"></span>  <span class="kt">uint32_t</span> <span class="n">new_serial</span> <span class="o">=</span> <span class="n">load_const_atomic</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pi</span><span class="o">-&gt;</span><span class="n">serial</span><span class="p">,</span> <span class="n">memory_order_acquire</span><span class="p">);</span>
+<span class="ln">53</span>  <span class="kt">uint32_t</span> <span class="n">serial</span><span class="p">;</span>
+<span class="ln">54</span>  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">len</span><span class="p">;</span>
+<span class="ln">55</span>  <span class="k">for</span> <span class="p">(;;)</span> <span class="p">{</span>
+<span class="ln">56</span>    <span class="n">serial</span> <span class="o">=</span> <span class="n">new_serial</span><span class="p">;</span>
+<span class="ln">57</span>    <span class="n">len</span> <span class="o">=</span> <span class="n">SERIAL_VALUE_LEN</span><span class="p">(</span><span class="n">serial</span><span class="p">);</span>
+<span class="ln">58</span>    <span class="k">if</span> <span class="p">(</span><span class="n">__predict_false</span><span class="p">(</span><span class="n">SERIAL_DIRTY</span><span class="p">(</span><span class="n">serial</span><span class="p">)))</span> <span class="p">{</span>
+<span class="ln">59</span>      <span class="c1">// See the comment in the prop_area constructor.
+</span><span class="ln">60</span><span class="c1"></span>      <span class="n">prop_area</span><span class="o">*</span> <span class="n">pa</span> <span class="o">=</span> <span class="n">contexts_</span><span class="o">-&gt;</span><span class="n">GetPropAreaForName</span><span class="p">(</span><span class="n">pi</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">);</span>
+<span class="ln">61</span>      <span class="n">memcpy</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">pa</span><span class="o">-&gt;</span><span class="n">dirty_backup_area</span><span class="p">(),</span> <span class="n">len</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+<span class="ln">62</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">63</span>      <span class="n">memcpy</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">pi</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">,</span> <span class="n">len</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+<span class="ln">64</span><span class="p">}</span>
+<span class="ln">65</span>    <span class="n">atomic_thread_fence</span><span class="p">(</span><span class="n">memory_order_acquire</span><span class="p">);</span>
+<span class="ln">66</span>    <span class="n">new_serial</span> <span class="o">=</span> <span class="n">load_const_atomic</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pi</span><span class="o">-&gt;</span><span class="n">serial</span><span class="p">,</span> <span class="n">memory_order_relaxed</span><span class="p">);</span>
+<span class="ln">67</span>    <span class="k">if</span> <span class="p">(</span><span class="n">__predict_true</span><span class="p">(</span><span class="n">serial</span> <span class="o">==</span> <span class="n">new_serial</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">68</span>      <span class="k">break</span><span class="p">;</span>
+<span class="ln">69</span>  <span class="p">}</span>
+<span class="ln">70</span>    <span class="n">atomic_thread_fence</span><span class="p">(</span><span class="n">memory_order_acquire</span><span class="p">);</span>
+<span class="ln">71</span>  <span class="p">}</span>
+<span class="ln">72</span>  <span class="k">return</span> <span class="n">serial</span><span class="p">;</span>
+<span class="ln">73</span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/property/property_28.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/property/property_28.png" >
+  
+    </a>
+  
+  
+</div>
+
+<blockquote>
+<p>补充：关于<code>libc.so</code>是什么时候初始化的</p>
+<p>关于在Android中的<code>libc.so</code>，实际上是<code>bionic/libc</code>，根据以下规则来生成对应的<code>libc.so</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-makefile" data-lang="makefile"><span class="ln"> 1</span><span class="err">//bionic/libc/Android.bp</span>
 <span class="ln"> 2</span><span class="err">cc_library_static</span> <span class="err">{</span>
 <span class="ln"> 3</span>    <span class="nf">name</span><span class="o">:</span> &#34;<span class="n">libc_init_dynamic</span>&#34;<span class="p">,</span>
 <span class="ln"> 4</span>    defaults: <span class="o">[</span><span class="s2">&#34;libc_defaults&#34;</span><span class="o">]</span>,
@@ -2738,12 +3172,13 @@
 <span class="ln">42</span>    <span class="o">}</span>,
 <span class="ln">43</span>    ...
 <span class="ln">44</span><span class="err">}</span>   
-</code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//bionic/libc/bionic/libc_init_dynamic.cpp
+</code></pre></div><p>这里面实际上是<code>libc_init_dynamic.cpp</code>为<code>libc_init_dynamic.a</code>的源文件，而<code>libc.so</code>是依赖于这个<code>libc_init_dynamic.a</code>的静态库，也就是间接也依赖于<code>libc_init_dynamic.cpp</code>文件。<code>libc_init_dynamic.cpp</code>文件，是用于初始化属性系统的，用于<code>Api</code>访问。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//bionic/libc/bionic/libc_init_dynamic.cpp
 </span><span class="ln">2</span><span class="c1"></span><span class="n">__attribute__</span><span class="p">((</span><span class="n">constructor</span><span class="p">(</span><span class="mi">1</span><span class="p">)))</span> <span class="k">static</span> <span class="kt">void</span> <span class="n">__libc_preinit</span><span class="p">()</span> <span class="p">{</span>
 <span class="ln">3</span>  <span class="n">__stack_chk_guard</span> <span class="o">=</span> <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">uintptr_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">__get_tls</span><span class="p">()[</span><span class="n">TLS_SLOT_STACK_GUARD</span><span class="p">]);</span>
 <span class="ln">4</span>  <span class="n">__libc_preinit_impl</span><span class="p">();</span>
 <span class="ln">5</span><span class="p">}</span>
-</code></pre></div><p>//todo 关于constructor(1)特性</p>
+</code></pre></div><p>关于constructor(1)特性。<code>constructor</code>参数让系统执行<code>main()</code>函数之前调用函数(被<code>__attribute__((constructor))</code>修饰的函数).同理, <code>destructor</code>让系统在<code>main()</code>函数退出或者调用了<code>exit()</code>之后,调用我们的函数.带有这些修饰属性的函数,对于我们初始化一些在程序中使用的数据非常有用。具体原理可以点击<a href="https://www.jianshu.com/p/dd425b9dc9db">这里</a>。</p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/bionic/libc_init_dynamic.cpp
 </span><span class="ln"> 2</span><span class="c1"></span><span class="n">__attribute__</span><span class="p">((</span><span class="n">noinline</span><span class="p">))</span>
 <span class="ln"> 3</span><span class="k">static</span> <span class="kt">void</span> <span class="n">__libc_preinit_impl</span><span class="p">()</span> <span class="p">{</span>
@@ -2776,12 +3211,14 @@
 <span class="ln">17</span>
 <span class="ln">18</span>  <span class="n">SetDefaultHeapTaggingLevel</span><span class="p">();</span>
 <span class="ln">19</span><span class="p">}</span>
-</code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//bionic/libc/bionic/system_property_api.cpp
+</code></pre></div><p><code>__system_properties_init</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//bionic/libc/bionic/system_property_api.cpp
 </span><span class="ln">2</span><span class="c1"></span><span class="cp">#define PROP_FILENAME &#34;/dev/__properties__&#34;
 </span><span class="ln">3</span><span class="cp"></span><span class="kt">int</span> <span class="nf">__system_properties_init</span><span class="p">()</span> <span class="p">{</span>
 <span class="ln">4</span>  <span class="k">return</span> <span class="n">system_properties</span><span class="p">.</span><span class="n">Init</span><span class="p">(</span><span class="n">PROP_FILENAME</span><span class="p">)</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
 <span class="ln">5</span><span class="p">}</span>
-</code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/system_properties/system_properties.cpp
+</code></pre></div><p><code>system_properties.Init</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/system_properties/system_properties.cpp
 </span><span class="ln"> 2</span><span class="c1"></span><span class="kt">bool</span> <span class="n">SystemProperties</span><span class="o">::</span><span class="n">Init</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">filename</span><span class="p">)</span> <span class="p">{</span>
 <span class="ln"> 3</span>  <span class="c1">// This is called from __libc_init_common, and should leave errno at 0 (http://b/37248982).
 </span><span class="ln"> 4</span><span class="c1"></span>  <span class="n">ErrnoRestorer</span> <span class="n">errno_restorer</span><span class="p">;</span>
@@ -2822,7 +3259,8 @@
 <span class="ln">10</span>  <span class="p">}</span>
 <span class="ln">11</span>  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
 <span class="ln">12</span><span class="p">}</span>
-</code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/system_properties/contexts_serialized.cpp
+</code></pre></div><p><code>InitializeProperties</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/system_properties/contexts_serialized.cpp
 </span><span class="ln"> 2</span><span class="c1"></span><span class="kt">bool</span> <span class="n">ContextsSerialized</span><span class="o">::</span><span class="n">InitializeProperties</span><span class="p">()</span> <span class="p">{</span>
 <span class="ln"> 3</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">property_info_area_file_</span><span class="p">.</span><span class="n">LoadDefaultPath</span><span class="p">())</span> <span class="p">{</span>
 <span class="ln"> 4</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
@@ -2835,74 +3273,7 @@
 <span class="ln">11</span>
 <span class="ln">12</span>  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
 <span class="ln">13</span><span class="p">}</span>
-</code></pre></div><p>主要是两个函数<code>LoadDefaultPath</code>和<code>InitializeContextNodes</code></p>
-<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/property_service/libpropertyinfoparser/property_info_parser.cpp
-</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">bool</span> <span class="n">PropertyInfoAreaFile</span><span class="o">::</span><span class="n">LoadDefaultPath</span><span class="p">()</span> <span class="p">{</span>
-<span class="ln"> 3</span>  <span class="k">return</span> <span class="nf">LoadPath</span><span class="p">(</span><span class="s">&#34;/dev/__properties__/property_info&#34;</span><span class="p">);</span>
-<span class="ln"> 4</span><span class="p">}</span>
-<span class="ln"> 5</span>
-<span class="ln"> 6</span><span class="kt">bool</span> <span class="n">PropertyInfoAreaFile</span><span class="o">::</span><span class="n">LoadPath</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">filename</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln"> 7</span>  <span class="kt">int</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">O_CLOEXEC</span> <span class="o">|</span> <span class="n">O_NOFOLLOW</span> <span class="o">|</span> <span class="n">O_RDONLY</span><span class="p">);</span>
-<span class="ln"> 8</span>
-<span class="ln"> 9</span>  <span class="k">struct</span> <span class="nc">stat</span> <span class="n">fd_stat</span><span class="p">;</span>
-<span class="ln">10</span>  <span class="k">if</span> <span class="p">(</span><span class="n">fstat</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">fd_stat</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln">11</span>    <span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
-<span class="ln">12</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
-<span class="ln">13</span>  <span class="p">}</span>
-<span class="ln">14</span>
-<span class="ln">15</span>  <span class="k">if</span> <span class="p">((</span><span class="n">fd_stat</span><span class="p">.</span><span class="n">st_uid</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">||</span> <span class="p">(</span><span class="n">fd_stat</span><span class="p">.</span><span class="n">st_gid</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">||</span>
-<span class="ln">16</span>      <span class="p">((</span><span class="n">fd_stat</span><span class="p">.</span><span class="n">st_mode</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">S_IWGRP</span> <span class="o">|</span> <span class="n">S_IWOTH</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">||</span>
-<span class="ln">17</span>      <span class="p">(</span><span class="n">fd_stat</span><span class="p">.</span><span class="n">st_size</span> <span class="o">&lt;</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">off_t</span><span class="o">&gt;</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">PropertyInfoArea</span><span class="p">))))</span> <span class="p">{</span>
-<span class="ln">18</span>    <span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
-<span class="ln">19</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
-<span class="ln">20</span>  <span class="p">}</span>
-<span class="ln">21</span>
-<span class="ln">22</span>  <span class="k">auto</span> <span class="n">mmap_size</span> <span class="o">=</span> <span class="n">fd_stat</span><span class="p">.</span><span class="n">st_size</span><span class="p">;</span>
-<span class="ln">23</span>
-<span class="ln">24</span>  <span class="kt">void</span><span class="o">*</span> <span class="n">map_result</span> <span class="o">=</span> <span class="n">mmap</span><span class="p">(</span><span class="k">nullptr</span><span class="p">,</span> <span class="n">mmap_size</span><span class="p">,</span> <span class="n">PROT_READ</span><span class="p">,</span> <span class="n">MAP_SHARED</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
-<span class="ln">25</span>  <span class="k">if</span> <span class="p">(</span><span class="n">map_result</span> <span class="o">==</span> <span class="n">MAP_FAILED</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln">26</span>    <span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
-<span class="ln">27</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
-<span class="ln">28</span>  <span class="p">}</span>
-<span class="ln">29</span>
-<span class="ln">30</span>  <span class="k">auto</span> <span class="n">property_info_area</span> <span class="o">=</span> <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">PropertyInfoArea</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">map_result</span><span class="p">);</span>
-<span class="ln">31</span>  <span class="k">if</span> <span class="p">(</span><span class="n">property_info_area</span><span class="o">-&gt;</span><span class="n">minimum_supported_version</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="o">||</span>
-<span class="ln">32</span>      <span class="n">property_info_area</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">()</span> <span class="o">!=</span> <span class="n">mmap_size</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln">33</span>    <span class="n">munmap</span><span class="p">(</span><span class="n">map_result</span><span class="p">,</span> <span class="n">mmap_size</span><span class="p">);</span>
-<span class="ln">34</span>    <span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
-<span class="ln">35</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
-<span class="ln">36</span>  <span class="p">}</span>
-<span class="ln">37</span>
-<span class="ln">38</span>  <span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
-<span class="ln">39</span>  <span class="n">mmap_base_</span> <span class="o">=</span> <span class="n">map_result</span><span class="p">;</span>
-<span class="ln">40</span>  <span class="n">mmap_size_</span> <span class="o">=</span> <span class="n">mmap_size</span><span class="p">;</span>
-<span class="ln">41</span>  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
-<span class="ln">42</span><span class="p">}</span>
-</code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/system_properties/contexts_serialized.cpp
-</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">bool</span> <span class="n">ContextsSerialized</span><span class="o">::</span><span class="n">InitializeContextNodes</span><span class="p">()</span> <span class="p">{</span>
-<span class="ln"> 3</span>  <span class="k">auto</span> <span class="n">num_context_nodes</span> <span class="o">=</span> <span class="n">property_info_area_file_</span><span class="o">-&gt;</span><span class="n">num_contexts</span><span class="p">();</span>
-<span class="ln"> 4</span>  <span class="k">auto</span> <span class="n">context_nodes_mmap_size</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">ContextNode</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_context_nodes</span><span class="p">;</span>
-<span class="ln"> 5</span>  <span class="c1">// We want to avoid malloc in system properties, so we take an anonymous map instead (b/31659220).
-</span><span class="ln"> 6</span><span class="c1"></span>  <span class="kt">void</span><span class="o">*</span> <span class="k">const</span> <span class="n">map_result</span> <span class="o">=</span> <span class="n">mmap</span><span class="p">(</span><span class="k">nullptr</span><span class="p">,</span> <span class="n">context_nodes_mmap_size</span><span class="p">,</span> <span class="n">PROT_READ</span> <span class="o">|</span> <span class="n">PROT_WRITE</span><span class="p">,</span>
-<span class="ln"> 7</span>                                <span class="n">MAP_PRIVATE</span> <span class="o">|</span> <span class="n">MAP_ANONYMOUS</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
-<span class="ln"> 8</span>  <span class="k">if</span> <span class="p">(</span><span class="n">map_result</span> <span class="o">==</span> <span class="n">MAP_FAILED</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln"> 9</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
-<span class="ln">10</span>  <span class="p">}</span>
-<span class="ln">11</span>
-<span class="ln">12</span>  <span class="n">prctl</span><span class="p">(</span><span class="n">PR_SET_VMA</span><span class="p">,</span> <span class="n">PR_SET_VMA_ANON_NAME</span><span class="p">,</span> <span class="n">map_result</span><span class="p">,</span> <span class="n">context_nodes_mmap_size</span><span class="p">,</span>
-<span class="ln">13</span>        <span class="s">&#34;System property context nodes&#34;</span><span class="p">);</span>
-<span class="ln">14</span>
-<span class="ln">15</span>  <span class="n">context_nodes_</span> <span class="o">=</span> <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">ContextNode</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">map_result</span><span class="p">);</span>
-<span class="ln">16</span>  <span class="n">num_context_nodes_</span> <span class="o">=</span> <span class="n">num_context_nodes</span><span class="p">;</span>
-<span class="ln">17</span>  <span class="n">context_nodes_mmap_size_</span> <span class="o">=</span> <span class="n">context_nodes_mmap_size</span><span class="p">;</span>
-<span class="ln">18</span>
-<span class="ln">19</span>  <span class="k">for</span> <span class="p">(</span><span class="n">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">num_context_nodes</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln">20</span>    <span class="k">new</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">context_nodes_</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="n">ContextNode</span><span class="p">(</span><span class="n">property_info_area_file_</span><span class="o">-&gt;</span><span class="n">context</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">filename_</span><span class="p">);</span>
-<span class="ln">21</span>  <span class="p">}</span>
-<span class="ln">22</span>
-<span class="ln">23</span>  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
-<span class="ln">24</span><span class="p">}</span>
-</code></pre></div><p>调用一次<code>prctl</code>使用<code>PR_SET_VMA</code>参数，功能是给<code>addr</code>和<code>vsize</code>指定的匿名内存区域命名了<code>&quot;System property context nodes&quot;</code></p>
+</code></pre></div><p>这里的流程跟前面1.2中的<code>__system_property_area_init</code>非常相似，但是区别是1.2中的<code>__system_property_area_init</code>初始化是在<code>Init</code>进程初始化的，具有<strong>可读写权限</strong>，而这里的<code>__system_properties_init</code>初始化是在<code>bionic/libc</code>这个so库初始化的，用于其他进程的调用，所以是没有<strong>可写权限</strong>的。</p>
 
 
  
@@ -2923,16 +3294,17 @@
 
 <div class="figure center fig-100" >
   
-    <a class="fancybox" href="https://yangyang48.github.io/property/property_1.png" data-fancybox-group="">
+    <a class="fancybox" href="https://yangyang48.github.io/property/property_29.png" data-fancybox-group="">
   
-    <img class="fig-img" src="https://yangyang48.github.io/property/property_1.png" >
+    <img class="fig-img" src="https://yangyang48.github.io/property/property_29.png" >
   
     </a>
   
   
 </div>
 
-<h2 id="adb获取属性">adb获取属性</h2>
+</blockquote>
+<h2 id="33adb获取属性">3.3adb获取属性</h2>
 <p><code>adb</code>命令直接输入<code>getprop</code>，实际上是调用到一个<code>toolbox</code>当中的进程<code>getprop</code>，有两个参数<code>ZT</code>，不能一起使用，<code>-Z</code>是打印对应的<code>SElinux</code>域文件，<code>-T</code>是打印对应的value具体的类型，比如<code>string</code>，<code>bool</code>等。</p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/toolbox/getprop.cpp
 </span><span class="ln"> 2</span><span class="c1"></span><span class="k">extern</span> <span class="s">&#34;C&#34;</span> <span class="kt">int</span> <span class="n">getprop_main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">**</span> <span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
@@ -2981,8 +3353,338 @@
 <span class="ln"> 8</span>        <span class="p">...</span>
 <span class="ln"> 9</span>    <span class="p">}</span>
 <span class="ln">10</span><span class="p">}</span>
-</code></pre></div><h1 id="4设置属性">4设置属性</h1>
-<p>这里主要是非<code>init</code>进程设置属性，这里有两种方式，一种是直接<code>adb</code>敲命令<code>setprop</code>，或者是在Java层或者Native层调用设置属性的方式。</p>
+</code></pre></div><p>到这里的GetProperty函数，就跟App的流程类似了。</p>
+<p><code>GetProperty</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/base/properties.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">GetProperty</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">default_value</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">property_value</span><span class="p">;</span>
+<span class="ln"> 4</span><span class="cp">#if defined(__BIONIC__)
+</span><span class="ln"> 5</span><span class="cp"></span>  <span class="k">const</span> <span class="n">prop_info</span><span class="o">*</span> <span class="n">pi</span> <span class="o">=</span> <span class="n">__system_property_find</span><span class="p">(</span><span class="n">key</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+<span class="ln"> 6</span>  <span class="k">if</span> <span class="p">(</span><span class="n">pi</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="k">return</span> <span class="n">default_value</span><span class="p">;</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span>  <span class="n">__system_property_read_callback</span><span class="p">(</span><span class="n">pi</span><span class="p">,</span>
+<span class="ln"> 9</span>                                  <span class="p">[](</span><span class="kt">void</span><span class="o">*</span> <span class="n">cookie</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">value</span><span class="p">,</span> <span class="kt">unsigned</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">10</span>                                    <span class="k">auto</span> <span class="n">property_value</span> <span class="o">=</span> <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">cookie</span><span class="p">);</span>
+<span class="ln">11</span>                                    <span class="o">*</span><span class="n">property_value</span> <span class="o">=</span> <span class="n">value</span><span class="p">;</span>
+<span class="ln">12</span>                                  <span class="p">},</span>
+<span class="ln">13</span>                                  <span class="o">&amp;</span><span class="n">property_value</span><span class="p">);</span>
+<span class="ln">14</span><span class="cp">#else
+</span><span class="ln">15</span><span class="cp"></span>  <span class="k">auto</span> <span class="n">it</span> <span class="o">=</span> <span class="n">g_properties</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">key</span><span class="p">);</span>
+<span class="ln">16</span>  <span class="k">if</span> <span class="p">(</span><span class="n">it</span> <span class="o">==</span> <span class="n">g_properties</span><span class="p">.</span><span class="n">end</span><span class="p">())</span> <span class="k">return</span> <span class="n">default_value</span><span class="p">;</span>
+<span class="ln">17</span>  <span class="n">property_value</span> <span class="o">=</span> <span class="n">it</span><span class="o">-&gt;</span><span class="n">second</span><span class="p">;</span>
+<span class="ln">18</span><span class="cp">#endif
+</span><span class="ln">19</span><span class="cp"></span>  <span class="k">return</span> <span class="n">property_value</span><span class="p">.</span><span class="n">empty</span><span class="p">()</span> <span class="o">?</span> <span class="nl">default_value</span> <span class="p">:</span> <span class="n">property_value</span><span class="p">;</span>
+<span class="ln">20</span><span class="p">}</span>
+</code></pre></div><p><code>GetProperty</code>函数的内部逻辑，会根据<code>__BIONIC__</code>这个宏是否定义，分两个不同的逻辑。可以看到如果该宏已定义的话，会继续调用<code>__system_property_find</code>, 如果该宏未定义，则从全局变量<code>g_properties</code>中读取。</p>
+<h2 id="34init进程获取属性">3.4Init进程获取属性</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/init/property_service.cpp
+</span><span class="ln"> 2</span><span class="c1">//实际上这里获取属性直接使用GetProperty来调用，跟adb方式一致
+</span><span class="ln"> 3</span><span class="c1"></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">ExportKernelBootProps</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="k">constexpr</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">UNSET</span> <span class="o">=</span> <span class="s">&#34;&#34;</span><span class="p">;</span>
+<span class="ln"> 5</span>    <span class="k">struct</span> <span class="p">{</span>
+<span class="ln"> 6</span>        <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">src_prop</span><span class="p">;</span>
+<span class="ln"> 7</span>        <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">dst_prop</span><span class="p">;</span>
+<span class="ln"> 8</span>        <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">default_value</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="p">}</span> <span class="n">prop_map</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln">10</span>            <span class="c1">// clang-format off
+</span><span class="ln">11</span><span class="c1"></span>        <span class="p">{</span> <span class="s">&#34;ro.boot.serialno&#34;</span><span class="p">,</span>   <span class="s">&#34;ro.serialno&#34;</span><span class="p">,</span>   <span class="n">UNSET</span><span class="p">,</span> <span class="p">},</span>
+<span class="ln">12</span>        <span class="p">{</span> <span class="s">&#34;ro.boot.mode&#34;</span><span class="p">,</span>       <span class="s">&#34;ro.bootmode&#34;</span><span class="p">,</span>   <span class="s">&#34;unknown&#34;</span><span class="p">,</span> <span class="p">},</span>
+<span class="ln">13</span>        <span class="p">{</span> <span class="s">&#34;ro.boot.baseband&#34;</span><span class="p">,</span>   <span class="s">&#34;ro.baseband&#34;</span><span class="p">,</span>   <span class="s">&#34;unknown&#34;</span><span class="p">,</span> <span class="p">},</span>
+<span class="ln">14</span>        <span class="p">{</span> <span class="s">&#34;ro.boot.bootloader&#34;</span><span class="p">,</span> <span class="s">&#34;ro.bootloader&#34;</span><span class="p">,</span> <span class="s">&#34;unknown&#34;</span><span class="p">,</span> <span class="p">},</span>
+<span class="ln">15</span>        <span class="p">{</span> <span class="s">&#34;ro.boot.hardware&#34;</span><span class="p">,</span>   <span class="s">&#34;ro.hardware&#34;</span><span class="p">,</span>   <span class="s">&#34;unknown&#34;</span><span class="p">,</span> <span class="p">},</span>
+<span class="ln">16</span>        <span class="p">{</span> <span class="s">&#34;ro.boot.revision&#34;</span><span class="p">,</span>   <span class="s">&#34;ro.revision&#34;</span><span class="p">,</span>   <span class="s">&#34;0&#34;</span><span class="p">,</span> <span class="p">},</span>
+<span class="ln">17</span>            <span class="c1">// clang-format on
+</span><span class="ln">18</span><span class="c1"></span>    <span class="p">};</span>
+<span class="ln">19</span>    <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="nl">prop</span> <span class="p">:</span> <span class="n">prop_map</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">20</span>        <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">value</span> <span class="o">=</span> <span class="n">GetProperty</span><span class="p">(</span><span class="n">prop</span><span class="p">.</span><span class="n">src_prop</span><span class="p">,</span> <span class="n">prop</span><span class="p">.</span><span class="n">default_value</span><span class="p">);</span>
+<span class="ln">21</span>        <span class="k">if</span> <span class="p">(</span><span class="n">value</span> <span class="o">!=</span> <span class="n">UNSET</span><span class="p">)</span> <span class="n">InitPropertySet</span><span class="p">(</span><span class="n">prop</span><span class="p">.</span><span class="n">dst_prop</span><span class="p">,</span> <span class="n">value</span><span class="p">);</span>
+<span class="ln">22</span>    <span class="p">}</span>
+<span class="ln">23</span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/property/property_30.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/property/property_30.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="35获取属性总结">3.5获取属性总结</h2>
+<p>不管是<code>Init</code>进程还是非<code>Init</code>进程，最终都会调用到<code>/bionic/libc</code>这个动态库中，且会先后调用<code>__system_property_find</code>和<code>__system_property_read_callback</code>函数，前者函数是通过属性名，从<code>/dev/__properties__/property_info</code>找到属性名对应<code>Selinux</code>域，然后在<code>/dev/__properties__</code>目录中找到对应的<code>Selinux</code>域文件，根据字典树的方式来读取全属性名。后者函数在域文件中，如果能够找到对应的<code>prop_info</code>，那么读取对应的<code>value</code>值，如果找不到那么就会返回<code>null</code>（其中<code>App</code>调用的<code>Java</code>和<code>Native</code>层，在上层封装了默认值，会返回默认值）。</p>
+<h1 id="4设置属性">4设置属性</h1>
+<p>这里包括非<code>init</code>进程和<code>init</code>进程设置属性，这里非<code>init</code>进程有两种方式，一种是在<code>App</code>调用<code>Java层</code>或者<code>Native层</code>调用设置属性的方式，另一种是直接<code>adb</code>敲命令<code>setprop</code>。</p>
+<h2 id="41app写入属性流程分析java侧">4.1App写入属性流程分析（Java侧）</h2>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//App设置属性
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kn">import</span> <span class="nn">android.os.SystemProperties</span><span class="o">;</span>
+<span class="ln"> 3</span><span class="kd">public</span> <span class="kd">static</span> <span class="kt">boolean</span> <span class="nf">setProperty</span><span class="o">(</span><span class="n">String</span> <span class="n">key</span><span class="o">,</span> <span class="n">String</span> <span class="n">value</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 4</span>    <span class="k">try</span> <span class="o">{</span>
+<span class="ln"> 5</span>        <span class="n">Class</span><span class="o">&lt;?&gt;</span> <span class="n">c</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="s">&#34;android.os.SystemProperties&#34;</span><span class="o">);</span>
+<span class="ln"> 6</span>        <span class="n">Method</span> <span class="n">set</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="na">getMethod</span><span class="o">(</span><span class="s">&#34;set&#34;</span><span class="o">,</span> <span class="n">String</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">String</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+<span class="ln"> 7</span>        <span class="n">set</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="n">c</span><span class="o">,</span> <span class="n">key</span><span class="o">,</span> <span class="n">value</span><span class="o">);</span>
+<span class="ln"> 8</span>        <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+<span class="ln"> 9</span>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">10</span>        <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="ln">11</span>    <span class="o">}</span>
+<span class="ln">12</span>    <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+<span class="ln">13</span><span class="o">}</span>
+<span class="ln">14</span>
+<span class="ln">15</span><span class="n">setProperty</span><span class="o">(</span><span class="s">&#34;persist.a.b.c&#34;</span><span class="o">,</span> <span class="s">&#34;1&#34;</span><span class="o">);</span>
+</code></pre></div><h3 id="411setproperty">4.1.1<code>setProperty</code></h3>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/base/core/java/android/os/SystemProperties.java
+</span><span class="ln"> 2</span><span class="c1">//需要通过反射来设置
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">set</span><span class="o">(</span><span class="nd">@NonNull</span> <span class="n">String</span> <span class="n">key</span><span class="o">,</span> <span class="nd">@Nullable</span> <span class="n">String</span> <span class="n">val</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 4</span>    <span class="k">if</span> <span class="o">(</span><span class="n">val</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">val</span><span class="o">.</span><span class="na">startsWith</span><span class="o">(</span><span class="s">&#34;ro.&#34;</span><span class="o">)</span> <span class="o">&amp;&amp;</span> <span class="n">val</span><span class="o">.</span><span class="na">length</span><span class="o">()</span> <span class="o">&gt;</span> <span class="n">PROP_VALUE_MAX</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 5</span>        <span class="k">throw</span> <span class="k">new</span> <span class="n">IllegalArgumentException</span><span class="o">(</span><span class="s">&#34;value of system property &#39;&#34;</span> <span class="o">+</span> <span class="n">key</span>
+<span class="ln"> 6</span>                                           <span class="o">+</span> <span class="s">&#34;&#39; is longer than &#34;</span> <span class="o">+</span> <span class="n">PROP_VALUE_MAX</span> <span class="o">+</span> <span class="s">&#34; characters: &#34;</span> <span class="o">+</span> <span class="n">val</span><span class="o">);</span>
+<span class="ln"> 7</span>    <span class="o">}</span>
+<span class="ln"> 8</span>    <span class="k">if</span> <span class="o">(</span><span class="n">TRACK_KEY_ACCESS</span><span class="o">)</span> <span class="n">onKeyAccess</span><span class="o">(</span><span class="n">key</span><span class="o">);</span>
+<span class="ln"> 9</span>    <span class="n">native_set</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">val</span><span class="o">);</span>
+<span class="ln">10</span><span class="o">}</span>
+</code></pre></div><h3 id="412native_set">4.1.2<code>native_set</code></h3>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks\base\core\jni\android_os_SystemProperties.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="nf">register_android_os_SystemProperties</span><span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">)</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="k">const</span> <span class="n">JNINativeMethod</span> <span class="n">method_table</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln"> 5</span>        <span class="p">...</span>
+<span class="ln"> 6</span>        <span class="c1">//设置属性就是这个SystemProperties_set函数 
+</span><span class="ln"> 7</span><span class="c1"></span>        <span class="p">{</span> <span class="s">&#34;native_set&#34;</span><span class="p">,</span> <span class="s">&#34;(Ljava/lang/String;Ljava/lang/String;)V&#34;</span><span class="p">,</span>
+<span class="ln"> 8</span>          <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span> <span class="n">SystemProperties_set</span> <span class="p">},</span>
+<span class="ln"> 9</span>    <span class="p">};</span>
+<span class="ln">10</span>    <span class="k">return</span> <span class="n">RegisterMethodsOrDie</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s">&#34;android/os/SystemProperties&#34;</span><span class="p">,</span>
+<span class="ln">11</span>                                <span class="n">method_table</span><span class="p">,</span> <span class="n">NELEM</span><span class="p">(</span><span class="n">method_table</span><span class="p">));</span>
+<span class="ln">12</span><span class="p">}</span>
+<span class="ln">13</span><span class="c1">//这里是设置属性的地方
+</span><span class="ln">14</span><span class="c1"></span><span class="kt">void</span> <span class="nf">SystemProperties_set</span><span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jobject</span> <span class="n">clazz</span><span class="p">,</span> <span class="n">jstring</span> <span class="n">keyJ</span><span class="p">,</span>
+<span class="ln">15</span>                          <span class="n">jstring</span> <span class="n">valJ</span><span class="p">)</span>
+<span class="ln">16</span><span class="p">{</span>
+<span class="ln">17</span>    <span class="n">ScopedUtfChars</span> <span class="n">key</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">keyJ</span><span class="p">);</span>
+<span class="ln">18</span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">key</span><span class="p">.</span><span class="n">c_str</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln">19</span>        <span class="k">return</span><span class="p">;</span>
+<span class="ln">20</span>    <span class="p">}</span>
+<span class="ln">21</span>    <span class="n">std</span><span class="o">::</span><span class="n">optional</span><span class="o">&lt;</span><span class="n">ScopedUtfChars</span><span class="o">&gt;</span> <span class="n">value</span><span class="p">;</span>
+<span class="ln">22</span>    <span class="k">if</span> <span class="p">(</span><span class="n">valJ</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">23</span>        <span class="n">value</span><span class="p">.</span><span class="n">emplace</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">valJ</span><span class="p">);</span>
+<span class="ln">24</span>        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">value</span><span class="o">-&gt;</span><span class="n">c_str</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln">25</span>            <span class="k">return</span><span class="p">;</span>
+<span class="ln">26</span>        <span class="p">}</span>
+<span class="ln">27</span>    <span class="p">}</span>
+<span class="ln">28</span>    <span class="kt">bool</span> <span class="n">success</span><span class="p">;</span>
+<span class="ln">29</span>    <span class="c1">//最终会调用到这里的__system_property_set函数
+</span><span class="ln">30</span><span class="c1"></span><span class="cp">#if defined(__BIONIC__)
+</span><span class="ln">31</span><span class="cp"></span>    <span class="n">success</span> <span class="o">=</span> <span class="o">!</span><span class="n">__system_property_set</span><span class="p">(</span><span class="n">key</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="n">value</span> <span class="o">?</span> <span class="n">value</span><span class="o">-&gt;</span><span class="n">c_str</span><span class="p">()</span> <span class="o">:</span> <span class="s">&#34;&#34;</span><span class="p">);</span>
+<span class="ln">32</span><span class="cp">#else
+</span><span class="ln">33</span><span class="cp"></span>    <span class="n">success</span> <span class="o">=</span> <span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">SetProperty</span><span class="p">(</span><span class="n">key</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="n">value</span> <span class="o">?</span> <span class="n">value</span><span class="o">-&gt;</span><span class="n">c_str</span><span class="p">()</span> <span class="o">:</span> <span class="s">&#34;&#34;</span><span class="p">);</span>
+<span class="ln">34</span><span class="cp">#endif
+</span><span class="ln">35</span><span class="cp"></span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">success</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">36</span>        <span class="n">jniThrowException</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s">&#34;java/lang/RuntimeException&#34;</span><span class="p">,</span>
+<span class="ln">37</span>                          <span class="s">&#34;failed to set system property (check logcat for reason)&#34;</span><span class="p">);</span>
+<span class="ln">38</span>    <span class="p">}</span>
+<span class="ln">39</span><span class="p">}</span>
+</code></pre></div><h3 id="413__system_property_set">4.1.3<code>__system_property_set</code></h3>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/bionic/system_property_set.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">__BIONIC_WEAK_FOR_NATIVE_BRIDGE</span>
+<span class="ln"> 3</span><span class="kt">int</span> <span class="nf">__system_property_set</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">key</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 4</span>  <span class="k">if</span> <span class="p">(</span><span class="n">key</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln"> 5</span>  <span class="k">if</span> <span class="p">(</span><span class="n">value</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="n">value</span> <span class="o">=</span> <span class="s">&#34;&#34;</span><span class="p">;</span>
+<span class="ln"> 6</span>  <span class="c1">//获取当前属性的版本号
+</span><span class="ln"> 7</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="n">g_propservice_protocol_version</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 8</span>    <span class="n">detect_protocol_version</span><span class="p">();</span>
+<span class="ln"> 9</span>  <span class="p">}</span>
+<span class="ln">10</span>  <span class="c1">//比较当前的版本号，属性系统启动的时候就是设置为ro.property_service.version为2
+</span><span class="ln">11</span><span class="c1"></span>  <span class="c1">//1的话为Android 8或者更早的系统版本
+</span><span class="ln">12</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="n">g_propservice_protocol_version</span> <span class="o">==</span> <span class="n">kProtocolVersion1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">13</span>    <span class="c1">// Old protocol does not support long names or values
+</span><span class="ln">14</span><span class="c1"></span>    <span class="p">...</span>
+<span class="ln">15</span>  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">16</span>    <span class="c1">// New protocol only allows long values for ro. properties only.
+</span><span class="ln">17</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">strlen</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">PROP_VALUE_MAX</span> <span class="o">&amp;&amp;</span> <span class="n">strncmp</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s">&#34;ro.&#34;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">18</span>    <span class="c1">// Use proper protocol
+</span><span class="ln">19</span><span class="c1"></span>    <span class="n">PropertyServiceConnection</span> <span class="n">connection</span><span class="p">;</span>
+<span class="ln">20</span>    <span class="p">...</span>
+<span class="ln">21</span>    <span class="c1">//建立socket连接，这里连接的就是Init进程启动时候的Property_Service
+</span><span class="ln">22</span><span class="c1"></span>    <span class="c1">//内部使用了writev，writev面向的是分散的数据块，两个函数的最终结果都是将内容写入连续的空间。
+</span><span class="ln">23</span><span class="c1"></span>    <span class="n">SocketWriter</span> <span class="n">writer</span><span class="p">(</span><span class="o">&amp;</span><span class="n">connection</span><span class="p">);</span>
+<span class="ln">24</span>    <span class="c1">//发送tcp消息，首先是MSG类型，这里是属性系统版本v2.0，然后追加key和value的值
+</span><span class="ln">25</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">writer</span><span class="p">.</span><span class="n">WriteUint32</span><span class="p">(</span><span class="n">PROP_MSG_SETPROP2</span><span class="p">).</span><span class="n">WriteString</span><span class="p">(</span><span class="n">key</span><span class="p">).</span><span class="n">WriteString</span><span class="p">(</span><span class="n">value</span><span class="p">).</span><span class="n">Send</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln">26</span>    <span class="p">...</span>
+<span class="ln">27</span>  <span class="p">}</span>
+<span class="ln">28</span><span class="p">}</span>
+</code></pre></div><p><code>SocketWriter</code>的数据结构如下图所示</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/property/property_31.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/property/property_31.png" >
+  
+    </a>
+  
+  
+</div>
+
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/bionic/system_property_set.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">SocketWriter</span><span class="o">&amp;</span> <span class="n">WriteUint32</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="kt">uint32_t</span><span class="o">*</span> <span class="n">ptr</span> <span class="o">=</span> <span class="n">uint_buf_</span> <span class="o">+</span> <span class="n">uint_buf_index_</span><span class="p">;</span>
+<span class="ln"> 4</span>    <span class="n">uint_buf_</span><span class="p">[</span><span class="n">uint_buf_index_</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span><span class="p">;</span>
+<span class="ln"> 5</span>    <span class="n">iov_</span><span class="p">[</span><span class="n">iov_index_</span><span class="p">].</span><span class="n">iov_base</span> <span class="o">=</span> <span class="n">ptr</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="n">iov_</span><span class="p">[</span><span class="n">iov_index_</span><span class="p">].</span><span class="n">iov_len</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">ptr</span><span class="p">);</span>
+<span class="ln"> 7</span>    <span class="o">++</span><span class="n">iov_index_</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="k">return</span> <span class="o">*</span><span class="k">this</span><span class="p">;</span>
+<span class="ln"> 9</span><span class="p">}</span>
+<span class="ln">10</span>
+<span class="ln">11</span><span class="n">SocketWriter</span><span class="o">&amp;</span> <span class="n">WriteString</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">12</span>    <span class="kt">uint32_t</span> <span class="n">valuelen</span> <span class="o">=</span> <span class="n">strlen</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
+<span class="ln">13</span>    <span class="n">WriteUint32</span><span class="p">(</span><span class="n">valuelen</span><span class="p">);</span>
+<span class="ln">14</span>    <span class="k">if</span> <span class="p">(</span><span class="n">valuelen</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">15</span>    <span class="k">return</span> <span class="o">*</span><span class="k">this</span><span class="p">;</span>
+<span class="ln">16</span>  <span class="p">}</span>
+<span class="ln">17</span>
+<span class="ln">18</span>    <span class="n">CHECK</span><span class="p">(</span><span class="n">iov_index_</span> <span class="o">&lt;</span> <span class="n">kIovSize</span><span class="p">);</span>
+<span class="ln">19</span>    <span class="n">iov_</span><span class="p">[</span><span class="n">iov_index_</span><span class="p">].</span><span class="n">iov_base</span> <span class="o">=</span> <span class="k">const_cast</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
+<span class="ln">20</span>    <span class="n">iov_</span><span class="p">[</span><span class="n">iov_index_</span><span class="p">].</span><span class="n">iov_len</span> <span class="o">=</span> <span class="n">valuelen</span><span class="p">;</span>
+<span class="ln">21</span>    <span class="o">++</span><span class="n">iov_index_</span><span class="p">;</span>
+<span class="ln">22</span>    <span class="k">return</span> <span class="o">*</span><span class="k">this</span><span class="p">;</span>
+<span class="ln">23</span><span class="p">}</span>
+</code></pre></div><h4 id="4131writeuint32prop_msg_setprop2">4.1.3.1<code>WriteUint32(PROP_MSG_SETPROP2)</code></h4>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/property/property_32.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/property/property_32.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h4 id="4132writestringpersistabc">4.1.3.2<code>WriteString(&quot;persist.a.b.c&quot;)</code></h4>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/property/property_33.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/property/property_33.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h4 id="4333writestring1">4.3.3.3<code>WriteString(&quot;1&quot;)</code></h4>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/property/property_34.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/property/property_34.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="42app写入属性流程分析native侧">4.2App写入属性流程分析（Native侧）</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//App通过封装的so进行读取属性
+</span><span class="ln">2</span><span class="c1"></span><span class="cp">#include</span> <span class="cpf">&lt;cutils/properties.h&gt;</span><span class="cp">
+</span><span class="ln">3</span><span class="cp">#define PROPERTY_KEY_MAX   32
+</span><span class="ln">4</span><span class="cp">#define PROPERTY_VALUE_MAX  92
+</span><span class="ln">5</span><span class="cp"></span><span class="n">property_set</span><span class="p">(</span><span class="s">&#34;persist.a.b.c&#34;</span><span class="p">,</span> <span class="s">&#34;1&#34;</span><span class="p">);</span>
+</code></pre></div><p><code>property_set</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//system/core/libcutils/properties.cpp
+</span><span class="ln">2</span><span class="c1"></span><span class="kt">int</span> <span class="nf">property_set</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">3</span>    <span class="k">return</span> <span class="n">__system_property_set</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">);</span>
+<span class="ln">4</span><span class="p">}</span>
+</code></pre></div><p><code>__system_property_set</code>跟上面4.1的流程一致，这里就不继续展开。</p>
+<h2 id="43adb写入属性">4.3adb写入属性</h2>
 <p><code>adb</code>命令直接输入<code>setprop</code>，实际上是调用到一个<code>toolbox</code>当中的进程<code>setprop</code>，需要有两个参数，<code>name</code>和<code>value</code>，且<code>name</code>和<code>value</code>必须符合规范（<code>name</code>长度小于32，<code>value</code>长度小于92）。</p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/toolbox/setprop.cpp
 </span><span class="ln"> 2</span><span class="c1"></span><span class="k">extern</span> <span class="s">&#34;C&#34;</span> <span class="kt">int</span> <span class="n">setprop_main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">**</span> <span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
@@ -2998,7 +3700,83 @@
 <span class="ln">12</span>
 <span class="ln">13</span>    <span class="k">return</span> <span class="n">EXIT_SUCCESS</span><span class="p">;</span>
 <span class="ln">14</span><span class="p">}</span>
-</code></pre></div><h1 id="5关于属性变化">5关于属性变化</h1>
+</code></pre></div><p><code>SetProperty</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//system/core/base/properties.cpp
+</span><span class="ln">2</span><span class="c1"></span><span class="kt">bool</span> <span class="nf">SetProperty</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">3</span>  <span class="k">return</span> <span class="p">(</span><span class="n">__system_property_set</span><span class="p">(</span><span class="n">key</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="n">value</span><span class="p">.</span><span class="n">c_str</span><span class="p">())</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+<span class="ln">4</span><span class="p">}</span>
+</code></pre></div><p><code>__system_property_set</code>跟上面4.1的流程一致，这里就不继续展开。</p>
+<h2 id="44init进程写入属性">4.4Init进程写入属性</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="k">static</span> <span class="kt">void</span> <span class="nf">update_sys_usb_config</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">2</span>    <span class="p">...</span>
+<span class="ln">3</span>    <span class="k">if</span> <span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">empty</span><span class="p">()</span> <span class="o">||</span> <span class="n">config</span> <span class="o">==</span> <span class="s">&#34;none&#34;</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">4</span>        <span class="n">InitPropertySet</span><span class="p">(</span><span class="s">&#34;persist.sys.usb.config&#34;</span><span class="p">,</span> <span class="n">is_debuggable</span> <span class="o">?</span> <span class="s">&#34;adb&#34;</span> <span class="o">:</span> <span class="s">&#34;none&#34;</span><span class="p">);</span>
+<span class="ln">5</span>    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">is_debuggable</span> <span class="o">&amp;&amp;</span> <span class="n">config</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#34;adb&#34;</span><span class="p">)</span> <span class="o">==</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">::</span><span class="n">npos</span> <span class="o">&amp;&amp;</span>
+<span class="ln">6</span>        <span class="p">...</span>
+<span class="ln">7</span>        <span class="n">InitPropertySet</span><span class="p">(</span><span class="s">&#34;persist.sys.usb.config&#34;</span><span class="p">,</span> <span class="n">config</span><span class="p">);</span>
+<span class="ln">8</span>    <span class="p">}</span>
+<span class="ln">9</span><span class="p">}</span>
+</code></pre></div><p><code>InitPropertySet</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/init/property_service.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">uint32_t</span> <span class="nf">InitPropertySet</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">name</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="kt">uint32_t</span> <span class="n">result</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 4</span>    <span class="n">ucred</span> <span class="n">cr</span> <span class="o">=</span> <span class="p">{.</span><span class="n">pid</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="p">.</span><span class="n">uid</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="p">.</span><span class="n">gid</span> <span class="o">=</span> <span class="mi">0</span><span class="p">};</span>
+<span class="ln"> 5</span>    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">error</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="n">result</span> <span class="o">=</span> <span class="n">HandlePropertySet</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">kInitContext</span><span class="p">,</span> <span class="n">cr</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">error</span><span class="p">);</span>
+<span class="ln"> 7</span>    <span class="k">if</span> <span class="p">(</span><span class="n">result</span> <span class="o">!=</span> <span class="n">PROP_SUCCESS</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 8</span>        <span class="n">LOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Init cannot set &#39;&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">name</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;&#39; to &#39;&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">value</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;&#39;: &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">error</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="p">}</span>
+<span class="ln">10</span>
+<span class="ln">11</span>    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="ln">12</span><span class="p">}</span>
+</code></pre></div><p><code>HandlePropertySet</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/init/property_service.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">uint32_t</span> <span class="nf">HandlePropertySet</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">name</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">,</span>
+<span class="ln"> 3</span>                           <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">source_context</span><span class="p">,</span> <span class="k">const</span> <span class="n">ucred</span><span class="o">&amp;</span> <span class="n">cr</span><span class="p">,</span>
+<span class="ln"> 4</span>                           <span class="n">SocketConnection</span><span class="o">*</span> <span class="n">socket</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">*</span> <span class="n">error</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 5</span>    <span class="k">if</span> <span class="p">(</span><span class="k">auto</span> <span class="n">ret</span> <span class="o">=</span> <span class="n">CheckPermissions</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">source_context</span><span class="p">,</span> <span class="n">cr</span><span class="p">,</span> <span class="n">error</span><span class="p">);</span> <span class="n">ret</span> <span class="o">!=</span> <span class="n">PROP_SUCCESS</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 6</span>        <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="p">}</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span>    <span class="k">if</span> <span class="p">(</span><span class="n">StartsWith</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s">&#34;ctl.&#34;</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">10</span>        <span class="k">return</span> <span class="n">SendControlMessage</span><span class="p">(</span><span class="n">name</span><span class="p">.</span><span class="n">c_str</span><span class="p">()</span> <span class="o">+</span> <span class="mi">4</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">cr</span><span class="p">.</span><span class="n">pid</span><span class="p">,</span> <span class="n">socket</span><span class="p">,</span> <span class="n">error</span><span class="p">);</span>
+<span class="ln">11</span>    <span class="p">}</span>
+<span class="ln">12</span>    <span class="p">...</span>
+<span class="ln">13</span>    <span class="k">return</span> <span class="n">PropertySet</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">error</span><span class="p">);</span>
+<span class="ln">14</span><span class="p">}</span>
+</code></pre></div><p>这个<code>PropertySet</code>又回到了2.3.2.3，具体不继续展开。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/property/property_35.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/property/property_35.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="45设置属性总结">4.5设置属性总结</h2>
+<p>不管是<code>Init</code>进程还是非<code>Init</code>进程，<strong>设置属性需要调用到<code>Init</code>进程去操作</strong>。如果是非<code>Init</code>进程，会通过本地<code>socket</code>通信，路径为<code>/dev/socket/property_service</code>与<code>Init</code>中的属性服务建立通信，让所有非<code>Init</code>进程的设置操作，全部在<code>Init</code>进程中操作。最终都会调用到<code>/bionic/libc</code>这个动态库中，且会先调用<code>__system_property_find</code>函数，通过属性名，从<code>/dev/__properties__/property_info</code>找到属性名对应<code>Selinux</code>域，然后在<code>/dev/__properties__</code>目录中找到对应的<code>Selinux</code>域文件。如果返回的<code>prop_info</code>存在，那么接着调用<code>__system_property_update</code>函数更新<code>value</code>值，如果<code>prop_info</code>不存在，那么接着调用<code>__system_property_Add</code>函数在域文件中按照字典树规则添加一个属性值。</p>
+<h1 id="5关于属性变化">5关于属性变化</h1>
 <p>在这个基础上Android推出了一个<code>init.rc</code>的机制，即<strong>类似通过读取配置文件的方式，来启动不同的进程</strong>，而不是通过传<code>exec</code>在代码中一个个的来执行进程。</p>
 <blockquote>
 <p><code>rc</code>是一个配置文件，内部由Android初始化语言编写（<code>Android Init Language</code>）编写的脚本。</p>
@@ -3076,7 +3854,7 @@
 </code></pre></div><p><code>QueuePropertyChange</code> 函数同样填充了 <code>event_queue_</code> 队列，将已改变属性的键值对作为参数。</p>
 <p>运行队列中已经添加了该属性的变化触发条件，同样通过 <code>am.ExecuteOneCommand()</code> 函数遍历所有的 <code>_actions</code> 链表，执行相应的 <code>commands</code>。</p>
 <h1 id="总结">总结</h1>
-<p>本文主要对属性系统的初始化原理，获取属性、设置属性和属性变化这五个方面来展开详解，围绕着属性，<code>SElinux</code>，<code>mmap</code>，共享内存，匿名私有内存，<code>Trie</code>，<code>rc文件</code>，<code>persist</code>属性做了一个流程的介绍和分析。总的来说，属性看起来简单，内部机制还是比较复杂的。特别是由于笔者水平有限，关于设置属性的脏区和属性变化的介绍不够深入，这个需要读者发挥自己的主观能动性进一步完善。</p>
+<p>本文主要对属性系统的初始化原理<code>PropertyInit</code>、<code>StartPropertyService</code>，获取属性、设置属性和属性变化这五个方面来展开详解，围绕着属性，<code>SElinux</code>，<code>mmap</code>，共享内存，匿名私有内存，<code>Trie</code>，<code>rc文件</code>，<code>persist</code>属性做了一个流程的介绍和分析。总的来说，属性看起来简单，内部机制还是比较复杂的。特别是由于笔者水平有限，关于设置属性的脏区和属性变化的介绍不够深入，这个需要读者发挥自己的主观能动性进一步完善。</p>
 <h1 id="下载">下载</h1>
 <p>本文源码<a href="https://github.com/YangYang48/project/tree/master/property">点击这里</a></p>
 <h1 id="几个问题">几个问题</h1>
@@ -3238,7 +4016,28 @@
   
 </div>
 
-<h1 id="参考">参考</h1>
+<blockquote>
+<p>5）属性系统预置的<code>SElinux</code>规则文件和预置写入的属性文件在哪个目录</p>
+</blockquote>
+<p><code>SElinux</code>规则文件，通常是下面几个目录文件，其中这些带有<code>selinux</code>目录是通过<code>mmm system/sepolicy</code>生成的，重启系统之后<code>SElinux</code>新的规则就能生效，通常对于<code>SElinux</code>修改都是在<code>/device</code>对应的<code>sepolicy</code>目录修改。</p>
+<div class="highlight"><pre class="chroma"><code class="language-txt" data-lang="txt"><span class="ln">1</span>/system/etc/selinux/plat_property_contexts
+<span class="ln">2</span>/system_ext/etc/selinux/system_ext_property_contexts
+<span class="ln">3</span>/vendor/etc/selinux/vendor_property_contexts
+<span class="ln">4</span>/product/etc/selinux/product_property_contexts
+<span class="ln">5</span>/odm/etc/selinux/odm_property_contexts
+</code></pre></div><p>预置写入的属性文件，通常是下面几个目录文件，也是在<code>/device</code>对应目录<code>mk</code>中修改，修改完成之后更新几个目录文件，重启之后即可生效。当然如果是修改类似<code>ro.boot</code>这种属性需要在<code>uboot</code>修改，<code>mk</code>修改是不起作用的。</p>
+<div class="highlight"><pre class="chroma"><code class="language-txt" data-lang="txt"><span class="ln"> 1</span>#并不是所有的文件都会存在设置属性的值
+<span class="ln"> 2</span>/system/etc/prop.default
+<span class="ln"> 3</span>/prop.default              #recovery path
+<span class="ln"> 4</span>/default.prop              #legacy path
+<span class="ln"> 5</span>/system/build.prop
+<span class="ln"> 6</span>/system_ext/build.prop
+<span class="ln"> 7</span>/vendor/default.prop
+<span class="ln"> 8</span>/vendor/build.prop
+<span class="ln"> 9</span>/odm/etc/build.prop
+<span class="ln">10</span>/product/build.prop
+<span class="ln">11</span>/factory/factory.prop
+</code></pre></div><h1 id="参考">参考</h1>
 <p><a href="https://wangzhengyi.blog.csdn.net/article/details/44999103">[1] 低调小一, Android init进程——属性服务, 2015.</a></p>
 <p><a href="https://blog.csdn.net/zhangjg_blog/article/details/122057945">[2] 昨夜星辰_zhangjg, Android是如何使用selinux来保护系统属性的, 2021.</a></p>
 <p><a href="https://blog.csdn.net/lijie2664989/article/details/107826733">[3] apigfly, 深入Android系统（二）Bionic库, 2020.</a></p>
@@ -3271,6 +4070,10 @@
 <p><a href="https://blog.csdn.net/konga/article/details/39062691">[30] konga, open中的 O_CLOEXEC 标志, 2014.</a></p>
 <p><a href="https://www.thinbug.com/q/42961339">[31] Thinbug, 删除文件后删除mmap（）, 2017.</a></p>
 <p><a href="https://bbs.csdn.net/topics/360058295">[32] cxz7531, mmap函数建立文件的内存映射后，删除文件，能正常读取内容吗？, 2011.</a></p>
+<p><a href="https://blog.csdn.net/weaiken/article/details/88085360">[33] weaiken, <code>__attribute__ </code>机制详解, 2019.</a></p>
+<p><a href="https://www.jianshu.com/p/dd425b9dc9db">[34] kenny肉桂, <code>__attribute__</code>((constructor))用法解析, 2016.</a></p>
+<p><a href="https://blog.csdn.net/linuxheik/article/details/76125411">[35] linuxheik, writev, 2017.</a></p>
+<p><a href="https://blog.csdn.net/weixin_43829445/article/details/116497954">[36] winsonCCCC, Linux网络编程之sockaddr与sockaddr_in,sockaddr_un分析, 2021.</a></p>
               
             </div>
           </div>
