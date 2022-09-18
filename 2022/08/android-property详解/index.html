@@ -388,11 +388,11 @@
 <span class="ln"> 7</span>	<span class="c1">//1.创建属性文件，用于序列化操作
 </span><span class="ln"> 8</span><span class="c1"></span>    <span class="n">mkdir</span><span class="p">(</span><span class="s">&#34;/dev/__properties__&#34;</span><span class="p">,</span> <span class="n">S_IRWXU</span> <span class="o">|</span> <span class="n">S_IXGRP</span> <span class="o">|</span> <span class="n">S_IXOTH</span><span class="p">);</span>
 <span class="ln"> 9</span>    <span class="n">CreateSerializedPropertyInfo</span><span class="p">();</span>
-<span class="ln">10</span>    <span class="c1">//2.初始化属性域
+<span class="ln">10</span>    <span class="c1">//2.初始化属性安全上下文
 </span><span class="ln">11</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">__system_property_area_init</span><span class="p">())</span> <span class="p">{</span>
 <span class="ln">12</span>        <span class="n">LOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Failed to initialize property area&#34;</span><span class="p">;</span>
 <span class="ln">13</span>    <span class="p">}</span>
-<span class="ln">14</span>    <span class="c1">//3.属性域的文件导入
+<span class="ln">14</span>    <span class="c1">//3.属性安全上下文的文件导入
 </span><span class="ln">15</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">property_info_area</span><span class="p">.</span><span class="n">LoadDefaultPath</span><span class="p">())</span> <span class="p">{</span>
 <span class="ln">16</span>        <span class="n">LOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Failed to load serialized property info file&#34;</span><span class="p">;</span>
 <span class="ln">17</span>    <span class="p">}</span>
@@ -947,8 +947,8 @@
   
 </div>
 
-<h3 id="12初始化属性域">1.2初始化属性域</h3>
-<p>初始化属性域<code>__system_property_area_init</code></p>
+<h3 id="12初始化属性安全上下文">1.2初始化属性安全上下文</h3>
+<p>初始化属性安全上下文<code>__system_property_area_init</code></p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/bionic/system_property_api.cpp
 </span><span class="ln"> 2</span><span class="c1">//__BIONIC_WEAK_FOR_NATIVE_BRIDGE代表__attribute__((__weak__, __noinline__))
 </span><span class="ln"> 3</span><span class="c1">//声明weak function,链接器不会从库中加载对象来解析弱引用。仅当由于其他原因在镜像中包含了定义时，它才能解析弱引用。
@@ -1089,7 +1089,7 @@
 </span><span class="ln"> 4</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">property_info_area_file_</span><span class="p">.</span><span class="n">LoadDefaultPath</span><span class="p">())</span> <span class="p">{</span>
 <span class="ln"> 5</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
 <span class="ln"> 6</span>  <span class="p">}</span>
-<span class="ln"> 7</span>  <span class="c1">//开始创建SElinux域文件  
+<span class="ln"> 7</span>  <span class="c1">//开始创建SElinux安全上下文文件  
 </span><span class="ln"> 8</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">InitializeContextNodes</span><span class="p">())</span> <span class="p">{</span>
 <span class="ln"> 9</span>    <span class="n">FreeAndUnmap</span><span class="p">();</span>
 <span class="ln">10</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
@@ -1274,7 +1274,7 @@
 </div>
 
 <p>2）<code>InitializeContextNodes</code></p>
-<p>生成对应的<code>SElinux</code>域的文件</p>
+<p>生成对应的<code>SElinux</code>安全上下文的文件</p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/system_properties/contexts_serialized.cpp
 </span><span class="ln"> 2</span><span class="c1"></span><span class="kt">bool</span> <span class="n">ContextsSerialized</span><span class="o">::</span><span class="n">InitializeContextNodes</span><span class="p">()</span> <span class="p">{</span>
 <span class="ln"> 3</span>  <span class="c1">//num_context_nodes这里指的arena_头部结构体PropertyInfoAreaHeader中的contexts_个数
@@ -1334,7 +1334,7 @@
 <h4 id="1222open">1.2.2.2Open</h4>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/system_properties/context_node.cpp
 </span><span class="ln"> 2</span><span class="c1"></span><span class="kt">bool</span> <span class="n">ContextNode</span><span class="o">::</span><span class="n">Open</span><span class="p">(</span><span class="kt">bool</span> <span class="n">access_rw</span><span class="p">,</span> <span class="kt">bool</span><span class="o">*</span> <span class="n">fsetxattr_failed</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln"> 3</span>  <span class="c1">//这里的pa_是prop_area类型的指针，如果pa_域存在说明文件已经存在，直接退出  
+<span class="ln"> 3</span>  <span class="c1">//这里的pa_是prop_area类型的指针，如果pa_安全上下文存在说明文件已经存在，直接退出  
 </span><span class="ln"> 4</span><span class="c1"></span>  <span class="n">lock_</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
 <span class="ln"> 5</span>  <span class="k">if</span> <span class="p">(</span><span class="n">pa_</span><span class="p">)</span> <span class="p">{</span>
 <span class="ln"> 6</span>    <span class="n">lock_</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
@@ -1386,7 +1386,7 @@
 <span class="ln">24</span>  <span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
 <span class="ln">25</span>  <span class="k">return</span> <span class="n">pa</span><span class="p">;</span>
 <span class="ln">26</span><span class="p">}</span>
-</code></pre></div><p>这里第三次出现了<code>mmap</code>，而且是通过创建的<code>SElinux</code>域文件来映射对应的共享内存区域</p>
+</code></pre></div><p>这里第三次出现了<code>mmap</code>，而且是通过创建的<code>SElinux</code>安全上下文文件来映射对应的共享内存区域</p>
 
 
  
@@ -1466,7 +1466,7 @@
   
 </div>
 
-<h3 id="13属性域的文件导入">1.3属性域的文件导入</h3>
+<h3 id="13属性安全上下文的文件导入">1.3属性安全上下文的文件导入</h3>
 <p>这里跟1.2中的有重复部分，这里就不具体展开了，作用是为了二次确认是否<code>/dev/__properties__/property_info</code>是否映射正常</p>
 <h3 id="14其他的属性初始化">1.4其他的属性初始化</h3>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="n">ProcessKernelDt</span><span class="p">();</span>
@@ -1596,7 +1596,7 @@
 <span class="ln">39</span>	<span class="c1">//persist.sys.usb.config是否是adb连接，笔者连接时[persist.sys.usb.config]: [mtp,adb]
 </span><span class="ln">40</span><span class="c1"></span>    <span class="n">update_sys_usb_config</span><span class="p">();</span>
 <span class="ln">41</span><span class="p">}</span>
-</code></pre></div><p>这个函数是用于导入一些默认的属性配置，一般工程开发会在这里面添加一些关于自定义但需要开机设置的一些属性。可以看到上面的属性都可以在这个阶段来进行初始化设置，属性会被添加到属性对应的<code>SElinux</code>域文件中。</p>
+</code></pre></div><p>这个函数是用于导入一些默认的属性配置，一般工程开发会在这里面添加一些关于自定义但需要开机设置的一些属性。可以看到上面的属性都可以在这个阶段来进行初始化设置，属性会被添加到属性对应的<code>SElinux</code>安全上下文文件中。</p>
 <p>通过键值对<code>map</code>来获取这些配置文件里面的属性，然后统一设置<strong>开机预置</strong>属性。(<code>map</code>默认按照<code>key</code>从小到大进行排序)</p>
 
 
@@ -2218,20 +2218,20 @@
 </span><span class="ln"> 4</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">initialized_</span><span class="p">)</span> <span class="p">{</span>
 <span class="ln"> 5</span>    <span class="k">return</span> <span class="k">nullptr</span><span class="p">;</span>
 <span class="ln"> 6</span>  <span class="p">}</span>
-<span class="ln"> 7</span>  <span class="c1">//通过属性名字，找到name对应的SElinux域
+<span class="ln"> 7</span>  <span class="c1">//通过属性名字，找到name对应的SElinux安全上下文
 </span><span class="ln"> 8</span><span class="c1"></span>  <span class="n">prop_area</span><span class="o">*</span> <span class="n">pa</span> <span class="o">=</span> <span class="n">contexts_</span><span class="o">-&gt;</span><span class="n">GetPropAreaForName</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
 <span class="ln"> 9</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">pa</span><span class="p">)</span> <span class="p">{</span>
 <span class="ln">10</span>    <span class="n">async_safe_format_log</span><span class="p">(</span><span class="n">ANDROID_LOG_ERROR</span><span class="p">,</span> <span class="s">&#34;libc&#34;</span><span class="p">,</span> <span class="s">&#34;Access denied finding property </span><span class="se">\&#34;</span><span class="s">%s</span><span class="se">\&#34;</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
 <span class="ln">11</span>    <span class="k">return</span> <span class="k">nullptr</span><span class="p">;</span>
 <span class="ln">12</span>  <span class="p">}</span>
-<span class="ln">13</span>  <span class="c1">//SElinux域，那么查找这个域中完整的路径
+<span class="ln">13</span>  <span class="c1">//SElinux安全上下文，那么查找这个域中完整的路径
 </span><span class="ln">14</span><span class="c1"></span>  <span class="k">return</span> <span class="n">pa</span><span class="o">-&gt;</span><span class="n">find</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
 <span class="ln">15</span><span class="p">}</span>
 </code></pre></div><p>1)<code>contexts_-&gt;GetPropAreaForName</code></p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/system_properties/contexts_serialized.cpp
 </span><span class="ln"> 2</span><span class="c1"></span><span class="n">prop_area</span><span class="o">*</span> <span class="n">ContextsSerialized</span><span class="o">::</span><span class="n">GetPropAreaForName</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span><span class="p">)</span> <span class="p">{</span>
 <span class="ln"> 3</span>  <span class="kt">uint32_t</span> <span class="n">index</span><span class="p">;</span>
-<span class="ln"> 4</span>  <span class="c1">//从私有匿名区域查找name对应的SElinux域的ContextNode的编号
+<span class="ln"> 4</span>  <span class="c1">//从私有匿名区域查找name对应的SElinux安全上下文的ContextNode的编号
 </span><span class="ln"> 5</span><span class="c1"></span>  <span class="n">property_info_area_file_</span><span class="o">-&gt;</span><span class="n">GetPropertyInfoIndexes</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">index</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">);</span>
 <span class="ln"> 6</span>  <span class="p">...</span>
 <span class="ln"> 7</span>  <span class="k">auto</span><span class="o">*</span> <span class="n">context_node</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">context_nodes_</span><span class="p">[</span><span class="n">index</span><span class="p">];</span>
@@ -2239,7 +2239,7 @@
 <span class="ln"> 9</span>    <span class="c1">//不检查 no_access_，因为与foreach()的情况不同，希望为该函数中的每个非允许属性访问生成一个selinux
 </span><span class="ln">10</span><span class="c1"></span>    <span class="n">context_node</span><span class="o">-&gt;</span><span class="n">Open</span><span class="p">(</span><span class="nb">false</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">);</span>
 <span class="ln">11</span>  <span class="p">}</span>
-<span class="ln">12</span>  <span class="c1">//返回对应当前ContextNode指向的pa指针，也就是指向对应的SElinux域文件  
+<span class="ln">12</span>  <span class="c1">//返回对应当前ContextNode指向的pa指针，也就是指向对应的SElinux安全上下文文件  
 </span><span class="ln">13</span><span class="c1"></span>  <span class="k">return</span> <span class="n">context_node</span><span class="o">-&gt;</span><span class="n">pa</span><span class="p">();</span>
 <span class="ln">14</span><span class="p">}</span>
 </code></pre></div><p><code>GetPropertyInfoIndexes</code></p>
@@ -2478,7 +2478,7 @@
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/system_properties/system_properties.cpp
 </span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="n">SystemProperties</span><span class="o">::</span><span class="n">Update</span><span class="p">(</span><span class="n">prop_info</span><span class="o">*</span> <span class="n">pi</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">value</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">len</span><span class="p">)</span> <span class="p">{</span>
 <span class="ln"> 3</span>  <span class="p">...</span>
-<span class="ln"> 4</span>  <span class="c1">//新增了一个serial_pa的prop_area域，对应文件名是/dev/__properties__/properties_serial  
+<span class="ln"> 4</span>  <span class="c1">//新增了一个serial_pa的prop_area安全上下文，对应文件名是/dev/__properties__/properties_serial  
 </span><span class="ln"> 5</span><span class="c1"></span>  <span class="n">prop_area</span><span class="o">*</span> <span class="n">serial_pa</span> <span class="o">=</span> <span class="n">contexts_</span><span class="o">-&gt;</span><span class="n">GetSerialPropArea</span><span class="p">();</span>
 <span class="ln"> 6</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">serial_pa</span><span class="p">)</span> <span class="p">{</span>
 <span class="ln"> 7</span>    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
@@ -2553,18 +2553,18 @@
 </span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="n">SystemProperties</span><span class="o">::</span><span class="n">Add</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">namelen</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">value</span><span class="p">,</span>
 <span class="ln"> 3</span>                          <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">valuelen</span><span class="p">)</span> <span class="p">{</span>
 <span class="ln"> 4</span>  <span class="p">...</span>
-<span class="ln"> 5</span>  <span class="c1">//新增了一个serial_pa的prop_area域，对应文件名是/dev/__properties__/properties_serial    
+<span class="ln"> 5</span>  <span class="c1">//新增了一个serial_pa的prop_area安全上下文，对应文件名是/dev/__properties__/properties_serial    
 </span><span class="ln"> 6</span><span class="c1"></span>  <span class="n">prop_area</span><span class="o">*</span> <span class="n">serial_pa</span> <span class="o">=</span> <span class="n">contexts_</span><span class="o">-&gt;</span><span class="n">GetSerialPropArea</span><span class="p">();</span>
 <span class="ln"> 7</span>  <span class="k">if</span> <span class="p">(</span><span class="n">serial_pa</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
 <span class="ln"> 8</span>    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
 <span class="ln"> 9</span>  <span class="p">}</span>
-<span class="ln">10</span>  <span class="c1">//这里和前面一模一样，重新找到对应的prop_area域
+<span class="ln">10</span>  <span class="c1">//这里和前面一模一样，重新找到对应的prop_area安全上下文
 </span><span class="ln">11</span><span class="c1"></span>  <span class="n">prop_area</span><span class="o">*</span> <span class="n">pa</span> <span class="o">=</span> <span class="n">contexts_</span><span class="o">-&gt;</span><span class="n">GetPropAreaForName</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
 <span class="ln">12</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">pa</span><span class="p">)</span> <span class="p">{</span>
 <span class="ln">13</span>    <span class="n">async_safe_format_log</span><span class="p">(</span><span class="n">ANDROID_LOG_ERROR</span><span class="p">,</span> <span class="s">&#34;libc&#34;</span><span class="p">,</span> <span class="s">&#34;Access denied adding property </span><span class="se">\&#34;</span><span class="s">%s</span><span class="se">\&#34;</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
 <span class="ln">14</span>    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
 <span class="ln">15</span>  <span class="p">}</span>
-<span class="ln">16</span>  <span class="c1">//在这个域中添加对应的属性
+<span class="ln">16</span>  <span class="c1">//在这个安全上下文文件中添加对应的属性
 </span><span class="ln">17</span><span class="c1"></span>  <span class="kt">bool</span> <span class="n">ret</span> <span class="o">=</span> <span class="n">pa</span><span class="o">-&gt;</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">namelen</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">valuelen</span><span class="p">);</span>
 <span class="ln">18</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">ret</span><span class="p">)</span> <span class="p">{</span>
 <span class="ln">19</span>    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
@@ -2670,7 +2670,7 @@
 </span><span class="ln">24</span><span class="c1"></span>        <span class="o">&amp;</span><span class="n">persistent_properties</span><span class="p">);</span>
 <span class="ln">25</span>    <span class="k">return</span> <span class="n">persistent_properties</span><span class="p">;</span>
 <span class="ln">26</span><span class="p">}</span>
-</code></pre></div><p>这个函数，实际上是第一次导入<code>persist</code>文件内容的函数。读取私有匿名区域中的<code>ContextNodes</code>，<strong>遍历所有<code>ContextNode</code>中指向的<code>SElinux</code>域文件的<code>prop_area</code>所形成的的字典树</strong>。即这里是开始创建<code>/data/property/persistent_properties</code>的函数。</p>
+</code></pre></div><p>这个函数，实际上是第一次导入<code>persist</code>文件内容的函数。读取私有匿名区域中的<code>ContextNodes</code>，<strong>遍历所有<code>ContextNode</code>中指向的<code>SElinux</code>安全上下文文件的<code>prop_area</code>所形成的的字典树</strong>。即这里是开始创建<code>/data/property/persistent_properties</code>的函数。</p>
 
 
  
@@ -2775,7 +2775,7 @@
 <span class="ln">30</span>    <span class="p">}</span>
 <span class="ln">31</span><span class="c1">//下面这个__BIONIC__，在一开始编译bionic的时候就已经编译进去了    
 </span><span class="ln">32</span><span class="c1"></span><span class="cp">#if defined(__BIONIC__)
-</span><span class="ln">33</span><span class="cp"></span>    <span class="c1">//1.寻找到属性名对应的Selinux的域名
+</span><span class="ln">33</span><span class="cp"></span>    <span class="c1">//1.寻找到属性名对应的Selinux的安全上下文名
 </span><span class="ln">34</span><span class="c1"></span>    <span class="k">const</span> <span class="n">prop_info</span><span class="o">*</span> <span class="n">prop</span> <span class="o">=</span> <span class="n">__system_property_find</span><span class="p">(</span><span class="n">key</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
 <span class="ln">35</span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">prop</span><span class="p">)</span> <span class="p">{</span>
 <span class="ln">36</span>        <span class="k">return</span><span class="p">;</span>
@@ -3317,7 +3317,7 @@
 
 </blockquote>
 <h2 id="33adb获取属性">3.3adb获取属性</h2>
-<p><code>adb</code>命令直接输入<code>getprop</code>，实际上是调用到一个<code>toolbox</code>当中的进程<code>getprop</code>，有两个参数<code>ZT</code>，不能一起使用，<code>-Z</code>是打印对应的<code>SElinux</code>域文件，<code>-T</code>是打印对应的value具体的类型，比如<code>string</code>，<code>bool</code>等。</p>
+<p><code>adb</code>命令直接输入<code>getprop</code>，实际上是调用到一个<code>toolbox</code>当中的进程<code>getprop</code>，有两个参数<code>ZT</code>，不能一起使用，<code>-Z</code>是打印对应的<code>SElinux</code>安全上下文文件，<code>-T</code>是打印对应的value具体的类型，比如<code>string</code>，<code>bool</code>等。</p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/toolbox/getprop.cpp
 </span><span class="ln"> 2</span><span class="c1"></span><span class="k">extern</span> <span class="s">&#34;C&#34;</span> <span class="kt">int</span> <span class="n">getprop_main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">**</span> <span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
 <span class="ln"> 3</span>    <span class="k">auto</span> <span class="n">result_type</span> <span class="o">=</span> <span class="n">ResultType</span><span class="o">::</span><span class="n">Value</span><span class="p">;</span>
@@ -3442,7 +3442,7 @@
 </div>
 
 <h2 id="35获取属性总结">3.5获取属性总结</h2>
-<p>不管是<code>Init</code>进程还是非<code>Init</code>进程，最终都会调用到<code>/bionic/libc</code>这个动态库中，且会先后调用<code>__system_property_find</code>和<code>__system_property_read_callback</code>函数，前者函数是通过属性名，从<code>/dev/__properties__/property_info</code>找到属性名对应<code>Selinux</code>域，然后在<code>/dev/__properties__</code>目录中找到对应的<code>Selinux</code>域文件，根据字典树的方式来读取全属性名。后者函数在域文件中，如果能够找到对应的<code>prop_info</code>，那么读取对应的<code>value</code>值，如果找不到那么就会返回<code>null</code>（其中<code>App</code>调用的<code>Java</code>和<code>Native</code>层，在上层封装了默认值，会返回默认值）。</p>
+<p>不管是<code>Init</code>进程还是非<code>Init</code>进程，最终都会调用到<code>/bionic/libc</code>这个动态库中，且会先后调用<code>__system_property_find</code>和<code>__system_property_read_callback</code>函数，前者函数是通过属性名，从<code>/dev/__properties__/property_info</code>找到属性名对应<code>Selinux</code>安全上下文，然后在<code>/dev/__properties__</code>目录中找到对应的<code>Selinux</code>安全上下文文件，根据字典树的方式来读取全属性名。后者函数在安全上下文文件中，如果能够找到对应的<code>prop_info</code>，那么读取对应的<code>value</code>值，如果找不到那么就会返回<code>null</code>（其中<code>App</code>调用的<code>Java</code>和<code>Native</code>层，在上层封装了默认值，会返回默认值）。</p>
 <h1 id="4设置属性">4设置属性</h1>
 <p>这里包括非<code>init</code>进程和<code>init</code>进程设置属性，这里非<code>init</code>进程有两种方式，一种是在<code>App</code>调用<code>Java层</code>或者<code>Native层</code>调用设置属性的方式，另一种是直接<code>adb</code>敲命令<code>setprop</code>。</p>
 <h2 id="41app写入属性流程分析java侧">4.1App写入属性流程分析（Java侧）</h2>
@@ -3892,7 +3892,7 @@
 <span class="ln">16</span>-rw-rw----   <span class="m">1</span> root sdcard_rw u:object_r:sdcardfs:s0      <span class="m">36</span> 2021-01-25 14:22 .SID_SYS
 <span class="ln">17</span>drwxrwx--x   <span class="m">2</span> root sdcard_rw u:object_r:sdcardfs:s0    <span class="m">3488</span> 2020-12-10 14:03 .Trusfort
 <span class="ln">18</span>-rw-rw----   <span class="m">1</span> root sdcard_rw u:object_r:sdcardfs:s0     <span class="m">169</span> 2021-01-25 14:22 .UA_SYS
-</code></pre></div><p>而属性域也是一样，所有的属性都会对应到一个标签，然后将默认设置的属性全部导入到一个文件中，也就是在本文1.1序列化的一个操作，<code>/dev/__properties__/property_info</code>，这里面保存了默认的所有属性对应的标签。再者，新建了一系列的属性域文件，包含了标签和对应的属性。访问一个属性的时候，首先会找到这个属性对应的标签，然后在<code>/dev/__properties__/</code>找到对应的属性域文件，找到之后，通过字典树的形式最终找到对应的属性。</p>
+</code></pre></div><p>而属性安全上下文文件也是一样，所有的属性都会对应到一个标签，然后将默认设置的属性全部导入到一个文件中，也就是在本文1.1序列化的一个操作，<code>/dev/__properties__/property_info</code>，这里面保存了默认的所有属性对应的标签。再者，新建了一系列的属性安全上下文文件，包含了标签和对应的属性。访问一个属性的时候，首先会找到这个属性对应的标签，然后在<code>/dev/__properties__/</code>找到对应的属性安全上下文文件，找到之后，通过字典树的形式最终找到对应的属性。</p>
 <blockquote>
 <p>2）自定义属性怎么添加上去的</p>
 </blockquote>
@@ -3913,7 +3913,7 @@
 </code></pre></div><blockquote>
 <p>4）persist属性为什么重启存在，我怎么删除自定义的persist属性呢</p>
 </blockquote>
-<p>i）首先回答第一个问题，为什么重启存在，因为除了像其他的属性一样会保存在<code>/dev/__properties__/</code>目录中，<code>persist.</code>开头的属性还会被保存在<code>/data/property/persistent_properties</code>这个文件中。开机的时候除了会重新初始化默认属性，还会将<code>/data/property/persistent_properties</code>这个文件中属性读到对应的<code>/dev/__properties__/</code>目录对应的域文件中。和上面的2.3.2.2.4的流程一样，只不过因为在第一次设置属性的时候用到了<code>LoadPersistentPropertiesFromMemory</code>，<code>/data/property/persistent_properties</code>文件已经创建。所以直接将该文件的内容从<code>proto</code>变成字符串的访问来设置即可。</p>
+<p>i）首先回答第一个问题，为什么重启存在，因为除了像其他的属性一样会保存在<code>/dev/__properties__/</code>目录中，<code>persist.</code>开头的属性还会被保存在<code>/data/property/persistent_properties</code>这个文件中。开机的时候除了会重新初始化默认属性，还会将<code>/data/property/persistent_properties</code>这个文件中属性读到对应的<code>/dev/__properties__/</code>目录对应的安全上下文文件中。和上面的2.3.2.2.4的流程一样，只不过因为在第一次设置属性的时候用到了<code>LoadPersistentPropertiesFromMemory</code>，<code>/data/property/persistent_properties</code>文件已经创建。所以直接将该文件的内容从<code>proto</code>变成字符串的访问来设置即可。</p>
 
 
  
@@ -3944,8 +3944,8 @@
 </div>
 
 <p>ii）怎么删除自定义的<code>persist</code>属性，比如<code>persist.a.b.c.d</code></p>
-<p><code>Android8.0</code>或者更低版本，只需要删除<code>/data/property/persist.a.b.c.d</code>的文件，并且删除<code>/data/property/persist.a.b.c.d</code>在<code>/dev/__properties__/</code>目录中的域文件。</p>
-<p><code>Android11</code>版本，只需要删除或者更名<code>/data/property/</code>目录，并且删除<code>/data/property/persist.a.b.c.d</code>在<code>/dev/__properties__/</code>目录中的域文件。</p>
+<p><code>Android8.0</code>或者更低版本，只需要删除<code>/data/property/persist.a.b.c.d</code>的文件，并且删除<code>/data/property/persist.a.b.c.d</code>在<code>/dev/__properties__/</code>目录中的安全上下文文件。</p>
+<p><code>Android11</code>版本，只需要删除或者更名<code>/data/property/</code>目录，并且删除<code>/data/property/persist.a.b.c.d</code>在<code>/dev/__properties__/</code>目录中的安全上下文文件。</p>
 <p>删除自定义的persist属性，需要知其所以然，原理是清理掉<code>/data/property/persistent_properties</code>，并且不能让属性在下一次启动的时候，还原清理掉的文件<code>/data/property/persistent_properties</code>。</p>
 <blockquote>
 <p>这里需要了解几件事</p>
@@ -3998,7 +3998,7 @@
 <span class="ln">36</span>
 <span class="ln">37</span>    <span class="k">return</span> <span class="p">{};</span>
 <span class="ln">38</span><span class="p">}</span>
-</code></pre></div><p>删除<code>/data/property/persistent_properties</code>和删除<code>persist.a.b.c.d</code>在<code>/dev/__properties__/</code>目录中的域文件。重启关机过程中，会设置关机的原因属性，那么会重新导入<code>/dev/__properties__/</code>定义的<code>Selinux</code>域对应的所有的<code>ContextNode</code>中的属性(删除<code>persist.a.b.c.d</code>在<code>/dev/__properties__/</code>目录中的域文件，<strong>进程依然可以读文件所映射的逻辑地址</strong>)，其中包括<code>persist.a.b.c.d</code>属性，那么在关机的过程中会重新生成<code>/data/property/persistent_properties</code>文件，那么下一次开机过程中，会从<code>/data/property/persistent_properties</code>文件导入所有的<code>persist.</code>开头的属性，那么自然<code>persist.a.b.c.d</code>属性也会被导入。因此，<strong>必须对<code>/data/property</code>目录进行更改。</strong></p>
+</code></pre></div><p>删除<code>/data/property/persistent_properties</code>和删除<code>persist.a.b.c.d</code>在<code>/dev/__properties__/</code>目录中的安全上下文文件。重启关机过程中，会设置关机的原因属性，那么会重新导入<code>/dev/__properties__/</code>定义的<code>Selinux</code>安全上下文对应的所有的<code>ContextNode</code>中的属性(删除<code>persist.a.b.c.d</code>在<code>/dev/__properties__/</code>目录中的安全上下文文件，<strong>进程依然可以读文件所映射的逻辑地址</strong>)，其中包括<code>persist.a.b.c.d</code>属性，那么在关机的过程中会重新生成<code>/data/property/persistent_properties</code>文件，那么下一次开机过程中，会从<code>/data/property/persistent_properties</code>文件导入所有的<code>persist.</code>开头的属性，那么自然<code>persist.a.b.c.d</code>属性也会被导入。因此，<strong>必须对<code>/data/property</code>目录进行更改。</strong></p>
 
 
  
