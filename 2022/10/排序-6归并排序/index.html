@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="经典的排序算法，归并排序">
+
+
+<meta property="og:description" content="经典的排序算法，归并排序">
+<meta property="og:type" content="article">
+<meta property="og:title" content="排序 6归并排序">
+<meta name="twitter:title" content="排序 6归并排序">
+<meta property="og:url" content="https://yangyang48.github.io/2022/10/%E6%8E%92%E5%BA%8F-6%E5%BD%92%E5%B9%B6%E6%8E%92%E5%BA%8F/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2022/10/%E6%8E%92%E5%BA%8F-6%E5%BD%92%E5%B9%B6%E6%8E%92%E5%BA%8F/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="经典的排序算法，归并排序">
+<meta name="twitter:description" content="经典的排序算法，归并排序">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2022-10-11T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2022-10-11T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="数据结构">
+    
+      <meta property="article:section" content="算法">
+    
+      <meta property="article:section" content="2022">
+    
+      <meta property="article:section" content="October">
+    
+  
+  
+    
+      <meta property="article:tag" content="sort">
+    
+      <meta property="article:tag" content="C&#43;&#43;">
+    
+      <meta property="article:tag" content="Java">
+    
+      <meta property="article:tag" content="双指针">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/leetcode/sort/MergeSort/MergeSort_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/leetcode/sort/MergeSort/MergeSort_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/leetcode/sort/MergeSort/MergeSort_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/leetcode/sort/MergeSort/MergeSort_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>排序 6归并排序</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2022/10/%E6%8E%92%E5%BA%8F-6%E5%BD%92%E5%B9%B6%E6%8E%92%E5%BA%8F/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/leetcode/sort/MergeSort/MergeSort_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      排序 6归并排序
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2022-10-11T00:00:00Z">
+        
+  十月 11, 2022
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/%e6%95%b0%e6%8d%ae%e7%bb%93%e6%9e%84">数据结构</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/%e7%ae%97%e6%b3%95">算法</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2022">2022</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/october">October</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">800 Words|Read in about 4 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>经典的排序算法，归并排序</p>
+<h1 id="0准备">0准备</h1>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//建立一个排序用的顺序表结构L
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#define MAXSIZE 9
+</span><span class="ln"> 3</span><span class="cp"></span><span class="k">typedef</span> <span class="k">struct</span> <span class="n">SqList</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span>    <span class="kt">int</span> <span class="n">r</span><span class="p">[</span><span class="n">MAXSIZE</span><span class="p">];</span>
+<span class="ln"> 6</span>    <span class="kt">int</span> <span class="n">length</span><span class="p">;</span>
+<span class="ln"> 7</span><span class="p">}</span><span class="n">SqList</span><span class="p">;</span>
+<span class="ln"> 8</span><span class="cm">/*排序的交换函数*/</span>
+<span class="ln"> 9</span><span class="kt">void</span> <span class="nf">swap</span><span class="p">(</span><span class="n">SqList</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span><span class="kt">int</span> <span class="n">i</span><span class="p">,</span><span class="kt">int</span> <span class="n">j</span><span class="p">)</span>
+<span class="ln">10</span><span class="p">{</span>
+<span class="ln">11</span>    <span class="kt">int</span> <span class="n">temp</span> <span class="o">=</span> <span class="n">L</span><span class="o">-&gt;</span><span class="n">r</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="ln">12</span>    <span class="n">L</span><span class="o">-&gt;</span><span class="n">r</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">L</span><span class="o">-&gt;</span><span class="n">r</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
+<span class="ln">13</span>    <span class="n">L</span><span class="o">-&gt;</span><span class="n">r</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp</span><span class="p">;</span>
+<span class="ln">14</span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/leetcode/sort/MergeSort/MergeSort_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/leetcode/sort/MergeSort/MergeSort_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="归并排序mergesort">归并排序<code>MergeSort</code></h1>
+<blockquote>
+<p>归并排序</p>
+<p>归并排序（Merging Sort）就是利用归并的思想实现的排序方法。它的原理是假设初始序列含有n个记录，则可以看成是n个有序的子序列，每个子序列的长度为1，然后两两归并，得到⌈ n / 2 ⌉ \lceil n/2 \rceil⌈n/2⌉(⌈ x ⌉ \lceil x \rceil⌈x⌉)表示不小于x的最小整数）个长度为2或1的有序子序列；再两两归并，……，如此重复，直至得到一个长度为n的有序序列为止，这种排序方法称为2路归并排序。</p>
+</blockquote>
+<h1 id="c的版本">C的版本</h1>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/leetcode/sort/MergeSort/MergeSort_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/leetcode/sort/MergeSort/MergeSort_2.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/leetcode/sort/MergeSort/MergeSort_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/leetcode/sort/MergeSort/MergeSort_3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="kt">void</span> <span class="nf">MSort</span><span class="p">(</span><span class="kt">int</span> <span class="n">src</span><span class="p">[],</span> <span class="kt">int</span> <span class="n">des</span><span class="p">[],</span> <span class="kt">int</span> <span class="n">start</span><span class="p">,</span> <span class="kt">int</span> <span class="n">end</span><span class="p">);</span>
+<span class="ln"> 2</span><span class="kt">void</span> <span class="nf">Merge</span><span class="p">(</span><span class="kt">int</span> <span class="n">partSrc</span><span class="p">[],</span> <span class="kt">int</span> <span class="n">partDes</span><span class="p">[],</span> <span class="kt">int</span> <span class="n">partStart</span><span class="p">,</span> <span class="kt">int</span> <span class="n">partMid</span><span class="p">,</span> <span class="kt">int</span> <span class="n">partEnd</span><span class="p">);</span>
+<span class="ln"> 3</span><span class="cm">/*递归调用，向外封装了一个函数*/</span>
+<span class="ln"> 4</span><span class="kt">void</span> <span class="nf">MergeSort</span><span class="p">(</span><span class="n">SqList</span> <span class="o">*</span><span class="n">L</span><span class="p">)</span>
+<span class="ln"> 5</span><span class="p">{</span>
+<span class="ln"> 6</span>    <span class="n">MSort</span><span class="p">(</span><span class="n">L</span><span class="o">-&gt;</span><span class="n">r</span><span class="p">,</span> <span class="n">L</span><span class="o">-&gt;</span><span class="n">r</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">L</span><span class="o">-&gt;</span><span class="n">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
+<span class="ln"> 7</span><span class="p">}</span>
+<span class="ln"> 8</span><span class="cm">/*将src[start..end]归并排序为des[start..end]*/</span>
+<span class="ln"> 9</span><span class="kt">void</span> <span class="nf">MSort</span><span class="p">(</span><span class="kt">int</span> <span class="n">src</span><span class="p">[],</span> <span class="kt">int</span> <span class="n">des</span><span class="p">[],</span> <span class="kt">int</span> <span class="n">start</span><span class="p">,</span> <span class="kt">int</span> <span class="n">end</span><span class="p">)</span>
+<span class="ln">10</span><span class="p">{</span>
+<span class="ln">11</span>    <span class="kt">int</span> <span class="n">mid</span><span class="p">;</span>
+<span class="ln">12</span>    <span class="kt">int</span> <span class="n">tmp</span><span class="p">[</span><span class="n">MAXSIZE</span><span class="o">+</span><span class="mi">1</span><span class="p">];</span><span class="c1">//每次递归归并的时候都会新创建一个数组
+</span><span class="ln">13</span><span class="c1"></span>    <span class="k">if</span><span class="p">(</span><span class="n">start</span> <span class="o">==</span> <span class="n">end</span><span class="p">)</span>
+<span class="ln">14</span>       <span class="n">des</span><span class="p">[</span><span class="n">start</span><span class="p">]</span> <span class="o">=</span> <span class="n">src</span><span class="p">[</span><span class="n">start</span><span class="p">];</span>
+<span class="ln">15</span>    <span class="k">else</span>
+<span class="ln">16</span>    <span class="p">{</span>
+<span class="ln">17</span>        <span class="n">mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">start</span> <span class="o">+</span> <span class="n">end</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">18</span>        <span class="n">MSort</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">tmp</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">mid</span><span class="p">);</span>
+<span class="ln">19</span>        <span class="n">MSort</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">tmp</span><span class="p">,</span> <span class="n">mid</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">end</span><span class="p">);</span>
+<span class="ln">20</span>        <span class="n">Merge</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">des</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">mid</span><span class="p">,</span> <span class="n">end</span><span class="p">);</span>
+<span class="ln">21</span>    <span class="p">}</span>
+<span class="ln">22</span><span class="p">}</span>
+<span class="ln">23</span><span class="cm">/*将有序的partSrc[partStart..partMid]和partSrc[partMid+1..partEnd]归并为有序的TR[partStart..partEnd]*/</span>
+<span class="ln">24</span><span class="kt">void</span> <span class="nf">Merge</span><span class="p">(</span><span class="kt">int</span> <span class="n">partSrc</span><span class="p">[],</span> <span class="kt">int</span> <span class="n">partDes</span><span class="p">[],</span> <span class="kt">int</span> <span class="n">partStart</span><span class="p">,</span> <span class="kt">int</span> <span class="n">partMid</span><span class="p">,</span> <span class="kt">int</span> <span class="n">partEnd</span><span class="p">)</span>
+<span class="ln">25</span><span class="p">{</span>
+<span class="ln">26</span>    <span class="kt">int</span> <span class="n">partMidPos</span><span class="p">,</span> <span class="n">partDesPos</span><span class="p">,</span> <span class="n">l</span><span class="p">;</span>
+<span class="ln">27</span>    <span class="cm">/*这里不用||代替&amp;&amp;原因是为了防止数组越界，由于partStart++和partMidPos++*/</span>
+<span class="ln">28</span>    <span class="cm">/*这里用到双指针的思想，两个指针分别为partStart和partMidPos，原数组为partSrc，目标数组为partDes*/</span>
+<span class="ln">29</span>    <span class="k">for</span><span class="p">(</span><span class="n">partMidPos</span> <span class="o">=</span> <span class="n">partMid</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">partDesPos</span> <span class="o">=</span> <span class="n">partStart</span><span class="p">;</span> <span class="n">partStart</span> <span class="o">&lt;=</span> <span class="n">partMid</span> <span class="o">&amp;&amp;</span> <span class="n">partMidPos</span> <span class="o">&lt;=</span> <span class="n">partEnd</span><span class="p">;</span> <span class="n">partDesPos</span><span class="o">++</span><span class="p">)</span>
+<span class="ln">30</span>    <span class="p">{</span>
+<span class="ln">31</span>        <span class="k">if</span><span class="p">(</span><span class="n">partSrc</span><span class="p">[</span><span class="n">partStart</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">partSrc</span><span class="p">[</span><span class="n">partMidPos</span><span class="p">])</span>
+<span class="ln">32</span>            <span class="n">partDes</span><span class="p">[</span><span class="n">partDesPos</span><span class="p">]</span> <span class="o">=</span> <span class="n">partSrc</span><span class="p">[</span><span class="n">partStart</span><span class="o">++</span><span class="p">];</span>
+<span class="ln">33</span>        <span class="k">else</span>
+<span class="ln">34</span>            <span class="n">partDes</span><span class="p">[</span><span class="n">partDesPos</span><span class="p">]</span> <span class="o">=</span> <span class="n">partSrc</span><span class="p">[</span><span class="n">partMidPos</span><span class="o">++</span><span class="p">];</span>
+<span class="ln">35</span>    <span class="p">}</span>
+<span class="ln">36</span>    <span class="cm">/*不可省，主要为了防止数组越界，导致partStart和partMidPos在partSrc数组赋值到partDes上出现混乱*/</span>
+<span class="ln">37</span>    <span class="k">if</span><span class="p">(</span><span class="n">partStart</span> <span class="o">&lt;=</span> <span class="n">partMid</span><span class="p">)</span>
+<span class="ln">38</span>    <span class="p">{</span>
+<span class="ln">39</span>        <span class="k">for</span><span class="p">(</span><span class="n">l</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">l</span> <span class="o">&lt;=</span> <span class="n">partMid</span> <span class="o">-</span> <span class="n">partStart</span><span class="p">;</span> <span class="n">l</span><span class="o">++</span><span class="p">)</span><span class="cm">/*这里是L不是数字1*/</span>
+<span class="ln">40</span>            <span class="n">partDes</span><span class="p">[</span><span class="n">partDesPos</span> <span class="o">+</span> <span class="n">l</span><span class="p">]</span> <span class="o">=</span> <span class="n">partSrc</span><span class="p">[</span><span class="n">partStart</span> <span class="o">+</span> <span class="n">l</span><span class="p">];</span>
+<span class="ln">41</span>    <span class="p">}</span>
+<span class="ln">42</span>    <span class="k">if</span><span class="p">(</span><span class="n">partMidPos</span> <span class="o">&lt;=</span> <span class="n">partEnd</span><span class="p">)</span>
+<span class="ln">43</span>    <span class="p">{</span>
+<span class="ln">44</span>        <span class="k">for</span><span class="p">(</span><span class="n">l</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">l</span> <span class="o">&lt;=</span> <span class="n">partEnd</span> <span class="o">-</span> <span class="n">partMidPos</span><span class="p">;</span> <span class="n">l</span><span class="o">++</span><span class="p">)</span>
+<span class="ln">45</span>            <span class="n">partDes</span><span class="p">[</span><span class="n">partDesPos</span> <span class="o">+</span> <span class="n">l</span><span class="p">]</span> <span class="o">=</span> <span class="n">partSrc</span><span class="p">[</span><span class="n">partMidPos</span> <span class="o">+</span> <span class="n">l</span><span class="p">];</span>
+<span class="ln">46</span>    <span class="p">}</span>
+<span class="ln">47</span><span class="p">}</span>
+</code></pre></div><h1 id="java版本">Java版本</h1>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="kd">public</span> <span class="kt">int</span><span class="o">[]</span> <span class="nf">MergeSort</span><span class="o">(</span><span class="kt">int</span><span class="o">[]</span> <span class="n">nums</span><span class="o">)</span>
+<span class="ln"> 2</span><span class="o">{</span>
+<span class="ln"> 3</span>    <span class="k">if</span><span class="o">(</span><span class="n">nums</span><span class="o">.</span><span class="na">length</span> <span class="o">&lt;</span> <span class="n">2</span><span class="o">)</span> <span class="k">return</span> <span class="n">nums</span><span class="o">;</span>
+<span class="ln"> 4</span>    <span class="kt">int</span> <span class="n">mid</span> <span class="o">=</span> <span class="n">nums</span><span class="o">.</span><span class="na">length</span> <span class="o">/</span> <span class="n">2</span><span class="o">;</span>
+<span class="ln"> 5</span>    <span class="kt">int</span><span class="o">[]</span> <span class="n">left</span> <span class="o">=</span> <span class="n">Arrays</span><span class="o">.</span><span class="na">copyOfRange</span><span class="o">(</span><span class="n">nums</span><span class="o">,</span> <span class="n">0</span><span class="o">,</span> <span class="n">mid</span><span class="o">);</span>
+<span class="ln"> 6</span>    <span class="kt">int</span><span class="o">[]</span> <span class="n">right</span> <span class="o">=</span> <span class="n">Arrays</span><span class="o">.</span><span class="na">copyOfRange</span><span class="o">(</span><span class="n">nums</span><span class="o">,</span> <span class="n">mid</span><span class="o">,</span> <span class="n">nums</span><span class="o">.</span><span class="na">length</span><span class="o">);</span>
+<span class="ln"> 7</span>    <span class="k">return</span> <span class="n">merge</span><span class="o">(</span><span class="n">MergeSort</span><span class="o">(</span><span class="n">left</span><span class="o">),</span> <span class="n">MergeSort</span><span class="o">(</span><span class="n">right</span><span class="o">));</span>
+<span class="ln"> 8</span><span class="o">}</span>
+<span class="ln"> 9</span><span class="c1">//将两端排序好的数组结合成一个排序数组，双指针
+</span><span class="ln">10</span><span class="c1"></span><span class="kd">public</span> <span class="kd">static</span> <span class="kt">int</span><span class="o">[]</span> <span class="nf">merge</span><span class="o">(</span><span class="kt">int</span><span class="o">[]</span> <span class="n">left</span><span class="o">,</span> <span class="kt">int</span><span class="o">[]</span> <span class="n">right</span><span class="o">)</span>
+<span class="ln">11</span><span class="o">{</span>
+<span class="ln">12</span>    <span class="kt">int</span><span class="o">[]</span> <span class="n">result</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span><span class="o">[</span><span class="n">left</span><span class="o">.</span><span class="na">length</span> <span class="o">+</span> <span class="n">right</span><span class="o">.</span><span class="na">length</span><span class="o">];</span>
+<span class="ln">13</span>    <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">index</span> <span class="o">=</span> <span class="n">0</span><span class="o">,</span> <span class="n">i</span> <span class="o">=</span> <span class="n">0</span><span class="o">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="n">result</span><span class="o">.</span><span class="na">length</span><span class="o">;</span> <span class="n">index</span><span class="o">++)</span>
+<span class="ln">14</span>    <span class="o">{</span>
+<span class="ln">15</span>        <span class="c1">//左边数组已经取完，完全取右边数组的值即可
+</span><span class="ln">16</span><span class="c1"></span>        <span class="k">if</span><span class="o">(</span><span class="n">i</span> <span class="o">&gt;=</span> <span class="n">left</span><span class="o">.</span><span class="na">length</span><span class="o">)</span>
+<span class="ln">17</span>        <span class="o">{</span>
+<span class="ln">18</span>            <span class="n">result</span><span class="o">[</span><span class="n">index</span><span class="o">]</span> <span class="o">=</span> <span class="n">right</span><span class="o">[</span><span class="n">j</span><span class="o">++];</span>
+<span class="ln">19</span>        <span class="c1">//右边数组已经取完，完全取左边数组的值即可
+</span><span class="ln">20</span><span class="c1"></span>        <span class="o">}</span><span class="k">else</span> <span class="k">if</span><span class="o">(</span><span class="n">j</span> <span class="o">&gt;=</span> <span class="n">right</span><span class="o">.</span><span class="na">length</span><span class="o">)</span>
+<span class="ln">21</span>        <span class="o">{</span>
+<span class="ln">22</span>            <span class="n">result</span><span class="o">[</span><span class="n">index</span><span class="o">]</span> <span class="o">=</span> <span class="n">left</span><span class="o">[</span><span class="n">j</span><span class="o">++];</span>
+<span class="ln">23</span>        <span class="c1">//左边数组元素大于右边数组，取右边元素
+</span><span class="ln">24</span><span class="c1"></span>        <span class="o">}</span><span class="k">else</span> <span class="k">if</span><span class="o">(</span><span class="n">left</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">&lt;</span> <span class="n">right</span><span class="o">[</span><span class="n">j</span><span class="o">])</span>
+<span class="ln">25</span>        <span class="o">{</span>
+<span class="ln">26</span>            <span class="n">result</span><span class="o">[</span><span class="n">index</span><span class="o">]</span> <span class="o">=</span> <span class="n">right</span><span class="o">[</span><span class="n">j</span><span class="o">++];</span>
+<span class="ln">27</span>        <span class="c1">//右边数组元素大于左边数组，取左边元素    
+</span><span class="ln">28</span><span class="c1"></span>        <span class="o">}</span><span class="k">else</span>
+<span class="ln">29</span>        <span class="o">{</span>
+<span class="ln">30</span>            <span class="n">result</span><span class="o">[</span><span class="n">index</span><span class="o">]</span> <span class="o">=</span> <span class="n">left</span><span class="o">[</span><span class="n">j</span><span class="o">++];</span>
+<span class="ln">31</span>        <span class="o">}</span>
+<span class="ln">32</span>    <span class="o">}</span>
+<span class="ln">33</span><span class="o">}</span>
+</code></pre></div><h1 id="timsort">TimSort</h1>
+<blockquote>
+<p>除了上述的归并，还存在另一种更加优化的归并排序，称为TimSort，结合了合并排序（合并排序）和插入排序（插入排序）而得出的排序算法，它在现实中有很好的效率.Tim Peters在2002年设计了该算法并在Python中使用是Python中list.sort的默认实现）。该算法找到数据中已经排好序的块 - 分区，每一个分区叫一个run，然后按规则合并这些run.Pyhton自从2.3版本以后一直采用Timsort算法排序，现在Java SE7和Android也采用Timsort算法对数组排序。JDK1.8中的实现，如下所示</p>
+</blockquote>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="kd">static</span> <span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="nf">sort</span><span class="o">(</span><span class="n">T</span><span class="o">[]</span> <span class="n">a</span><span class="o">,</span> <span class="kt">int</span> <span class="n">lo</span><span class="o">,</span> <span class="kt">int</span> <span class="n">hi</span><span class="o">,</span> <span class="n">Comparator</span><span class="o">&lt;?</span> <span class="kd">super</span> <span class="n">T</span><span class="o">&gt;</span> <span class="n">c</span><span class="o">,</span>
+<span class="ln"> 2</span>                     <span class="n">T</span><span class="o">[]</span> <span class="n">work</span><span class="o">,</span> <span class="kt">int</span> <span class="n">workBase</span><span class="o">,</span> <span class="kt">int</span> <span class="n">workLen</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 3</span>    <span class="k">assert</span> <span class="n">c</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">a</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">lo</span> <span class="o">&gt;=</span> <span class="n">0</span> <span class="o">&amp;&amp;</span> <span class="n">lo</span> <span class="o">&lt;=</span> <span class="n">hi</span> <span class="o">&amp;&amp;</span> <span class="n">hi</span> <span class="o">&lt;=</span> <span class="n">a</span><span class="o">.</span><span class="na">length</span><span class="o">;</span>
+<span class="ln"> 4</span>
+<span class="ln"> 5</span>    <span class="kt">int</span> <span class="n">nRemaining</span>  <span class="o">=</span> <span class="n">hi</span> <span class="o">-</span> <span class="n">lo</span><span class="o">;</span>
+<span class="ln"> 6</span>    <span class="k">if</span> <span class="o">(</span><span class="n">nRemaining</span> <span class="o">&lt;</span> <span class="n">2</span><span class="o">)</span>
+<span class="ln"> 7</span>        <span class="k">return</span><span class="o">;</span>  <span class="c1">// Arrays of size 0 and 1 are always sorted
+</span><span class="ln"> 8</span><span class="c1"></span>
+<span class="ln"> 9</span>    <span class="c1">// 数组长度小于MIN_MERGER，不进行归并处理
+</span><span class="ln">10</span><span class="c1"></span>    <span class="k">if</span> <span class="o">(</span><span class="n">nRemaining</span> <span class="o">&lt;</span> <span class="n">MIN_MERGE</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">11</span>        <span class="c1">// 从lo位置开始找出有序的序列，如果是倒序装换为正序
+</span><span class="ln">12</span><span class="c1"></span>        <span class="kt">int</span> <span class="n">initRunLen</span> <span class="o">=</span> <span class="n">countRunAndMakeAscending</span><span class="o">(</span><span class="n">a</span><span class="o">,</span> <span class="n">lo</span><span class="o">,</span> <span class="n">hi</span><span class="o">,</span> <span class="n">c</span><span class="o">);</span>
+<span class="ln">13</span>        <span class="c1">// 二分插入排序，lo+iniRunLen为起始位置（因为这之前的都是有序且正序的）
+</span><span class="ln">14</span><span class="c1"></span>        <span class="n">binarySort</span><span class="o">(</span><span class="n">a</span><span class="o">,</span> <span class="n">lo</span><span class="o">,</span> <span class="n">hi</span><span class="o">,</span> <span class="n">lo</span> <span class="o">+</span> <span class="n">initRunLen</span><span class="o">,</span> <span class="n">c</span><span class="o">);</span>
+<span class="ln">15</span>        <span class="k">return</span><span class="o">;</span>
+<span class="ln">16</span>    <span class="o">}</span>
+<span class="ln">17</span>
+<span class="ln">18</span>    <span class="cm">/**
+</span><span class="ln">19</span><span class="cm">         *实例化TimSort对象
+</span><span class="ln">20</span><span class="cm">         * March over the array once, left to right, finding natural runs,
+</span><span class="ln">21</span><span class="cm">         * extending short natural runs to minRun elements, and merging runs
+</span><span class="ln">22</span><span class="cm">         * to maintain stack invariant.
+</span><span class="ln">23</span><span class="cm">         */</span>
+<span class="ln">24</span>    <span class="n">TimSort</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">ts</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TimSort</span><span class="o">&lt;&gt;(</span><span class="n">a</span><span class="o">,</span> <span class="n">c</span><span class="o">,</span> <span class="n">work</span><span class="o">,</span> <span class="n">workBase</span><span class="o">,</span> <span class="n">workLen</span><span class="o">);</span>
+<span class="ln">25</span>    <span class="c1">// run最小长度
+</span><span class="ln">26</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">minRun</span> <span class="o">=</span> <span class="n">minRunLength</span><span class="o">(</span><span class="n">nRemaining</span><span class="o">);</span>
+<span class="ln">27</span>    <span class="k">do</span> <span class="o">{</span>
+<span class="ln">28</span>        <span class="c1">// Identify next run
+</span><span class="ln">29</span><span class="c1"></span>        <span class="kt">int</span> <span class="n">runLen</span> <span class="o">=</span> <span class="n">countRunAndMakeAscending</span><span class="o">(</span><span class="n">a</span><span class="o">,</span> <span class="n">lo</span><span class="o">,</span> <span class="n">hi</span><span class="o">,</span> <span class="n">c</span><span class="o">);</span>
+<span class="ln">30</span>
+<span class="ln">31</span>        <span class="c1">// run长度小于minRun，使用插入法进行补充
+</span><span class="ln">32</span><span class="c1"></span>        <span class="k">if</span> <span class="o">(</span><span class="n">runLen</span> <span class="o">&lt;</span> <span class="n">minRun</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">33</span>            <span class="kt">int</span> <span class="n">force</span> <span class="o">=</span> <span class="n">nRemaining</span> <span class="o">&lt;=</span> <span class="n">minRun</span> <span class="o">?</span> <span class="n">nRemaining</span> <span class="o">:</span> <span class="n">minRun</span><span class="o">;</span>
+<span class="ln">34</span>            <span class="n">binarySort</span><span class="o">(</span><span class="n">a</span><span class="o">,</span> <span class="n">lo</span><span class="o">,</span> <span class="n">lo</span> <span class="o">+</span> <span class="n">force</span><span class="o">,</span> <span class="n">lo</span> <span class="o">+</span> <span class="n">runLen</span><span class="o">,</span> <span class="n">c</span><span class="o">);</span>
+<span class="ln">35</span>            <span class="n">runLen</span> <span class="o">=</span> <span class="n">force</span><span class="o">;</span>
+<span class="ln">36</span>        <span class="o">}</span>
+<span class="ln">37</span>
+<span class="ln">38</span>        <span class="c1">// 将run推入栈中，并判断是否需要合并
+</span><span class="ln">39</span><span class="c1"></span>        <span class="n">ts</span><span class="o">.</span><span class="na">pushRun</span><span class="o">(</span><span class="n">lo</span><span class="o">,</span> <span class="n">runLen</span><span class="o">);</span>
+<span class="ln">40</span>        <span class="n">ts</span><span class="o">.</span><span class="na">mergeCollapse</span><span class="o">();</span>
+<span class="ln">41</span>
+<span class="ln">42</span>        <span class="c1">// Advance to find next run
+</span><span class="ln">43</span><span class="c1"></span>        <span class="n">lo</span> <span class="o">+=</span> <span class="n">runLen</span><span class="o">;</span>
+<span class="ln">44</span>        <span class="n">nRemaining</span> <span class="o">-=</span> <span class="n">runLen</span><span class="o">;</span>
+<span class="ln">45</span>    <span class="o">}</span> <span class="k">while</span> <span class="o">(</span><span class="n">nRemaining</span> <span class="o">!=</span> <span class="n">0</span><span class="o">);</span>
+<span class="ln">46</span>
+<span class="ln">47</span>    <span class="c1">// 循环结束，将栈中剩余的序列合并
+</span><span class="ln">48</span><span class="c1"></span>    <span class="k">assert</span> <span class="n">lo</span> <span class="o">==</span> <span class="n">hi</span><span class="o">;</span>
+<span class="ln">49</span>    <span class="n">ts</span><span class="o">.</span><span class="na">mergeForceCollapse</span><span class="o">();</span>
+<span class="ln">50</span>    <span class="k">assert</span> <span class="n">ts</span><span class="o">.</span><span class="na">stackSize</span> <span class="o">==</span> <span class="n">1</span><span class="o">;</span>
+<span class="ln">51</span><span class="o">}</span>
+<span class="ln">52</span>
+<span class="ln">53</span><span class="cm">/*当数组长度小于MIN_MERGE，直接返回数组长度，相当不做归并排序只进行插入排序，与上述对MIN_MERGE判断一致。
+</span><span class="ln">54</span><span class="cm">如果数组长度是2的精准乘方（2^m，2的阶乘），返回MIN_MERGE/2
+</span><span class="ln">55</span><span class="cm">其余返回整数k，MIN_MERGE/2 &lt;= K &lt;= MIN_MERGE，n/k接近但严格小于2的精准乘方。（严格小于即差值为1）*/</span>
+<span class="ln">56</span><span class="kd">private</span> <span class="kd">static</span> <span class="kt">int</span> <span class="nf">minRunLength</span><span class="o">(</span><span class="kt">int</span> <span class="n">n</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">57</span>    <span class="k">assert</span> <span class="n">n</span> <span class="o">&gt;=</span> <span class="n">0</span><span class="o">;</span>
+<span class="ln">58</span>    <span class="kt">int</span> <span class="n">r</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span>      <span class="c1">// Becomes 1 if any 1 bits are shifted off
+</span><span class="ln">59</span><span class="c1"></span>    <span class="k">while</span> <span class="o">(</span><span class="n">n</span> <span class="o">&gt;=</span> <span class="n">MIN_MERGE</span><span class="o">)</span> <span class="o">{</span>   
+<span class="ln">60</span>        <span class="n">r</span> <span class="o">|=</span> <span class="o">(</span><span class="n">n</span> <span class="o">&amp;</span> <span class="n">1</span><span class="o">);</span> <span class="c1">// 奇数二进制低位为1，&amp;1=1;偶数二进制低位为0，&amp;1=0
+</span><span class="ln">61</span><span class="c1"></span>        <span class="n">n</span> <span class="o">&gt;&gt;=</span> <span class="n">1</span><span class="o">;</span> <span class="c1">// 向右移一位，相当于除以2
+</span><span class="ln">62</span><span class="c1"></span>    <span class="o">}</span>
+<span class="ln">63</span>    <span class="k">return</span> <span class="n">n</span> <span class="o">+</span> <span class="n">r</span><span class="o">;</span>
+<span class="ln">64</span><span class="o">}</span>
+</code></pre></div><p>当待排序数组长度小于MIN_MERGER且已经是有序时，只进行一次查找有序序列的过程（countRunAndMakeAscending），是对数组的一次遍历，此时不需要进行二分插入排序也不需要进行归并。即最好情况下TimSort的时间复杂度为O(n)。</p>
+<p>平均来看，使用了二分插入排序和归并排序，TimSort的时间复杂度为<strong>O(n*logn)</strong>。</p>
+<p>在归并的过程使用了临时数组tmp存放待比对移动的元素，其空间复杂度为O(n)。</p>
+<p>在二分插入即归并的过程中，对于大小相同的元素，没有改变其先后顺序，因此TimSort是一种稳定的排序算法。</p>
+<p>快速排序的<strong>平均时间复杂度也为O(n*logn)，但快速排序是一种不稳定的排序</strong>，无法保证排序前后相同大小元素的有序性，这在某些场景下会出现影响，具体点击<a href="https://www.jianshu.com/p/767857ba041e">这里</a>。</p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/sort/">sort</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/c&#43;&#43;/">C&#43;&#43;</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/java/">Java</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E5%8F%8C%E6%8C%87%E9%92%88/">双指针</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/10/%E6%8E%92%E5%BA%8F-4%E5%BF%AB%E9%80%9F%E6%8E%92%E5%BA%8F/" data-tooltip="排序 4快速排序">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2022 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/10/%E6%8E%92%E5%BA%8F-4%E5%BF%AB%E9%80%9F%E6%8E%92%E5%BA%8F/" data-tooltip="排序 4快速排序">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2022%2F10%2F%25E6%258E%2592%25E5%25BA%258F-6%25E5%25BD%2592%25E5%25B9%25B6%25E6%258E%2592%25E5%25BA%258F%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2022%2F10%2F%25E6%258E%2592%25E5%25BA%258F-6%25E5%25BD%2592%25E5%25B9%25B6%25E6%258E%2592%25E5%25BA%258F%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2022%2F10%2F%25E6%258E%2592%25E5%25BA%258F-6%25E5%25BD%2592%25E5%25B9%25B6%25E6%258E%2592%25E5%25BA%258F%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2022\/10\/%E6%8E%92%E5%BA%8F-6%E5%BD%92%E5%B9%B6%E6%8E%92%E5%BA%8F\/';
+          
+            this.page.identifier = '\/2022\/10\/%E6%8E%92%E5%BA%8F-6%E5%BD%92%E5%B9%B6%E6%8E%92%E5%BA%8F\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
