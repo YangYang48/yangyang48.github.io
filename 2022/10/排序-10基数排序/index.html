@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="经典的排序算法，基数排序">
+
+
+<meta property="og:description" content="经典的排序算法，基数排序">
+<meta property="og:type" content="article">
+<meta property="og:title" content="排序 10基数排序">
+<meta name="twitter:title" content="排序 10基数排序">
+<meta property="og:url" content="https://yangyang48.github.io/2022/10/%E6%8E%92%E5%BA%8F-10%E5%9F%BA%E6%95%B0%E6%8E%92%E5%BA%8F/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2022/10/%E6%8E%92%E5%BA%8F-10%E5%9F%BA%E6%95%B0%E6%8E%92%E5%BA%8F/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="经典的排序算法，基数排序">
+<meta name="twitter:description" content="经典的排序算法，基数排序">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2022-10-23T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2022-10-23T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="数据结构">
+    
+      <meta property="article:section" content="算法">
+    
+      <meta property="article:section" content="2022">
+    
+      <meta property="article:section" content="October">
+    
+  
+  
+    
+      <meta property="article:tag" content="sort">
+    
+      <meta property="article:tag" content="C&#43;&#43;">
+    
+      <meta property="article:tag" content="Java">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/leetcode/sort/RadixSort/RadixSort_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/leetcode/sort/RadixSort/RadixSort_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/leetcode/sort/RadixSort/RadixSort_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/leetcode/sort/RadixSort/RadixSort_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>排序 10基数排序</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2022/10/%E6%8E%92%E5%BA%8F-10%E5%9F%BA%E6%95%B0%E6%8E%92%E5%BA%8F/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/leetcode/sort/RadixSort/RadixSort_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      排序 10基数排序
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2022-10-23T00:00:00Z">
+        
+  十月 23, 2022
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/%e6%95%b0%e6%8d%ae%e7%bb%93%e6%9e%84">数据结构</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/%e7%ae%97%e6%b3%95">算法</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2022">2022</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/october">October</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">500 Words|Read in about 3 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>经典的排序算法，基数排序</p>
+<h1 id="0准备">0准备</h1>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//建立一个排序用的顺序表结构L
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#define MAXSIZE 9
+</span><span class="ln"> 3</span><span class="cp"></span><span class="k">typedef</span> <span class="k">struct</span> <span class="n">SqList</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span>    <span class="kt">int</span> <span class="n">r</span><span class="p">[</span><span class="n">MAXSIZE</span><span class="p">];</span>
+<span class="ln"> 6</span>    <span class="kt">int</span> <span class="n">length</span><span class="p">;</span>
+<span class="ln"> 7</span><span class="p">}</span><span class="n">SqList</span><span class="p">;</span>
+<span class="ln"> 8</span><span class="cm">/*排序的交换函数*/</span>
+<span class="ln"> 9</span><span class="kt">void</span> <span class="nf">swap</span><span class="p">(</span><span class="n">SqList</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span><span class="kt">int</span> <span class="n">i</span><span class="p">,</span><span class="kt">int</span> <span class="n">j</span><span class="p">)</span>
+<span class="ln">10</span><span class="p">{</span>
+<span class="ln">11</span>    <span class="kt">int</span> <span class="n">temp</span> <span class="o">=</span> <span class="n">L</span><span class="o">-&gt;</span><span class="n">r</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="ln">12</span>    <span class="n">L</span><span class="o">-&gt;</span><span class="n">r</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">L</span><span class="o">-&gt;</span><span class="n">r</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
+<span class="ln">13</span>    <span class="n">L</span><span class="o">-&gt;</span><span class="n">r</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp</span><span class="p">;</span>
+<span class="ln">14</span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/leetcode/sort/RadixSort/RadixSort_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/leetcode/sort/RadixSort/RadixSort_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="基数排序radixsort">基数排序(RadixSort)</h1>
+<blockquote>
+<p>基数是什么意思？</p>
+<p>对于十进制整数，每一位都只可能是0~9中的某一个，总共10种可能。那<strong>10就是它的基</strong>,同理<strong>二进制数字的基为2</strong>；对于字符串，如果它使用的是8位的扩展ASC字符集，那么它的<strong>基就是256</strong>。</p>
+<p>常见的数据元素一般是由若干位组成的，比如字符串由若干字符组成，整数由若干位0~9数字组成。基数排序按照从右往左的顺序，依次将每一位都当做一次关键字，然后按照该关键字对数组的元素入桶，每一轮入桶都基于上轮入桶的结果；完成所有位的入桶后，整个数组就达到有序状态。</p>
+<p>比如对于数字2985，从右往左就是先以个位为关键字进行入桶，然后是十位、百位、千位总共需要四轮。基数排序也是一种<strong>无需比较的排序算法</strong>。</p>
+<p>例子中是按照个位-十位-百位的顺序进行基数排序，此种方式是从最低位开始排序，所以被称为最低位优先法（简称“<strong>LSD法</strong>”）。</p>
+<p>同样还可以按照百位-十位-各位的顺序进行排序，称为最高位优先法（简称“<strong>MSD</strong>法”）</p>
+</blockquote>
+<h1 id="c的版本">C的版本</h1>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="kt">int</span> <span class="nf">maxbit</span><span class="p">(</span><span class="n">SqList</span> <span class="o">*</span><span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">n</span><span class="p">)</span> <span class="c1">//辅助函数，求数据的最大位数
+</span><span class="ln"> 2</span><span class="c1"></span><span class="p">{</span>
+<span class="ln"> 3</span>    <span class="kt">int</span> <span class="n">maxData</span> <span class="o">=</span> <span class="n">L</span><span class="o">-&gt;</span><span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>           <span class="c1">// 最大数
+</span><span class="ln"> 4</span><span class="c1"></span>    <span class="c1">/// 先求出最大数，再求其位数，这样有原先依次每个数判断其位数，稍微优化点。
+</span><span class="ln"> 5</span><span class="c1"></span>    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+<span class="ln"> 6</span>    <span class="p">{</span>
+<span class="ln"> 7</span>        <span class="k">if</span> <span class="p">(</span><span class="n">maxData</span> <span class="o">&lt;</span> <span class="n">L</span><span class="o">-&gt;</span><span class="n">r</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+<span class="ln"> 8</span>            <span class="n">maxData</span> <span class="o">=</span> <span class="n">L</span><span class="o">-&gt;</span><span class="n">r</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="ln"> 9</span>    <span class="p">}</span>
+<span class="ln">10</span>    <span class="kt">int</span> <span class="n">d</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="kt">int</span> <span class="n">p</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
+<span class="ln">12</span>    <span class="k">while</span> <span class="p">(</span><span class="n">maxData</span> <span class="o">&gt;=</span> <span class="n">p</span><span class="p">)</span>
+<span class="ln">13</span>    <span class="p">{</span>
+<span class="ln">14</span>        <span class="c1">//p *= 10; // Maybe overflow
+</span><span class="ln">15</span><span class="c1"></span>        <span class="n">maxData</span> <span class="o">/=</span> <span class="mi">10</span><span class="p">;</span>
+<span class="ln">16</span>        <span class="o">++</span><span class="n">d</span><span class="p">;</span>
+<span class="ln">17</span>    <span class="p">}</span>
+<span class="ln">18</span>    <span class="k">return</span> <span class="n">d</span><span class="p">;</span>
+<span class="ln">19</span><span class="p">}</span>
+<span class="ln">20</span><span class="kt">void</span> <span class="nf">RadixSort</span><span class="p">(</span><span class="n">SqList</span> <span class="o">*</span><span class="n">L</span><span class="p">)</span> <span class="c1">//基数排序
+</span><span class="ln">21</span><span class="c1"></span><span class="p">{</span>
+<span class="ln">22</span>    <span class="kt">int</span> <span class="n">n</span> <span class="o">=</span> <span class="n">L</span><span class="o">-&gt;</span><span class="n">length</span><span class="p">;</span>
+<span class="ln">23</span>    <span class="kt">int</span> <span class="n">d</span> <span class="o">=</span> <span class="n">maxbit</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+<span class="ln">24</span>    <span class="kt">int</span><span class="o">*</span> <span class="n">tmp</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span><span class="p">[</span><span class="n">n</span><span class="p">];</span>
+<span class="ln">25</span>    <span class="kt">int</span><span class="o">*</span> <span class="n">count</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span><span class="p">[</span><span class="mi">10</span><span class="p">];</span> <span class="c1">//计数器
+</span><span class="ln">26</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">;</span>
+<span class="ln">27</span>    <span class="kt">int</span> <span class="n">radix</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">28</span>    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="n">d</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="c1">//进行d次排序
+</span><span class="ln">29</span><span class="c1"></span>    <span class="p">{</span>
+<span class="ln">30</span>        <span class="c1">//每次分配前清空计数器
+</span><span class="ln">31</span><span class="c1"></span>        <span class="k">for</span> <span class="p">(</span><span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+<span class="ln">32</span>            <span class="n">count</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">33</span>        <span class="c1">//统计每个桶中的记录数
+</span><span class="ln">34</span><span class="c1"></span>        <span class="k">for</span> <span class="p">(</span><span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+<span class="ln">35</span>        <span class="p">{</span>
+<span class="ln">36</span>            <span class="n">k</span> <span class="o">=</span> <span class="p">(</span><span class="n">L</span><span class="o">-&gt;</span><span class="n">r</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">/</span> <span class="n">radix</span><span class="p">)</span> <span class="o">%</span> <span class="mi">10</span><span class="p">;</span>
+<span class="ln">37</span>            <span class="n">count</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">++</span><span class="p">;</span>
+<span class="ln">38</span>        <span class="p">}</span>
+<span class="ln">39</span>        <span class="c1">//将tmp中的位置依次分配给每个桶,求前缀和
+</span><span class="ln">40</span><span class="c1"></span>        <span class="k">for</span> <span class="p">(</span><span class="n">j</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+<span class="ln">41</span>            <span class="n">count</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+=</span> <span class="n">count</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">];</span>
+<span class="ln">42</span>        <span class="c1">//将所有桶中记录依次收集到tmp中
+</span><span class="ln">43</span><span class="c1"></span>        <span class="k">for</span> <span class="p">(</span><span class="n">j</span> <span class="o">=</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span> <span class="n">j</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span><span class="o">--</span><span class="p">)</span>
+<span class="ln">44</span>        <span class="p">{</span>
+<span class="ln">45</span>            <span class="n">k</span> <span class="o">=</span> <span class="p">(</span><span class="n">L</span><span class="o">-&gt;</span><span class="n">r</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">/</span> <span class="n">radix</span><span class="p">)</span> <span class="o">%</span> <span class="mi">10</span><span class="p">;</span>
+<span class="ln">46</span>            <span class="n">tmp</span><span class="p">[</span><span class="n">count</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">L</span><span class="o">-&gt;</span><span class="n">r</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
+<span class="ln">47</span>            <span class="n">count</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">--</span><span class="p">;</span>
+<span class="ln">48</span>        <span class="p">}</span>
+<span class="ln">49</span>        <span class="c1">//将临时数组的内容复制到data中
+</span><span class="ln">50</span><span class="c1"></span>        <span class="k">for</span> <span class="p">(</span><span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+<span class="ln">51</span>            <span class="n">L</span><span class="o">-&gt;</span><span class="n">r</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
+<span class="ln">52</span>        <span class="c1">//位数加1
+</span><span class="ln">53</span><span class="c1"></span>        <span class="n">radix</span> <span class="o">=</span> <span class="n">radix</span> <span class="o">*</span> <span class="mi">10</span><span class="p">;</span>
+<span class="ln">54</span>    <span class="p">}</span>
+<span class="ln">55</span>    <span class="k">delete</span><span class="p">[]</span><span class="n">tmp</span><span class="p">;</span>
+<span class="ln">56</span>    <span class="k">delete</span><span class="p">[]</span><span class="n">count</span><span class="p">;</span>
+<span class="ln">57</span><span class="p">}</span>
+</code></pre></div><h1 id="java版本">Java版本</h1>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="kd">public</span> <span class="kt">int</span><span class="o">[]</span> <span class="nf">RadixSort</span><span class="o">(</span><span class="kt">int</span><span class="o">[]</span> <span class="n">nums</span><span class="o">)</span>
+<span class="ln"> 2</span><span class="o">{</span>
+<span class="ln"> 3</span>    <span class="k">if</span><span class="o">(</span><span class="kc">null</span> <span class="o">==</span> <span class="n">nums</span> <span class="o">||</span> <span class="n">nums</span><span class="o">.</span><span class="na">length</span> <span class="o">&lt;</span> <span class="n">2</span><span class="o">)</span>
+<span class="ln"> 4</span>    <span class="o">{</span>
+<span class="ln"> 5</span>        <span class="k">return</span> <span class="n">nums</span><span class="o">;</span>
+<span class="ln"> 6</span>    <span class="o">}</span>
+<span class="ln"> 7</span>    <span class="c1">//找出最大数
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">max</span> <span class="o">=</span> <span class="n">nums</span><span class="o">[</span><span class="n">0</span><span class="o">];</span>
+<span class="ln"> 9</span>    <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">nums</span><span class="o">.</span><span class="na">length</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span>
+<span class="ln">10</span>    <span class="o">{</span>
+<span class="ln">11</span>        <span class="n">max</span> <span class="o">=</span> <span class="n">Math</span><span class="o">.</span><span class="na">max</span><span class="o">(</span><span class="n">max</span><span class="o">,</span> <span class="n">nums</span><span class="o">[</span><span class="n">i</span><span class="o">]);</span>
+<span class="ln">12</span>    <span class="o">}</span>
+<span class="ln">13</span>    <span class="c1">//先算出最大数的位数，他决定了我们需要进行几轮排序
+</span><span class="ln">14</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">maxDigit</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span>
+<span class="ln">15</span>    <span class="k">while</span><span class="o">(</span><span class="n">max</span> <span class="o">!=</span> <span class="n">0</span><span class="o">)</span>
+<span class="ln">16</span>    <span class="o">{</span>
+<span class="ln">17</span>        <span class="n">max</span> <span class="o">/=</span> <span class="n">10</span><span class="o">;</span>
+<span class="ln">18</span>        <span class="n">maxDigit</span><span class="o">++;</span>
+<span class="ln">19</span>    <span class="o">}</span>
+<span class="ln">20</span>    <span class="kt">int</span> <span class="n">mod</span> <span class="o">=</span> <span class="n">10</span><span class="o">,</span> <span class="n">div</span> <span class="o">=</span> <span class="n">1</span><span class="o">;</span>
+<span class="ln">21</span>    <span class="c1">//构建桶
+</span><span class="ln">22</span><span class="c1"></span>    <span class="n">ArrayList</span><span class="o">&lt;</span><span class="n">ArrayList</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="n">bucketList</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayList</span><span class="o">&lt;</span><span class="n">ArrayList</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;();</span>
+<span class="ln">23</span>    <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">10</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span>
+<span class="ln">24</span>    <span class="o">{</span>
+<span class="ln">25</span>        <span class="n">bucketList</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="k">new</span> <span class="n">ArrayList</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;());</span>
+<span class="ln">26</span>    <span class="o">}</span>
+<span class="ln">27</span>    <span class="c1">//按照从右往左的顺序，一次将每一位都当做一次关键字，然后按照该关键字对数组排序，每一轮都基于上一轮排序的结果
+</span><span class="ln">28</span><span class="c1"></span>    <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">nums</span><span class="o">.</span><span class="na">length</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span>
+<span class="ln">29</span>    <span class="o">{</span>
+<span class="ln">30</span>        <span class="kt">int</span> <span class="n">num</span> <span class="o">=</span> <span class="o">(</span><span class="n">nums</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">%</span> <span class="n">mod</span><span class="o">)</span> <span class="o">/</span> <span class="n">div</span><span class="o">;</span>
+<span class="ln">31</span>        <span class="n">bucketList</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">num</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="n">nums</span><span class="o">[</span><span class="n">j</span><span class="o">]);</span>
+<span class="ln">32</span>    <span class="o">}</span>
+<span class="ln">33</span>    <span class="c1">//看看桶中数据的分布
+</span><span class="ln">34</span><span class="c1"></span>    <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">b</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span> <span class="n">b</span> <span class="o">&lt;</span> <span class="n">bucketList</span><span class="o">.</span><span class="na">size</span><span class="o">();</span> <span class="n">b</span><span class="o">++)</span>
+<span class="ln">35</span>    <span class="o">{</span>
+<span class="ln">36</span>        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&#34;第&#34;</span> <span class="o">+</span> <span class="n">b</span> <span class="o">+</span> <span class="s">&#34;个桶包含数据&#34;</span><span class="o">);</span>
+<span class="ln">37</span>        <span class="n">PrintArray</span><span class="o">.</span><span class="na">printObject</span><span class="o">(</span><span class="n">bucketList</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">b</span><span class="o">));</span>
+<span class="ln">38</span>    <span class="o">}</span>
+<span class="ln">39</span>    <span class="c1">//桶中的数据回写原始数据，清楚桶，准备下一轮的排序
+</span><span class="ln">40</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">index</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span>
+<span class="ln">41</span>    <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">bucketList</span><span class="o">.</span><span class="na">size</span><span class="o">();</span> <span class="n">j</span><span class="o">++)</span>
+<span class="ln">42</span>    <span class="o">{</span>
+<span class="ln">43</span>        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">k</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="n">bucketList</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">j</span><span class="o">).</span><span class="na">size</span><span class="o">();</span> <span class="n">k</span><span class="o">++)</span>
+<span class="ln">44</span>        <span class="o">{</span>
+<span class="ln">45</span>            <span class="n">nums</span><span class="o">[</span><span class="n">index</span><span class="o">++]</span> <span class="o">=</span> <span class="n">bucketList</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">j</span><span class="o">).</span><span class="na">get</span><span class="o">(</span><span class="n">k</span><span class="o">);</span>
+<span class="ln">46</span>        <span class="o">}</span>
+<span class="ln">47</span>        <span class="n">bucketList</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">j</span><span class="o">).</span><span class="na">clear</span><span class="o">();</span>
+<span class="ln">48</span>    <span class="o">}</span>
+<span class="ln">49</span>    <span class="k">return</span> <span class="n">nums</span><span class="o">;</span>
+<span class="ln">50</span><span class="o">}</span>
+</code></pre></div><p>由于例子中是两位数，所以只需要考虑个位入桶和十位入桶即可</p>
+<p><code>个位入桶</code></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/leetcode/sort/RadixSort/RadixSort_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/leetcode/sort/RadixSort/RadixSort_2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><code>十位入桶</code></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/leetcode/sort/RadixSort/RadixSort_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/leetcode/sort/RadixSort/RadixSort_3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<blockquote>
+<p>基数排序Vs计数排序Vs桶排序</p>
+<p>这三种排序算法都利用了桶的概念，但对桶的使用方法上有明显差异：</p>
+<ul>
+<li><strong>基数排序</strong>：根据键值的每位数字来分配桶</li>
+<li><strong>计数排序</strong>：每个桶只存储单一键值</li>
+<li><strong>桶排序</strong>：每个桶存储一定范围的数值</li>
+</ul>
+</blockquote>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/sort/">sort</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/c&#43;&#43;/">C&#43;&#43;</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/java/">Java</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/10/%E6%8E%92%E5%BA%8F-9%E6%A1%B6%E6%8E%92%E5%BA%8F/" data-tooltip="排序 9桶排序">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2022 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/10/%E6%8E%92%E5%BA%8F-9%E6%A1%B6%E6%8E%92%E5%BA%8F/" data-tooltip="排序 9桶排序">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2022%2F10%2F%25E6%258E%2592%25E5%25BA%258F-10%25E5%259F%25BA%25E6%2595%25B0%25E6%258E%2592%25E5%25BA%258F%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2022%2F10%2F%25E6%258E%2592%25E5%25BA%258F-10%25E5%259F%25BA%25E6%2595%25B0%25E6%258E%2592%25E5%25BA%258F%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2022%2F10%2F%25E6%258E%2592%25E5%25BA%258F-10%25E5%259F%25BA%25E6%2595%25B0%25E6%258E%2592%25E5%25BA%258F%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2022\/10\/%E6%8E%92%E5%BA%8F-10%E5%9F%BA%E6%95%B0%E6%8E%92%E5%BA%8F\/';
+          
+            this.page.identifier = '\/2022\/10\/%E6%8E%92%E5%BA%8F-10%E5%9F%BA%E6%95%B0%E6%8E%92%E5%BA%8F\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
