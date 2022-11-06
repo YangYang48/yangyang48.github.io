@@ -394,6 +394,42 @@
 <li>链表每移动一个结点，就把当前结点的指向修改成指向新链表中的结点</li>
 <li>直到链表移动到<code>null</code>结束，那么新链表就为反转的链表</li>
 </ol>
+<blockquote>
+<ol>
+<li>需要一个变量保存当前的遍历结点，用于判断是否到最后一个节点，<code>current = head;</code> <code>current = current.next;</code></li>
+<li><code>nextTmp</code>变量用于保存下一个结点，因为一旦将当前结点的指向修改，就找不到下一个结点。<code>nextTmp = current.next;</code></li>
+<li><code>preTmp</code>变量用于保存当前结点，因为下一个结点无法主动找到上一个结点,<code>preTmp = current;</code>并且<code>preTmp = current;</code>操作要在<code>current = current.next;</code></li>
+</ol>
+</blockquote>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/leetcode/leetcode_206/leetcode206_5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/leetcode/leetcode_206/leetcode206_5.png" >
+  
+    </a>
+  
+  
+</div>
+
 <h1 id="解题">解题</h1>
 <div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="cm">/**
 </span><span class="ln"> 2</span><span class="cm"> * Definition for singly-linked list.
@@ -421,7 +457,43 @@
 <span class="ln">24</span>        <span class="k">return</span> <span class="n">preNode</span><span class="o">;</span>
 <span class="ln">25</span>    <span class="o">}</span>
 <span class="ln">26</span><span class="o">}</span>
-</code></pre></div><p>也可以采用递归的方式</p>
+</code></pre></div><h1 id="递归">递归</h1>
+<p>也可以采用递归的方式</p>
+<ol>
+<li>传入的是<code>head</code>链表头部。需要翻转链表，意味着第二个节点的<code>next</code>指向1，<code>head.next.next = head;</code></li>
+<li>然后再将1结点的<code>next</code>指向<code>null</code>，<code>head.next = null;</code>，避免形成环形链表</li>
+<li>上面是1结点和2结点的翻转，并且可以将这种方式推广到剩余的结点，也可以两两翻转</li>
+</ol>
+<p>按照上面的操作，会发现按顺序执行会找不到第二个结点后面的结点，因为可以<strong>逆序</strong>操作，从最后一个结点，一个个倒退回到第一个结点</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/leetcode/leetcode_206/leetcode206_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/leetcode/leetcode_206/leetcode206_4.png" >
+  
+    </a>
+  
+  
+</div>
+
 <div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="cm">/**
 </span><span class="ln"> 2</span><span class="cm"> * Definition for singly-linked list.
 </span><span class="ln"> 3</span><span class="cm"> * public class ListNode {
