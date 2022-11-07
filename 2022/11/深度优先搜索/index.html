@@ -8,18 +8,18 @@
 <meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
 <meta name="author" content="Yang Ju">
 <meta name="keywords" content="">
-<meta name="description" content="二叉树，找出其最小深度。学习深度优先搜索(DFS)方法。">
+<meta name="description" content="学习深度优先搜索(DFS)方法。">
 
 
-<meta property="og:description" content="二叉树，找出其最小深度。学习深度优先搜索(DFS)方法。">
+<meta property="og:description" content="学习深度优先搜索(DFS)方法。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="深度优先搜索">
 <meta name="twitter:title" content="深度优先搜索">
 <meta property="og:url" content="https://yangyang48.github.io/2022/11/%E6%B7%B1%E5%BA%A6%E4%BC%98%E5%85%88%E6%90%9C%E7%B4%A2/">
 <meta property="twitter:url" content="https://yangyang48.github.io/2022/11/%E6%B7%B1%E5%BA%A6%E4%BC%98%E5%85%88%E6%90%9C%E7%B4%A2/">
 <meta property="og:site_name" content="欢迎来到我的博客~">
-<meta property="og:description" content="二叉树，找出其最小深度。学习深度优先搜索(DFS)方法。">
-<meta name="twitter:description" content="二叉树，找出其最小深度。学习深度优先搜索(DFS)方法。">
+<meta property="og:description" content="学习深度优先搜索(DFS)方法。">
+<meta name="twitter:description" content="学习深度优先搜索(DFS)方法。">
 <meta property="og:locale" content="zh-cn">
 
   
@@ -49,6 +49,12 @@
       <meta property="article:tag" content="Java">
     
       <meta property="article:tag" content="DFS">
+    
+      <meta property="article:tag" content="前序遍历">
+    
+      <meta property="article:tag" content="中序遍历">
+    
+      <meta property="article:tag" content="后序遍历">
     
   
 
@@ -278,15 +284,22 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">200 Words|Read in about 1 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">700 Words|Read in about 3 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
-              <p>二叉树，找出其最小深度。学习深度优先搜索(DFS)方法。</p>
+              <p>学习深度优先搜索(DFS)方法。</p>
 <h1 id="深度优先搜索">深度优先搜索</h1>
-<p>给定一个二叉树，找出其最小深度</p>
-<h1 id="dfs">DFS</h1>
-
+<h1 id="0dfs">0DFS</h1>
+<blockquote>
+<p>深度优先搜索（<code>DFS</code>，Depth-First Search）是搜索算法的一种，它从某一个状态开始，不断地转移状态直到无法转移，然后回退到前一步的状态，继续转移到其他状态，如此不断重复，直到找到最终的解。</p>
+</blockquote>
+<h1 id="1举例1">1举例1</h1>
+<p>给定一个二叉树，找出其最小深度。</p>
+<p><strong>示例1</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-text" data-lang="text"><span class="ln">1</span>输入：[1,2,4,4,5,6,7]
+<span class="ln">2</span>输出：3
+</code></pre></div>
 
  
   
@@ -315,6 +328,39 @@
   
 </div>
 
+<h2 id="思路">思路</h2>
+<p>上面这个二叉树的遍历顺序，<code>1-&gt;2-&gt;4-&gt;5-&gt;3-&gt;6-&gt;7</code></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/leetcode/treesearch/DFS/DFS_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/leetcode/treesearch/DFS/DFS_2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="heading"></h2>
+<h2 id="解题">解题</h2>
 <div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="kd">static</span> <span class="kd">class</span> <span class="nc">TreeNode</span>
 <span class="ln"> 2</span><span class="o">{</span>
 <span class="ln"> 3</span>    <span class="kt">int</span> <span class="n">val</span><span class="o">;</span>
@@ -364,6 +410,382 @@
 <span class="ln">47</span>    <span class="o">}</span>
 <span class="ln">48</span>    <span class="k">return</span> <span class="n">min</span> <span class="o">+</span> <span class="n">1</span><span class="o">;</span>
 <span class="ln">49</span><span class="o">}</span>
+</code></pre></div><h1 id="2举例2">2举例2</h1>
+<p>有一个大小为<code>N × M</code>的园子，雨后积起了水，八连通的积水被认为是连接在一起的，请求出园子里共有多少个水洼。（八连通指的是下图中相对<code>w</code>的<code>*</code>的部分）</p>
+<div class="highlight"><pre class="chroma"><code class="language-text" data-lang="text"><span class="ln">1</span>* * *
+<span class="ln">2</span>* w *
+<span class="ln">3</span>* * *
+</code></pre></div><ul>
+<li>第一行输入一个整数<code>N</code></li>
+<li>第二行输入一个整数<code>M</code></li>
+<li>接下来的<code>N</code> 行<code>M</code> 列表示园子的范围，其中<code>“w”</code>为积水</li>
+</ul>
+<p><strong>限制条件:</strong>
+<code>*N , M ≤ 100</code></p>
+<p><strong>示例2：</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln"> 1</span>样例输入：
+<span class="ln"> 2</span>w........ww.
+<span class="ln"> 3</span>.www.....www
+<span class="ln"> 4</span>....ww...ww.
+<span class="ln"> 5</span>.........ww.
+<span class="ln"> 6</span>.........w..
+<span class="ln"> 7</span>..w......w..
+<span class="ln"> 8</span>.w.w.....ww.
+<span class="ln"> 9</span>w.w.w.....w.
+<span class="ln">10</span>.w.w......w.
+<span class="ln">11</span>..w.......w.
+<span class="ln">12</span>样例输出：
+<span class="ln">13</span>3
+</code></pre></div><h2 id="思路-1">思路</h2>
+<ol>
+<li>可以从任意一个<code>w</code>的位置入手，将这个位置用<code>&quot;.&quot;</code>代替</li>
+<li>搜索它所对应八连通的位置，如果搜索的位置在园子内，并且值为<code>w</code>，则递归调用自身，重复上述步骤；</li>
+<li>直到某个点的八连通位置内没有<code>w</code>时退出循环</li>
+</ol>
+<p>依次对园子内的每个点进行如上操作，则<code>DFS</code>被调用的次数即为水洼的个数。</p>
+<h2 id="解题-1">解题</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="cp">#include</span> <span class="cpf">&lt;bits/stdc++.h&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp"></span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="cp">#define max_N 101
+</span><span class="ln"> 4</span><span class="cp"></span><span class="kt">int</span> <span class="n">N</span><span class="p">,</span><span class="n">M</span><span class="p">;</span>
+<span class="ln"> 5</span><span class="kt">char</span> <span class="n">field</span><span class="p">[</span><span class="n">max_N</span><span class="p">][</span><span class="n">max_N</span><span class="p">];</span><span class="c1">//园子 
+</span><span class="ln"> 6</span><span class="c1"></span><span class="kt">void</span> <span class="nf">dfs</span> <span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 7</span>	<span class="c1">//将该位置用&#34;.&#34;替换
+</span><span class="ln"> 8</span><span class="c1"></span>	<span class="n">field</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;.&#39;</span><span class="p">;</span>
+<span class="ln"> 9</span>	
+<span class="ln">10</span>	<span class="c1">//循环遍历八连通的各个点
+</span><span class="ln">11</span><span class="c1"></span>	<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">dx</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span> <span class="n">dx</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">dx</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">12</span>		<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">dy</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span> <span class="n">dy</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">dy</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">13</span>			<span class="kt">int</span> <span class="n">nx</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">dx</span><span class="p">,</span> <span class="n">ny</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="n">dy</span><span class="p">;</span>
+<span class="ln">14</span>			<span class="c1">//判断该点是否在园子内并且是否为积水
+</span><span class="ln">15</span><span class="c1"></span>			<span class="k">if</span> <span class="p">(</span><span class="n">nx</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">nx</span> <span class="o">&lt;=</span> <span class="n">N</span> <span class="o">&amp;&amp;</span> <span class="n">ny</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">ny</span> <span class="o">&lt;=</span> <span class="n">M</span> <span class="o">&amp;&amp;</span> <span class="n">field</span><span class="p">[</span><span class="n">nx</span><span class="p">][</span><span class="n">ny</span><span class="p">]</span> <span class="o">==</span> <span class="sc">&#39;w&#39;</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">16</span>				<span class="n">dfs</span><span class="p">(</span><span class="n">nx</span><span class="p">,</span> <span class="n">ny</span><span class="p">);</span>
+<span class="ln">17</span>			<span class="p">}</span> 
+<span class="ln">18</span>		<span class="p">}</span>
+<span class="ln">19</span>	<span class="p">}</span> 
+<span class="ln">20</span>	<span class="k">return</span> <span class="p">;</span>
+<span class="ln">21</span><span class="p">}</span>
+<span class="ln">22</span><span class="kt">void</span> <span class="nf">solve</span> <span class="p">()</span> <span class="p">{</span>
+<span class="ln">23</span>	<span class="kt">int</span> <span class="n">res</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">24</span>	<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">25</span>		<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">M</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">26</span>			<span class="k">if</span> <span class="p">(</span><span class="n">field</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="sc">&#39;w&#39;</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">27</span>				<span class="n">dfs</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">);</span>
+<span class="ln">28</span>				<span class="n">res</span><span class="o">++</span><span class="p">;</span>
+<span class="ln">29</span>			<span class="p">}</span>
+<span class="ln">30</span>		<span class="p">}</span>
+<span class="ln">31</span>	<span class="p">}</span>
+<span class="ln">32</span>	<span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">res</span><span class="p">;</span>
+<span class="ln">33</span><span class="p">}</span>
+<span class="ln">34</span><span class="kt">int</span> <span class="nf">main</span> <span class="p">()</span> <span class="p">{</span>
+<span class="ln">35</span>	<span class="n">cin</span> <span class="o">&gt;&gt;</span> <span class="n">N</span> <span class="o">&gt;&gt;</span> <span class="n">M</span><span class="p">;</span>
+<span class="ln">36</span>	<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">37</span>		<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">M</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">38</span>			<span class="n">cin</span> <span class="o">&gt;&gt;</span> <span class="n">field</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">];</span>
+<span class="ln">39</span>		<span class="p">}</span>
+<span class="ln">40</span>	<span class="p">}</span>
+<span class="ln">41</span>	<span class="n">solve</span><span class="p">();</span>
+<span class="ln">42</span>	<span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">43</span><span class="p">}</span>
+</code></pre></div><p><code>原始数据</code></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/leetcode/treesearch/DFS/DFS_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/leetcode/treesearch/DFS/DFS_3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><code>第一次遍历</code></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/leetcode/treesearch/DFS/DFS_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/leetcode/treesearch/DFS/DFS_4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><code>第二次遍历</code></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/leetcode/treesearch/DFS/DFS_5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/leetcode/treesearch/DFS/DFS_5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><code>第三次遍历</code></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/leetcode/treesearch/DFS/DFS_6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/leetcode/treesearch/DFS/DFS_6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><code>第四次遍历</code></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/leetcode/treesearch/DFS/DFS_7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/leetcode/treesearch/DFS/DFS_7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><code>第五次遍历</code></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/leetcode/treesearch/DFS/DFS_8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/leetcode/treesearch/DFS/DFS_8.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><code>第六次遍历</code></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/leetcode/treesearch/DFS/DFS_9.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/leetcode/treesearch/DFS/DFS_9.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><code>最终遍历完成</code></p>
+<p>遍历完成，<strong>得到3处水洼</strong></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/leetcode/treesearch/DFS/DFS_10.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/leetcode/treesearch/DFS/DFS_10.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="3深度优先搜索算法框架">3深度优先搜索算法框架</h1>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="kt">void</span> <span class="nf">DFS</span><span class="p">(</span><span class="err">当前节点</span><span class="p">){</span>
+<span class="ln">2</span>    <span class="err">对当前节点的访问</span><span class="p">;</span><span class="err">`在这里插入代码片`</span>
+<span class="ln">3</span>    <span class="err">标记当前节点为已访问</span><span class="p">;</span>
+<span class="ln">4</span>    <span class="k">for</span><span class="p">(</span><span class="err">下一节点</span> <span class="o">:</span> <span class="err">当前节点的邻接列表</span><span class="p">){</span>
+<span class="ln">5</span>        <span class="err">剪枝</span><span class="p">(</span><span class="err">如果下一节点已经访问过就跳过</span><span class="p">);</span>
+<span class="ln">6</span>        <span class="n">DFS</span><span class="p">(</span><span class="err">下一节点</span><span class="p">);</span>
+<span class="ln">7</span>    <span class="p">}</span>
+<span class="ln">8</span><span class="p">}</span>
+</code></pre></div><p>二叉树的前中后序遍历也可以是深度优先搜索</p>
+<h2 id="二叉树的前序遍历">二叉树的前序遍历</h2>
+<p><code>当前结点-&gt;当前的左孩子结点-&gt;当前的右孩子结点</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//二叉树前序DFS搜索
+</span><span class="ln">2</span><span class="c1"></span><span class="kt">void</span> <span class="nf">DFS</span><span class="p">(</span><span class="n">TreeNode</span><span class="o">*</span> <span class="n">root</span><span class="p">){</span>
+<span class="ln">3</span>    <span class="k">if</span><span class="p">(</span><span class="n">root</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+<span class="ln">4</span>    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">root</span><span class="o">-&gt;</span><span class="n">val</span> <span class="o">&lt;&lt;</span> <span class="s">&#34; &#34;</span><span class="p">;</span> <span class="c1">//输出当前节点
+</span><span class="ln">5</span><span class="c1"></span>    <span class="c1">//这里不需要标记当前节点为已访问，因为二叉树不会往回走
+</span><span class="ln">6</span><span class="c1"></span>    <span class="n">DFS</span><span class="p">(</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">lchild</span><span class="p">);</span> 
+<span class="ln">7</span>    <span class="n">DFS</span><span class="p">(</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">rchild</span><span class="p">);</span> 
+<span class="ln">8</span><span class="p">}</span>
+</code></pre></div><h2 id="二叉树的中序遍历">二叉树的中序遍历</h2>
+<p><code>当前的左孩子结点-&gt;当前结点-&gt;当前的右孩子结点</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//二叉树中序DFS搜索
+</span><span class="ln">2</span><span class="c1"></span><span class="kt">void</span> <span class="nf">DFS</span><span class="p">(</span><span class="n">TreeNode</span><span class="o">*</span> <span class="n">root</span><span class="p">){</span>
+<span class="ln">3</span>    <span class="k">if</span><span class="p">(</span><span class="n">root</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+<span class="ln">4</span>    <span class="n">DFS</span><span class="p">(</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">lchild</span><span class="p">);</span>
+<span class="ln">5</span>    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">root</span><span class="o">-&gt;</span><span class="n">val</span> <span class="o">&lt;&lt;</span> <span class="s">&#34; &#34;</span><span class="p">;</span> <span class="c1">//输出当前节点
+</span><span class="ln">6</span><span class="c1"></span>    <span class="n">DFS</span><span class="p">(</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">rchild</span><span class="p">);</span>
+<span class="ln">7</span><span class="p">}</span>
+</code></pre></div><h2 id="二叉树的后序遍历">二叉树的后序遍历</h2>
+<p><code>当前的左孩子结点-&gt;当前的右孩子结点-&gt;当前结点</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//二叉树后序DFS搜索
+</span><span class="ln">2</span><span class="c1"></span><span class="kt">void</span> <span class="nf">DFS</span><span class="p">(</span><span class="n">TreeNode</span><span class="o">*</span> <span class="n">root</span><span class="p">){</span>
+<span class="ln">3</span>    <span class="k">if</span><span class="p">(</span><span class="n">root</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+<span class="ln">4</span>    <span class="n">DFS</span><span class="p">(</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">lchild</span><span class="p">);</span>
+<span class="ln">5</span>    <span class="n">DFS</span><span class="p">(</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">rchild</span><span class="p">);</span>
+<span class="ln">6</span>    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">root</span><span class="o">-&gt;</span><span class="n">val</span> <span class="o">&lt;&lt;</span> <span class="s">&#34; &#34;</span><span class="p">;</span> <span class="c1">//输出当前节点
+</span><span class="ln">7</span><span class="c1"></span><span class="p">}</span>
+</code></pre></div><h2 id="二维矩阵深度优先搜索模板">二维矩阵深度优先搜索模板</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="kt">int</span> <span class="n">m</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="c1">//行数
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="n">n</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">size</span><span class="p">();</span>  <span class="c1">//列数
+</span><span class="ln"> 3</span><span class="c1"></span><span class="n">vector</span><span class="o">&lt;</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&gt;</span> <span class="n">visited</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">0</span><span class="p">));</span> <span class="c1">//用来标记已经访问过的节点
+</span><span class="ln"> 4</span><span class="c1"></span><span class="kt">int</span> <span class="n">directions</span><span class="p">[</span><span class="mi">4</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">{{</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">},</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">},</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">},</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">}};</span> <span class="c1">//行进方向
+</span><span class="ln"> 5</span><span class="c1"></span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span><span class="kt">void</span> <span class="nf">DFS</span><span class="p">(</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&gt;</span> <span class="o">&amp;</span><span class="n">matrix</span><span class="p">,</span> <span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">){</span>
+<span class="ln"> 8</span>    <span class="k">if</span><span class="p">(</span><span class="n">matrix</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="o">==</span> <span class="n">target</span><span class="p">)</span>
+<span class="ln"> 9</span>        <span class="k">return</span><span class="p">;</span>
+<span class="ln">10</span>    <span class="n">visited</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="c1">//标记当前节点为已访问
+</span><span class="ln">11</span><span class="c1"></span>
+<span class="ln">12</span>    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">){</span>
+<span class="ln">13</span>        <span class="kt">int</span> <span class="n">new_x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">directions</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">];</span>
+<span class="ln">14</span>        <span class="kt">int</span> <span class="n">new_y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="n">directions</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">];</span>
+<span class="ln">15</span>        	<span class="c1">//这里一定要把visites[new_x][new_y]放在最后，因为计算后的new_x和new_y值有可能已经超过visited的下标访问范围
+</span><span class="ln">16</span><span class="c1"></span>        	<span class="k">if</span><span class="p">(</span><span class="n">new_x</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">||</span> <span class="n">new_x</span> <span class="o">&gt;=</span> <span class="n">m</span> <span class="o">||</span> <span class="n">new_y</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">||</span> <span class="n">new_y</span> <span class="o">&gt;=</span> <span class="n">n</span> <span class="o">||</span> <span class="n">visited</span><span class="p">[</span><span class="n">new_x</span><span class="p">][</span><span class="n">new_y</span><span class="p">])</span> <span class="k">continue</span><span class="p">;</span> 
+<span class="ln">17</span>            	<span class="n">DFS</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">new_x</span><span class="p">,</span> <span class="n">new_y</span><span class="p">);</span>
+<span class="ln">18</span>    <span class="p">}</span>
+<span class="ln">19</span><span class="p">}</span>
 </code></pre></div>
               
             </div>
@@ -383,6 +805,12 @@
   <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/java/">Java</a>
 
   <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/dfs/">DFS</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E5%89%8D%E5%BA%8F%E9%81%8D%E5%8E%86/">前序遍历</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E4%B8%AD%E5%BA%8F%E9%81%8D%E5%8E%86/">中序遍历</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E5%90%8E%E5%BA%8F%E9%81%8D%E5%8E%86/">后序遍历</a>
 
                   </div>
                 
