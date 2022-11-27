@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="Android源码中有大量的智能指针，它们经常使用，通常一个类前会修饰sp或者wp，这种修饰即为智能指针。">
+
+
+<meta property="og:description" content="Android源码中有大量的智能指针，它们经常使用，通常一个类前会修饰sp或者wp，这种修饰即为智能指针。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android智能指针解析">
+<meta name="twitter:title" content="Android智能指针解析">
+<meta property="og:url" content="https://yangyang48.github.io/2022/11/android%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E8%A7%A3%E6%9E%90/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2022/11/android%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E8%A7%A3%E6%9E%90/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="Android源码中有大量的智能指针，它们经常使用，通常一个类前会修饰sp或者wp，这种修饰即为智能指针。">
+<meta name="twitter:description" content="Android源码中有大量的智能指针，它们经常使用，通常一个类前会修饰sp或者wp，这种修饰即为智能指针。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2022-11-27T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2022-11-27T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="智能指针">
+    
+      <meta property="article:section" content="2022">
+    
+      <meta property="article:section" content="November">
+    
+  
+  
+    
+      <meta property="article:tag" content="C&#43;&#43;">
+    
+      <meta property="article:tag" content="sp">
+    
+      <meta property="article:tag" content="wp">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/AndroidSmartPtr/asp_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/AndroidSmartPtr/asp_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/AndroidSmartPtr/asp_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/AndroidSmartPtr/asp_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>Android智能指针解析</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2022/11/android%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E8%A7%A3%E6%9E%90/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/AndroidSmartPtr/asp_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      Android智能指针解析
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2022-11-27T00:00:00Z">
+        
+  十一月 27, 2022
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/%e6%99%ba%e8%83%bd%e6%8c%87%e9%92%88">智能指针</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2022">2022</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/november">November</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">900 Words|Read in about 4 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>Android源码中有大量的智能指针，它们经常使用，通常一个类前会修饰sp或者wp，这种修饰即为智能指针。</p>
+<h1 id="android智能指针解析">Android智能指针解析</h1>
+<h1 id="1简介">1简介</h1>
+<p>智能指针<code>C++11</code>就存在，是为了媲美<code>java</code>的<code>JVM</code>，完全不用管对象的回收问题。</p>
+<p><code>Android</code>的智能指针，巧妙的运用<code>C++</code>的基础特性，实现对象的自动释放。</p>
+<h1 id="2智能指针原理">2智能指针原理</h1>
+<h2 id="21作用域">2.1作用域</h2>
+<h3 id="211栈空间">2.1.1栈空间</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//demo1
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">class</span> <span class="nc">Yangyang</span>
+<span class="ln"> 3</span><span class="p">{};</span>
+<span class="ln"> 4</span><span class="c1">//yangyang1的作用域开始
+</span><span class="ln"> 5</span><span class="c1"></span><span class="kt">void</span> <span class="nf">demo1</span><span class="p">()</span>
+<span class="ln"> 6</span><span class="p">{</span>
+<span class="ln"> 7</span>    <span class="n">Yangyang</span> <span class="n">yangyang1</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="c1">//yangyang2的作用域开始
+</span><span class="ln"> 9</span><span class="c1"></span>    <span class="p">{</span>
+<span class="ln">10</span>        <span class="n">Yangyang</span> <span class="n">yangyang2</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="p">}</span>
+<span class="ln">12</span>    <span class="c1">//yangyang2的作用域结束
+</span><span class="ln">13</span><span class="c1"></span><span class="p">}</span>
+<span class="ln">14</span><span class="c1">//yangyang1的作用域结束
+</span></code></pre></div><p>可以看出局部变量的作用域实际上是最近一对括号包含的范围。</p>
+<h3 id="212堆空间">2.1.2堆空间</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//demo2
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">class</span> <span class="nc">Yangyang</span>
+<span class="ln"> 3</span><span class="p">{};</span>
+<span class="ln"> 4</span>
+<span class="ln"> 5</span><span class="kt">void</span> <span class="nf">demo2</span><span class="p">()</span>
+<span class="ln"> 6</span><span class="p">{</span>
+<span class="ln"> 7</span>    <span class="n">Yangyang</span> <span class="n">stackYangyang</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="c1">//pHeapYangyang是栈空间的变量，但是指向的是堆空间变量
+</span><span class="ln"> 9</span><span class="c1"></span>    <span class="n">Yangyang</span><span class="o">*</span> <span class="n">pHeapYangyang</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Yangyang</span><span class="p">;</span>
+<span class="ln">10</span>    <span class="c1">//指向堆空间变量的栈变量需要手动释放
+</span><span class="ln">11</span><span class="c1"></span>    <span class="k">delete</span> <span class="n">pHeapYangyang</span><span class="p">;</span>
+<span class="ln">12</span>    <span class="c1">//将指向堆空间的栈变量指向nullptr，防止造成野指针
+</span><span class="ln">13</span><span class="c1"></span>    <span class="n">pHeapYangyang</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln">14</span><span class="p">}</span>
+</code></pre></div><h1 id="3源码解析">3源码解析</h1>
+<p>源码里主要用到了<code>sp</code>（强引用指针）和<code>wp</code>（弱引用指针）的智能指针，当然还有其他类似<code>LightRefBase</code>（本文不做介绍）。</p>
+<p><code>Android</code>设计了强引用<code>sp</code>和弱引用<code>wp</code>，故实际对象的释放，可分为强引用控制和弱引用控制。前者是，指的是强引用数mStrong为0时，释放实际对象；后者是，则指的是弱引用数mWeak为0时，才释放实际对象。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidSmartPtr/asp_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidSmartPtr/asp_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="31举例说明">3.1举例说明</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//demo3
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">class</span> <span class="nc">Yangyang</span> <span class="o">:</span> <span class="k">public</span> <span class="n">RefBase</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="n">Yangyang</span><span class="p">()</span> <span class="o">:</span> <span class="n">RefBase</span><span class="p">()</span>
+<span class="ln"> 5</span>    <span class="p">{</span>
+<span class="ln"> 6</span>        <span class="c1">//可以显示调用RefBase构造
+</span><span class="ln"> 7</span><span class="c1"></span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Yangyang Constructor&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="p">}</span>
+<span class="ln"> 9</span>    <span class="k">virtual</span> <span class="o">~</span><span class="n">Yangyang</span><span class="p">()</span>
+<span class="ln">10</span>    <span class="p">{</span>
+<span class="ln">11</span>        <span class="c1">//声明virtual，可以从Yangyang派生
+</span><span class="ln">12</span><span class="c1"></span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Yangyang Destructor&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">13</span>    <span class="p">}</span>
+<span class="ln">14</span><span class="p">};</span>
+<span class="ln">15</span>
+<span class="ln">16</span><span class="kt">void</span> <span class="nf">demo3</span><span class="p">()</span>
+<span class="ln">17</span><span class="p">{</span>
+<span class="ln">18</span>    <span class="c1">//new一个对象，pYangyang指向的是一个堆空间
+</span><span class="ln">19</span><span class="c1"></span>    <span class="n">Yangyang</span><span class="o">*</span> <span class="n">pYangyang</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Yangyang</span><span class="p">();</span>
+<span class="ln">20</span>    <span class="c1">//限定sp的作用域,利用sp的栈变量，spYangyang
+</span><span class="ln">21</span><span class="c1"></span>    <span class="p">{</span>
+<span class="ln">22</span>        <span class="n">sp</span><span class="o">&lt;</span><span class="n">Yangyang</span><span class="o">&gt;</span> <span class="n">spYangyang</span><span class="p">(</span><span class="n">pYangyang</span><span class="p">);</span>
+<span class="ln">23</span>        <span class="c1">//限定wp的作用域，利用wp的栈变量，wpYangyang
+</span><span class="ln">24</span><span class="c1"></span>        <span class="p">{</span>
+<span class="ln">25</span>            <span class="n">wp</span><span class="o">&lt;</span><span class="n">Yangyang</span><span class="o">&gt;</span> <span class="n">wpYangyang</span><span class="p">(</span><span class="n">pYangyang</span><span class="p">);</span>
+<span class="ln">26</span>        <span class="p">}</span>
+<span class="ln">27</span>        <span class="c1">//wpYangyang作用域结束
+</span><span class="ln">28</span><span class="c1"></span>    <span class="p">}</span>
+<span class="ln">29</span>    <span class="c1">//spYangyang作用域结束
+</span><span class="ln">30</span><span class="c1"></span><span class="p">}</span>
+</code></pre></div><p>结果显示</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="n">Yangyang</span><span class="o">::-----</span><span class="n">demo3</span><span class="o">--</span>
+<span class="ln"> 2</span><span class="n">Yangyang</span><span class="o">::</span><span class="n">Yangyang</span> <span class="n">Constructor</span> <span class="k">this</span><span class="p">(</span><span class="mh">0x21127080</span><span class="p">)</span>
+<span class="ln"> 3</span><span class="nl">Yangyang</span><span class="p">:</span><span class="n">No</span> <span class="n">refs</span><span class="p">,</span><span class="n">strong</span> <span class="n">count</span><span class="p">(</span><span class="mh">0x10000000</span><span class="p">),</span><span class="n">weak</span> <span class="n">count</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="ln"> 4</span><span class="nl">Yangyang</span><span class="p">:</span><span class="n">in</span> <span class="n">sp</span> <span class="n">scope</span> <span class="nl">Yangyang</span><span class="p">:</span><span class="n">onFirstRef</span><span class="p">,</span><span class="n">object</span><span class="p">(</span><span class="mh">0x21127080</span><span class="p">)</span>
+<span class="ln"> 5</span><span class="n">Yangyang</span><span class="o">::</span><span class="n">After</span> <span class="n">strong</span> <span class="n">ref</span><span class="p">,</span><span class="n">strong</span> <span class="n">count</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">weak</span> <span class="n">count</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln"> 6</span><span class="nl">Yangyang</span><span class="p">:</span><span class="n">in</span> <span class="n">wp</span> <span class="n">scope</span> <span class="n">Yangyang</span><span class="o">::</span><span class="n">After</span> <span class="n">weak</span> <span class="n">ref</span><span class="p">,</span><span class="n">strong</span> <span class="n">count</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="n">weak</span> <span class="n">count</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="ln"> 7</span><span class="nl">Yangyang</span><span class="p">:</span><span class="n">out</span> <span class="n">wp</span> <span class="n">scope</span> <span class="nl">Yangyang</span><span class="p">:</span><span class="n">release</span> <span class="n">weak</span> <span class="n">ref</span><span class="p">,</span><span class="n">strong</span> <span class="n">count</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="n">weak</span> <span class="n">count</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln"> 8</span><span class="n">Yangyang</span><span class="o">::</span><span class="n">out</span> <span class="n">sp</span> <span class="n">scope</span> <span class="nl">Yangyang</span><span class="p">:</span><span class="n">onLastStrongRef</span><span class="p">,</span><span class="n">id</span><span class="p">(</span><span class="mh">0x21712848</span><span class="p">)</span>
+<span class="ln"> 9</span><span class="nl">Yangyang</span><span class="p">:</span><span class="n">Yangyang</span> <span class="n">Destructor</span>  <span class="k">this</span><span class="p">(</span><span class="mh">0x21127080</span><span class="p">)</span>
+<span class="ln">10</span><span class="n">Yangyang</span><span class="o">::------</span>
+</code></pre></div><h2 id="32refbase">3.2RefBase</h2>
+<p><code>RefBase</code>构造</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libutils/RefBase.cpp
+</span><span class="ln"> 2</span><span class="c1">//INITIAL_STRONG_VALUE 0x10000000
+</span><span class="ln"> 3</span><span class="c1">//这个传入的base就是实际对象pYangyang
+</span><span class="ln"> 4</span><span class="c1">//mFlags表示是否强引用，0是强引用，1是弱引用
+</span><span class="ln"> 5</span><span class="c1"></span><span class="k">explicit</span> <span class="nf">weakref_impl</span><span class="p">(</span><span class="n">RefBase</span><span class="o">*</span> <span class="n">base</span><span class="p">)</span>
+<span class="ln"> 6</span><span class="o">:</span> <span class="n">mStrong</span><span class="p">(</span><span class="n">INITIAL_STRONG_VALUE</span><span class="p">)</span>
+<span class="ln"> 7</span>    <span class="p">,</span> <span class="n">mWeak</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="ln"> 8</span>    <span class="p">,</span> <span class="n">mBase</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+<span class="ln"> 9</span>    <span class="p">,</span> <span class="n">mFlags</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="ln">10</span><span class="p">{</span>
+<span class="ln">11</span><span class="p">}</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="c1">//这里的this指的就是Yangyang的实例化对象pYangyang
+</span><span class="ln">14</span><span class="c1"></span><span class="n">RefBase</span><span class="o">::</span><span class="n">RefBase</span><span class="p">()</span>
+<span class="ln">15</span>    <span class="o">:</span> <span class="n">mRefs</span><span class="p">(</span><span class="k">new</span> <span class="n">weakref_impl</span><span class="p">(</span><span class="k">this</span><span class="p">))</span>
+<span class="ln">16</span><span class="p">{</span>
+<span class="ln">17</span><span class="p">}</span>
+</code></pre></div><h2 id="33sp构造">3.3sp构造</h2>
+<p><code>sp</code>构造</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libutils/include/utils/StrongPointer.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kr">inline</span> <span class="nf">sp</span><span class="p">()</span> <span class="o">:</span> <span class="n">m_ptr</span><span class="p">(</span><span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span> <span class="p">}</span>
+<span class="ln"> 3</span>
+<span class="ln"> 4</span><span class="c1">//这里的T就是Yangyang类，other就是pYangyang
+</span><span class="ln"> 5</span><span class="c1">//这里的this，实际上是spYangyang栈变量的地址
+</span><span class="ln"> 6</span><span class="c1"></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="ln"> 7</span><span class="n">sp</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">sp</span><span class="p">(</span><span class="n">T</span><span class="o">*</span> <span class="n">other</span><span class="p">)</span>
+<span class="ln"> 8</span>    <span class="o">:</span> <span class="n">m_ptr</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 9</span>    <span class="k">if</span> <span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">10</span>        <span class="n">check_not_on_stack</span><span class="p">(</span><span class="n">other</span><span class="p">);</span>
+<span class="ln">11</span>        <span class="n">other</span><span class="o">-&gt;</span><span class="n">incStrong</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+<span class="ln">12</span>    <span class="p">}</span>
+<span class="ln">13</span><span class="p">}</span>
+</code></pre></div><p>因为<code>pYangyang</code>的<code>Yangyang</code>类，继承<code>RefBase</code>，所以可以找到基类<code>RefBase</code>对应的函数<code>incStrong</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libutils/RefBase.cpp
+</span><span class="ln"> 2</span><span class="c1">//这里的mRefs实际上是new weakref_impl(pYangyang)
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kt">void</span> <span class="n">RefBase</span><span class="o">::</span><span class="n">incStrong</span><span class="p">(</span><span class="k">const</span> <span class="kt">void</span><span class="o">*</span> <span class="n">id</span><span class="p">)</span> <span class="k">const</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span>    <span class="n">weakref_impl</span><span class="o">*</span> <span class="k">const</span> <span class="n">refs</span> <span class="o">=</span> <span class="n">mRefs</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="c1">//1.弱引用增加1
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="n">refs</span><span class="o">-&gt;</span><span class="n">incWeak</span><span class="p">(</span><span class="n">id</span><span class="p">);</span>
+<span class="ln"> 8</span>    
+<span class="ln"> 9</span>    <span class="n">refs</span><span class="o">-&gt;</span><span class="n">addStrongRef</span><span class="p">(</span><span class="n">id</span><span class="p">);</span>
+<span class="ln">10</span>    <span class="c1">//2-1.fetch_add操作之后，refs-&gt;mStrong=0x10000001，c=0x10000000
+</span><span class="ln">11</span><span class="c1"></span>    <span class="k">const</span> <span class="kt">int32_t</span> <span class="n">c</span> <span class="o">=</span> <span class="n">refs</span><span class="o">-&gt;</span><span class="n">mStrong</span><span class="p">.</span><span class="n">fetch_add</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+<span class="ln">12</span>    <span class="p">...</span>
+<span class="ln">13</span>	<span class="c1">//2-2.fetch_sub操作之后，refs-&gt;mStrong=1，c=0x10000001
+</span><span class="ln">14</span><span class="c1"></span>    <span class="kt">int32_t</span> <span class="n">old</span> <span class="n">__unused</span> <span class="o">=</span> <span class="n">refs</span><span class="o">-&gt;</span><span class="n">mStrong</span><span class="p">.</span><span class="n">fetch_sub</span><span class="p">(</span><span class="n">INITIAL_STRONG_VALUE</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+<span class="ln">15</span>
+<span class="ln">16</span>    <span class="c1">//3调用onFirstRef，实际上调用的是pYangyang-&gt;onFirstRef
+</span><span class="ln">17</span><span class="c1"></span>    <span class="n">refs</span><span class="o">-&gt;</span><span class="n">mBase</span><span class="o">-&gt;</span><span class="n">onFirstRef</span><span class="p">();</span>
+<span class="ln">18</span><span class="p">}</span>
+</code></pre></div><p>这里存在一些原子操作的函数<code>/system/core/libcutils/include/cutils/atomic.h</code></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">函数名</th>
+<th style="text-align:center">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"><code>android_atomic_inc</code></td>
+<td style="text-align:center">自增函数，返回值为旧值<!-- raw HTML omitted --><code>*ptr =*ptr + 1</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>android_atomic_dec</code></td>
+<td style="text-align:center">自减函数，返回值为旧值<!-- raw HTML omitted --><code>*ptr =*ptr - 1</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>android_atomic_add</code></td>
+<td style="text-align:center">加函数，返回值为旧值<!-- raw HTML omitted --><code>*ptr =*ptr + increment</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>android_atomic_and</code></td>
+<td style="text-align:center">位与函数，返回值为旧值<!-- raw HTML omitted --><code>*ptr =*ptr &amp; value</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>android_atomic_or</code></td>
+<td style="text-align:center">位或函数，返回值为旧值<!-- raw HTML omitted -->`*ptr =*ptr</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>fetch_add</code></td>
+<td style="text-align:center">自增函数，返回值为旧值。<!-- raw HTML omitted --><code>*this =*this + 1</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>fetch_sub</code></td>
+<td style="text-align:center">自减函数，返回值为旧值。<!-- raw HTML omitted --><code>*this =*this - 1</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>incWeak</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libutils/RefBase.cpp
+</span><span class="ln"> 2</span><span class="c1">//这里的this指针是上面的mRefs，类型为weakref_impl* const
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kt">void</span> <span class="n">RefBase</span><span class="o">::</span><span class="n">weakref_type</span><span class="o">::</span><span class="n">incWeak</span><span class="p">(</span><span class="k">const</span> <span class="kt">void</span><span class="o">*</span> <span class="n">id</span><span class="p">)</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span>    <span class="n">weakref_impl</span><span class="o">*</span> <span class="k">const</span> <span class="n">impl</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">weakref_impl</span><span class="o">*&gt;</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+<span class="ln"> 6</span>    <span class="n">impl</span><span class="o">-&gt;</span><span class="n">addWeakRef</span><span class="p">(</span><span class="n">id</span><span class="p">);</span>
+<span class="ln"> 7</span>    <span class="c1">//fetch_add之后，impl-&gt;mWeak=1，c=0
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="k">const</span> <span class="kt">int32_t</span> <span class="n">c</span> <span class="n">__unused</span> <span class="o">=</span> <span class="n">impl</span><span class="o">-&gt;</span><span class="n">mWeak</span><span class="p">.</span><span class="n">fetch_add</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span>
+<span class="ln"> 9</span>            <span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+<span class="ln">10</span>    <span class="n">ALOG_ASSERT</span><span class="p">(</span><span class="n">c</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#34;incWeak called on %p after last weak ref&#34;</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
+<span class="ln">11</span><span class="p">}</span>
+</code></pre></div><p>因此，<code>sp</code>构造完成后，<code>mRefs</code>的弱引用数变为1，强引用数也变为1；第一次强引用时，回调<code>onFirstRef()</code>。</p>
+<h2 id="34wp构造">3.4wp构造</h2>
+<p>弱引用构造</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//system/core/libutils/include/utils/RefBase.h
+</span><span class="ln">2</span><span class="c1">//这里的T就是Yangyang类，other就是pYangyang
+</span><span class="ln">3</span><span class="c1">//这里的this，实际上是wpYangyang栈变量的地址
+</span><span class="ln">4</span><span class="c1"></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="ln">5</span><span class="n">wp</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">wp</span><span class="p">(</span><span class="n">T</span><span class="o">*</span> <span class="n">other</span><span class="p">)</span>
+<span class="ln">6</span>    <span class="o">:</span> <span class="n">m_ptr</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+<span class="ln">7</span><span class="p">{</span>
+<span class="ln">8</span>    <span class="n">m_refs</span> <span class="o">=</span> <span class="n">other</span> <span class="o">?</span> <span class="n">m_refs</span> <span class="o">=</span> <span class="n">other</span><span class="o">-&gt;</span><span class="n">createWeak</span><span class="p">(</span><span class="k">this</span><span class="p">)</span> <span class="o">:</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln">9</span><span class="p">}</span>
+</code></pre></div><p>这里的<code>demo</code>不存在会创建对象失败的情况，所以这里的<code>wp</code>中的<code>m_refs</code>为<code>other-&gt;createWeak(this)</code>，即<code>pYangyang-&gt;createWeak(&amp;wpYangyang)</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//system/core/libutils/RefBase.cpp
+</span><span class="ln">2</span><span class="c1">//这里的返回值会返回当前的mRefs，是new weakref_impl(pYangyang)
+</span><span class="ln">3</span><span class="c1"></span><span class="n">RefBase</span><span class="o">::</span><span class="n">weakref_type</span><span class="o">*</span> <span class="n">RefBase</span><span class="o">::</span><span class="n">createWeak</span><span class="p">(</span><span class="k">const</span> <span class="kt">void</span><span class="o">*</span> <span class="n">id</span><span class="p">)</span> <span class="k">const</span>
+<span class="ln">4</span><span class="p">{</span>
+<span class="ln">5</span>    <span class="c1">//这里的mRefs就是new weakref_impl(pYangyang)
+</span><span class="ln">6</span><span class="c1"></span>    <span class="n">mRefs</span><span class="o">-&gt;</span><span class="n">incWeak</span><span class="p">(</span><span class="n">id</span><span class="p">);</span>
+<span class="ln">7</span>    <span class="k">return</span> <span class="n">mRefs</span><span class="p">;</span>
+<span class="ln">8</span><span class="p">}</span>
+</code></pre></div><p><code>incWeak</code>在3.3中已经出现过了，作用是原子操作，让<code>mRefs-&gt;mWeak</code>增加1</p>
+<p>调用<code>incWeak</code>，最终的影响是弱引用数+1。当前的<code>demo3</code>中，强引用数为1，弱引用数为2。</p>
+<blockquote>
+<p><code>RefBase</code>构造的时候，<code>mFlags</code>默认为0，即<code>OBJECT_LIFETIME_STRONG</code>，强引用控制。设置为<code>OBJECT LIFETIME WEAK</code>时，为弱引用控制。可以通过<code>extendObjectLifetime</code>函数修改</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//system/core/libutils/RefBase.cpp
+</span><span class="ln">2</span><span class="c1">//如果仅仅是弱引用，需要mFlags修改成1
+</span><span class="ln">3</span><span class="c1"></span><span class="kt">void</span> <span class="n">RefBase</span><span class="o">::</span><span class="n">extendObjectLifetime</span><span class="p">(</span><span class="kt">int32_t</span> <span class="n">mode</span><span class="p">)</span>
+<span class="ln">4</span><span class="p">{</span>
+<span class="ln">5</span>    <span class="c1">// Must be happens-before ordered with respect to construction or any
+</span><span class="ln">6</span><span class="c1"></span>    <span class="c1">// operation that could destroy the object.
+</span><span class="ln">7</span><span class="c1"></span>    <span class="n">mRefs</span><span class="o">-&gt;</span><span class="n">mFlags</span><span class="p">.</span><span class="n">fetch_or</span><span class="p">(</span><span class="n">mode</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+<span class="ln">8</span><span class="p">}</span>
+</code></pre></div></blockquote>
+<h2 id="35wp析构">3.5wp析构</h2>
+<p>当<code>wp</code>作用域结束，弱引用开始析构</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//system/core/libutils/include/utils/RefBase.h
+</span><span class="ln">2</span><span class="c1">//这里的m_ptr是pYangyang，因为还存在所以可以操作
+</span><span class="ln">3</span><span class="c1">//这里的m_refs是new weakref_impl(pYangyang)
+</span><span class="ln">4</span><span class="c1">//这里的this，实际上是wpYangyang栈变量的地址
+</span><span class="ln">5</span><span class="c1"></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="ln">6</span><span class="n">wp</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::~</span><span class="n">wp</span><span class="p">()</span>
+<span class="ln">7</span><span class="p">{</span>
+<span class="ln">8</span>    <span class="k">if</span> <span class="p">(</span><span class="n">m_ptr</span><span class="p">)</span> <span class="n">m_refs</span><span class="o">-&gt;</span><span class="n">decWeak</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+<span class="ln">9</span><span class="p">}</span>
+</code></pre></div><p>由于<code>m_refs</code>的变量是基类，<code>m_refs</code>所指向的指针是派生类，这里的<code>decWeak</code>不是<code>virtual</code>标识，只能调用基类的<code>decWeak</code>函数</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libutils/RefBase.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span> <span class="n">RefBase</span><span class="o">::</span><span class="n">weakref_type</span><span class="o">::</span><span class="n">decWeak</span><span class="p">(</span><span class="k">const</span> <span class="kt">void</span><span class="o">*</span> <span class="n">id</span><span class="p">)</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="c1">//这里的static_cast就是子父类的向下转换
+</span><span class="ln"> 5</span><span class="c1"></span>    <span class="n">weakref_impl</span><span class="o">*</span> <span class="k">const</span> <span class="n">impl</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">weakref_impl</span><span class="o">*&gt;</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+<span class="ln"> 6</span>    <span class="n">impl</span><span class="o">-&gt;</span><span class="n">removeWeakRef</span><span class="p">(</span><span class="n">id</span><span class="p">);</span>
+<span class="ln"> 7</span>    <span class="c1">//fetch_sub,mRefs-&gt;mWeak=0，c=1
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="k">const</span> <span class="kt">int32_t</span> <span class="n">c</span> <span class="o">=</span> <span class="n">impl</span><span class="o">-&gt;</span><span class="n">mWeak</span><span class="p">.</span><span class="n">fetch_sub</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_release</span><span class="p">);</span>
+<span class="ln"> 9</span>    <span class="n">atomic_thread_fence</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">);</span>
+<span class="ln">10</span>
+<span class="ln">11</span>    <span class="kt">int32_t</span> <span class="n">flags</span> <span class="o">=</span> <span class="n">impl</span><span class="o">-&gt;</span><span class="n">mFlags</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+<span class="ln">12</span>    <span class="c1">//如果是强引用
+</span><span class="ln">13</span><span class="c1"></span>    <span class="k">if</span> <span class="p">((</span><span class="n">flags</span><span class="o">&amp;</span><span class="n">OBJECT_LIFETIME_MASK</span><span class="p">)</span> <span class="o">==</span> <span class="n">OBJECT_LIFETIME_STRONG</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">14</span>        <span class="c1">//如果强引用的mStrong元素时0x10000000,那么强引用错误
+</span><span class="ln">15</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="n">impl</span><span class="o">-&gt;</span><span class="n">mStrong</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">)</span>
+<span class="ln">16</span>                <span class="o">==</span> <span class="n">INITIAL_STRONG_VALUE</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">17</span>            <span class="n">ALOGW</span><span class="p">(</span><span class="s">&#34;RefBase: Object at %p lost last weak reference &#34;</span>
+<span class="ln">18</span>                    <span class="s">&#34;before it had a strong reference&#34;</span><span class="p">,</span> <span class="n">impl</span><span class="o">-&gt;</span><span class="n">mBase</span><span class="p">);</span>
+<span class="ln">19</span>        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">20</span>            <span class="c1">//如果强引用mStrong是其他值，释放impl，这里实际上释放的是mRefs
+</span><span class="ln">21</span><span class="c1"></span>            <span class="c1">//这里不能直接释放pYangyang，可能计数还没完全减掉
+</span><span class="ln">22</span><span class="c1"></span>            <span class="k">delete</span> <span class="n">impl</span><span class="p">;</span>
+<span class="ln">23</span>        <span class="p">}</span>
+<span class="ln">24</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">25</span>        <span class="c1">//如果只是弱引用，调用onLastWeakRef，这个impl-&gt;mBase实际上是pYangyang，即pYangyang-&gt;onLastWeakRef
+</span><span class="ln">26</span><span class="c1"></span>        <span class="c1">//然后把弱引用中的impl-&gt;mBase释放，即释放的是pYangyang，会调用pYangyang的析构函数
+</span><span class="ln">27</span><span class="c1"></span>        <span class="n">impl</span><span class="o">-&gt;</span><span class="n">mBase</span><span class="o">-&gt;</span><span class="n">onLastWeakRef</span><span class="p">(</span><span class="n">id</span><span class="p">);</span>
+<span class="ln">28</span>        <span class="k">delete</span> <span class="n">impl</span><span class="o">-&gt;</span><span class="n">mBase</span><span class="p">;</span>
+<span class="ln">29</span>    <span class="p">}</span>
+<span class="ln">30</span><span class="p">}</span>
+</code></pre></div><p>wp析构，情况比较复杂</p>
+<ul>
+<li>弱引用数减1</li>
+<li>最后一次弱引用时，如果是强引用控制，释放<code>mRfs</code></li>
+<li>若没有强引用，释放实际对象<code>pYangyang</code></li>
+</ul>
+<p><code>demo3</code>来看，此时，强引用数为1，弱引用数为1，并没有任何释放</p>
+<h2 id="36sp析构">3.6sp析构</h2>
+<p>当<code>sp</code>作用域结束，强引用开始析构</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//system/core/libutils/include/utils/StrongPointer.h
+</span><span class="ln">2</span><span class="c1">//针对sp析构，m_ptr实际上是pYangyang,所以调用的是pYangyang基类RefBase的decStrong函数
+</span><span class="ln">3</span><span class="c1"></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="ln">4</span><span class="n">sp</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::~</span><span class="n">sp</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">5</span>    <span class="k">if</span> <span class="p">(</span><span class="n">m_ptr</span><span class="p">)</span>
+<span class="ln">6</span>        <span class="n">m_ptr</span><span class="o">-&gt;</span><span class="n">decStrong</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+<span class="ln">7</span><span class="p">}</span>
+</code></pre></div><p><code>decStrong</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libutils/RefBase.cpp
+</span><span class="ln"> 2</span><span class="c1">//这里的mRefs
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kt">void</span> <span class="n">RefBase</span><span class="o">::</span><span class="n">decStrong</span><span class="p">(</span><span class="k">const</span> <span class="kt">void</span><span class="o">*</span> <span class="n">id</span><span class="p">)</span> <span class="k">const</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span>    <span class="n">weakref_impl</span><span class="o">*</span> <span class="k">const</span> <span class="n">refs</span> <span class="o">=</span> <span class="n">mRefs</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="n">refs</span><span class="o">-&gt;</span><span class="n">removeStrongRef</span><span class="p">(</span><span class="n">id</span><span class="p">);</span>
+<span class="ln"> 7</span>    <span class="c1">//做减操作，mStrong=0，c=1
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="k">const</span> <span class="kt">int32_t</span> <span class="n">c</span> <span class="o">=</span> <span class="n">refs</span><span class="o">-&gt;</span><span class="n">mStrong</span><span class="p">.</span><span class="n">fetch_sub</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_release</span><span class="p">);</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span>    <span class="k">if</span> <span class="p">(</span><span class="n">c</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">11</span>        <span class="n">std</span><span class="o">::</span><span class="n">atomic_thread_fence</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">);</span>
+<span class="ln">12</span>        <span class="c1">//如果是强引用，调用onLastStrongRef，这个impl-&gt;mBase实际上是pYangyang，即pYangyang-&gt;onLastStrongRef
+</span><span class="ln">13</span><span class="c1"></span>        <span class="n">refs</span><span class="o">-&gt;</span><span class="n">mBase</span><span class="o">-&gt;</span><span class="n">onLastStrongRef</span><span class="p">(</span><span class="n">id</span><span class="p">);</span>
+<span class="ln">14</span>        <span class="kt">int32_t</span> <span class="n">flags</span> <span class="o">=</span> <span class="n">refs</span><span class="o">-&gt;</span><span class="n">mFlags</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+<span class="ln">15</span>        <span class="c1">//如果是强引用
+</span><span class="ln">16</span><span class="c1"></span>        <span class="k">if</span> <span class="p">((</span><span class="n">flags</span><span class="o">&amp;</span><span class="n">OBJECT_LIFETIME_MASK</span><span class="p">)</span> <span class="o">==</span> <span class="n">OBJECT_LIFETIME_STRONG</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">17</span>            <span class="c1">//这里的this指的是m_ptr，指向的是pYangyang，释放pYangyang，并调用其析构
+</span><span class="ln">18</span><span class="c1"></span>            <span class="k">delete</span> <span class="k">this</span><span class="p">;</span>
+<span class="ln">19</span>        <span class="p">}</span>
+<span class="ln">20</span>    <span class="p">}</span>
+<span class="ln">21</span>	<span class="c1">//做减操作，mWeak=0，c=1
+</span><span class="ln">22</span><span class="c1"></span>    <span class="n">refs</span><span class="o">-&gt;</span><span class="n">decWeak</span><span class="p">(</span><span class="n">id</span><span class="p">);</span>
+<span class="ln">23</span><span class="p">}</span>
+</code></pre></div><h2 id="37refbase析构">3.7RefBase析构</h2>
+<p>析构完实际对象pYangyang之后，基类也同步析构</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libutils/RefBase.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">RefBase</span><span class="o">::~</span><span class="n">RefBase</span><span class="p">()</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="kt">int32_t</span> <span class="n">flags</span> <span class="o">=</span> <span class="n">mRefs</span><span class="o">-&gt;</span><span class="n">mFlags</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+<span class="ln"> 5</span>	<span class="c1">//如果是弱引用
+</span><span class="ln"> 6</span><span class="c1"></span>    <span class="k">if</span> <span class="p">((</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">OBJECT_LIFETIME_MASK</span><span class="p">)</span> <span class="o">==</span> <span class="n">OBJECT_LIFETIME_WEAK</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 7</span>        <span class="c1">//弱引用计算为0，那么就把mRefs释放
+</span><span class="ln"> 8</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="n">mRefs</span><span class="o">-&gt;</span><span class="n">mWeak</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 9</span>            <span class="k">delete</span> <span class="n">mRefs</span><span class="p">;</span>
+<span class="ln">10</span>        <span class="p">}</span>
+<span class="ln">11</span>    <span class="p">}</span> <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">mRefs</span><span class="o">-&gt;</span><span class="n">mStrong</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">)</span> <span class="o">==</span> <span class="n">INITIAL_STRONG_VALUE</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">12</span>        <span class="c1">//如果mStrong是0x10000000，会有RefBase相关的堆栈
+</span><span class="ln">13</span><span class="c1"></span>        <span class="n">ALOGD</span><span class="p">(</span><span class="s">&#34;RefBase: Explicit destruction, weak count = %d (in %p)&#34;</span><span class="p">,</span> <span class="n">mRefs</span><span class="o">-&gt;</span><span class="n">mWeak</span><span class="p">.</span><span class="n">load</span><span class="p">(),</span> <span class="k">this</span><span class="p">);</span>
+<span class="ln">14</span>        <span class="n">CallStack</span><span class="o">::</span><span class="n">logStack</span><span class="p">(</span><span class="n">LOG_TAG</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="p">}</span>
+<span class="ln">16</span>    <span class="c1">//清除mRefs。对未完成的wp无效
+</span><span class="ln">17</span><span class="c1"></span>    <span class="k">const_cast</span><span class="o">&lt;</span><span class="n">weakref_impl</span><span class="o">*&amp;&gt;</span><span class="p">(</span><span class="n">mRefs</span><span class="p">)</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln">18</span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidSmartPtr/asp_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidSmartPtr/asp_2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="38总结">3.8总结</h2>
+<p>1）仅有sp的时候（绿色是构造，红色是析构）</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidSmartPtr/asp_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidSmartPtr/asp_3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>2）仅有wp的时候（绿色是构造，红色是析构）</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidSmartPtr/asp_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidSmartPtr/asp_4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>3）有sp和wp的时候（绿色是构造，红色是析构）</p>
+<h1 id="4智能指针使用">4智能指针使用</h1>
+<p>源码中大量使用<code>sp</code>和<code>wp</code>，而且用于很广泛，也无需考虑是否足要去释放</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//frameworks/av/services/camera/libcameraservice/CameraService.cpp
+</span><span class="ln">2</span><span class="c1"></span><span class="kt">void</span> <span class="n">CameraService</span><span class="o">::</span><span class="n">updateProxyDeviceState</span><span class="p">(</span><span class="kt">int</span> <span class="n">newState</span><span class="p">,</span>
+<span class="ln">3</span>        <span class="k">const</span> <span class="n">String8</span><span class="o">&amp;</span> <span class="n">cameraId</span><span class="p">,</span> <span class="kt">int</span> <span class="n">facing</span><span class="p">,</span> <span class="k">const</span> <span class="n">String16</span><span class="o">&amp;</span> <span class="n">clientName</span><span class="p">,</span> <span class="kt">int</span> <span class="n">apiLevel</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">4</span>    <span class="n">sp</span><span class="o">&lt;</span><span class="n">ICameraServiceProxy</span><span class="o">&gt;</span> <span class="n">proxyBinder</span> <span class="o">=</span> <span class="n">getCameraServiceProxy</span><span class="p">();</span>
+<span class="ln">5</span>    <span class="k">if</span> <span class="p">(</span><span class="n">proxyBinder</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+<span class="ln">6</span>    <span class="n">String16</span> <span class="nf">id</span><span class="p">(</span><span class="n">cameraId</span><span class="p">);</span>
+<span class="ln">7</span>    <span class="n">proxyBinder</span><span class="o">-&gt;</span><span class="n">notifyCameraState</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="n">newState</span><span class="p">,</span> <span class="n">facing</span><span class="p">,</span> <span class="n">clientName</span><span class="p">,</span> <span class="n">apiLevel</span><span class="p">);</span>
+<span class="ln">8</span><span class="p">}</span>
+</code></pre></div><p>上面以<code>CameraService</code>中的<code>ICameraServiceProxy</code>为例，这里的<code>proxyBinder</code>是一个栈变量，但是后面的<code>proxyBinder-&gt;notifyCameraState</code>，就直接将其当做一个指针使用。</p>
+<p>这其实是正确的的，并不是乱写，一切都有迹可循</p>
+<p>1）<code>ICameraServiceProxy</code>继承于<code>RefBase</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span>
+</code></pre></div><p>2）<code>proxyBinder-&gt;notifyCameraState</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//system/core/libutils/include/utils/StrongPointer.h
+</span><span class="ln">2</span><span class="c1">//proxyBinder-&gt;notifyCameraState转化为proxyBinder.operator-&gt;()-&gt;notifyCameraState,proxyBinder-&gt;()返回的是m_ptr，m_ptr指向ICameraServiceProxy的实例化对象，即ICameraServiceProxy的实例化对象的notifyCameraState调用
+</span><span class="ln">3</span><span class="c1"></span><span class="kr">inline</span> <span class="n">T</span><span class="o">*</span>       <span class="k">operator</span><span class="o">-&gt;</span> <span class="p">()</span> <span class="k">const</span>    <span class="p">{</span> <span class="k">return</span> <span class="n">m_ptr</span><span class="p">;</span>  <span class="p">}</span>
+</code></pre></div><blockquote>
+<p>关于为什么关于'-&gt;&lsquo;运算符的重载会有.operator-&gt;()的解释，具体可以点击<a href="https://blog.csdn.net/zzl_python/article/details/83243353">这里</a></p>
+<p>这里就涉及到C++标准对<code>-&gt;</code>运算符的语义解释</p>
+<p>因为运算符的结合律不同，解引用（*）是<strong>向右结合</strong>的，而 成员访问运算符（<code>.</code>和<code>-&gt;</code>）是<strong>向左结合</strong>的。这是不同符号的结合律不同的例子，C++ 里符号相同的时候也会有用法不同导致结合律不同的例子。例如：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">运算符</th>
+<th style="text-align:center">向左结合</th>
+<th style="text-align:center">向右结合</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center"><code>lhs op rhs  /  lhs op</code></td>
+<td style="text-align:center"><code>op rhs</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>++</code> <code>--</code></td>
+<td style="text-align:center">后缀递增/递减</td>
+<td style="text-align:center">前缀递增/递减</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>+</code> <code>-</code></td>
+<td style="text-align:center">二进制加法/减法</td>
+<td style="text-align:center">一元加号/减号</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>*</code></td>
+<td style="text-align:center">二进制乘法</td>
+<td style="text-align:center">解引用</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>&amp;</code></td>
+<td style="text-align:center">按位与</td>
+<td style="text-align:center">取地址</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>()</code></td>
+<td style="text-align:center">函数调用</td>
+<td style="text-align:center">类型转换</td>
+</tr>
+</tbody>
+</table>
+<p>当你重载一个左结合律的操作符时（如<code>+ - * / ()</code>等），往往这个操作符是个二元操作符，对于<code>lhs op rhs</code>，就会调用<code>lhs.operator op(rhs)</code>或<code>operator op(lhs, rhs)</code>，我们只需要按照这个函数签名来重载操作符就行了。</p>
+<p>但是，如果这个操作符是一元操作符怎么办？这就要分情况讨论了：</p>
+<p>1）如果这个符号有一种以上的用法（比如<code>++</code>或<code>--</code>），对于<code>lhs op</code>（左结合）和<code>op rhs</code>（右结合），我们得想个办法区分不同的用法啊，所以就会出现用于占位的函数参数（<code>int</code>）：</p>
+<ul>
+<li>对于<code>lhs op</code>调用<code>lhs.operator op(int)</code></li>
+<li>对于<code>op rhs</code>调用<code>rhs.operator op()</code></li>
+</ul>
+<p>2）如果这个符号只有一种用法（比如<code>-&gt;</code>），对于<code>lhs op</code>，那就不需要用于占位的函数参数了，可以直接写成类似右结合的函数签名，即</p>
+<ul>
+<li>对于<code>lhs op</code>调用<code>lhs.operator op()</code></li>
+</ul>
+<p>这是由 C++ 标准规定的，对于<code>ptr-&gt;mem</code>根据<code>ptr</code>类型的不同，操作符<code>-&gt;</code>的解释也不同：</p>
+<ul>
+<li>当<code>ptr</code>的类型是内置指针类型时，等价于<code>(*ptr).mem</code></li>
+<li>当<code>ptr</code>的类型是类时，等价于<code>ptr.operator-&gt;()-&gt;mem</code></li>
+</ul>
+<p>你会发现这是一个递归的解释，对于<code>ptr-&gt;mem</code>会递归成：</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">ptr</span><span class="p">.</span><span class="k">operator</span><span class="o">-&gt;</span><span class="p">().</span><span class="k">operator</span><span class="o">-&gt;</span><span class="p">().</span><span class="err">…</span><span class="p">.</span><span class="k">operator</span><span class="o">-&gt;</span><span class="p">())).</span><span class="n">mem</span>
+</code></pre></div><p>操作符<code>-&gt;</code>是一元的，而操作符<code>.</code>是二元的。操作符<code>-&gt;</code>最终是通过操作符<code>.</code>来访问成员的，而<code>.</code>这个操作符是不允许重载的，只能由编译器实现。</p>
+</blockquote>
+<h1 id="源码下载">源码下载</h1>
+<p><a href="https://github.com/YangYang48/project/tree/master/sp_wp">sp_wp源码</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/c&#43;&#43;/">C&#43;&#43;</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/sp/">sp</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/wp/">wp</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/11/%E5%B9%BF%E5%BA%A6%E4%BC%98%E5%85%88%E6%90%9C%E7%B4%A2/" data-tooltip="广度优先搜索">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2022 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/11/%E5%B9%BF%E5%BA%A6%E4%BC%98%E5%85%88%E6%90%9C%E7%B4%A2/" data-tooltip="广度优先搜索">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2022%2F11%2Fandroid%25E6%2599%25BA%25E8%2583%25BD%25E6%258C%2587%25E9%2592%2588%25E8%25A7%25A3%25E6%259E%2590%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2022%2F11%2Fandroid%25E6%2599%25BA%25E8%2583%25BD%25E6%258C%2587%25E9%2592%2588%25E8%25A7%25A3%25E6%259E%2590%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2022%2F11%2Fandroid%25E6%2599%25BA%25E8%2583%25BD%25E6%258C%2587%25E9%2592%2588%25E8%25A7%25A3%25E6%259E%2590%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2022\/11\/android%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E8%A7%A3%E6%9E%90\/';
+          
+            this.page.identifier = '\/2022\/11\/android%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E8%A7%A3%E6%9E%90\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
