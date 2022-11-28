@@ -42,9 +42,17 @@
     
       <meta property="article:tag" content="C&#43;&#43;">
     
+      <meta property="article:tag" content="Java">
+    
       <meta property="article:tag" content="sp">
     
       <meta property="article:tag" content="wp">
+    
+      <meta property="article:tag" content="Binder">
+    
+      <meta property="article:tag" content="aidl">
+    
+      <meta property="article:tag" content="运算符重载">
     
   
 
@@ -272,7 +280,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">900 Words|Read in about 4 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">1200 Words|Read in about 6 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -721,18 +729,64 @@
 <p>3）有sp和wp的时候（绿色是构造，红色是析构）</p>
 <h1 id="4智能指针使用">4智能指针使用</h1>
 <p>源码中大量使用<code>sp</code>和<code>wp</code>，而且用于很广泛，也无需考虑是否足要去释放</p>
-<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//frameworks/av/services/camera/libcameraservice/CameraService.cpp
-</span><span class="ln">2</span><span class="c1"></span><span class="kt">void</span> <span class="n">CameraService</span><span class="o">::</span><span class="n">updateProxyDeviceState</span><span class="p">(</span><span class="kt">int</span> <span class="n">newState</span><span class="p">,</span>
-<span class="ln">3</span>        <span class="k">const</span> <span class="n">String8</span><span class="o">&amp;</span> <span class="n">cameraId</span><span class="p">,</span> <span class="kt">int</span> <span class="n">facing</span><span class="p">,</span> <span class="k">const</span> <span class="n">String16</span><span class="o">&amp;</span> <span class="n">clientName</span><span class="p">,</span> <span class="kt">int</span> <span class="n">apiLevel</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln">4</span>    <span class="n">sp</span><span class="o">&lt;</span><span class="n">ICameraServiceProxy</span><span class="o">&gt;</span> <span class="n">proxyBinder</span> <span class="o">=</span> <span class="n">getCameraServiceProxy</span><span class="p">();</span>
-<span class="ln">5</span>    <span class="k">if</span> <span class="p">(</span><span class="n">proxyBinder</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
-<span class="ln">6</span>    <span class="n">String16</span> <span class="nf">id</span><span class="p">(</span><span class="n">cameraId</span><span class="p">);</span>
-<span class="ln">7</span>    <span class="n">proxyBinder</span><span class="o">-&gt;</span><span class="n">notifyCameraState</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="n">newState</span><span class="p">,</span> <span class="n">facing</span><span class="p">,</span> <span class="n">clientName</span><span class="p">,</span> <span class="n">apiLevel</span><span class="p">);</span>
-<span class="ln">8</span><span class="p">}</span>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/av/services/camera/libcameraservice/CameraService.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span> <span class="n">CameraService</span><span class="o">::</span><span class="n">updateProxyDeviceState</span><span class="p">(</span><span class="kt">int</span> <span class="n">newState</span><span class="p">,</span>
+<span class="ln"> 3</span>        <span class="k">const</span> <span class="n">String8</span><span class="o">&amp;</span> <span class="n">cameraId</span><span class="p">,</span> <span class="kt">int</span> <span class="n">facing</span><span class="p">,</span> <span class="k">const</span> <span class="n">String16</span><span class="o">&amp;</span> <span class="n">clientName</span><span class="p">,</span> <span class="kt">int</span> <span class="n">apiLevel</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="n">sp</span><span class="o">&lt;</span><span class="n">ICameraServiceProxy</span><span class="o">&gt;</span> <span class="n">proxyBinder</span> <span class="o">=</span> <span class="n">getCameraServiceProxy</span><span class="p">();</span>
+<span class="ln"> 5</span>    <span class="k">if</span> <span class="p">(</span><span class="n">proxyBinder</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="n">String16</span> <span class="nf">id</span><span class="p">(</span><span class="n">cameraId</span><span class="p">);</span>
+<span class="ln"> 7</span>    <span class="n">proxyBinder</span><span class="o">-&gt;</span><span class="n">notifyCameraState</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="n">newState</span><span class="p">,</span> <span class="n">facing</span><span class="p">,</span> <span class="n">clientName</span><span class="p">,</span> <span class="n">apiLevel</span><span class="p">);</span>
+<span class="ln"> 8</span><span class="p">}</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span><span class="n">sp</span><span class="o">&lt;</span><span class="n">ICameraServiceProxy</span><span class="o">&gt;</span> <span class="n">CameraService</span><span class="o">::</span><span class="n">getCameraServiceProxy</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">11</span><span class="cp">#ifndef __BRILLO__
+</span><span class="ln">12</span><span class="cp"></span>    <span class="n">Mutex</span><span class="o">::</span><span class="n">Autolock</span> <span class="n">al</span><span class="p">(</span><span class="n">sProxyMutex</span><span class="p">);</span>
+<span class="ln">13</span>    <span class="k">if</span> <span class="p">(</span><span class="n">sCameraServiceProxy</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">14</span>        <span class="c1">//这里拿到ServiceManager的代理对象，即defaultServiceManager返回的是BpServiceManager
+</span><span class="ln">15</span><span class="c1"></span>        <span class="n">sp</span><span class="o">&lt;</span><span class="n">IServiceManager</span><span class="o">&gt;</span> <span class="n">sm</span> <span class="o">=</span> <span class="n">defaultServiceManager</span><span class="p">();</span>
+<span class="ln">16</span>        <span class="c1">//这里的checkService和getService类似，查找注册服务，前者是非阻塞，后者是阻塞的
+</span><span class="ln">17</span><span class="c1"></span>        <span class="n">sp</span><span class="o">&lt;</span><span class="n">IBinder</span><span class="o">&gt;</span> <span class="n">binder</span> <span class="o">=</span> <span class="n">sm</span><span class="o">-&gt;</span><span class="n">checkService</span><span class="p">(</span><span class="n">String16</span><span class="p">(</span><span class="s">&#34;media.camera.proxy&#34;</span><span class="p">));</span>
+<span class="ln">18</span>        <span class="k">if</span> <span class="p">(</span><span class="n">binder</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">19</span>            <span class="c1">//interface_cast会调用ICameraServiceProxy::asInterface(binder);
+</span><span class="ln">20</span><span class="c1"></span>            <span class="c1">//asInterface又是在IInterface.h中定义的一个宏
+</span><span class="ln">21</span><span class="c1"></span>            <span class="c1">//DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_INTERFACE(INTERFACE, NAME)
+</span><span class="ln">22</span><span class="c1"></span>            <span class="n">sCameraServiceProxy</span> <span class="o">=</span> <span class="n">interface_cast</span><span class="o">&lt;</span><span class="n">ICameraServiceProxy</span><span class="o">&gt;</span><span class="p">(</span><span class="n">binder</span><span class="p">);</span>
+<span class="ln">23</span>        <span class="p">}</span>
+<span class="ln">24</span>    <span class="p">}</span>
+<span class="ln">25</span><span class="cp">#endif
+</span><span class="ln">26</span><span class="cp"></span>    <span class="k">return</span> <span class="n">sCameraServiceProxy</span><span class="p">;</span>
+<span class="ln">27</span><span class="p">}</span>
 </code></pre></div><p>上面以<code>CameraService</code>中的<code>ICameraServiceProxy</code>为例，这里的<code>proxyBinder</code>是一个栈变量，但是后面的<code>proxyBinder-&gt;notifyCameraState</code>，就直接将其当做一个指针使用。</p>
 <p>这其实是正确的的，并不是乱写，一切都有迹可循</p>
-<p>1）<code>ICameraServiceProxy</code>继承于<code>RefBase</code></p>
-<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span>
+<p>1）<code>ICameraServiceProxy</code>间接继承于<code>RefBase</code>，其中<code>ICameraServiceProxy</code>继承<code>IInterface</code>，<code>IInterface</code>继承<code>RefBase</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//path:out/soong/.intermediates/frameworks/av/camera/libcamera_client/xxx/gen/aidl/android/hardware/
+</span><span class="ln"> 2</span><span class="c1">//file:ICameraServiceProxy.h
+</span><span class="ln"> 3</span><span class="c1">//file:BpCameraServiceProxy.h
+</span><span class="ln"> 4</span><span class="c1">//file:BnCameraServiceProxy.h
+</span><span class="ln"> 5</span><span class="c1">//其中这里是ICameraServiceProxy.h
+</span><span class="ln"> 6</span><span class="c1">//这里声明了一个宏，正好对应上面的ICameraServiceProxy::asInterface
+</span><span class="ln"> 7</span><span class="c1">//这个宏展开
+</span><span class="ln"> 8</span><span class="c1"></span><span class="cm">/*
+</span><span class="ln"> 9</span><span class="cm">//这个传入的obj可知道是代理客户端的IBinder
+</span><span class="ln">10</span><span class="cm">::android::sp&lt;ICameraServiceProxy&gt; ICameraServiceProxy::asInterface(
+</span><span class="ln">11</span><span class="cm">        const ::android::sp&lt;::android::IBinder&gt;&amp; obj)
+</span><span class="ln">12</span><span class="cm">{
+</span><span class="ln">13</span><span class="cm">    ::android::sp&lt;ICameraServiceProxy&gt; intr;
+</span><span class="ln">14</span><span class="cm">    if (obj != nullptr) {
+</span><span class="ln">15</span><span class="cm">        intr = static_cast&lt;ICameraServiceProxy*&gt;(
+</span><span class="ln">16</span><span class="cm">        	//这里代理客户端的queryLocalInterface返回结果为nullptr
+</span><span class="ln">17</span><span class="cm">            obj-&gt;queryLocalInterface(
+</span><span class="ln">18</span><span class="cm">                    ICameraServiceProxy::descriptor).get());
+</span><span class="ln">19</span><span class="cm">        if (intr == nullptr) {
+</span><span class="ln">20</span><span class="cm">            intr = new BpCameraServiceProxy(obj);
+</span><span class="ln">21</span><span class="cm">        }
+</span><span class="ln">22</span><span class="cm">    }
+</span><span class="ln">23</span><span class="cm">    return intr;
+</span><span class="ln">24</span><span class="cm">}
+</span><span class="ln">25</span><span class="cm">*/</span>
+<span class="ln">26</span><span class="n">DO_NOT_DIRECTLY_USE_ME_IMPLEMENT_META_INTERFACE</span><span class="p">(</span><span class="s">&#34;CameraServiceProxy&#34;</span><span class="p">,</span> <span class="s">&#34;android.hardware.ICameraServiceProxy&#34;</span><span class="p">)</span>
+<span class="ln">27</span><span class="k">class</span> <span class="nc">ICameraServiceProxy</span> <span class="o">:</span> <span class="k">public</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">IInterface</span>
+<span class="ln">28</span><span class="p">{...};</span>
 </code></pre></div><p>2）<code>proxyBinder-&gt;notifyCameraState</code></p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//system/core/libutils/include/utils/StrongPointer.h
 </span><span class="ln">2</span><span class="c1">//proxyBinder-&gt;notifyCameraState转化为proxyBinder.operator-&gt;()-&gt;notifyCameraState,proxyBinder-&gt;()返回的是m_ptr，m_ptr指向ICameraServiceProxy的实例化对象，即ICameraServiceProxy的实例化对象的notifyCameraState调用
@@ -802,6 +856,139 @@
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">ptr</span><span class="p">.</span><span class="k">operator</span><span class="o">-&gt;</span><span class="p">().</span><span class="k">operator</span><span class="o">-&gt;</span><span class="p">().</span><span class="err">…</span><span class="p">.</span><span class="k">operator</span><span class="o">-&gt;</span><span class="p">())).</span><span class="n">mem</span>
 </code></pre></div><p>操作符<code>-&gt;</code>是一元的，而操作符<code>.</code>是二元的。操作符<code>-&gt;</code>最终是通过操作符<code>.</code>来访问成员的，而<code>.</code>这个操作符是不允许重载的，只能由编译器实现。</p>
 </blockquote>
+<p>3）服务端实现，可以发现<code>sp</code>调用的客户端可以通过<code>Binder</code>调用到这里，即<code>C++</code>端为客户端，<code>Java</code>端为服务端</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/base/services/core/java/com/android/server/camera/CameraServiceProxy.java
+</span><span class="ln"> 2</span><span class="c1">//ICameraServiceProxy.Stub()这个是匿名内部类的方式继承来最终实现
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kd">private</span> <span class="kd">final</span> <span class="n">ICameraServiceProxy</span><span class="o">.</span><span class="na">Stub</span> <span class="n">mCameraServiceProxy</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ICameraServiceProxy</span><span class="o">.</span><span class="na">Stub</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 4</span>    <span class="nd">@Override</span>
+<span class="ln"> 5</span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">pingForUserUpdate</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 6</span>        <span class="k">if</span> <span class="o">(</span><span class="n">Binder</span><span class="o">.</span><span class="na">getCallingUid</span><span class="o">()</span> <span class="o">!=</span> <span class="n">Process</span><span class="o">.</span><span class="na">CAMERASERVER_UID</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 7</span>            <span class="n">Slog</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;Calling UID: &#34;</span> <span class="o">+</span> <span class="n">Binder</span><span class="o">.</span><span class="na">getCallingUid</span><span class="o">()</span> <span class="o">+</span> <span class="s">&#34; doesn&#39;t match expected &#34;</span> <span class="o">+</span>
+<span class="ln"> 8</span>                   <span class="s">&#34; camera service UID!&#34;</span><span class="o">);</span>
+<span class="ln"> 9</span>            <span class="k">return</span><span class="o">;</span>
+<span class="ln">10</span>        <span class="o">}</span>
+<span class="ln">11</span>        <span class="n">notifySwitchWithRetries</span><span class="o">(</span><span class="n">RETRY_TIMES</span><span class="o">);</span>
+<span class="ln">12</span>    <span class="o">}</span>
+<span class="ln">13</span>
+<span class="ln">14</span>    <span class="nd">@Override</span>
+<span class="ln">15</span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">notifyCameraState</span><span class="o">(</span><span class="n">String</span> <span class="n">cameraId</span><span class="o">,</span> <span class="kt">int</span> <span class="n">newCameraState</span><span class="o">,</span> <span class="kt">int</span> <span class="n">facing</span><span class="o">,</span>
+<span class="ln">16</span>                                  <span class="n">String</span> <span class="n">clientName</span><span class="o">,</span> <span class="kt">int</span> <span class="n">apiLevel</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">17</span>        <span class="k">if</span> <span class="o">(</span><span class="n">Binder</span><span class="o">.</span><span class="na">getCallingUid</span><span class="o">()</span> <span class="o">!=</span> <span class="n">Process</span><span class="o">.</span><span class="na">CAMERASERVER_UID</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">18</span>            <span class="n">Slog</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;Calling UID: &#34;</span> <span class="o">+</span> <span class="n">Binder</span><span class="o">.</span><span class="na">getCallingUid</span><span class="o">()</span> <span class="o">+</span> <span class="s">&#34; doesn&#39;t match expected &#34;</span> <span class="o">+</span>
+<span class="ln">19</span>                   <span class="s">&#34; camera service UID!&#34;</span><span class="o">);</span>
+<span class="ln">20</span>            <span class="k">return</span><span class="o">;</span>
+<span class="ln">21</span>        <span class="o">}</span>
+<span class="ln">22</span>        <span class="n">String</span> <span class="n">state</span> <span class="o">=</span> <span class="n">cameraStateToString</span><span class="o">(</span><span class="n">newCameraState</span><span class="o">);</span>
+<span class="ln">23</span>        <span class="n">String</span> <span class="n">facingStr</span> <span class="o">=</span> <span class="n">cameraFacingToString</span><span class="o">(</span><span class="n">facing</span><span class="o">);</span>
+<span class="ln">24</span>        <span class="k">if</span> <span class="o">(</span><span class="n">DEBUG</span><span class="o">)</span> <span class="n">Slog</span><span class="o">.</span><span class="na">v</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;Camera &#34;</span> <span class="o">+</span> <span class="n">cameraId</span> <span class="o">+</span> <span class="s">&#34; facing &#34;</span> <span class="o">+</span> <span class="n">facingStr</span> <span class="o">+</span> <span class="s">&#34; state now &#34;</span> <span class="o">+</span>
+<span class="ln">25</span>                          <span class="n">state</span> <span class="o">+</span> <span class="s">&#34; for client &#34;</span> <span class="o">+</span> <span class="n">clientName</span> <span class="o">+</span> <span class="s">&#34; API Level &#34;</span> <span class="o">+</span> <span class="n">apiLevel</span><span class="o">);</span>
+<span class="ln">26</span>
+<span class="ln">27</span>        <span class="n">updateActivityCount</span><span class="o">(</span><span class="n">cameraId</span><span class="o">,</span> <span class="n">newCameraState</span><span class="o">,</span> <span class="n">facing</span><span class="o">,</span> <span class="n">clientName</span><span class="o">,</span> <span class="n">apiLevel</span><span class="o">);</span>
+<span class="ln">28</span>    <span class="o">}</span>
+<span class="ln">29</span><span class="o">};</span>
+</code></pre></div><blockquote>
+<p>补充说明：<code>C++</code>端代理调用和<code>Java</code>端代理调用</p>
+<ul>
+<li>
+<p><code>Java</code>端代理调用</p>
+<p>通过<code>AIDL</code>的方式，系统会生成一个<code>ICameraServiceProxy.java</code>文件，其中类图关系如下。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidSmartPtr/asp_6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidSmartPtr/asp_6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>调用方式</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//1）调用asInterface
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">ICameraServiceProxy</span><span class="o">.</span><span class="na">Stub</span><span class="o">.</span><span class="na">asInterface</span><span class="o">(</span><span class="n">binder</span><span class="o">);</span>
+<span class="ln"> 3</span><span class="c1">//2)判断是否是跨进程通信，如果不是返回null，如果是实例化一个代理类对象
+</span><span class="ln"> 4</span><span class="c1"></span><span class="n">mCameraServiceProxy</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ICameraServiceProxy</span><span class="o">.</span><span class="na">Stub</span><span class="o">.</span><span class="na">Proxy</span><span class="o">(</span><span class="n">binder</span><span class="o">);</span>
+<span class="ln"> 5</span><span class="c1">//3)根据对象调用
+</span><span class="ln"> 6</span><span class="c1"></span><span class="n">mCameraServiceProxy</span><span class="o">.</span><span class="na">pingForUserUpdate</span><span class="o">();</span>
+<span class="ln"> 7</span><span class="c1">//4)找到Proxy中的对应的方法，传递数据则用该方法中的transact
+</span><span class="ln"> 8</span><span class="c1"></span><span class="n">ICameraServiceProxy</span><span class="o">.</span><span class="na">Stub</span><span class="o">.</span><span class="na">Proxy</span><span class="o">.</span><span class="na">pingForUserUpdate</span><span class="err">#</span><span class="n">transact</span><span class="o">;</span>
+<span class="ln"> 9</span><span class="c1">//5)找到Stub中的onTransact中的方法
+</span><span class="ln">10</span><span class="c1"></span><span class="n">ICameraServiceProxy</span><span class="o">.</span><span class="na">Stub</span><span class="o">.</span><span class="na">Proxy</span><span class="o">.</span><span class="na">pingForUserUpdate</span><span class="err">#</span><span class="n">onTransact</span><span class="o">;</span>
+<span class="ln">11</span><span class="c1">//6)服务端实现ICameraServiceProxy.Stub接口，找到onTransact对应的pingForUserUpdate方法
+</span><span class="ln">12</span><span class="c1"></span><span class="k">new</span> <span class="n">ICameraServiceProxy</span><span class="o">.</span><span class="na">Stub</span><span class="o">(){...</span><span class="nd">@Override</span> <span class="kd">public</span> <span class="kt">void</span> <span class="nf">pingForUserUpdate</span><span class="o">()</span> <span class="o">{}</span> <span class="o">}</span>
+</code></pre></div></li>
+<li>
+<p><code>C++</code>端代理调用</p>
+<p>通过<code>AIDL</code>的方式，系统会生成对应的四个文件，分别为<code>ICameraServiceProxy.h</code>,<code>BpCameraServiceProxy.h</code>,<code>BnCameraServiceProxy.h</code>,<code>ICameraServiceProxy.cpp</code>，具体的类图关系如下所示。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidSmartPtr/asp_5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidSmartPtr/asp_5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>调用方式</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//1)defaultServiceManager返回一个BpServiceManager
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">sp</span><span class="o">&lt;</span><span class="n">IServiceManager</span><span class="o">&gt;</span> <span class="n">sm</span> <span class="o">=</span> <span class="n">defaultServiceManager</span><span class="p">();</span>
+<span class="ln"> 3</span><span class="c1">//2)找到对应service的IBinder，这里的IBinder是代理客户端的
+</span><span class="ln"> 4</span><span class="c1"></span><span class="n">sp</span><span class="o">&lt;</span><span class="n">IBinder</span><span class="o">&gt;</span> <span class="n">binder</span> <span class="o">=</span> <span class="n">sm</span><span class="o">-&gt;</span><span class="n">checkService</span><span class="p">(</span><span class="n">String16</span><span class="p">(</span><span class="s">&#34;media.camera.proxy&#34;</span><span class="p">));</span>
+<span class="ln"> 5</span><span class="c1">//3)实例化一个代理类
+</span><span class="ln"> 6</span><span class="c1">//interface_cast&lt;ICameraServiceProxy&gt;(binder)转化为ICameraServiceProxy::asInterface(binder)
+</span><span class="ln"> 7</span><span class="c1">//asInterface调用到BpBinder中的queryLocalInterface，返回nullptr
+</span><span class="ln"> 8</span><span class="c1">///asInterface最后返回代理客户端的BpCameraServiceProxy实例化对象
+</span><span class="ln"> 9</span><span class="c1"></span><span class="n">sCameraServiceProxy</span> <span class="o">=</span> <span class="n">interface_cast</span><span class="o">&lt;</span><span class="n">ICameraServiceProxy</span><span class="o">&gt;</span><span class="p">(</span><span class="n">binder</span><span class="p">);</span>
+<span class="ln">10</span><span class="c1">//4)根据对象调用
+</span><span class="ln">11</span><span class="c1"></span><span class="n">sCameraServiceProxy</span><span class="o">-&gt;</span><span class="n">pingForUserUpdate</span><span class="p">();</span>
+<span class="ln">12</span><span class="c1">//5)调用到BpCameraServiceProxy.h中的函数，传递数据则用该方法中的transact
+</span><span class="ln">13</span><span class="c1"></span><span class="n">BpCameraServiceProxy</span><span class="o">::</span><span class="n">transact</span><span class="p">;</span>
+<span class="ln">14</span><span class="c1">//6)BnCameraServiceProxy.h中的中的onTransact中的方法
+</span><span class="ln">15</span><span class="c1"></span><span class="n">BnCameraServiceProxy</span><span class="o">::</span><span class="n">onTransact</span><span class="p">;</span>
+<span class="ln">16</span><span class="c1">//7)服务端找到onTransact中的pingForUserUpdate函数实现
+</span><span class="ln">17</span><span class="c1"></span><span class="n">BnCameraServiceProxy</span><span class="o">::</span><span class="n">pingForUserUpdate</span><span class="p">();</span>
+</code></pre></div></li>
+</ul>
+<p>关于<code>Binder</code>流程中，<code>defaultServiceManager</code>返回的是<code>BpServiceManager</code>，可以点击<a href="https://blog.csdn.net/yiranfeng/article/details/105210611">这里</a>，本文不过多介绍。</p>
+</blockquote>
 <h1 id="源码下载">源码下载</h1>
 <p><a href="https://github.com/YangYang48/project/tree/master/sp_wp">sp_wp源码</a></p>
               
@@ -817,9 +1004,17 @@
                     
   <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/c&#43;&#43;/">C&#43;&#43;</a>
 
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/java/">Java</a>
+
   <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/sp/">sp</a>
 
   <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/wp/">wp</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/binder/">Binder</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/aidl/">aidl</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E8%BF%90%E7%AE%97%E7%AC%A6%E9%87%8D%E8%BD%BD/">运算符重载</a>
 
                   </div>
                 
