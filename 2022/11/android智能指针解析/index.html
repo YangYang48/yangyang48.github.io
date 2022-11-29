@@ -280,7 +280,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">1200 Words|Read in about 6 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">1300 Words|Read in about 6 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -554,28 +554,30 @@
 <span class="ln"> 6</span>    <span class="n">impl</span><span class="o">-&gt;</span><span class="n">removeWeakRef</span><span class="p">(</span><span class="n">id</span><span class="p">);</span>
 <span class="ln"> 7</span>    <span class="c1">//fetch_sub,mRefs-&gt;mWeak=0，c=1
 </span><span class="ln"> 8</span><span class="c1"></span>    <span class="k">const</span> <span class="kt">int32_t</span> <span class="n">c</span> <span class="o">=</span> <span class="n">impl</span><span class="o">-&gt;</span><span class="n">mWeak</span><span class="p">.</span><span class="n">fetch_sub</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_release</span><span class="p">);</span>
-<span class="ln"> 9</span>    <span class="n">atomic_thread_fence</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">);</span>
-<span class="ln">10</span>
-<span class="ln">11</span>    <span class="kt">int32_t</span> <span class="n">flags</span> <span class="o">=</span> <span class="n">impl</span><span class="o">-&gt;</span><span class="n">mFlags</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
-<span class="ln">12</span>    <span class="c1">//如果是强引用
-</span><span class="ln">13</span><span class="c1"></span>    <span class="k">if</span> <span class="p">((</span><span class="n">flags</span><span class="o">&amp;</span><span class="n">OBJECT_LIFETIME_MASK</span><span class="p">)</span> <span class="o">==</span> <span class="n">OBJECT_LIFETIME_STRONG</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln">14</span>        <span class="c1">//如果强引用的mStrong元素时0x10000000,那么强引用错误
-</span><span class="ln">15</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="n">impl</span><span class="o">-&gt;</span><span class="n">mStrong</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">)</span>
-<span class="ln">16</span>                <span class="o">==</span> <span class="n">INITIAL_STRONG_VALUE</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln">17</span>            <span class="n">ALOGW</span><span class="p">(</span><span class="s">&#34;RefBase: Object at %p lost last weak reference &#34;</span>
-<span class="ln">18</span>                    <span class="s">&#34;before it had a strong reference&#34;</span><span class="p">,</span> <span class="n">impl</span><span class="o">-&gt;</span><span class="n">mBase</span><span class="p">);</span>
-<span class="ln">19</span>        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-<span class="ln">20</span>            <span class="c1">//如果强引用mStrong是其他值，释放impl，这里实际上释放的是mRefs
-</span><span class="ln">21</span><span class="c1"></span>            <span class="c1">//这里不能直接释放pYangyang，可能计数还没完全减掉
-</span><span class="ln">22</span><span class="c1"></span>            <span class="k">delete</span> <span class="n">impl</span><span class="p">;</span>
-<span class="ln">23</span>        <span class="p">}</span>
-<span class="ln">24</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-<span class="ln">25</span>        <span class="c1">//如果只是弱引用，调用onLastWeakRef，这个impl-&gt;mBase实际上是pYangyang，即pYangyang-&gt;onLastWeakRef
-</span><span class="ln">26</span><span class="c1"></span>        <span class="c1">//然后把弱引用中的impl-&gt;mBase释放，即释放的是pYangyang，会调用pYangyang的析构函数
-</span><span class="ln">27</span><span class="c1"></span>        <span class="n">impl</span><span class="o">-&gt;</span><span class="n">mBase</span><span class="o">-&gt;</span><span class="n">onLastWeakRef</span><span class="p">(</span><span class="n">id</span><span class="p">);</span>
-<span class="ln">28</span>        <span class="k">delete</span> <span class="n">impl</span><span class="o">-&gt;</span><span class="n">mBase</span><span class="p">;</span>
-<span class="ln">29</span>    <span class="p">}</span>
-<span class="ln">30</span><span class="p">}</span>
+<span class="ln"> 9</span>    <span class="c1">//如果同时出现sp和wp的时候，mWeak的计数会是2，这里的c返回旧值也是2，直接返回
+</span><span class="ln">10</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">c</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="n">atomic_thread_fence</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">);</span>
+<span class="ln">12</span>
+<span class="ln">13</span>    <span class="kt">int32_t</span> <span class="n">flags</span> <span class="o">=</span> <span class="n">impl</span><span class="o">-&gt;</span><span class="n">mFlags</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+<span class="ln">14</span>    <span class="c1">//如果是强引用
+</span><span class="ln">15</span><span class="c1"></span>    <span class="k">if</span> <span class="p">((</span><span class="n">flags</span><span class="o">&amp;</span><span class="n">OBJECT_LIFETIME_MASK</span><span class="p">)</span> <span class="o">==</span> <span class="n">OBJECT_LIFETIME_STRONG</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">16</span>        <span class="c1">//如果强引用的mStrong元素时0x10000000,那么强引用错误
+</span><span class="ln">17</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="n">impl</span><span class="o">-&gt;</span><span class="n">mStrong</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">)</span>
+<span class="ln">18</span>                <span class="o">==</span> <span class="n">INITIAL_STRONG_VALUE</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">19</span>            <span class="n">ALOGW</span><span class="p">(</span><span class="s">&#34;RefBase: Object at %p lost last weak reference &#34;</span>
+<span class="ln">20</span>                    <span class="s">&#34;before it had a strong reference&#34;</span><span class="p">,</span> <span class="n">impl</span><span class="o">-&gt;</span><span class="n">mBase</span><span class="p">);</span>
+<span class="ln">21</span>        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">22</span>            <span class="c1">//如果强引用mStrong是其他值，释放impl，这里实际上释放的是mRefs
+</span><span class="ln">23</span><span class="c1"></span>            <span class="c1">//这里不能直接释放pYangyang，可能计数还没完全减掉
+</span><span class="ln">24</span><span class="c1"></span>            <span class="k">delete</span> <span class="n">impl</span><span class="p">;</span>
+<span class="ln">25</span>        <span class="p">}</span>
+<span class="ln">26</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">27</span>        <span class="c1">//如果只是弱引用，调用onLastWeakRef，这个impl-&gt;mBase实际上是pYangyang，即pYangyang-&gt;onLastWeakRef
+</span><span class="ln">28</span><span class="c1"></span>        <span class="c1">//然后把弱引用中的impl-&gt;mBase释放，即释放的是pYangyang，会调用pYangyang的析构函数
+</span><span class="ln">29</span><span class="c1"></span>        <span class="n">impl</span><span class="o">-&gt;</span><span class="n">mBase</span><span class="o">-&gt;</span><span class="n">onLastWeakRef</span><span class="p">(</span><span class="n">id</span><span class="p">);</span>
+<span class="ln">30</span>        <span class="k">delete</span> <span class="n">impl</span><span class="o">-&gt;</span><span class="n">mBase</span><span class="p">;</span>
+<span class="ln">31</span>    <span class="p">}</span>
+<span class="ln">32</span><span class="p">}</span>
 </code></pre></div><p>wp析构，情况比较复杂</p>
 <ul>
 <li>弱引用数减1</li>
@@ -727,6 +729,131 @@
 </div>
 
 <p>3）有sp和wp的时候（绿色是构造，红色是析构）</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidSmartPtr/asp_7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidSmartPtr/asp_7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<ul>
+<li>
+<p>如果是demo3的场景，先出现析构wp，再出现析构sp场景</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="kt">void</span> <span class="nf">demo3</span><span class="p">()</span>
+<span class="ln"> 2</span><span class="p">{</span>
+<span class="ln"> 3</span>    <span class="c1">//new一个对象，pYangyang指向的是一个堆空间
+</span><span class="ln"> 4</span><span class="c1"></span>    <span class="n">Yangyang</span><span class="o">*</span> <span class="n">pYangyang</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Yangyang</span><span class="p">();</span>
+<span class="ln"> 5</span>    <span class="c1">//限定sp的作用域,利用sp的栈变量，spYangyang
+</span><span class="ln"> 6</span><span class="c1"></span>    <span class="p">{</span>
+<span class="ln"> 7</span>        <span class="n">sp</span><span class="o">&lt;</span><span class="n">Yangyang</span><span class="o">&gt;</span> <span class="n">spYangyang</span><span class="p">(</span><span class="n">pYangyang</span><span class="p">);</span>
+<span class="ln"> 8</span>        <span class="c1">//限定wp的作用域，利用wp的栈变量，wpYangyang
+</span><span class="ln"> 9</span><span class="c1"></span>        <span class="p">{</span>
+<span class="ln">10</span>            <span class="n">wp</span><span class="o">&lt;</span><span class="n">Yangyang</span><span class="o">&gt;</span> <span class="n">wpYangyang</span><span class="p">(</span><span class="n">pYangyang</span><span class="p">);</span>
+<span class="ln">11</span>        <span class="p">}</span>
+<span class="ln">12</span>        <span class="c1">//wpYangyang作用域结束
+</span><span class="ln">13</span><span class="c1"></span>    <span class="p">}</span>
+<span class="ln">14</span>    <span class="c1">//spYangyang作用域结束
+</span><span class="ln">15</span><span class="c1"></span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidSmartPtr/asp_8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidSmartPtr/asp_8.png" >
+  
+    </a>
+  
+  
+</div>
+
+</li>
+<li>
+<p>如果是先析构sp，再出现析构wp的场景</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="kt">void</span> <span class="nf">demo4</span><span class="p">()</span>
+<span class="ln"> 2</span><span class="p">{</span>
+<span class="ln"> 3</span>    <span class="c1">//new一个对象，pYangyang指向的是一个堆空间
+</span><span class="ln"> 4</span><span class="c1"></span>    <span class="n">Yangyang</span><span class="o">*</span> <span class="n">pYangyang</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Yangyang</span><span class="p">();</span>
+<span class="ln"> 5</span>    <span class="c1">//限wp的作用域,利用wp的栈变量，wpYangyang
+</span><span class="ln"> 6</span><span class="c1"></span>    <span class="p">{</span>
+<span class="ln"> 7</span>        <span class="n">wp</span><span class="o">&lt;</span><span class="n">Yangyang</span><span class="o">&gt;</span> <span class="n">wpYangyang</span><span class="p">(</span><span class="n">pYangyang</span><span class="p">);</span>
+<span class="ln"> 8</span>        <span class="c1">//限定sp的作用域，利用sp的栈变量，spYangyang
+</span><span class="ln"> 9</span><span class="c1"></span>        <span class="p">{</span>
+<span class="ln">10</span>            <span class="n">sp</span><span class="o">&lt;</span><span class="n">Yangyang</span><span class="o">&gt;</span> <span class="n">spYangyang</span><span class="p">(</span><span class="n">pYangyang</span><span class="p">);</span>
+<span class="ln">11</span>        <span class="p">}</span>
+<span class="ln">12</span>        <span class="c1">//spYangyang作用域结束
+</span><span class="ln">13</span><span class="c1"></span>    <span class="p">}</span>
+<span class="ln">14</span>    <span class="c1">//wpYangyang作用域结束
+</span><span class="ln">15</span><span class="c1"></span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidSmartPtr/asp_9.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidSmartPtr/asp_9.png" >
+  
+    </a>
+  
+  
+</div>
+
+</li>
+</ul>
 <h1 id="4智能指针使用">4智能指针使用</h1>
 <p>源码中大量使用<code>sp</code>和<code>wp</code>，而且用于很广泛，也无需考虑是否足要去释放</p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/av/services/camera/libcameraservice/CameraService.cpp
