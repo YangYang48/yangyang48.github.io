@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="Android中有一些常见的调试技巧，比如addr2line，用于将函数地址解析为函数名。">
+
+
+<meta property="og:description" content="Android中有一些常见的调试技巧，比如addr2line，用于将函数地址解析为函数名。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="addr2line工具使用">
+<meta name="twitter:title" content="addr2line工具使用">
+<meta property="og:url" content="https://yangyang48.github.io/2022/12/addr2line%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2022/12/addr2line%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="Android中有一些常见的调试技巧，比如addr2line，用于将函数地址解析为函数名。">
+<meta name="twitter:description" content="Android中有一些常见的调试技巧，比如addr2line，用于将函数地址解析为函数名。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2022-12-03T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2022-12-03T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="addr2line">
+    
+      <meta property="article:section" content="2022">
+    
+      <meta property="article:section" content="November">
+    
+  
+  
+    
+      <meta property="article:tag" content="Android">
+    
+      <meta property="article:tag" content="调试工具">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/AndroidTools/addr2line/addr2line_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/AndroidTools/addr2line/addr2line_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/AndroidTools/addr2line/addr2line_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/AndroidTools/addr2line/addr2line_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>addr2line工具使用</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2022/12/addr2line%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/AndroidTools/addr2line/addr2line_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      addr2line工具使用
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2022-12-03T00:00:00Z">
+        
+  十二月 3, 2022
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/addr2line">addr2line</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2022">2022</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/november">November</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">300 Words|Read in about 2 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>Android中有一些常见的调试技巧，比如addr2line，用于将函数地址解析为函数名。</p>
+<h1 id="0简介">0简介</h1>
+<p><code>addr2line</code>这个工具是<code>Linux</code>源码自带的工具，位置<code>/user/bin/addr2line</code></p>
+<p>用<code>addr2line</code>可以将函数地址解析为函数名，在抓取调堆栈时<code>Java</code>层的堆栈本身就是显示函数名与行数，这个不需要转换，但对于<code>native</code>和<code>kernel</code>层的则是函数地址，需要借助<code>addr2line</code>来进行转换。</p>
+<p>除了本来<strong>动态库</strong>之外，应用到<strong>进程</strong>也是可行的</p>
+<h1 id="1使用">1使用</h1>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">参数</th>
+<th style="text-align:center">解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"><code>-a --addresses</code></td>
+<td style="text-align:center">在函数名、文件和行号信息之前，显示地址，以十六进制形式</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>-b --target=&lt;bfdname&gt;</code></td>
+<td style="text-align:center">指定目标文件的格式为bfdname</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>-e --exe=&lt;executable&gt;</code></td>
+<td style="text-align:center">指定需要转换地址的可执行文件名</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>-i --inlines</code></td>
+<td style="text-align:center">如果需要转换的地址是一个内联函数，则输出的信息包括其最近范围内的一个非内联函数的信息</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>-j --section=&lt;name&gt;</code></td>
+<td style="text-align:center">给出的地址代表指定section的偏移，而非绝对地址</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>-p --pretty-print</code></td>
+<td style="text-align:center">使得该函数的输出信息更加人性化：每一个地址的信息占一行</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>-s --basenames</code></td>
+<td style="text-align:center">仅仅显示每个文件名的基址（即不显示文件的具体路径，只显示文件名）</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>-f --functions</code></td>
+<td style="text-align:center">在显示文件名、行号输出信息的同时显示函数名信息</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>-C --demangle[=style]</code></td>
+<td style="text-align:center">将低级别的符号名解码为用户级别的名字</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>-h --help</code></td>
+<td style="text-align:center">输出帮助信息</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>-v --version</code></td>
+<td style="text-align:center">输出版本号</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>使用过程中如果出现的是问号</p>
+<p>说明没有使用带符号的目录下对应的进程或者动态库，</p>
+<ul>
+<li>进程目录为<code>/out/target/product/xxx/xxx/symbols/system/bin/xxx</code></li>
+<li>动态库目录是<code>/out/target/product/xxx/xxx/symbols/system/lib/xxx</code></li>
+</ul>
+</blockquote>
+<p><strong>如何使用</strong></p>
+<h2 id="11首先需要错误堆栈信息">1.1首先需要错误堆栈信息</h2>
+<p>找到一份有堆栈信息的错误打印日志</p>
+<div class="highlight"><pre class="chroma"><code class="language-text" data-lang="text"><span class="ln"> 1</span>//省略如下
+<span class="ln"> 2</span>--------- beginning of crash 
+<span class="ln"> 3</span>Fatal signal 11 (SIGSEGV), code 1, fault addr 0x4 in tid 1234 (demo.crash), pid 1234(demo) 
+<span class="ln"> 4</span>1234 1234 F DEBUG : *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** 
+<span class="ln"> 5</span>1234 1234 F DEBUG : Build fingerprint: &#39;&#39; 
+<span class="ln"> 6</span>1234 1234 F DEBUG : Revision: &#39;0&#39; 
+<span class="ln"> 7</span>1234 1234 F DEBUG : ABI: &#39;arm&#39; 
+<span class="ln"> 8</span>1234 1234 F DEBUG : pid: 1234, tid: 1234, name: demo &gt;&gt;&gt; /system/bin/demo &lt;&lt;&lt; 
+<span class="ln"> 9</span>1234 1234 F DEBUG : signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x4 
+<span class="ln">10</span>1234 1234 F DEBUG : Cause: null pointer dereference 
+<span class="ln">11</span>1234 1234 F DEBUG : 
+<span class="ln">12</span>1234 1234 F DEBUG : backtrace: 
+<span class="ln">13</span>1234 1234 F DEBUG : #00 pc 000a56c6 /system/bin/demo (divide+761) 
+<span class="ln">14</span>1234 1234 F DEBUG : #01 pc 000f2d9d /system/bin/demo (main+110) 
+<span class="ln">15</span>1234 1234 F DEBUG : #02 pc 000f0480 /system/lib/libc.so (__pthread_start(void*)+22) 
+<span class="ln">16</span>1234 1234 F DEBUG : #03 pc 0001af8d /system/lib/libc.so (__start_thread+32) 
+<span class="ln">17</span>--------- beginning of main
+</code></pre></div><p>可以看到这里有<code>backtrace</code>的堆栈信息，<code>#00</code>就是最终的错误发生点</p>
+<h2 id="12验证函数名和行数">1.2验证函数名和行数</h2>
+<p>这里先验证<code>##01</code>，如果函数名和行数正确，再来看<code>crash</code>对应的日志</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>$ addr2line -C -f -e /out/target/product/xxx/xxx/symbols/system/bin/demo 000f2d9d
+<span class="ln">2</span>main
+<span class="ln">3</span>/external/demo/main.c:13
+</code></pre></div><p>发现是正确的</p>
+<p>再次验证<code>##00</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>$ addr2line -C -f -e /out/target/product/xxx/xxx/symbols/system/bin/demo 000a56c6
+<span class="ln">2</span>divide
+<span class="ln">3</span>/external/demo/main.c:5
+</code></pre></div><p>到这里真正找到原因，原来是<code>demo</code>中出现了除以0的操作，导致异常<code>crash</code>。</p>
+<h2 id="13demo">1.3demo</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//这是一个demo，用于验证addr2line的
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#include</span><span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp"></span><span class="kt">int</span> <span class="nf">divide</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">)</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span>    <span class="k">return</span> <span class="n">x</span><span class="o">/</span><span class="n">y</span><span class="p">;</span>
+<span class="ln"> 6</span><span class="p">}</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln"> 9</span><span class="p">{</span>
+<span class="ln">10</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;hello world</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">11</span>    <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+<span class="ln">12</span>    <span class="kt">int</span> <span class="n">y</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">13</span>    <span class="kt">int</span> <span class="n">div</span> <span class="o">=</span> <span class="n">divide</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">);</span> 
+<span class="ln">14</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;---&gt;&gt;&gt;div(%d)&#34;</span><span class="p">,</span> <span class="n">div</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">16</span><span class="p">}</span>
+</code></pre></div>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/android/">Android</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7/">调试工具</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/11/android%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E8%A7%A3%E6%9E%90/" data-tooltip="Android智能指针解析">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2022 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/11/android%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E8%A7%A3%E6%9E%90/" data-tooltip="Android智能指针解析">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2022%2F12%2Faddr2line%25E5%25B7%25A5%25E5%2585%25B7%25E4%25BD%25BF%25E7%2594%25A8%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2022%2F12%2Faddr2line%25E5%25B7%25A5%25E5%2585%25B7%25E4%25BD%25BF%25E7%2594%25A8%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2022%2F12%2Faddr2line%25E5%25B7%25A5%25E5%2585%25B7%25E4%25BD%25BF%25E7%2594%25A8%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2022\/12\/addr2line%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8\/';
+          
+            this.page.identifier = '\/2022\/12\/addr2line%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
