@@ -272,7 +272,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">800 Words|Read in about 4 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">2300 Words|Read in about 11 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -280,6 +280,7 @@
 <h1 id="用命令发送广播">用命令发送广播</h1>
 <p>这里不展开说明参数，具体可以参考<a href="https://yangyang48.github.io/2021/08/%E4%B8%80%E7%AF%87%E6%96%87%E7%AB%A0%E6%90%9E%E5%AE%9A%E5%B9%BF%E6%92%AD/">这里</a>解析。</p>
 <div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>$ adb shell am broadcast -a android.intent.action.SENDLOVE -n com.example.broadcast/.MyTanabataReceiver –es “love” “爱你” –ei “days” <span class="m">10000</span> –ez “reality” <span class="nb">true</span>
+<span class="ln">2</span>$ adb shell cmd activity broadcast -a android.intent.action.SENDLOVE -n com.example.broadcast/.MyTanabataReceiver –es “love” “爱你” –ei “days” <span class="m">10000</span> –ez “reality” <span class="nb">true</span>
 </code></pre></div><blockquote>
 <p>例如<code>-a</code>指定<code>action</code>，<code>-d</code>指定<code>uri</code>，<code>-p</code>指定包名，<code>-n</code>指定组件名，<code>--es</code>指定<code>{key,value}</code></p>
 <p><code>--es</code> 表示使用字符串类型，参数 <code>--ei</code>表示int类型，参数<code>--ez</code>表示boolean类型</p>
@@ -361,7 +362,7 @@
 <span class="ln"> 6</span>    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string_view</span><span class="o">&gt;</span> <span class="n">arguments</span><span class="p">;</span>
 <span class="ln"> 7</span>    <span class="c1">//这里的reserve是预留大小，并没有分配大小
 </span><span class="ln"> 8</span><span class="c1"></span>    <span class="n">arguments</span><span class="p">.</span><span class="n">reserve</span><span class="p">(</span><span class="n">argc</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
-<span class="ln"> 9</span>    <span class="c1">// 0th argument is a program name, skipping.
+<span class="ln"> 9</span>    <span class="c1">//这里的arguments就是除了cmd之外所有的args
 </span><span class="ln">10</span><span class="c1"></span>    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">argc</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
 <span class="ln">11</span>        <span class="n">arguments</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
 <span class="ln">12</span>    <span class="p">}</span>
@@ -425,7 +426,7 @@
 <span class="ln">41</span>	
 <span class="ln">42</span>    <span class="n">Vector</span><span class="o">&lt;</span><span class="n">String16</span><span class="o">&gt;</span> <span class="n">args</span><span class="p">;</span>
 <span class="ln">43</span>    <span class="n">String16</span> <span class="n">serviceName</span> <span class="o">=</span> <span class="n">String16</span><span class="p">(</span><span class="n">cmd</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">cmd</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
-<span class="ln">44</span>    <span class="c1">//把参数添加到args中
+<span class="ln">44</span>    <span class="c1">//把参数添加到args中，args为broadcast -a android.intent.action.SENDLOVE -n com.example.broadcast/.MyTanabataReceiver –es “love” “爱你” –ei “days” 10000 –ez “reality” true
 </span><span class="ln">45</span><span class="c1"></span>    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">serviceIdx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">argc</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
 <span class="ln">46</span>        <span class="n">args</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">String16</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">data</span><span class="p">(),</span> <span class="n">argv</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">size</span><span class="p">()));</span>
 <span class="ln">47</span>    <span class="p">}</span>
@@ -447,30 +448,572 @@
 <span class="ln">63</span>
 <span class="ln">64</span>    <span class="c1">// 这个同步命令，进行阻塞，直到有MyResultReceiver类的结果产生
 </span><span class="ln">65</span><span class="c1"></span>    <span class="c1">//通过代理发起ipc调用
-</span><span class="ln">66</span><span class="c1"></span>    <span class="n">status_t</span> <span class="n">error</span> <span class="o">=</span> <span class="n">IBinder</span><span class="o">::</span><span class="n">shellCommand</span><span class="p">(</span><span class="n">service</span><span class="p">,</span> <span class="n">in</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">cb</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
-<span class="ln">67</span>    <span class="k">if</span> <span class="p">(</span><span class="n">error</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln">68</span>        <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">errstr</span><span class="p">;</span>
-<span class="ln">69</span>        <span class="k">switch</span> <span class="p">(</span><span class="n">error</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln">70</span>            <span class="k">case</span> <span class="nl">BAD_TYPE</span><span class="p">:</span> <span class="n">errstr</span> <span class="o">=</span> <span class="s">&#34;Bad type&#34;</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
-<span class="ln">71</span>            <span class="k">case</span> <span class="nl">FAILED_TRANSACTION</span><span class="p">:</span> <span class="n">errstr</span> <span class="o">=</span> <span class="s">&#34;Failed transaction&#34;</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
-<span class="ln">72</span>            <span class="k">case</span> <span class="nl">FDS_NOT_ALLOWED</span><span class="p">:</span> <span class="n">errstr</span> <span class="o">=</span> <span class="s">&#34;File descriptors not allowed&#34;</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
-<span class="ln">73</span>            <span class="k">case</span> <span class="nl">UNEXPECTED_NULL</span><span class="p">:</span> <span class="n">errstr</span> <span class="o">=</span> <span class="s">&#34;Unexpected null&#34;</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
-<span class="ln">74</span>            <span class="k">default</span><span class="o">:</span> <span class="n">errstr</span> <span class="o">=</span> <span class="n">strerror</span><span class="p">(</span><span class="o">-</span><span class="n">error</span><span class="p">);</span> <span class="k">break</span><span class="p">;</span>
-<span class="ln">75</span>        <span class="p">}</span>
-<span class="ln">76</span>        <span class="k">if</span> <span class="p">(</span><span class="n">runMode</span> <span class="o">==</span> <span class="n">RunMode</span><span class="o">::</span><span class="n">kStandalone</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln">77</span>            <span class="n">ALOGW</span><span class="p">(</span><span class="s">&#34;Failure calling service %.*s: %s (%d)&#34;</span><span class="p">,</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">cmd</span><span class="p">.</span><span class="n">size</span><span class="p">()),</span> <span class="n">cmd</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span>
-<span class="ln">78</span>                  <span class="n">errstr</span><span class="p">,</span> <span class="o">-</span><span class="n">error</span><span class="p">);</span>
-<span class="ln">79</span>        <span class="p">}</span>
-<span class="ln">80</span>        <span class="n">outputLog</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;cmd: Failure calling service &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">cmd</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;: &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">errstr</span> <span class="o">&lt;&lt;</span> <span class="s">&#34; (&#34;</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="o">-</span><span class="n">error</span><span class="p">)</span>
-<span class="ln">81</span>                  <span class="o">&lt;&lt;</span> <span class="s">&#34;)&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
-<span class="ln">82</span>        <span class="k">return</span> <span class="n">error</span><span class="p">;</span>
-<span class="ln">83</span>    <span class="p">}</span>
-<span class="ln">84</span>
-<span class="ln">85</span>    <span class="n">cb</span><span class="o">-&gt;</span><span class="n">mActive</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
-<span class="ln">86</span>    <span class="n">status_t</span> <span class="n">res</span> <span class="o">=</span> <span class="n">result</span><span class="o">-&gt;</span><span class="n">waitForResult</span><span class="p">();</span>
-<span class="ln">87</span>    <span class="k">return</span> <span class="n">res</span><span class="p">;</span>
-<span class="ln">88</span><span class="p">}</span>
+</span><span class="ln">66</span><span class="c1"></span>    <span class="c1">//其中service指的是上述BpBinder传递的activity的service，in是STDIN_FILENO，out是STDOUT_FILENO
+</span><span class="ln">67</span><span class="c1"></span>    <span class="c1">//err是STDERR_FILENO，cb是上述的回调
+</span><span class="ln">68</span><span class="c1"></span>    <span class="n">status_t</span> <span class="n">error</span> <span class="o">=</span> <span class="n">IBinder</span><span class="o">::</span><span class="n">shellCommand</span><span class="p">(</span><span class="n">service</span><span class="p">,</span> <span class="n">in</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">cb</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+<span class="ln">69</span>    <span class="k">if</span> <span class="p">(</span><span class="n">error</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">70</span>        <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">errstr</span><span class="p">;</span>
+<span class="ln">71</span>        <span class="k">switch</span> <span class="p">(</span><span class="n">error</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">72</span>            <span class="k">case</span> <span class="nl">BAD_TYPE</span><span class="p">:</span> <span class="n">errstr</span> <span class="o">=</span> <span class="s">&#34;Bad type&#34;</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+<span class="ln">73</span>            <span class="k">case</span> <span class="nl">FAILED_TRANSACTION</span><span class="p">:</span> <span class="n">errstr</span> <span class="o">=</span> <span class="s">&#34;Failed transaction&#34;</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+<span class="ln">74</span>            <span class="k">case</span> <span class="nl">FDS_NOT_ALLOWED</span><span class="p">:</span> <span class="n">errstr</span> <span class="o">=</span> <span class="s">&#34;File descriptors not allowed&#34;</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+<span class="ln">75</span>            <span class="k">case</span> <span class="nl">UNEXPECTED_NULL</span><span class="p">:</span> <span class="n">errstr</span> <span class="o">=</span> <span class="s">&#34;Unexpected null&#34;</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+<span class="ln">76</span>            <span class="k">default</span><span class="o">:</span> <span class="n">errstr</span> <span class="o">=</span> <span class="n">strerror</span><span class="p">(</span><span class="o">-</span><span class="n">error</span><span class="p">);</span> <span class="k">break</span><span class="p">;</span>
+<span class="ln">77</span>        <span class="p">}</span>
+<span class="ln">78</span>        <span class="c1">//如果shellCommand执行失败，会打印到这里
+</span><span class="ln">79</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="n">runMode</span> <span class="o">==</span> <span class="n">RunMode</span><span class="o">::</span><span class="n">kStandalone</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">80</span>            <span class="n">ALOGW</span><span class="p">(</span><span class="s">&#34;Failure calling service %.*s: %s (%d)&#34;</span><span class="p">,</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">cmd</span><span class="p">.</span><span class="n">size</span><span class="p">()),</span> <span class="n">cmd</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span>
+<span class="ln">81</span>                  <span class="n">errstr</span><span class="p">,</span> <span class="o">-</span><span class="n">error</span><span class="p">);</span>
+<span class="ln">82</span>        <span class="p">}</span>
+<span class="ln">83</span>        <span class="n">outputLog</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;cmd: Failure calling service &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">cmd</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;: &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">errstr</span> <span class="o">&lt;&lt;</span> <span class="s">&#34; (&#34;</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="o">-</span><span class="n">error</span><span class="p">)</span>
+<span class="ln">84</span>                  <span class="o">&lt;&lt;</span> <span class="s">&#34;)&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">85</span>        <span class="k">return</span> <span class="n">error</span><span class="p">;</span>
+<span class="ln">86</span>    <span class="p">}</span>
+<span class="ln">87</span>
+<span class="ln">88</span>    <span class="n">cb</span><span class="o">-&gt;</span><span class="n">mActive</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">89</span>    <span class="n">status_t</span> <span class="n">res</span> <span class="o">=</span> <span class="n">result</span><span class="o">-&gt;</span><span class="n">waitForResult</span><span class="p">();</span>
+<span class="ln">90</span>    <span class="k">return</span> <span class="n">res</span><span class="p">;</span>
+<span class="ln">91</span><span class="p">}</span>
+</code></pre></div><p>上述的<code>shellCommand</code>执行时阻塞的，需要等待这个函数执行完成</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/Binder.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">status_t</span> <span class="n">IBinder</span><span class="o">::</span><span class="n">shellCommand</span><span class="p">(</span><span class="k">const</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">IBinder</span><span class="o">&gt;&amp;</span> <span class="n">target</span><span class="p">,</span> <span class="kt">int</span> <span class="n">in</span><span class="p">,</span> <span class="kt">int</span> <span class="n">out</span><span class="p">,</span> <span class="kt">int</span> <span class="n">err</span><span class="p">,</span>
+<span class="ln"> 3</span>    <span class="n">Vector</span><span class="o">&lt;</span><span class="n">String16</span><span class="o">&gt;&amp;</span> <span class="n">args</span><span class="p">,</span> <span class="k">const</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">IShellCallback</span><span class="o">&gt;&amp;</span> <span class="n">callback</span><span class="p">,</span>
+<span class="ln"> 4</span>    <span class="k">const</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">IResultReceiver</span><span class="o">&gt;&amp;</span> <span class="n">resultReceiver</span><span class="p">)</span>
+<span class="ln"> 5</span><span class="p">{</span>
+<span class="ln"> 6</span>    <span class="n">Parcel</span> <span class="n">send</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="n">Parcel</span> <span class="n">reply</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="c1">//in,out,error,分别为标准输入设备，标准输除设备，标准错误设备
+</span><span class="ln"> 9</span><span class="c1"></span>    <span class="n">send</span><span class="p">.</span><span class="n">writeFileDescriptor</span><span class="p">(</span><span class="n">in</span><span class="p">);</span>
+<span class="ln">10</span>    <span class="n">send</span><span class="p">.</span><span class="n">writeFileDescriptor</span><span class="p">(</span><span class="n">out</span><span class="p">);</span>
+<span class="ln">11</span>    <span class="n">send</span><span class="p">.</span><span class="n">writeFileDescriptor</span><span class="p">(</span><span class="n">err</span><span class="p">);</span>
+<span class="ln">12</span>    <span class="c1">//使用Parcel方式序列化参数broadcast -a android.intent.action.SENDLOVE -n com.example.broadcast/.MyTanabataReceiver –es “love” “爱你” –ei “days” 10000 –ez “reality” true
+</span><span class="ln">13</span><span class="c1"></span>    <span class="k">const</span> <span class="n">size_t</span> <span class="n">numArgs</span> <span class="o">=</span> <span class="n">args</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
+<span class="ln">14</span>    <span class="n">send</span><span class="p">.</span><span class="n">writeInt32</span><span class="p">(</span><span class="n">numArgs</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="k">for</span> <span class="p">(</span><span class="n">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">numArgs</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">16</span>        <span class="n">send</span><span class="p">.</span><span class="n">writeString16</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+<span class="ln">17</span>    <span class="p">}</span>
+<span class="ln">18</span>    <span class="n">send</span><span class="p">.</span><span class="n">writeStrongBinder</span><span class="p">(</span><span class="n">callback</span> <span class="o">!=</span> <span class="k">nullptr</span> <span class="o">?</span> <span class="n">IInterface</span><span class="o">::</span><span class="n">asBinder</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span> <span class="o">:</span> <span class="k">nullptr</span><span class="p">);</span>
+<span class="ln">19</span>    <span class="n">send</span><span class="p">.</span><span class="n">writeStrongBinder</span><span class="p">(</span><span class="n">resultReceiver</span> <span class="o">!=</span> <span class="k">nullptr</span> <span class="o">?</span> <span class="n">IInterface</span><span class="o">::</span><span class="n">asBinder</span><span class="p">(</span><span class="n">resultReceiver</span><span class="p">)</span> <span class="o">:</span> <span class="k">nullptr</span><span class="p">);</span>
+<span class="ln">20</span>    <span class="c1">//与服务端建立通信，IPC调用，通过command值为SHELL_COMMAND_TRANSACTION查找
+</span><span class="ln">21</span><span class="c1"></span>    <span class="k">return</span> <span class="n">target</span><span class="o">-&gt;</span><span class="n">transact</span><span class="p">(</span><span class="n">SHELL_COMMAND_TRANSACTION</span><span class="p">,</span> <span class="n">send</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">reply</span><span class="p">);</span>
+<span class="ln">22</span><span class="p">}</span>
+</code></pre></div><p><code>onTransact</code></p>
+<p>由于服务端<code>ActivityManagerService</code>没有<code>SHELL_COMMAND_TRANSACTION</code>命令，只能从继承的<code>AIDL</code>中的<code>Binder.java</code>去找</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/base/core/java/android/os/Binder.java
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">protected</span> <span class="kt">boolean</span> <span class="nf">onTransact</span><span class="o">(</span><span class="kt">int</span> <span class="n">code</span><span class="o">,</span> <span class="nd">@NonNull</span> <span class="n">Parcel</span> <span class="n">data</span><span class="o">,</span> <span class="nd">@Nullable</span> <span class="n">Parcel</span> <span class="n">reply</span><span class="o">,</span>
+<span class="ln"> 3</span>                             <span class="kt">int</span> <span class="n">flags</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">RemoteException</span> <span class="o">{</span>
+<span class="ln"> 4</span>    <span class="o">...</span>
+<span class="ln"> 5</span>    <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">code</span> <span class="o">==</span> <span class="n">SHELL_COMMAND_TRANSACTION</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 6</span>        <span class="n">ParcelFileDescriptor</span> <span class="n">in</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="na">readFileDescriptor</span><span class="o">();</span>
+<span class="ln"> 7</span>        <span class="n">ParcelFileDescriptor</span> <span class="n">out</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="na">readFileDescriptor</span><span class="o">();</span>
+<span class="ln"> 8</span>        <span class="n">ParcelFileDescriptor</span> <span class="n">err</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="na">readFileDescriptor</span><span class="o">();</span>
+<span class="ln"> 9</span>        <span class="n">String</span><span class="o">[]</span> <span class="n">args</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="na">readStringArray</span><span class="o">();</span>
+<span class="ln">10</span>        <span class="n">ShellCallback</span> <span class="n">shellCallback</span> <span class="o">=</span> <span class="n">ShellCallback</span><span class="o">.</span><span class="na">CREATOR</span><span class="o">.</span><span class="na">createFromParcel</span><span class="o">(</span><span class="n">data</span><span class="o">);</span>
+<span class="ln">11</span>        <span class="n">ResultReceiver</span> <span class="n">resultReceiver</span> <span class="o">=</span> <span class="n">ResultReceiver</span><span class="o">.</span><span class="na">CREATOR</span><span class="o">.</span><span class="na">createFromParcel</span><span class="o">(</span><span class="n">data</span><span class="o">);</span>
+<span class="ln">12</span>        <span class="k">try</span> <span class="o">{</span>
+<span class="ln">13</span>            <span class="k">if</span> <span class="o">(</span><span class="n">out</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">14</span>                <span class="c1">//正常执行回到这里，调用shellCommand
+</span><span class="ln">15</span><span class="c1"></span>                <span class="n">shellCommand</span><span class="o">(</span><span class="n">in</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">?</span> <span class="n">in</span><span class="o">.</span><span class="na">getFileDescriptor</span><span class="o">()</span> <span class="o">:</span> <span class="kc">null</span><span class="o">,</span>
+<span class="ln">16</span>                             <span class="n">out</span><span class="o">.</span><span class="na">getFileDescriptor</span><span class="o">(),</span>
+<span class="ln">17</span>                             <span class="n">err</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">?</span> <span class="n">err</span><span class="o">.</span><span class="na">getFileDescriptor</span><span class="o">()</span> <span class="o">:</span> <span class="n">out</span><span class="o">.</span><span class="na">getFileDescriptor</span><span class="o">(),</span>
+<span class="ln">18</span>                             <span class="n">args</span><span class="o">,</span> <span class="n">shellCallback</span><span class="o">,</span> <span class="n">resultReceiver</span><span class="o">);</span>
+<span class="ln">19</span>            <span class="o">}</span>
+<span class="ln">20</span>        <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+<span class="ln">21</span>            <span class="o">...</span>
+<span class="ln">22</span>        <span class="o">}</span>
+<span class="ln">23</span>        <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+<span class="ln">24</span>    <span class="o">}</span>
+<span class="ln">25</span>    <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+<span class="ln">26</span><span class="o">}</span>
+</code></pre></div><p><code>shellCommand</code>会继续调用<code>onShellCommand</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//frameworks/base/core/java/android/os/Binder.java
+</span><span class="ln">2</span><span class="c1"></span><span class="kd">public</span> <span class="kt">void</span> <span class="nf">shellCommand</span><span class="o">(</span><span class="nd">@Nullable</span> <span class="n">FileDescriptor</span> <span class="n">in</span><span class="o">,</span> <span class="nd">@Nullable</span> <span class="n">FileDescriptor</span> <span class="n">out</span><span class="o">,</span>
+<span class="ln">3</span>                         <span class="nd">@Nullable</span> <span class="n">FileDescriptor</span> <span class="n">err</span><span class="o">,</span>
+<span class="ln">4</span>                         <span class="nd">@NonNull</span> <span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">,</span> <span class="nd">@Nullable</span> <span class="n">ShellCallback</span> <span class="n">callback</span><span class="o">,</span>
+<span class="ln">5</span>                         <span class="nd">@NonNull</span> <span class="n">ResultReceiver</span> <span class="n">resultReceiver</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">RemoteException</span> <span class="o">{</span>
+<span class="ln">6</span>    <span class="n">onShellCommand</span><span class="o">(</span><span class="n">in</span><span class="o">,</span> <span class="n">out</span><span class="o">,</span> <span class="n">err</span><span class="o">,</span> <span class="n">args</span><span class="o">,</span> <span class="n">callback</span><span class="o">,</span> <span class="n">resultReceiver</span><span class="o">);</span>
+<span class="ln">7</span><span class="o">}</span>
+</code></pre></div><p>调用到服务端的<code>ActivityManagerService</code>中的<code>onShellCommand</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/base/services/core/java/com/android/server/am/ActivityManagerService.java
+</span><span class="ln"> 2</span><span class="c1"></span><span class="nd">@Override</span>
+<span class="ln"> 3</span><span class="kd">public</span> <span class="kt">void</span> <span class="nf">onShellCommand</span><span class="o">(</span><span class="n">FileDescriptor</span> <span class="n">in</span><span class="o">,</span> <span class="n">FileDescriptor</span> <span class="n">out</span><span class="o">,</span>
+<span class="ln"> 4</span>                           <span class="n">FileDescriptor</span> <span class="n">err</span><span class="o">,</span> <span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">,</span> <span class="n">ShellCallback</span> <span class="n">callback</span><span class="o">,</span>
+<span class="ln"> 5</span>                           <span class="n">ResultReceiver</span> <span class="n">resultReceiver</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 6</span>    <span class="c1">//这里的false指的是dumpsys中的函数，这里不dump关于AMS的信息
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="c1">//这里的new ActivityManagerShellCommand会初始化mInterface，mInterface就是this
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="o">(</span><span class="k">new</span> <span class="n">ActivityManagerShellCommand</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="kc">false</span><span class="o">)).</span><span class="na">exec</span><span class="o">(</span>
+<span class="ln"> 9</span>        <span class="k">this</span><span class="o">,</span> <span class="n">in</span><span class="o">,</span> <span class="n">out</span><span class="o">,</span> <span class="n">err</span><span class="o">,</span> <span class="n">args</span><span class="o">,</span> <span class="n">callback</span><span class="o">,</span> <span class="n">resultReceiver</span><span class="o">);</span>
+<span class="ln">10</span><span class="o">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidTools/am_broadcast/am_broadcast_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidTools/am_broadcast/am_broadcast_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>由于类图的关系如上所示，所以调用<code>exec</code>实际上是抽象类<code>BasicShellCommandHandler</code>中的方法</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/base/core/java/android/os/BasicShellCommandHandler.java
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kt">int</span> <span class="nf">exec</span><span class="o">(</span><span class="n">Binder</span> <span class="n">target</span><span class="o">,</span> <span class="n">FileDescriptor</span> <span class="n">in</span><span class="o">,</span> <span class="n">FileDescriptor</span> <span class="n">out</span><span class="o">,</span> <span class="n">FileDescriptor</span> <span class="n">err</span><span class="o">,</span>
+<span class="ln"> 3</span>                <span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 4</span>    <span class="n">String</span> <span class="n">cmd</span><span class="o">;</span>
+<span class="ln"> 5</span>    <span class="kt">int</span> <span class="n">start</span><span class="o">;</span>
+<span class="ln"> 6</span>    <span class="k">if</span> <span class="o">(</span><span class="n">args</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">args</span><span class="o">.</span><span class="na">length</span> <span class="o">&gt;</span> <span class="n">0</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 7</span>        <span class="c1">//cmd实际上是broadcast
+</span><span class="ln"> 8</span><span class="c1"></span>        <span class="n">cmd</span> <span class="o">=</span> <span class="n">args</span><span class="o">[</span><span class="n">0</span><span class="o">];</span>
+<span class="ln"> 9</span>        <span class="n">start</span> <span class="o">=</span> <span class="n">1</span><span class="o">;</span>
+<span class="ln">10</span>    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln">11</span>        <span class="n">cmd</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">12</span>        <span class="n">start</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span>
+<span class="ln">13</span>    <span class="o">}</span>
+<span class="ln">14</span>    <span class="c1">//这个init用于初始化一些command信息，target是用于之后执行错误之后的一些错误打印
+</span><span class="ln">15</span><span class="c1"></span>    <span class="n">init</span><span class="o">(</span><span class="n">target</span><span class="o">,</span> <span class="n">in</span><span class="o">,</span> <span class="n">out</span><span class="o">,</span> <span class="n">err</span><span class="o">,</span> <span class="n">args</span><span class="o">,</span> <span class="n">start</span><span class="o">);</span>
+<span class="ln">16</span>    <span class="n">mCmd</span> <span class="o">=</span> <span class="n">cmd</span><span class="o">;</span>
+<span class="ln">17</span>
+<span class="ln">18</span>    <span class="kt">int</span> <span class="n">res</span> <span class="o">=</span> <span class="o">-</span><span class="n">1</span><span class="o">;</span>
+<span class="ln">19</span>    <span class="k">try</span> <span class="o">{</span>
+<span class="ln">20</span>        <span class="c1">//这里传入的this是ActivityManagerService，所以onCommand是AMS中的
+</span><span class="ln">21</span><span class="c1"></span>        <span class="n">res</span> <span class="o">=</span> <span class="n">onCommand</span><span class="o">(</span><span class="n">mCmd</span><span class="o">);</span>
+<span class="ln">22</span>        <span class="k">if</span> <span class="o">(</span><span class="n">DEBUG</span><span class="o">)</span> <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;Executed command &#34;</span> <span class="o">+</span> <span class="n">mCmd</span> <span class="o">+</span> <span class="s">&#34; on &#34;</span> <span class="o">+</span> <span class="n">mTarget</span><span class="o">);</span>
+<span class="ln">23</span>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Throwable</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">24</span>        <span class="o">...</span>
+<span class="ln">25</span>    <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+<span class="ln">26</span>        <span class="o">...</span>
+<span class="ln">27</span>    <span class="o">}</span>
+<span class="ln">28</span>    <span class="k">return</span> <span class="n">res</span><span class="o">;</span>
+<span class="ln">29</span><span class="o">}</span>
+</code></pre></div><p><code>onCommand</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/base/services/core/java/com/android/server/am/ActivityManagerService.java
+</span><span class="ln"> 2</span><span class="c1"></span><span class="nd">@Override</span>
+<span class="ln"> 3</span><span class="kd">public</span> <span class="kt">int</span> <span class="nf">onCommand</span><span class="o">(</span><span class="n">String</span> <span class="n">cmd</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 4</span>    <span class="k">if</span> <span class="o">(</span><span class="n">cmd</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 5</span>        <span class="k">return</span> <span class="n">handleDefaultCommands</span><span class="o">(</span><span class="n">cmd</span><span class="o">);</span>
+<span class="ln"> 6</span>    <span class="o">}</span>
+<span class="ln"> 7</span>    <span class="kd">final</span> <span class="n">PrintWriter</span> <span class="n">pw</span> <span class="o">=</span> <span class="n">getOutPrintWriter</span><span class="o">();</span>
+<span class="ln"> 8</span>    <span class="k">try</span> <span class="o">{</span>
+<span class="ln"> 9</span>        <span class="k">switch</span> <span class="o">(</span><span class="n">cmd</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">10</span>            <span class="k">case</span> <span class="s">&#34;start&#34;</span><span class="o">:</span>
+<span class="ln">11</span>            <span class="k">case</span> <span class="s">&#34;start-activity&#34;</span><span class="o">:</span>
+<span class="ln">12</span>                <span class="k">return</span> <span class="n">runStartActivity</span><span class="o">(</span><span class="n">pw</span><span class="o">);</span>
+<span class="ln">13</span>			<span class="o">...</span>
+<span class="ln">14</span>            <span class="c1">//显然，会调用到这里
+</span><span class="ln">15</span><span class="c1"></span>            <span class="k">case</span> <span class="s">&#34;broadcast&#34;</span><span class="o">:</span>
+<span class="ln">16</span>                <span class="k">return</span> <span class="n">runSendBroadcast</span><span class="o">(</span><span class="n">pw</span><span class="o">);</span>
+<span class="ln">17</span>            <span class="o">...</span>
+<span class="ln">18</span>            <span class="k">default</span><span class="o">:</span>
+<span class="ln">19</span>                <span class="k">return</span> <span class="n">handleDefaultCommands</span><span class="o">(</span><span class="n">cmd</span><span class="o">);</span>
+<span class="ln">20</span><span class="o">}</span>
+<span class="ln">21</span>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">RemoteException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">22</span>        <span class="n">pw</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&#34;Remote exception: &#34;</span> <span class="o">+</span> <span class="n">e</span><span class="o">);</span>
+<span class="ln">23</span>    <span class="o">}</span>
+<span class="ln">24</span>    <span class="k">return</span> <span class="o">-</span><span class="n">1</span><span class="o">;</span>
+<span class="ln">25</span><span class="o">}</span>
 </code></pre></div><h1 id="3am-broadcast">3am broadcast</h1>
+<p>根据上面得知<code>am broadcast</code>通过<code>cmd</code>脚本，从<code>ServiceManager</code>大管家中找到名叫<code>&quot;activity&quot;</code>的服务，通过客服端<code>IPC</code>调用服务端<code>AMS</code>方法，参与执行命令的<code>cmd</code>为<code>broadcast</code>，最终会调用到<code>runSendBroadcast</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/base/services/core/java/com/android/server/am/ActivityManagerShellCommand.java
+</span><span class="ln"> 2</span><span class="c1">//传入的pw，其实就是JDK中的工具，向文本输出流打印对象的格式化表示形式
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kt">int</span> <span class="nf">runSendBroadcast</span><span class="o">(</span><span class="n">PrintWriter</span> <span class="n">pw</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">RemoteException</span> <span class="o">{</span>
+<span class="ln"> 4</span>    <span class="n">Intent</span> <span class="n">intent</span><span class="o">;</span>
+<span class="ln"> 5</span>    <span class="k">try</span> <span class="o">{</span>
+<span class="ln"> 6</span>        <span class="c1">//[3.1]这里的makeIntent开始真正解析传入的args
+</span><span class="ln"> 7</span><span class="c1"></span>        <span class="c1">//UserHandle.USER_CURRENT用来指示当前活动用户的用户id
+</span><span class="ln"> 8</span><span class="c1"></span>        <span class="n">intent</span> <span class="o">=</span> <span class="n">makeIntent</span><span class="o">(</span><span class="n">UserHandle</span><span class="o">.</span><span class="na">USER_CURRENT</span><span class="o">);</span>
+<span class="ln"> 9</span>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">URISyntaxException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">10</span>        <span class="k">throw</span> <span class="k">new</span> <span class="n">RuntimeException</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">(),</span> <span class="n">e</span><span class="o">);</span>
+<span class="ln">11</span>    <span class="o">}</span>
+<span class="ln">12</span>    <span class="c1">//Flags是intent的跳转类型，这里说明是通过shell来发送广播的
+</span><span class="ln">13</span><span class="c1"></span>    <span class="n">intent</span><span class="o">.</span><span class="na">addFlags</span><span class="o">(</span><span class="n">Intent</span><span class="o">.</span><span class="na">FLAG_RECEIVER_FROM_SHELL</span><span class="o">);</span>
+<span class="ln">14</span>    <span class="c1">//这里的IntentReceiver是一个ActivityManagerShellCommand.java中的内部类
+</span><span class="ln">15</span><span class="c1"></span>    <span class="c1">//主要用于设置回调完成广播会有打印
+</span><span class="ln">16</span><span class="c1"></span>    <span class="n">IntentReceiver</span> <span class="n">receiver</span> <span class="o">=</span> <span class="k">new</span> <span class="n">IntentReceiver</span><span class="o">(</span><span class="n">pw</span><span class="o">);</span>
+<span class="ln">17</span>    <span class="c1">//这里的mReceiverPermission为null
+</span><span class="ln">18</span><span class="c1"></span>    <span class="n">String</span><span class="o">[]</span> <span class="n">requiredPermissions</span> <span class="o">=</span> <span class="n">mReceiverPermission</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">?</span> <span class="kc">null</span>
+<span class="ln">19</span>        <span class="o">:</span> <span class="k">new</span> <span class="n">String</span><span class="o">[]</span> <span class="o">{</span><span class="n">mReceiverPermission</span><span class="o">};</span>
+<span class="ln">20</span>    <span class="n">pw</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&#34;Broadcasting: &#34;</span> <span class="o">+</span> <span class="n">intent</span><span class="o">);</span>
+<span class="ln">21</span>    <span class="n">pw</span><span class="o">.</span><span class="na">flush</span><span class="o">();</span>
+<span class="ln">22</span>    <span class="c1">//这里的Bundle依然是null
+</span><span class="ln">23</span><span class="c1"></span>    <span class="n">Bundle</span> <span class="n">bundle</span> <span class="o">=</span> <span class="n">mBroadcastOptions</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">?</span> <span class="kc">null</span> <span class="o">:</span> <span class="n">mBroadcastOptions</span><span class="o">.</span><span class="na">toBundle</span><span class="o">();</span>
+<span class="ln">24</span>    <span class="c1">//[3.2]mInterface就是初始化的ActivityManagerShellCommand注入的，为AMS
+</span><span class="ln">25</span><span class="c1"></span>    <span class="n">mInterface</span><span class="o">.</span><span class="na">broadcastIntentWithFeature</span><span class="o">(</span><span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="n">intent</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="n">receiver</span><span class="o">,</span> <span class="n">0</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span>
+<span class="ln">26</span>                                          <span class="n">requiredPermissions</span><span class="o">,</span> <span class="n">android</span><span class="o">.</span><span class="na">app</span><span class="o">.</span><span class="na">AppOpsManager</span><span class="o">.</span><span class="na">OP_NONE</span><span class="o">,</span> <span class="n">bundle</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="kc">false</span><span class="o">,</span> <span class="n">mUserId</span><span class="o">);</span>
+<span class="ln">27</span>    <span class="c1">//这里让当前线程等待，直到上述的操作完成，直到receiver回调performReceive
+</span><span class="ln">28</span><span class="c1"></span>    <span class="n">receiver</span><span class="o">.</span><span class="na">waitForFinish</span><span class="o">();</span>
+<span class="ln">29</span>    <span class="k">return</span> <span class="n">0</span><span class="o">;</span>
+<span class="ln">30</span><span class="o">}</span>
+</code></pre></div><h2 id="31makeintent">3.1makeIntent</h2>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/base/services/core/java/com/android/server/am/ActivityManagerShellCommand.java
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">private</span> <span class="n">Intent</span> <span class="nf">makeIntent</span><span class="o">(</span><span class="kt">int</span> <span class="n">defUser</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">URISyntaxException</span> <span class="o">{</span>
+<span class="ln"> 3</span>
+<span class="ln"> 4</span>    <span class="n">mUserId</span> <span class="o">=</span> <span class="n">defUser</span><span class="o">;</span>
+<span class="ln"> 5</span>	<span class="o">...</span>
+<span class="ln"> 6</span>	<span class="c1">//这里开始解析args，这里的this指的是ActivityManagerShellCommand
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="c1">//对于发送广播而言,后者的匿名内部类new Intent.CommandOptionHandler()的回调不会发生
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="k">return</span> <span class="n">Intent</span><span class="o">.</span><span class="na">parseCommandArgs</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="k">new</span> <span class="n">Intent</span><span class="o">.</span><span class="na">CommandOptionHandler</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 9</span>        <span class="nd">@Override</span>
+<span class="ln">10</span>        <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">handleOption</span><span class="o">(</span><span class="n">String</span> <span class="n">opt</span><span class="o">,</span> <span class="n">ShellCommand</span> <span class="n">cmd</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">11</span>            <span class="k">if</span> <span class="o">(</span><span class="n">opt</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="s">&#34;-D&#34;</span><span class="o">))</span> <span class="o">{</span>
+<span class="ln">12</span>                <span class="n">mStartFlags</span> <span class="o">|=</span> <span class="n">ActivityManager</span><span class="o">.</span><span class="na">START_FLAG_DEBUG</span><span class="o">;</span>
+<span class="ln">13</span>            <span class="o">...</span>
+<span class="ln">14</span>            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln">15</span>                <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+<span class="ln">16</span>            <span class="o">}</span>
+<span class="ln">17</span>            <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+<span class="ln">18</span>        <span class="o">}</span>
+<span class="ln">19</span>    <span class="o">});</span>
+<span class="ln">20</span><span class="o">}</span>
+</code></pre></div><p><code>parseCommandArgs</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">  1</span><span class="c1">//frameworks/base/core/java/android/content/Intent.java
+</span><span class="ln">  2</span><span class="c1"></span><span class="nd">@UnsupportedAppUsage</span>
+<span class="ln">  3</span><span class="kd">public</span> <span class="kd">static</span> <span class="n">Intent</span> <span class="nf">parseCommandArgs</span><span class="o">(</span><span class="n">ShellCommand</span> <span class="n">cmd</span><span class="o">,</span> <span class="n">CommandOptionHandler</span> <span class="n">optionHandler</span><span class="o">)</span>
+<span class="ln">  4</span>    <span class="kd">throws</span> <span class="n">URISyntaxException</span> <span class="o">{</span>
+<span class="ln">  5</span>    <span class="n">Intent</span> <span class="n">intent</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Intent</span><span class="o">();</span>
+<span class="ln">  6</span>    <span class="n">Intent</span> <span class="n">baseIntent</span> <span class="o">=</span> <span class="n">intent</span><span class="o">;</span>
+<span class="ln">  7</span>    <span class="kt">boolean</span> <span class="n">hasIntentInfo</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+<span class="ln">  8</span>
+<span class="ln">  9</span>    <span class="n">Uri</span> <span class="n">data</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln"> 10</span>    <span class="n">String</span> <span class="n">type</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln"> 11</span>
+<span class="ln"> 12</span>    <span class="n">String</span> <span class="n">opt</span><span class="o">;</span>
+<span class="ln"> 13</span>    <span class="c1">//对cmd进行遍历，然后对每一个符号进行解析
+</span><span class="ln"> 14</span><span class="c1"></span>    <span class="c1">//getNextArgRequired就是参数后面紧跟的值
+</span><span class="ln"> 15</span><span class="c1"></span>    <span class="c1">//最终不管是es，ei，ez其实都是存放到Bundle中的k-v键值对
+</span><span class="ln"> 16</span><span class="c1"></span>    <span class="k">while</span> <span class="o">((</span><span class="n">opt</span><span class="o">=</span><span class="n">cmd</span><span class="o">.</span><span class="na">getNextOption</span><span class="o">())</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 17</span>        <span class="k">switch</span> <span class="o">(</span><span class="n">opt</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 18</span>            <span class="k">case</span> <span class="s">&#34;-a&#34;</span><span class="o">:</span>
+<span class="ln"> 19</span>                <span class="c1">//intent.setAction(android.intent.action.SENDLOVE);
+</span><span class="ln"> 20</span><span class="c1"></span>                <span class="n">intent</span><span class="o">.</span><span class="na">setAction</span><span class="o">(</span><span class="n">cmd</span><span class="o">.</span><span class="na">getNextArgRequired</span><span class="o">());</span>
+<span class="ln"> 21</span>                <span class="k">if</span> <span class="o">(</span><span class="n">intent</span> <span class="o">==</span> <span class="n">baseIntent</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 22</span>                    <span class="n">hasIntentInfo</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+<span class="ln"> 23</span>                <span class="o">}</span>
+<span class="ln"> 24</span>                <span class="k">break</span><span class="o">;</span>
+<span class="ln"> 25</span>            <span class="k">case</span> <span class="s">&#34;-e&#34;</span><span class="o">:</span>
+<span class="ln"> 26</span>            <span class="k">case</span> <span class="s">&#34;--es&#34;</span><span class="o">:</span> <span class="o">{</span>
+<span class="ln"> 27</span>                <span class="c1">//key=&#34;love&#34;,value=&#34;爱你&#34;
+</span><span class="ln"> 28</span><span class="c1"></span>                <span class="n">String</span> <span class="n">key</span> <span class="o">=</span> <span class="n">cmd</span><span class="o">.</span><span class="na">getNextArgRequired</span><span class="o">();</span>
+<span class="ln"> 29</span>                <span class="n">String</span> <span class="n">value</span> <span class="o">=</span> <span class="n">cmd</span><span class="o">.</span><span class="na">getNextArgRequired</span><span class="o">();</span>
+<span class="ln"> 30</span>                <span class="n">intent</span><span class="o">.</span><span class="na">putExtra</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">value</span><span class="o">);</span>
+<span class="ln"> 31</span>            <span class="o">}</span>
+<span class="ln"> 32</span>                <span class="k">break</span><span class="o">;</span>
+<span class="ln"> 33</span>            <span class="k">case</span> <span class="s">&#34;--ei&#34;</span><span class="o">:</span> <span class="o">{</span>
+<span class="ln"> 34</span>                <span class="c1">//key=&#34;days&#34;,value=&#34;10000&#34;
+</span><span class="ln"> 35</span><span class="c1"></span>                <span class="n">String</span> <span class="n">key</span> <span class="o">=</span> <span class="n">cmd</span><span class="o">.</span><span class="na">getNextArgRequired</span><span class="o">();</span>
+<span class="ln"> 36</span>                <span class="n">String</span> <span class="n">value</span> <span class="o">=</span> <span class="n">cmd</span><span class="o">.</span><span class="na">getNextArgRequired</span><span class="o">();</span>
+<span class="ln"> 37</span>                <span class="n">intent</span><span class="o">.</span><span class="na">putExtra</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">Integer</span><span class="o">.</span><span class="na">decode</span><span class="o">(</span><span class="n">value</span><span class="o">));</span>
+<span class="ln"> 38</span>            <span class="o">}</span>
+<span class="ln"> 39</span>                <span class="k">break</span><span class="o">;</span>
+<span class="ln"> 40</span>            <span class="k">case</span> <span class="s">&#34;--ez&#34;</span><span class="o">:</span> <span class="o">{</span>
+<span class="ln"> 41</span>                <span class="c1">//key=&#34;reality&#34;,value=&#34;true&#34;
+</span><span class="ln"> 42</span><span class="c1"></span>                <span class="n">String</span> <span class="n">key</span> <span class="o">=</span> <span class="n">cmd</span><span class="o">.</span><span class="na">getNextArgRequired</span><span class="o">();</span>
+<span class="ln"> 43</span>                <span class="n">String</span> <span class="n">value</span> <span class="o">=</span> <span class="n">cmd</span><span class="o">.</span><span class="na">getNextArgRequired</span><span class="o">().</span><span class="na">toLowerCase</span><span class="o">();</span>
+<span class="ln"> 44</span>                <span class="kt">boolean</span> <span class="n">arg</span><span class="o">;</span>
+<span class="ln"> 45</span>                <span class="k">if</span> <span class="o">(</span><span class="s">&#34;true&#34;</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">value</span><span class="o">)</span> <span class="o">||</span> <span class="s">&#34;t&#34;</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">value</span><span class="o">))</span> <span class="o">{</span>
+<span class="ln"> 46</span>                    <span class="n">arg</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+<span class="ln"> 47</span>                <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="s">&#34;false&#34;</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">value</span><span class="o">)</span> <span class="o">||</span> <span class="s">&#34;f&#34;</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">value</span><span class="o">))</span> <span class="o">{</span>
+<span class="ln"> 48</span>                    <span class="n">arg</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+<span class="ln"> 49</span>                <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln"> 50</span>                    <span class="k">try</span> <span class="o">{</span>
+<span class="ln"> 51</span>                        <span class="n">arg</span> <span class="o">=</span> <span class="n">Integer</span><span class="o">.</span><span class="na">decode</span><span class="o">(</span><span class="n">value</span><span class="o">)</span> <span class="o">!=</span> <span class="n">0</span><span class="o">;</span>
+<span class="ln"> 52</span>                    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">NumberFormatException</span> <span class="n">ex</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 53</span>                        <span class="k">throw</span> <span class="k">new</span> <span class="n">IllegalArgumentException</span><span class="o">(</span><span class="s">&#34;Invalid boolean value: &#34;</span> <span class="o">+</span> <span class="n">value</span><span class="o">);</span>
+<span class="ln"> 54</span>                    <span class="o">}</span>
+<span class="ln"> 55</span>                <span class="o">}</span>
+<span class="ln"> 56</span>
+<span class="ln"> 57</span>                <span class="n">intent</span><span class="o">.</span><span class="na">putExtra</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">arg</span><span class="o">);</span>
+<span class="ln"> 58</span>            <span class="o">}</span>
+<span class="ln"> 59</span>                <span class="k">break</span><span class="o">;</span>
+<span class="ln"> 60</span>            <span class="k">case</span> <span class="s">&#34;-n&#34;</span><span class="o">:</span> <span class="o">{</span>
+<span class="ln"> 61</span>                <span class="c1">//str=com.example.broadcast/.MyTanabataReceiver
+</span><span class="ln"> 62</span><span class="c1"></span>                <span class="n">String</span> <span class="n">str</span> <span class="o">=</span> <span class="n">cmd</span><span class="o">.</span><span class="na">getNextArgRequired</span><span class="o">();</span>
+<span class="ln"> 63</span>                <span class="n">ComponentName</span> <span class="n">cn</span> <span class="o">=</span> <span class="n">ComponentName</span><span class="o">.</span><span class="na">unflattenFromString</span><span class="o">(</span><span class="n">str</span><span class="o">);</span>
+<span class="ln"> 64</span>                <span class="k">if</span> <span class="o">(</span><span class="n">cn</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span>
+<span class="ln"> 65</span>                    <span class="k">throw</span> <span class="k">new</span> <span class="n">IllegalArgumentException</span><span class="o">(</span><span class="s">&#34;Bad component name: &#34;</span> <span class="o">+</span> <span class="n">str</span><span class="o">);</span>
+<span class="ln"> 66</span>                <span class="n">intent</span><span class="o">.</span><span class="na">setComponent</span><span class="o">(</span><span class="n">cn</span><span class="o">);</span>
+<span class="ln"> 67</span>                <span class="c1">//这里的intent和baseIntent是一致的
+</span><span class="ln"> 68</span><span class="c1"></span>                <span class="k">if</span> <span class="o">(</span><span class="n">intent</span> <span class="o">==</span> <span class="n">baseIntent</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 69</span>                    <span class="n">hasIntentInfo</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+<span class="ln"> 70</span>                <span class="o">}</span>
+<span class="ln"> 71</span>            <span class="o">}</span>
+<span class="ln"> 72</span>                <span class="k">break</span><span class="o">;</span>
+<span class="ln"> 73</span>            <span class="o">...</span>
+<span class="ln"> 74</span>            <span class="k">default</span><span class="o">:</span>
+<span class="ln"> 75</span>                <span class="k">if</span> <span class="o">(</span><span class="n">optionHandler</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">optionHandler</span><span class="o">.</span><span class="na">handleOption</span><span class="o">(</span><span class="n">opt</span><span class="o">,</span> <span class="n">cmd</span><span class="o">))</span> <span class="o">{</span>
+<span class="ln"> 76</span>                    <span class="c1">// Okay, caller handled this option.
+</span><span class="ln"> 77</span><span class="c1"></span>                <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln"> 78</span>                    <span class="k">throw</span> <span class="k">new</span> <span class="n">IllegalArgumentException</span><span class="o">(</span><span class="s">&#34;Unknown option: &#34;</span> <span class="o">+</span> <span class="n">opt</span><span class="o">);</span>
+<span class="ln"> 79</span>                <span class="o">}</span>
+<span class="ln"> 80</span>                <span class="k">break</span><span class="o">;</span>
+<span class="ln"> 81</span>        <span class="o">}</span>
+<span class="ln"> 82</span>    <span class="o">}</span>
+<span class="ln"> 83</span>    <span class="c1">//这里的data和type依然是null
+</span><span class="ln"> 84</span><span class="c1"></span>    <span class="n">intent</span><span class="o">.</span><span class="na">setDataAndType</span><span class="o">(</span><span class="n">data</span><span class="o">,</span> <span class="n">type</span><span class="o">);</span>
+<span class="ln"> 85</span>	<span class="c1">//这里有两个操作intent.replaceExtras((Bundle)null);和intent.replaceExtras(extras);
+</span><span class="ln"> 86</span><span class="c1"></span>    <span class="c1">//把它置空，又把它放进去，这里的目的跟baseIntent相关，用于Uri和extras的交换，这里没有uri所以流程比较简单
+</span><span class="ln"> 87</span><span class="c1"></span>    <span class="k">if</span> <span class="o">(</span><span class="n">baseIntent</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 88</span>        <span class="n">Bundle</span> <span class="n">extras</span> <span class="o">=</span> <span class="n">intent</span><span class="o">.</span><span class="na">getExtras</span><span class="o">();</span>
+<span class="ln"> 89</span>        <span class="n">intent</span><span class="o">.</span><span class="na">replaceExtras</span><span class="o">((</span><span class="n">Bundle</span><span class="o">)</span><span class="kc">null</span><span class="o">);</span>
+<span class="ln"> 90</span>        <span class="n">Bundle</span> <span class="n">uriExtras</span> <span class="o">=</span> <span class="n">baseIntent</span><span class="o">.</span><span class="na">getExtras</span><span class="o">();</span>
+<span class="ln"> 91</span>        <span class="n">baseIntent</span><span class="o">.</span><span class="na">replaceExtras</span><span class="o">((</span><span class="n">Bundle</span><span class="o">)</span><span class="kc">null</span><span class="o">);</span>
+<span class="ln"> 92</span>        <span class="k">if</span> <span class="o">(</span><span class="n">intent</span><span class="o">.</span><span class="na">getAction</span><span class="o">()</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">baseIntent</span><span class="o">.</span><span class="na">getCategories</span><span class="o">()</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 93</span>            <span class="n">HashSet</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">cats</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HashSet</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;(</span><span class="n">baseIntent</span><span class="o">.</span><span class="na">getCategories</span><span class="o">());</span>
+<span class="ln"> 94</span>            <span class="k">for</span> <span class="o">(</span><span class="n">String</span> <span class="n">c</span> <span class="o">:</span> <span class="n">cats</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 95</span>                <span class="n">baseIntent</span><span class="o">.</span><span class="na">removeCategory</span><span class="o">(</span><span class="n">c</span><span class="o">);</span>
+<span class="ln"> 96</span>            <span class="o">}</span>
+<span class="ln"> 97</span>        <span class="o">}</span>
+<span class="ln"> 98</span>        <span class="n">intent</span><span class="o">.</span><span class="na">fillIn</span><span class="o">(</span><span class="n">baseIntent</span><span class="o">,</span> <span class="n">Intent</span><span class="o">.</span><span class="na">FILL_IN_COMPONENT</span> <span class="o">|</span> <span class="n">Intent</span><span class="o">.</span><span class="na">FILL_IN_SELECTOR</span><span class="o">);</span>
+<span class="ln"> 99</span>        <span class="k">if</span> <span class="o">(</span><span class="n">extras</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">100</span>            <span class="n">extras</span> <span class="o">=</span> <span class="n">uriExtras</span><span class="o">;</span>
+<span class="ln">101</span>        <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">uriExtras</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">102</span>            <span class="n">uriExtras</span><span class="o">.</span><span class="na">putAll</span><span class="o">(</span><span class="n">extras</span><span class="o">);</span>
+<span class="ln">103</span>            <span class="n">extras</span> <span class="o">=</span> <span class="n">uriExtras</span><span class="o">;</span>
+<span class="ln">104</span>        <span class="o">}</span>
+<span class="ln">105</span>        <span class="n">intent</span><span class="o">.</span><span class="na">replaceExtras</span><span class="o">(</span><span class="n">extras</span><span class="o">);</span>
+<span class="ln">106</span>        <span class="n">hasIntentInfo</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+<span class="ln">107</span>    <span class="o">}</span>
+<span class="ln">108</span>
+<span class="ln">109</span>    <span class="k">if</span> <span class="o">(!</span><span class="n">hasIntentInfo</span><span class="o">)</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">IllegalArgumentException</span><span class="o">(</span><span class="s">&#34;No intent supplied&#34;</span><span class="o">);</span>
+<span class="ln">110</span>    <span class="k">return</span> <span class="n">intent</span><span class="o">;</span>
+<span class="ln">111</span><span class="o">}</span>
+</code></pre></div><p>最终<code>makeIntent</code>的结果</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidTools/am_broadcast/am_broadcast_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidTools/am_broadcast/am_broadcast_2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="32broadcastintentwithfeature">3.2broadcastIntentWithFeature</h2>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/base/services/core/java/com/android/server/am/ActivityManagerService.java
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">final</span> <span class="kt">int</span> <span class="nf">broadcastIntentWithFeature</span><span class="o">(</span><span class="n">IApplicationThread</span> <span class="n">caller</span><span class="o">,</span> <span class="n">String</span> <span class="n">callingFeatureId</span><span class="o">,</span>
+<span class="ln"> 3</span>                                            <span class="n">Intent</span> <span class="n">intent</span><span class="o">,</span> <span class="n">String</span> <span class="n">resolvedType</span><span class="o">,</span> <span class="n">IIntentReceiver</span> <span class="n">resultTo</span><span class="o">,</span>
+<span class="ln"> 4</span>                                            <span class="kt">int</span> <span class="n">resultCode</span><span class="o">,</span> <span class="n">String</span> <span class="n">resultData</span><span class="o">,</span> <span class="n">Bundle</span> <span class="n">resultExtras</span><span class="o">,</span>
+<span class="ln"> 5</span>                                            <span class="n">String</span><span class="o">[]</span> <span class="n">requiredPermissions</span><span class="o">,</span> <span class="kt">int</span> <span class="n">appOp</span><span class="o">,</span> <span class="n">Bundle</span> <span class="n">bOptions</span><span class="o">,</span>
+<span class="ln"> 6</span>                                            <span class="kt">boolean</span> <span class="n">serialized</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">sticky</span><span class="o">,</span> <span class="kt">int</span> <span class="n">userId</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 7</span>    <span class="c1">//强制非隔离调用者，判断调用方是否有selinux权限
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="n">enforceNotIsolatedCaller</span><span class="o">(</span><span class="s">&#34;broadcastIntent&#34;</span><span class="o">);</span>
+<span class="ln"> 9</span>    <span class="kd">synchronized</span><span class="o">(</span><span class="k">this</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">10</span>        <span class="c1">//校验intent的正确性
+</span><span class="ln">11</span><span class="c1"></span>        <span class="n">intent</span> <span class="o">=</span> <span class="n">verifyBroadcastLocked</span><span class="o">(</span><span class="n">intent</span><span class="o">);</span>
+<span class="ln">12</span>		<span class="c1">//获取client端caller进程record,如果对端进程已经被kill则直接抛出异常。这里传入的是null不处理
+</span><span class="ln">13</span><span class="c1"></span>        <span class="kd">final</span> <span class="n">ProcessRecord</span> <span class="n">callerApp</span> <span class="o">=</span> <span class="n">getRecordForAppLocked</span><span class="o">(</span><span class="n">caller</span><span class="o">);</span>
+<span class="ln">14</span>        <span class="kd">final</span> <span class="kt">int</span> <span class="n">callingPid</span> <span class="o">=</span> <span class="n">Binder</span><span class="o">.</span><span class="na">getCallingPid</span><span class="o">();</span>
+<span class="ln">15</span>        <span class="kd">final</span> <span class="kt">int</span> <span class="n">callingUid</span> <span class="o">=</span> <span class="n">Binder</span><span class="o">.</span><span class="na">getCallingUid</span><span class="o">();</span>
+<span class="ln">16</span>        <span class="c1">//作用是清空远程调用端的uid和pid，用当前本地进程的uid和pid替代
+</span><span class="ln">17</span><span class="c1"></span>        <span class="kd">final</span> <span class="kt">long</span> <span class="n">origId</span> <span class="o">=</span> <span class="n">Binder</span><span class="o">.</span><span class="na">clearCallingIdentity</span><span class="o">();</span>
+<span class="ln">18</span>        <span class="k">try</span> <span class="o">{</span>
+<span class="ln">19</span>            <span class="c1">//这里就是真正发送广播，由于这里是标准流程，这里不展开
+</span><span class="ln">20</span><span class="c1"></span>            <span class="k">return</span> <span class="n">broadcastIntentLocked</span><span class="o">(</span><span class="n">callerApp</span><span class="o">,</span>
+<span class="ln">21</span>                                         <span class="n">callerApp</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">?</span> <span class="n">callerApp</span><span class="o">.</span><span class="na">info</span><span class="o">.</span><span class="na">packageName</span> <span class="o">:</span> <span class="kc">null</span><span class="o">,</span> 
+<span class="ln">22</span>                                         <span class="n">callingFeatureId</span><span class="o">,</span> <span class="n">intent</span><span class="o">,</span> <span class="n">resolvedType</span><span class="o">,</span> <span class="n">resultTo</span><span class="o">,</span> <span class="n">resultCode</span><span class="o">,</span> 
+<span class="ln">23</span>                                         <span class="n">resultData</span><span class="o">,</span> <span class="n">resultExtras</span><span class="o">,</span> <span class="n">requiredPermissions</span><span class="o">,</span> <span class="n">appOp</span><span class="o">,</span> <span class="n">bOptions</span><span class="o">,</span> 
+<span class="ln">24</span>                                         <span class="n">serialized</span><span class="o">,</span> <span class="n">sticky</span><span class="o">,</span> <span class="n">callingPid</span><span class="o">,</span> <span class="n">callingUid</span><span class="o">,</span> <span class="n">callingUid</span><span class="o">,</span> <span class="n">callingPid</span><span class="o">,</span> 
+<span class="ln">25</span>                                         <span class="n">userId</span><span class="o">);</span>
+<span class="ln">26</span>        <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+<span class="ln">27</span>            <span class="c1">//作用是恢复远程调用端的uid和pid信息，正好是`clearCallingIdentity`的反过程
+</span><span class="ln">28</span><span class="c1"></span>            <span class="n">Binder</span><span class="o">.</span><span class="na">restoreCallingIdentity</span><span class="o">(</span><span class="n">origId</span><span class="o">);</span>
+<span class="ln">29</span>        <span class="o">}</span>
+<span class="ln">30</span>    <span class="o">}</span>
+<span class="ln">31</span><span class="o">}</span>
+</code></pre></div><p><code>verifyBroadcastLocked</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/base/services/core/java/com/android/server/am/ActivityManagerService.java
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">final</span> <span class="n">Intent</span> <span class="nf">verifyBroadcastLocked</span><span class="o">(</span><span class="n">Intent</span> <span class="n">intent</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 3</span>    <span class="c1">// Refuse possible leaked file descriptors
+</span><span class="ln"> 4</span><span class="c1"></span>    <span class="k">if</span> <span class="o">(</span><span class="n">intent</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">intent</span><span class="o">.</span><span class="na">hasFileDescriptors</span><span class="o">()</span> <span class="o">==</span> <span class="kc">true</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 5</span>        <span class="k">throw</span> <span class="k">new</span> <span class="n">IllegalArgumentException</span><span class="o">(</span><span class="s">&#34;File descriptors passed in Intent&#34;</span><span class="o">);</span>
+<span class="ln"> 6</span>    <span class="o">}</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span>    <span class="kt">int</span> <span class="n">flags</span> <span class="o">=</span> <span class="n">intent</span><span class="o">.</span><span class="na">getFlags</span><span class="o">();</span>
+<span class="ln"> 9</span>	<span class="c1">//这里面指的是system系统还未完整引导完成，引导完成mProcessesReady为true
+</span><span class="ln">10</span><span class="c1"></span>    <span class="k">if</span> <span class="o">(!</span><span class="n">mProcessesReady</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">11</span>        <span class="k">if</span> <span class="o">((</span><span class="n">flags</span><span class="o">&amp;</span><span class="n">Intent</span><span class="o">.</span><span class="na">FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT</span><span class="o">)</span> <span class="o">!=</span> <span class="n">0</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">12</span>            <span class="c1">// This will be turned into a FLAG_RECEIVER_REGISTERED_ONLY later on if needed.
+</span><span class="ln">13</span><span class="c1"></span>        <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">((</span><span class="n">flags</span><span class="o">&amp;</span><span class="n">Intent</span><span class="o">.</span><span class="na">FLAG_RECEIVER_REGISTERED_ONLY</span><span class="o">)</span> <span class="o">==</span> <span class="n">0</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">14</span>            <span class="n">Slog</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;Attempt to launch receivers of broadcast intent &#34;</span> <span class="o">+</span> <span class="n">intent</span>
+<span class="ln">15</span>                   <span class="o">+</span> <span class="s">&#34; before boot completion&#34;</span><span class="o">);</span>
+<span class="ln">16</span>            <span class="k">throw</span> <span class="k">new</span> <span class="n">IllegalStateException</span><span class="o">(</span><span class="s">&#34;Cannot broadcast before boot completed&#34;</span><span class="o">);</span>
+<span class="ln">17</span>        <span class="o">}</span>
+<span class="ln">18</span>    <span class="o">}</span>
+<span class="ln">19</span>	<span class="c1">//不能直接发送广播升级
+</span><span class="ln">20</span><span class="c1"></span>    <span class="k">if</span> <span class="o">((</span><span class="n">flags</span><span class="o">&amp;</span><span class="n">Intent</span><span class="o">.</span><span class="na">FLAG_RECEIVER_BOOT_UPGRADE</span><span class="o">)</span> <span class="o">!=</span> <span class="n">0</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">21</span>        <span class="k">throw</span> <span class="k">new</span> <span class="n">IllegalArgumentException</span><span class="o">(</span>
+<span class="ln">22</span>            <span class="s">&#34;Can&#39;t use FLAG_RECEIVER_BOOT_UPGRADE here&#34;</span><span class="o">);</span>
+<span class="ln">23</span>    <span class="o">}</span>
+<span class="ln">24</span>	<span class="c1">//我们的flag是这个
+</span><span class="ln">25</span><span class="c1"></span>    <span class="k">if</span> <span class="o">((</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">Intent</span><span class="o">.</span><span class="na">FLAG_RECEIVER_FROM_SHELL</span><span class="o">)</span> <span class="o">!=</span> <span class="n">0</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">26</span>        <span class="c1">//显而易见我们的广播发送必须是root权限或者是shell权限，不然没有权限发送
+</span><span class="ln">27</span><span class="c1"></span>        <span class="k">switch</span> <span class="o">(</span><span class="n">Binder</span><span class="o">.</span><span class="na">getCallingUid</span><span class="o">())</span> <span class="o">{</span>
+<span class="ln">28</span>            <span class="k">case</span> <span class="n">ROOT_UID</span><span class="o">:</span>
+<span class="ln">29</span>            <span class="k">case</span> <span class="n">SHELL_UID</span><span class="o">:</span>
+<span class="ln">30</span>                <span class="k">break</span><span class="o">;</span>
+<span class="ln">31</span>            <span class="k">default</span><span class="o">:</span>
+<span class="ln">32</span>                <span class="n">Slog</span><span class="o">.</span><span class="na">w</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;Removing FLAG_RECEIVER_FROM_SHELL because caller is UID &#34;</span>
+<span class="ln">33</span>                       <span class="o">+</span> <span class="n">Binder</span><span class="o">.</span><span class="na">getCallingUid</span><span class="o">());</span>
+<span class="ln">34</span>                <span class="n">intent</span><span class="o">.</span><span class="na">removeFlags</span><span class="o">(</span><span class="n">Intent</span><span class="o">.</span><span class="na">FLAG_RECEIVER_FROM_SHELL</span><span class="o">);</span>
+<span class="ln">35</span>                <span class="k">break</span><span class="o">;</span>
+<span class="ln">36</span>        <span class="o">}</span>
+<span class="ln">37</span>    <span class="o">}</span>
+<span class="ln">38</span>
+<span class="ln">39</span>    <span class="k">return</span> <span class="n">intent</span><span class="o">;</span>
+<span class="ln">40</span><span class="o">}</span>
+</code></pre></div><p><code>clearCallingIdentity</code>和<code>restoreCallingIdentity</code>，关于这两个作用具体可以点击<a href="https://blog.csdn.net/fchyang/article/details/82345927">这里</a></p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//frameworks/base/core/java/android/os/Binder.java
+</span><span class="ln">2</span><span class="c1"></span><span class="nd">@CriticalNative</span>
+<span class="ln">3</span><span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kd">native</span> <span class="kt">long</span> <span class="nf">clearCallingIdentity</span><span class="o">();</span>
+<span class="ln">4</span>
+<span class="ln">5</span><span class="cm">/* @see #clearCallingIdentity
+</span><span class="ln">6</span><span class="cm">*/</span>
+<span class="ln">7</span><span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kd">native</span> <span class="kt">void</span> <span class="nf">restoreCallingIdentity</span><span class="o">(</span><span class="kt">long</span> <span class="n">token</span><span class="o">);</span>
+</code></pre></div><p>调用到native方法里面</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/libs/binder/IPCThreadState.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int64_t</span> <span class="n">IPCThreadState</span><span class="o">::</span><span class="n">clearCallingIdentity</span><span class="p">()</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="c1">// ignore mCallingSid for legacy reasons
+</span><span class="ln"> 5</span><span class="c1"></span>    <span class="kt">int64_t</span> <span class="n">token</span> <span class="o">=</span> <span class="p">((</span><span class="kt">int64_t</span><span class="p">)</span><span class="n">mCallingUid</span><span class="o">&lt;&lt;</span><span class="mi">32</span><span class="p">)</span> <span class="o">|</span> <span class="n">mCallingPid</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="n">clearCaller</span><span class="p">();</span>
+<span class="ln"> 7</span>    <span class="k">return</span> <span class="n">token</span><span class="p">;</span>
+<span class="ln"> 8</span><span class="p">}</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span><span class="kt">void</span> <span class="n">IPCThreadState</span><span class="o">::</span><span class="n">clearCaller</span><span class="p">()</span>
+<span class="ln">11</span><span class="p">{</span>
+<span class="ln">12</span>    <span class="n">mCallingPid</span> <span class="o">=</span> <span class="n">getpid</span><span class="p">();</span>
+<span class="ln">13</span>    <span class="n">mCallingSid</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>  <span class="c1">// expensive to lookup
+</span><span class="ln">14</span><span class="c1"></span>    <span class="n">mCallingUid</span> <span class="o">=</span> <span class="n">getuid</span><span class="p">();</span>
+<span class="ln">15</span><span class="p">}</span>
+<span class="ln">16</span>
+<span class="ln">17</span><span class="kt">void</span> <span class="n">IPCThreadState</span><span class="o">::</span><span class="n">restoreCallingIdentity</span><span class="p">(</span><span class="kt">int64_t</span> <span class="n">token</span><span class="p">)</span>
+<span class="ln">18</span><span class="p">{</span>
+<span class="ln">19</span>    <span class="n">mCallingUid</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)(</span><span class="n">token</span><span class="o">&gt;&gt;</span><span class="mi">32</span><span class="p">);</span>
+<span class="ln">20</span>    <span class="n">mCallingSid</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>  <span class="c1">// not enough data to restore
+</span><span class="ln">21</span><span class="c1"></span>    <span class="n">mCallingPid</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">token</span><span class="p">;</span>
+<span class="ln">22</span><span class="p">}</span>
+</code></pre></div><blockquote>
+<ol>
+<li>线程A通过Binder远程调用线程B：则线程B的<code>IPCThreadState</code>中的<code>mCallingUid</code>和<code>mCallingPid</code>保存的就是线程A的<code>UID</code>和<code>PID</code>。这时在线程B中调用<code>Binder.getCallingPid()</code>和<code>Binder.getCallingUid()</code>方法便可获取线程A的<code>UID</code>和<code>PID</code>，然后利用<code>UID</code>和<code>PID</code>进行权限比对，判断线程A是否有权限调用线程B的某个方法。</li>
+<li>线程B通过<code>Binder</code>调用当前线程的某个组件：此时线程B是线程B某个组件的调用端，则<code>mCallingUid</code>和<code>mCallingPid</code>应该保存当前线程B的<code>PID</code>和<code>UID</code>，故需要调用<code>clearCallingIdentity()</code>方法完成这个功能。当线程B调用完某个组件，由于线程B仍然处于线程A的被调用端，因此<code>mCallingUid</code>和<code>mCallingPid</code>需要恢复成线程A的<code>UID</code>和<code>PID</code>，这是调用<code>restoreCallingIdentity()</code>即可完成。</li>
+</ol>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidTools/am_broadcast/am_broadcast_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidTools/am_broadcast/am_broadcast_3.png" >
+  
+    </a>
+  
+  
+</div>
+
+</blockquote>
+<h1 id="4总结">4总结</h1>
+<p>总的来说，<code>am broadcast</code>还是比较常用的<code>shell</code>命令，通过一系列的操作，最终可以达到<code>Context.sendBroadcast</code>同等效果的广播。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>$ adb shell am broadcast -a android.intent.action.SENDLOVE -n com.example.broadcast/.MyTanabataReceiver –es “love” “爱你” –ei “days” <span class="m">10000</span> –ez “reality” <span class="nb">true</span>
+</code></pre></div><p>以上面的<code>shell</code>命令为例</p>
+<ol>
+<li>
+<p><code>am</code>命令会调用到<code>/frameworks/base/cmds/am</code>目录中的<code>am</code>脚本，并且在脚本里会调用<code>cmd</code>命令</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>$ adb shell cmd activity broadcast -a android.intent.action.SENDLOVE -n com.example.broadcast/.MyTanabataReceiver –es “love” “爱你” –ei “days” <span class="m">10000</span> –ez “reality” <span class="nb">true</span>
+</code></pre></div></li>
+<li>
+<p><code>cmd</code>命令会建立<code>Binder</code>通信，通过传入的参数为<code>activity</code>，从<code>ServiceManager</code>大管家中找到名叫<code>&quot;activity&quot;</code>的服务，接着调用<code>shellCommand</code>，通过<code>IPC</code>中的<code>command</code>序号<code>SHELL_COMMAND_TRANSACTION</code></p>
+</li>
+<li>
+<p>在<code>AMS</code>中找到<code>Binder</code>通信的真实调用<code>onShellCommand</code>，然后通过命令的形式在基类执行<code>BasicShellCommandHandler</code>的<code>exec</code>方法，最终会在<code>AMS</code>中找到对应的实现方法<code>onCommand</code>，这个就是处理参数<code>broadcast</code>方式</p>
+</li>
+<li>
+<p>在<code>AMS</code>开始处理<code>broadcast</code>方式<code>runSendBroadcast</code>。主要有创建广播的<code>Intent</code>内容，并发送广播。发送广播完成之后，回调<code>receiver</code>的<code>performReceive</code>方法</p>
+<p>创建广播其实也是解析命令行的过程，这里解析之后，会被送到<code>AMS</code>中进行校验，包括<code>selinux</code>权限、广播时机和广播发送的<code>uid</code>等，最终通过标准流程<code>broadcastIntentLocked</code>实现发送广播。</p>
+</li>
+</ol>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidTools/am_broadcast/am_broadcast_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidTools/am_broadcast/am_broadcast_4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="源码下载">源码下载</h1>
+<p><a href="https://github.com/YangYang48/project/tree/master/am_broadcast">am broadcast源码</a></p>
               
             </div>
           </div>
