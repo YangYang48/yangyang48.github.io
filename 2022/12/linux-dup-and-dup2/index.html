@@ -46,6 +46,12 @@
     
       <meta property="article:tag" content="Linux">
     
+      <meta property="article:tag" content="pipe">
+    
+      <meta property="article:tag" content="fork">
+    
+      <meta property="article:tag" content="NativeCrash">
+    
       <meta property="article:tag" content="基础">
     
       <meta property="article:tag" content="源码">
@@ -278,15 +284,616 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">100 Words|Read in about 1 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">900 Words|Read in about 5 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
               <p>学习Linux中的dup/dup2函数。</p>
-<h1 id="linux-dup-and-dup2">Linux dup and dup2</h1>
+<h1 id="0简介">0简介</h1>
+<h2 id="1name">1NAME</h2>
+<p><code>dup</code>, <code>dup2</code>, <code>dup3</code> - duplicate a file descriptor</p>
+<p>这类函数是用于复制文件描述符的。</p>
+<h2 id="2synopsis">2SYNOPSIS</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span><span class="ln">2</span><span class="cp"></span>
+<span class="ln">3</span><span class="kt">int</span> <span class="nf">dup</span><span class="p">(</span><span class="kt">int</span> <span class="n">oldfd</span><span class="p">);</span>
+<span class="ln">4</span><span class="kt">int</span> <span class="nf">dup2</span><span class="p">(</span><span class="kt">int</span> <span class="n">oldfd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">newfd</span><span class="p">);</span>
+</code></pre></div><h2 id="3description">3DESCRIPTION</h2>
+<div class="highlight"><pre class="chroma"><code class="language-text" data-lang="text"><span class="ln"> 1</span>dup()
+<span class="ln"> 2</span>系统调用创建文件描述符oldfd的副本，为新的描述符使用编号最低的未使用的描述符。
+<span class="ln"> 3</span>成功返回后，新旧文件描述符可以互换使用。它们引用相同的打开文件描述
+<span class="ln"> 4</span>(参见open(2))，从而共享文件偏移量和文件状态标志;例如，如果在一个文件上使用lseek(2)修改文件偏移量
+<span class="ln"> 5</span>在描述符中，另一个的偏移量也改变了。
+<span class="ln"> 6</span>这两个描述符不共享文件描述符标志(close-on-exec标志)。关闭执行标志(FD_CLOEXEC;它看到fcntl (2))
+<span class="ln"> 7</span>为重复描述符关闭。
+<span class="ln"> 8</span>
+<span class="ln"> 9</span>dup2()
+<span class="ln">10</span>dup2()系统调用执行与dup()相同的任务，但它不是使用编号最低的未使用文件描述符，而是使用
+<span class="ln">11</span>在newfd中指定的描述符编号。如果描述符newfd以前是打开的，那么在重用它之前，它将被无声地关闭。
+<span class="ln">12</span>关闭和重用文件描述符newfd的步骤是原子地执行的。这很重要，因为试图实现
+<span class="ln">13</span>使用close(2)和dup()的等效功能将受到竞争条件的影响，因此newfd可能在两者之间被重用
+<span class="ln">14</span>步骤。发生这种重用的原因可能是主程序被分配文件描述符的信号处理程序中断
+<span class="ln">15</span>因为并行线程分配一个文件描述符。
+<span class="ln">16</span>
+<span class="ln">17</span>注意以下几点:
+<span class="ln">18</span>*如果oldfd不是有效的文件描述符，则调用失败，newfd不会关闭。
+<span class="ln">19</span>*如果oldfd是一个有效的文件描述符，并且newfd与oldfd具有相同的值，那么dup2()不做任何事情，并返回newfd。
+</code></pre></div><p>具体再解释下，由<code>dup</code>返回的新文件描述符一定是当前可用文件描述符中的最小数值。对于<code>dup2</code>，可以用<code>fd2</code>参数指定新描述符的值。如果<code>fd2</code>已经打开，则先将其关闭。如若<code>fd</code>等于<code>fd2</code>，则<code>dup2</code>返回<code>fd2</code>，而不关闭它。否则，<code>fd2</code>的<code>FD_CLOEXEC</code>文件描述符标志就被清除，这样<code>fd2</code>在进程调用<code>exec</code>时是打开状态。</p>
+<h2 id="4return-value">4RETURN VALUE</h2>
+<div class="highlight"><pre class="chroma"><code class="language-text" data-lang="text"><span class="ln"> 1</span>如果成功，这些系统调用将返回新的描述符。如果出现错误，则返回-1，并适当地设置errno。
+<span class="ln"> 2</span>
+<span class="ln"> 3</span>错误
+<span class="ln"> 4</span>EBADF oldfd不是一个打开的文件描述符。
+<span class="ln"> 5</span>EBADF newfd超出了文件描述符的允许范围(请参阅getrlimit(2)中关于RLIMIT_NOFILE的讨论)。
+<span class="ln"> 6</span>EBUSY(仅限Linux)这可能由dup2()或dup3()在open(2)和dup()的竞态条件下返回。
+<span class="ln"> 7</span>EINTR dup2()或dup3()调用被信号中断;看到信号(7)。
+<span class="ln"> 8</span>EINVAL (dup3())标志包含无效值。
+<span class="ln"> 9</span>EINVAL (dup3()) oldfd等于newfd。
+<span class="ln">10</span>EMFILE每个进程打开的文件描述符数量的限制已经达到(参见getr‐中RLIMIT_NOFILE的讨论)
+<span class="ln">11</span>限制(2))。
+</code></pre></div><h1 id="1举例">1举例</h1>
+<h2 id="11复制文件描述符重定向">1.1复制文件描述符（重定向）</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span><span class="ln"> 4</span><span class="cp">#include</span> <span class="cpf">&lt;sys/stat.h&gt;</span><span class="cp">
+</span><span class="ln"> 5</span><span class="cp">#include</span> <span class="cpf">&lt;fcntl.h&gt;</span><span class="cp">
+</span><span class="ln"> 6</span><span class="cp"></span>
+<span class="ln"> 7</span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">argv</span><span class="p">[])</span>
+<span class="ln"> 8</span><span class="p">{</span>
+<span class="ln"> 9</span>    <span class="kt">int</span> <span class="n">i_fd</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="s">&#34;hello.txt&#34;</span><span class="p">,</span> <span class="n">O_CREAT</span><span class="o">|</span><span class="n">O_APPEND</span><span class="o">|</span><span class="n">O_RDWR</span><span class="p">,</span> <span class="mo">0666</span><span class="p">);</span>
+<span class="ln">10</span>
+<span class="ln">11</span>    <span class="k">if</span><span class="p">(</span><span class="n">i_fd</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+<span class="ln">12</span>    <span class="p">{</span>
+<span class="ln">13</span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;open error!</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">14</span>        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">15</span>    <span class="p">}</span>
+<span class="ln">16</span>
+<span class="ln">17</span>    <span class="k">if</span><span class="p">(</span><span class="n">write</span><span class="p">(</span><span class="n">i_fd</span><span class="p">,</span> <span class="s">&#34;hello fd</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">9</span><span class="p">)</span>
+<span class="ln">18</span>     <span class="p">{</span>
+<span class="ln">19</span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;write fd error</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">20</span>
+<span class="ln">21</span>    <span class="p">}</span>
+<span class="ln">22</span>	<span class="c1">//这里操作之后，原本句柄3就被句柄4复制，也就是句柄3和句柄4都指向真实的hello.txt，关掉任意一个对另外一个都没影响
+</span><span class="ln">23</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">i_dup_fd</span> <span class="o">=</span> <span class="n">dup</span><span class="p">(</span><span class="n">i_fd</span><span class="p">);</span>
+<span class="ln">24</span>    <span class="k">if</span><span class="p">(</span><span class="n">i_dup_fd</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+<span class="ln">25</span>    <span class="p">{</span>
+<span class="ln">26</span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;dup error!</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">27</span>        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">28</span>    <span class="p">}</span>
+<span class="ln">29</span>
+<span class="ln">30</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;i_dup_fd = %d </span><span class="se">\t</span><span class="s"> i_fd = %d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">i_dup_fd</span><span class="p">,</span> <span class="n">i_fd</span><span class="p">);</span>
+<span class="ln">31</span>    <span class="n">close</span><span class="p">(</span><span class="n">i_fd</span><span class="p">);</span>
+<span class="ln">32</span>
+<span class="ln">33</span>    <span class="kt">char</span> <span class="n">c_buffer</span><span class="p">[</span><span class="mi">100</span><span class="p">];</span>
+<span class="ln">34</span>    <span class="kt">int</span> <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">35</span>    <span class="k">while</span><span class="p">((</span><span class="n">n</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="n">STDIN_FILENO</span><span class="p">,</span> <span class="n">c_buffer</span><span class="p">,</span> <span class="mi">1000</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+<span class="ln">36</span>    <span class="p">{</span>
+<span class="ln">37</span>        <span class="k">if</span><span class="p">(</span><span class="n">write</span><span class="p">(</span><span class="n">i_dup_fd</span><span class="p">,</span> <span class="n">c_buffer</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">!=</span> <span class="n">n</span><span class="p">)</span>
+<span class="ln">38</span>        <span class="p">{</span>
+<span class="ln">39</span>            <span class="n">printf</span><span class="p">(</span><span class="s">&#34;write dup fd error!</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">40</span>            <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">41</span>        <span class="p">}</span>
+<span class="ln">42</span>    <span class="p">}</span>
+<span class="ln">43</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">44</span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/func/dup_dup2/dup_dup2_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/func/dup_dup2/dup_dup2_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/func/dup_dup2/dup_dup2_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/func/dup_dup2/dup_dup2_2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="12当前可用文件描述符中的最小数值">1.2当前可用文件描述符中的最小数值</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span><span class="ln"> 4</span><span class="cp">#include</span> <span class="cpf">&lt;sys/stat.h&gt;</span><span class="cp">
+</span><span class="ln"> 5</span><span class="cp">#include</span> <span class="cpf">&lt;fcntl.h&gt;</span><span class="cp">
+</span><span class="ln"> 6</span><span class="cp"></span>
+<span class="ln"> 7</span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">argv</span><span class="p">[])</span>
+<span class="ln"> 8</span><span class="p">{</span>
+<span class="ln"> 9</span>    <span class="kt">int</span> <span class="n">i_fd</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="s">&#34;hello.txt&#34;</span><span class="p">,</span> <span class="n">O_CREAT</span><span class="o">|</span><span class="n">O_APPEND</span><span class="o">|</span><span class="n">O_RDWR</span><span class="p">,</span> <span class="mo">0666</span><span class="p">);</span>
+<span class="ln">10</span>
+<span class="ln">11</span>    <span class="k">if</span><span class="p">(</span><span class="n">i_fd</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+<span class="ln">12</span>    <span class="p">{</span>
+<span class="ln">13</span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;open error!</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">14</span>        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">15</span>    <span class="p">}</span>
+<span class="ln">16</span>
+<span class="ln">17</span>    <span class="k">if</span><span class="p">(</span><span class="n">write</span><span class="p">(</span><span class="n">i_fd</span><span class="p">,</span> <span class="s">&#34;hello fd</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">9</span><span class="p">)</span>
+<span class="ln">18</span>     <span class="p">{</span>
+<span class="ln">19</span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;write fd error</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">20</span>
+<span class="ln">21</span>    <span class="p">}</span>
+<span class="ln">22</span>    <span class="c1">//在重定向新句柄前先把默认的句柄0关闭了，那么复制的句柄将是当前可用最小的句柄，即为0
+</span><span class="ln">23</span><span class="c1"></span>    <span class="n">close</span><span class="p">(</span><span class="n">STDIN_FILENO</span><span class="p">);</span>
+<span class="ln">24</span>    <span class="kt">int</span> <span class="n">i_dup_fd</span> <span class="o">=</span> <span class="n">dup</span><span class="p">(</span><span class="n">i_fd</span><span class="p">);</span>
+<span class="ln">25</span>    <span class="k">if</span><span class="p">(</span><span class="n">i_dup_fd</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+<span class="ln">26</span>    <span class="p">{</span>
+<span class="ln">27</span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;dup error!</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">28</span>        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">29</span>    <span class="p">}</span>
+<span class="ln">30</span>
+<span class="ln">31</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;i_dup_fd = %d </span><span class="se">\t</span><span class="s"> i_fd = %d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">i_dup_fd</span><span class="p">,</span> <span class="n">i_fd</span><span class="p">);</span>
+<span class="ln">32</span>    <span class="n">close</span><span class="p">(</span><span class="n">i_fd</span><span class="p">);</span>
+<span class="ln">33</span>    <span class="n">close</span><span class="p">(</span><span class="n">i_dup_fd</span><span class="p">);</span>
+<span class="ln">34</span>
+<span class="ln">35</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">36</span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/func/dup_dup2/dup_dup2_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/func/dup_dup2/dup_dup2_3.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/func/dup_dup2/dup_dup2_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/func/dup_dup2/dup_dup2_4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="13-dup2">1.3 dup2</h2>
+<p>这里的<code>dup2</code>，会通过后者设置的标准输出，重定向为文件的句柄<code>file_fd</code>，然后在重定向回来为标准输出。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span><span class="ln"> 4</span><span class="cp">#include</span> <span class="cpf">&lt;sys/stat.h&gt;</span><span class="cp">
+</span><span class="ln"> 5</span><span class="cp">#include</span> <span class="cpf">&lt;fcntl.h&gt;</span><span class="cp">
+</span><span class="ln"> 6</span><span class="cp"></span>
+<span class="ln"> 7</span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
+<span class="ln"> 8</span><span class="p">{</span>
+<span class="ln"> 9</span>    <span class="c1">//先调用dup将标准输出拷贝一份，指向真正的标准输出
+</span><span class="ln">10</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">stdout_copy_fd</span> <span class="o">=</span> <span class="n">dup</span><span class="p">(</span><span class="n">STDOUT_FILENO</span><span class="p">);</span>
+<span class="ln">11</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;stdout_copy_fd = %d </span><span class="se">\t</span><span class="s"> STDOUT_FILENO = %d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">stdout_copy_fd</span><span class="p">,</span> <span class="n">STDOUT_FILENO</span><span class="p">);</span>
+<span class="ln">12</span>    <span class="kt">int</span> <span class="n">file_fd</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="s">&#34;hello_dup2.txt&#34;</span><span class="p">,</span> <span class="n">O_CREAT</span><span class="o">|</span><span class="n">O_APPEND</span><span class="o">|</span><span class="n">O_RDWR</span><span class="p">,</span> <span class="mo">0666</span><span class="p">);</span>
+<span class="ln">13</span>    <span class="c1">//让标准输出指向文件
+</span><span class="ln">14</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">dup2_fd</span> <span class="o">=</span> <span class="n">dup2</span><span class="p">(</span><span class="n">file_fd</span><span class="p">,</span> <span class="n">STDOUT_FILENO</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="c1">//printf(&#34;before dup2_fd = %d \t file_fd = %d\n&#34;, dup2_fd, file_fd);
+</span><span class="ln">16</span><span class="c1"></span>    <span class="c1">//实际上printf(&#34;hello\n&#34;)也可以写成fprintf(STDOUT_FILENO, &#34;hello\n&#34;);
+</span><span class="ln">17</span><span class="c1"></span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;hello</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">18</span>    <span class="c1">//刷新缓冲区
+</span><span class="ln">19</span><span class="c1"></span>	<span class="c1">//fflush(stdout);
+</span><span class="ln">20</span><span class="c1"></span>    <span class="c1">//恢复标准输出
+</span><span class="ln">21</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">dup2_recovery_fd</span> <span class="o">=</span><span class="n">dup2</span><span class="p">(</span><span class="n">stdout_copy_fd</span><span class="p">,</span> <span class="n">STDOUT_FILENO</span><span class="p">);</span>
+<span class="ln">22</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;world</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">23</span>    <span class="c1">//printf(&#34;after dup2_fd = %d \t file_fd = %d \t dup2_recovery_fd = %d\n&#34;, dup2_fd, file_fd, dup2_recovery_fd);
+</span><span class="ln">24</span><span class="c1"></span>    <span class="n">close</span><span class="p">(</span><span class="n">file_fd</span><span class="p">);</span>
+<span class="ln">25</span>    <span class="n">close</span><span class="p">(</span><span class="n">stdout_copy_fd</span><span class="p">);</span>
+<span class="ln">26</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">27</span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/func/dup_dup2/dup_dup2_5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/func/dup_dup2/dup_dup2_5.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/func/dup_dup2/dup_dup2_6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/func/dup_dup2/dup_dup2_6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<blockquote>
+<p>注：如果出现调用的两次<code>printf</code>仍然出现在屏幕上。。<code>hello</code>并没有写入到文件中。</p>
+<p>这个时候需要刷新缓冲区，再重新输出。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">//让标准输出指向文件
+</span><span class="ln">2</span><span class="c1"></span><span class="n">dup2</span><span class="p">(</span><span class="n">file_fd</span><span class="p">,</span> <span class="n">STDOUT_FILENO</span><span class="p">);</span>
+<span class="ln">3</span><span class="n">printf</span><span class="p">(</span><span class="s">&#34;hello</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">4</span><span class="c1">//刷新缓冲区
+</span><span class="ln">5</span><span class="c1"></span><span class="n">fflush</span><span class="p">(</span><span class="n">stdout</span><span class="p">);</span>
+<span class="ln">6</span><span class="c1">//恢复标准输出
+</span><span class="ln">7</span><span class="c1"></span><span class="n">dup2</span><span class="p">(</span><span class="n">stdout_copy_fd</span><span class="p">,</span> <span class="n">STDOUT_FILENO</span><span class="p">);</span>
+</code></pre></div></blockquote>
+<h1 id="2源码与pipe一起使用">2源码（与pipe一起使用）</h1>
+<h2 id="21libc中的debuggerd">2.1libc中的debuggerd</h2>
+<p>以Native crash中的源码为例</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/debuggerd/handler/debuggerd_handler.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="kt">int</span> <span class="nf">debuggerd_dispatch_pseudothread</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">arg</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="c1">//首先把标准输出和标准输入都置为null,这里的/dev/null用于丢弃整个输出中的标准输出或标准错误
+</span><span class="ln"> 4</span><span class="c1"></span>  <span class="kt">int</span> <span class="n">devnull</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">open</span><span class="p">(</span><span class="s">&#34;/dev/null&#34;</span><span class="p">,</span> <span class="n">O_RDWR</span><span class="p">));</span>
+<span class="ln"> 5</span>  <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">dup2</span><span class="p">(</span><span class="n">devnull</span><span class="p">,</span> <span class="mi">1</span><span class="p">));</span>
+<span class="ln"> 6</span>  <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">dup2</span><span class="p">(</span><span class="n">devnull</span><span class="p">,</span> <span class="mi">2</span><span class="p">));</span>
+<span class="ln"> 7</span>  <span class="c1">//这里设置管道，管道的用途，一端的管道写，一段的管道读	
+</span><span class="ln"> 8</span><span class="c1"></span>  <span class="n">unique_fd</span> <span class="n">input_read</span><span class="p">,</span> <span class="n">input_write</span><span class="p">;</span>
+<span class="ln"> 9</span>  <span class="n">unique_fd</span> <span class="n">output_read</span><span class="p">,</span> <span class="n">output_write</span><span class="p">;</span>
+<span class="ln">10</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">Pipe</span><span class="p">(</span><span class="o">&amp;</span><span class="n">input_read</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">input_write</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="o">||</span> <span class="o">!</span><span class="n">Pipe</span><span class="p">(</span><span class="o">&amp;</span><span class="n">output_read</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">output_write</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">11</span>    <span class="n">fatal_errno</span><span class="p">(</span><span class="s">&#34;failed to create pipe&#34;</span><span class="p">);</span>
+<span class="ln">12</span>  <span class="p">}</span>
+<span class="ln">13</span>  <span class="c1">//这种数据结构调用中读、写多个非连续缓冲区  
+</span><span class="ln">14</span><span class="c1"></span>  <span class="k">struct</span> <span class="nc">iovec</span> <span class="n">iovs</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln">15</span>      <span class="p">{.</span><span class="n">iov_base</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">version</span><span class="p">,</span> <span class="p">.</span><span class="n">iov_len</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">version</span><span class="p">)},</span>
+<span class="ln">16</span>      <span class="p">{.</span><span class="n">iov_base</span> <span class="o">=</span> <span class="n">thread_info</span><span class="o">-&gt;</span><span class="n">siginfo</span><span class="p">,</span> <span class="p">.</span><span class="n">iov_len</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">siginfo_t</span><span class="p">)},</span>
+<span class="ln">17</span>      <span class="p">{.</span><span class="n">iov_base</span> <span class="o">=</span> <span class="n">thread_info</span><span class="o">-&gt;</span><span class="n">ucontext</span><span class="p">,</span> <span class="p">.</span><span class="n">iov_len</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">ucontext_t</span><span class="p">)},</span>
+<span class="ln">18</span>      <span class="p">{.</span><span class="n">iov_base</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">thread_info</span><span class="o">-&gt;</span><span class="n">abort_msg</span><span class="p">,</span> <span class="p">.</span><span class="n">iov_len</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">uintptr_t</span><span class="p">)},</span>
+<span class="ln">19</span>      <span class="p">{.</span><span class="n">iov_base</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">thread_info</span><span class="o">-&gt;</span><span class="n">fdsan_table</span><span class="p">,</span> <span class="p">.</span><span class="n">iov_len</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">uintptr_t</span><span class="p">)},</span>
+<span class="ln">20</span>      <span class="p">{.</span><span class="n">iov_base</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">thread_info</span><span class="o">-&gt;</span><span class="n">gwp_asan_state</span><span class="p">,</span> <span class="p">.</span><span class="n">iov_len</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">uintptr_t</span><span class="p">)},</span>
+<span class="ln">21</span>      <span class="p">{.</span><span class="n">iov_base</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">thread_info</span><span class="o">-&gt;</span><span class="n">gwp_asan_metadata</span><span class="p">,</span> <span class="p">.</span><span class="n">iov_len</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">uintptr_t</span><span class="p">)},</span>
+<span class="ln">22</span>  <span class="p">};</span>
+<span class="ln">23</span>  <span class="c1">//将数据以iov的形式传递
+</span><span class="ln">24</span><span class="c1"></span>  <span class="n">ssize_t</span> <span class="n">rc</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">writev</span><span class="p">(</span><span class="n">output_write</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">iovs</span><span class="p">,</span> <span class="n">arraysize</span><span class="p">(</span><span class="n">iovs</span><span class="p">)));</span>
+<span class="ln">25</span>  <span class="c1">//将debuggerd_handler所在进程fork复制一份
+</span><span class="ln">26</span><span class="c1"></span>  <span class="n">pid_t</span> <span class="n">crash_dump_pid</span> <span class="o">=</span> <span class="n">__fork</span><span class="p">();</span>
+<span class="ln">27</span>  <span class="k">if</span> <span class="p">(</span><span class="n">crash_dump_pid</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">28</span>    <span class="n">async_safe_format_log</span><span class="p">(</span><span class="n">ANDROID_LOG_FATAL</span><span class="p">,</span> <span class="s">&#34;libc&#34;</span><span class="p">,</span>
+<span class="ln">29</span>                          <span class="s">&#34;failed to fork in debuggerd signal handler: %s&#34;</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">30</span>  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">crash_dump_pid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">31</span>    <span class="c1">//这个是子进程  
+</span><span class="ln">32</span><span class="c1"></span>    <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">dup2</span><span class="p">(</span><span class="n">input_write</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">STDOUT_FILENO</span><span class="p">));</span>
+<span class="ln">33</span>    <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">dup2</span><span class="p">(</span><span class="n">output_read</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">STDIN_FILENO</span><span class="p">));</span>
+<span class="ln">34</span>    <span class="n">input_read</span><span class="p">.</span><span class="n">reset</span><span class="p">();</span>
+<span class="ln">35</span>    <span class="n">input_write</span><span class="p">.</span><span class="n">reset</span><span class="p">();</span>
+<span class="ln">36</span>    <span class="n">output_read</span><span class="p">.</span><span class="n">reset</span><span class="p">();</span>
+<span class="ln">37</span>    <span class="n">output_write</span><span class="p">.</span><span class="n">reset</span><span class="p">();</span>
+<span class="ln">38</span>    <span class="c1">//这个是crash_dump进程
+</span><span class="ln">39</span><span class="c1"></span>    <span class="n">execle</span><span class="p">(</span><span class="n">CRASH_DUMP_PATH</span><span class="p">,</span> <span class="n">CRASH_DUMP_NAME</span><span class="p">,</span> <span class="n">main_tid</span><span class="p">,</span> <span class="n">pseudothread_tid</span><span class="p">,</span> <span class="n">debuggerd_dump_type</span><span class="p">,</span>
+<span class="ln">40</span>           <span class="k">nullptr</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">);</span>
+<span class="ln">41</span>
+<span class="ln">42</span>    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">43</span>  <span class="p">}</span>
+<span class="ln">44</span>  <span class="c1">//外面是父进程
+</span><span class="ln">45</span><span class="c1"></span>  <span class="n">input_write</span><span class="p">.</span><span class="n">reset</span><span class="p">();</span>
+<span class="ln">46</span>  <span class="n">output_read</span><span class="p">.</span><span class="n">reset</span><span class="p">();</span>
+<span class="ln">47</span>  <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">4</span><span class="p">];</span>
+<span class="ln">48</span>  <span class="n">rc</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">read</span><span class="p">(</span><span class="n">input_read</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="o">&amp;</span><span class="n">buf</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">)));</span>
+<span class="ln">49</span>  <span class="k">if</span> <span class="p">(</span><span class="n">rc</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">50</span>    <span class="n">async_safe_format_log</span><span class="p">(</span><span class="n">ANDROID_LOG_FATAL</span><span class="p">,</span> <span class="s">&#34;libc&#34;</span><span class="p">,</span> <span class="s">&#34;read of IPC pipe failed: %s&#34;</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">51</span>    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">52</span>  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">rc</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">53</span>    <span class="n">async_safe_format_log</span><span class="p">(</span><span class="n">ANDROID_LOG_FATAL</span><span class="p">,</span> <span class="s">&#34;libc&#34;</span><span class="p">,</span> <span class="s">&#34;crash_dump helper failed to exec&#34;</span><span class="p">);</span>
+<span class="ln">54</span>    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">55</span>  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">rc</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">56</span>    <span class="n">async_safe_format_log</span><span class="p">(</span><span class="n">ANDROID_LOG_FATAL</span><span class="p">,</span> <span class="s">&#34;libc&#34;</span><span class="p">,</span>
+<span class="ln">57</span>                          <span class="s">&#34;read of IPC pipe returned unexpected value: %zd&#34;</span><span class="p">,</span> <span class="n">rc</span><span class="p">);</span>
+<span class="ln">58</span>    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">59</span>  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">buf</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="sc">&#39;\1&#39;</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">60</span>    <span class="n">async_safe_format_log</span><span class="p">(</span><span class="n">ANDROID_LOG_FATAL</span><span class="p">,</span> <span class="s">&#34;libc&#34;</span><span class="p">,</span> <span class="s">&#34;crash_dump helper reported failure&#34;</span><span class="p">);</span>
+<span class="ln">61</span>    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">62</span>  <span class="p">}</span>
+<span class="ln">63</span><span class="p">}</span>
+</code></pre></div><p>把父子进程分成进程A和进程B</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/func/dup_dup2/dup_dup2_7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/func/dup_dup2/dup_dup2_7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>考虑到其中四个句柄是比较特殊的句柄，它们是管道，管道的一边是写，管道的一边是读</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/func/dup_dup2/dup_dup2_8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/func/dup_dup2/dup_dup2_8.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>最终合并起来的父子进程表项</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/func/dup_dup2/dup_dup2_9.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/func/dup_dup2/dup_dup2_9.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="22crash_dump进程">2.2<code>crash_dump</code>进程</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">**</span> <span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 2</span>  <span class="c1">//将当前进程的标准输出复制为output_pipe，将便准输入复制为input_pipe
+</span><span class="ln"> 3</span><span class="c1"></span>  <span class="n">unique_fd</span> <span class="n">output_pipe</span><span class="p">(</span><span class="n">dup</span><span class="p">(</span><span class="n">STDOUT_FILENO</span><span class="p">));</span>
+<span class="ln"> 4</span>  <span class="n">unique_fd</span> <span class="n">input_pipe</span><span class="p">(</span><span class="n">dup</span><span class="p">(</span><span class="n">STDIN_FILENO</span><span class="p">));</span>
+<span class="ln"> 5</span>  <span class="c1">//出现的crash_dump进程之后又开始fork出一个新进程，将原先的进程退出  
+</span><span class="ln"> 6</span><span class="c1"></span>  <span class="n">pid_t</span> <span class="n">forkpid</span> <span class="o">=</span> <span class="n">fork</span><span class="p">();</span>
+<span class="ln"> 7</span>  <span class="k">if</span> <span class="p">(</span><span class="n">forkpid</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 8</span>    <span class="n">PLOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;fork failed&#34;</span><span class="p">;</span>
+<span class="ln"> 9</span>  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">forkpid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">10</span>    <span class="c1">//子进程不退出
+</span><span class="ln">11</span><span class="c1"></span>    <span class="n">fork_exit_read</span><span class="p">.</span><span class="n">reset</span><span class="p">();</span>
+<span class="ln">12</span>  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">13</span>    <span class="c1">// We need the pseudothread to live until we get around to verifying the vm pid against it.
+</span><span class="ln">14</span><span class="c1"></span>    <span class="c1">// The last thing it does is block on a waitpid on us, so wait until our child tells us to die.
+</span><span class="ln">15</span><span class="c1"></span>    <span class="c1">//父进程退出
+</span><span class="ln">16</span><span class="c1"></span>    <span class="n">fork_exit_write</span><span class="p">.</span><span class="n">reset</span><span class="p">();</span>
+<span class="ln">17</span>    <span class="kt">char</span> <span class="n">buf</span><span class="p">;</span>
+<span class="ln">18</span>    <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">read</span><span class="p">(</span><span class="n">fork_exit_read</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="o">&amp;</span><span class="n">buf</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">)));</span>
+<span class="ln">19</span>    <span class="n">_exit</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="ln">20</span>  <span class="p">}</span>
+<span class="ln">21</span>    
+<span class="ln">22</span>  <span class="p">{</span>
+<span class="ln">23</span>    <span class="n">ATRACE_NAME</span><span class="p">(</span><span class="s">&#34;ptrace&#34;</span><span class="p">);</span>
+<span class="ln">24</span>    <span class="p">...</span>
+<span class="ln">25</span>      <span class="k">if</span> <span class="p">(</span><span class="kr">thread</span> <span class="o">==</span> <span class="n">g_target_thread</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">26</span>        <span class="c1">//这里重要是的ReadCrashInfo，将之前保存的CrashInfo读取出来，通过input_pipe可以获取iov传输的数据
+</span><span class="ln">27</span><span class="c1"></span>        <span class="n">ReadCrashInfo</span><span class="p">(</span><span class="n">input_pipe</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">siginfo</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">info</span><span class="p">.</span><span class="n">registers</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">abort_msg_address</span><span class="p">,</span>
+<span class="ln">28</span>                      <span class="o">&amp;</span><span class="n">fdsan_table_address</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">gwp_asan_state</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">gwp_asan_metadata</span><span class="p">);</span>
+<span class="ln">29</span>        <span class="n">info</span><span class="p">.</span><span class="n">siginfo</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">siginfo</span><span class="p">;</span>
+<span class="ln">30</span>        <span class="n">info</span><span class="p">.</span><span class="n">signo</span> <span class="o">=</span> <span class="n">info</span><span class="p">.</span><span class="n">siginfo</span><span class="o">-&gt;</span><span class="n">si_signo</span><span class="p">;</span>
+<span class="ln">31</span>      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">32</span>        <span class="p">...</span>
+<span class="ln">33</span>        <span class="p">}</span>
+<span class="ln">34</span>      <span class="p">}</span>
+<span class="ln">35</span>
+<span class="ln">36</span>      <span class="n">thread_info</span><span class="p">[</span><span class="kr">thread</span><span class="p">]</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">info</span><span class="p">);</span>
+<span class="ln">37</span>    <span class="p">}</span>
+<span class="ln">38</span>  <span class="p">}</span>  
+<span class="ln">39</span>  <span class="c1">//将数据写入到output_pipe句柄中
+</span><span class="ln">40</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">write</span><span class="p">(</span><span class="n">output_pipe</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="s">&#34;</span><span class="se">\1</span><span class="s">&#34;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">41</span>    <span class="n">PLOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;failed to write to pseudothread&#34;</span><span class="p">;</span>
+<span class="ln">42</span>  <span class="p">}</span>
+<span class="ln">43</span><span class="p">}</span>
+</code></pre></div><p><code>crash_dump</code>进程<code>fork</code>出一个进程C之后</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/func/dup_dup2/dup_dup2_10.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/func/dup_dup2/dup_dup2_10.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>最终进程B死掉，进程A和进程C通过管道通信</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/func/dup_dup2/dup_dup2_11.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/func/dup_dup2/dup_dup2_11.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="23总结">2.3总结</h2>
+<p>之所以上述的<code>Native crash</code>中的源码大费周章的将<code>input_write</code>和<code>output_read</code>重定向为标准输出和标准输入，然后又将标准输入和表述输出句柄<code>copy</code>到进程的新句柄<code>output_pipe</code>和<code>input_pipe</code>中。主要原因是这里用到了父子进程，其中子进程执行<code>exec</code>之后，变成了新的进程，原先的句柄无法直接通过变量带过来，可以通过标准输入和标准输出的形式将句柄复制过来。</p>
 <h1 id="参考">参考</h1>
 <p><a href="https://blog.csdn.net/u012058778/article/details/78705536">[1] 非正经程序员, 浅谈dup和dup2的用法, 2017.</a></p>
-<p><a href="https://www.cnblogs.com/0x12345678/p/5847734.html">[1] Hackergin, dup和dup2用法小结, 2016.</a></p>
+<p><a href="https://www.cnblogs.com/0x12345678/p/5847734.html">[2] Hackergin, dup和dup2用法小结, 2016.</a></p>
+<p><a href="https://blog.csdn.net/mayue_web/article/details/88672296">[3] mayue_csdn, readv和writev函数, 2022.</a></p>
               
             </div>
           </div>
@@ -301,6 +908,12 @@
   <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/android/">Android</a>
 
   <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/linux/">Linux</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/pipe/">pipe</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/fork/">fork</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/nativecrash/">NativeCrash</a>
 
   <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E5%9F%BA%E7%A1%80/">基础</a>
 
