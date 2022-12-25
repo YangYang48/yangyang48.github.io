@@ -274,7 +274,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">100 Words|Read in about 1 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">1000 Words|Read in about 5 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -284,7 +284,350 @@
 <p>除了主流对Thread的用法，还有关于Thread.sleep(0)的方法使用</p>
 <p>另外，Java端要获取Linux层的线程id的话，应该通过什么方式呢</p>
 <h1 id="1threadsleep0">1Thread.Sleep(0)</h1>
+<p>下面这段代码注释写着保护GC。这个代码是想要“触发”GC，而不是“避免”GC，或者说是“避免”时间很长的 GC。从这个角度来说，程序里面的注释其实是在撒谎或者没写完整。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//这段源码来自于RocketMQ 的源码
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">0</span><span class="o">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="k">this</span><span class="o">.</span><span class="na">fileSize</span><span class="o">;</span> <span class="n">i</span> <span class="o">+=</span> <span class="n">MappedFile</span><span class="o">.</span><span class="na">OS_PAGE_SIZE</span><span class="o">,</span> <span class="n">j</span><span class="o">++)</span> <span class="o">{</span>
+<span class="ln"> 3</span>        <span class="n">byteBuffer</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">i</span><span class="o">,</span> <span class="o">(</span><span class="kt">byte</span><span class="o">)</span> <span class="n">0</span><span class="o">);</span>
+<span class="ln"> 4</span>        <span class="c1">// force flush when flush disk type is sync
+</span><span class="ln"> 5</span><span class="c1"></span>        <span class="k">if</span> <span class="o">(</span><span class="n">type</span> <span class="o">==</span> <span class="n">FlushDiskType</span><span class="o">.</span><span class="na">SYNC_FLUSH</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 6</span>            <span class="k">if</span> <span class="o">((</span><span class="n">i</span> <span class="o">/</span> <span class="n">OS_PAGE_SIZE</span><span class="o">)</span> <span class="o">-</span> <span class="o">(</span><span class="n">flush</span> <span class="o">/</span> <span class="n">OS_PAGE_SIZE</span><span class="o">)</span> <span class="o">&gt;=</span> <span class="n">pages</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 7</span>                <span class="n">flush</span> <span class="o">=</span> <span class="n">i</span><span class="o">;</span>
+<span class="ln"> 8</span>                <span class="n">mappedByteBuffer</span><span class="o">.</span><span class="na">force</span><span class="o">();</span>
+<span class="ln"> 9</span>            <span class="o">}</span>
+<span class="ln">10</span>        <span class="o">}</span>
+<span class="ln">11</span>
+<span class="ln">12</span>        <span class="c1">// prevent gc
+</span><span class="ln">13</span><span class="c1"></span>        <span class="k">if</span> <span class="o">(</span><span class="n">j</span> <span class="o">%</span> <span class="n">1000</span> <span class="o">==</span> <span class="n">0</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">14</span>            <span class="n">log</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&#34;j={}, costTime={}&#34;</span><span class="o">,</span> <span class="n">j</span><span class="o">,</span> <span class="n">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">()</span> <span class="o">-</span> <span class="n">time</span><span class="o">);</span>
+<span class="ln">15</span>            <span class="n">time</span> <span class="o">=</span> <span class="n">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">();</span>
+<span class="ln">16</span>            <span class="k">try</span> <span class="o">{</span>
+<span class="ln">17</span>                <span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="n">0</span><span class="o">);</span>
+<span class="ln">18</span>            <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">19</span>                <span class="n">log</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">&#34;Interrupted&#34;</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+<span class="ln">20</span>            <span class="o">}</span>
+<span class="ln">21</span>        <span class="o">}</span>
+<span class="ln">22</span> <span class="o">}</span>
+</code></pre></div><p>原理</p>
+<blockquote>
+<ul>
+<li>
+<p>Thread.sleep(0)就是“<strong>触发操作系统立刻重新进行一次CPU竞争</strong>”。结果也许是当前线程仍然获得CPU控制权，也许会换成别的线程获得CPU控制权。</p>
+<p>这样看来，这个场面就有意思了——可能有些人是PPMM，因此具有高优先级，于是她就可以经常来吃蛋糕。可能另外一个人是个丑男，而去很ws，所以优先级特别低，于是好半天了才轮到他一次（因为随着时间的推移，他会越来越饥饿，因此算出来的总优先级就会越来越高，因此总有一天会轮到他的）。而且，如果一不小心让一个大胖子得到了刀叉，因为他饭量大，可能他会霸占着蛋糕连续吃很久很久，导致旁边的人在那里咽口水。。。</p>
+<p>而且，还可能会有这种情况出现：操作系统现在计算出来的结果，5号PPMM总优先级最高，而且高出别人一大截。因此就叫5号来吃蛋糕。5号吃了一小会儿，觉得没那么饿了，于是说“我不吃了”（挂起）。因此操作系统就会重新计算所有人的优先级。因为5号刚刚吃过，因此她的饥饿程度变小了，于是总优先级变小了；而其他人因为多等了一会儿，饥饿程度都变大了，所以总优先级也变大了。不过这时候仍然有可能5号的优先级比别的都高，只不过现在只比其他的高一点点——但她仍然是总优先级最高的啊。因此操作系统就会说：5号mm上来吃蛋糕……（5号mm心里郁闷，这不刚吃过嘛……人家要减肥……谁叫你长那么漂亮，获得了那么高的优先级）。</p>
+<p>那么，Thread.Sleep 函数是干吗的呢？还用刚才的分蛋糕的场景来描述。上面的场景里面，5号MM在吃了一次蛋糕之后，觉得已经有8分饱了，她觉得在未来的半个小时之内都不想再来吃蛋糕了，那么她就会跟操作系统说：在未来的半个小时之内不要再叫我上来吃蛋糕了。这样，操作系统在随后的半个小时里面重新计算所有人总优先级的时候，就会忽略5号mm。Sleep函数就是干这事的，他告诉操作系统“在未来的多少毫秒内我不参与CPU竞争”。</p>
+</li>
+<li>
+<p>Thread.sleep(0)<strong>相当于插入了一个安全点。<strong>这样就可以避免你的程序 <code>GC</code> 线程长时间等待。也就是所谓的</strong>GC削峰</strong>。</p>
+<p><code>Java</code>虚拟机在进行<code>GC</code>的时候，有着<code>STW</code>的特性。即<code>Stop The World</code>，停顿所有<code>Java</code>执行进程。</p>
+<p>既然有<code>STW</code>的机制，那么<code>GC</code>是随时发起的吗？并是不，<code>Java</code>虚拟机利用了一个安全点机制<code>Safepoint</code>，<strong>只有程序到达安全点的时候才能够进行<code>GC</code>。<strong>有了安全点的设定，也就决定了用户程序执行时并</strong>非在代码指令流的任意位置都能够停顿下来开始垃圾收集</strong>，而是强制要求必须执行到达安全点后才能够暂停。</p>
+<p><strong>可数循环</strong>：如果循环次数比较少的话，执行时间应该不会太长，**使用<code>int</code>类型或者范围更小的数据类型作为索引值，这种是不会被放置安全点的。**循环如果没有结束。程序就无法走到安全点，就无法<code>GC</code>。</p>
+<p><strong>不可数循环</strong>：反之，如果使用<code>long</code>这样范围更大的类型作为索引的循环，就叫做不可数循环。此时循环过程中就会插入安全点。<strong>单次循环体结束的时候，就可以进入安全点，无需等待整个循环跑完</strong>。</p>
+<p>一个线程在运行 <code>native</code> 方法后，返回到 <code>Java</code> 线程后，<strong>必须</strong>进行一次 <code>safepoint</code> 的检测。Thread.sleep(0)正好为native方法，需要做一个安全点检测。在这里的循环中，相当于放置一个 Safepoint 呢，以达到避免 GC 线程长时间等待，相当于让可数循环变成不可数循环那样，无需等待整个循环跑完。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//通常num需要两个子线程结束才能给出结果
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MainTest</span> <span class="o">{</span>
+<span class="ln"> 3</span>
+<span class="ln"> 4</span>    <span class="kd">public</span> <span class="kd">static</span> <span class="n">AtomicInteger</span> <span class="n">num</span> <span class="o">=</span> <span class="k">new</span> <span class="n">AtomicInteger</span><span class="o">(</span><span class="n">0</span><span class="o">);</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span>    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+<span class="ln"> 7</span>        <span class="n">Runnable</span> <span class="n">runnable</span><span class="o">=()-&gt;{</span>
+<span class="ln"> 8</span>            <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">1000000000</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+<span class="ln"> 9</span>                <span class="n">num</span><span class="o">.</span><span class="na">getAndAdd</span><span class="o">(</span><span class="n">1</span><span class="o">);</span>
+<span class="ln">10</span>            <span class="o">}</span>
+<span class="ln">11</span>            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">getName</span><span class="o">()+</span><span class="s">&#34;执行结束!&#34;</span><span class="o">);</span>
+<span class="ln">12</span>        <span class="o">};</span>
+<span class="ln">13</span>
+<span class="ln">14</span>        <span class="n">Thread</span> <span class="n">t1</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Thread</span><span class="o">(</span><span class="n">runnable</span><span class="o">);</span>
+<span class="ln">15</span>        <span class="n">Thread</span> <span class="n">t2</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Thread</span><span class="o">(</span><span class="n">runnable</span><span class="o">);</span>
+<span class="ln">16</span>        <span class="n">t1</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+<span class="ln">17</span>        <span class="n">t2</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+<span class="ln">18</span>        <span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="n">1000</span><span class="o">);</span>
+<span class="ln">19</span>        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&#34;num = &#34;</span> <span class="o">+</span> <span class="n">num</span><span class="o">);</span>
+<span class="ln">20</span>    <span class="o">}</span>
+<span class="ln">21</span><span class="o">}</span>
+</code></pre></div><p>1）但是把int修改成long变成不可数循环即可</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//通常num需要两个子线程结束才能给出结果
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MainTest</span> <span class="o">{</span>
+<span class="ln"> 3</span>
+<span class="ln"> 4</span>    <span class="kd">public</span> <span class="kd">static</span> <span class="n">AtomicInteger</span> <span class="n">num</span> <span class="o">=</span> <span class="k">new</span> <span class="n">AtomicInteger</span><span class="o">(</span><span class="n">0</span><span class="o">);</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span>    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+<span class="ln"> 7</span>        <span class="n">Runnable</span> <span class="n">runnable</span><span class="o">=()-&gt;{</span>
+<span class="ln"> 8</span>            <span class="c1">//这里把int修改成long，变成不可数循环，进入安全点无需等待循环结束
+</span><span class="ln"> 9</span><span class="c1"></span>            <span class="k">for</span> <span class="o">(</span><span class="kt">long</span> <span class="n">i</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">1000000000</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+<span class="ln">10</span>                <span class="n">num</span><span class="o">.</span><span class="na">getAndAdd</span><span class="o">(</span><span class="n">1</span><span class="o">);</span>
+<span class="ln">11</span>            <span class="o">}</span>
+<span class="ln">12</span>            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">getName</span><span class="o">()+</span><span class="s">&#34;执行结束!&#34;</span><span class="o">);</span>
+<span class="ln">13</span>        <span class="o">};</span>
+<span class="ln">14</span>
+<span class="ln">15</span>        <span class="n">Thread</span> <span class="n">t1</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Thread</span><span class="o">(</span><span class="n">runnable</span><span class="o">);</span>
+<span class="ln">16</span>        <span class="n">Thread</span> <span class="n">t2</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Thread</span><span class="o">(</span><span class="n">runnable</span><span class="o">);</span>
+<span class="ln">17</span>        <span class="n">t1</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+<span class="ln">18</span>        <span class="n">t2</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+<span class="ln">19</span>        <span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="n">1000</span><span class="o">);</span>
+<span class="ln">20</span>        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&#34;num = &#34;</span> <span class="o">+</span> <span class="n">num</span><span class="o">);</span>
+<span class="ln">21</span>    <span class="o">}</span>
+<span class="ln">22</span><span class="o">}</span>
+</code></pre></div><p>2）或者是把引入Thread.sleep(0)，可以达到同样效果，无需等待循环结束</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//引入Thread.sleep(0)
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MainTest</span> <span class="o">{</span>
+<span class="ln"> 3</span>
+<span class="ln"> 4</span>    <span class="kd">public</span> <span class="kd">static</span> <span class="n">AtomicInteger</span> <span class="n">num</span> <span class="o">=</span> <span class="k">new</span> <span class="n">AtomicInteger</span><span class="o">(</span><span class="n">0</span><span class="o">);</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span>    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+<span class="ln"> 7</span>        <span class="n">Runnable</span> <span class="n">runnable</span><span class="o">=()-&gt;{</span>
+<span class="ln"> 8</span>            <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">1000000000</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+<span class="ln"> 9</span>                <span class="n">num</span><span class="o">.</span><span class="na">getAndAdd</span><span class="o">(</span><span class="n">1</span><span class="o">);</span>
+<span class="ln">10</span>                <span class="c1">// prevent gc
+</span><span class="ln">11</span><span class="c1"></span>                <span class="k">if</span> <span class="o">(</span><span class="n">i</span> <span class="o">%</span> <span class="n">1000</span> <span class="o">==</span> <span class="n">0</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">12</span>                    <span class="k">try</span> <span class="o">{</span>
+<span class="ln">13</span>                        <span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="n">0</span><span class="o">);</span>
+<span class="ln">14</span>                    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">15</span>                        <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="ln">16</span>                    <span class="o">}</span>
+<span class="ln">17</span>                <span class="o">}</span>
+<span class="ln">18</span>            <span class="o">}</span>
+<span class="ln">19</span>            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">getName</span><span class="o">()+</span><span class="s">&#34;执行结束!&#34;</span><span class="o">);</span>
+<span class="ln">20</span>        <span class="o">};</span>
+<span class="ln">21</span>
+<span class="ln">22</span>        <span class="n">Thread</span> <span class="n">t1</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Thread</span><span class="o">(</span><span class="n">runnable</span><span class="o">);</span>
+<span class="ln">23</span>        <span class="n">Thread</span> <span class="n">t2</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Thread</span><span class="o">(</span><span class="n">runnable</span><span class="o">);</span>
+<span class="ln">24</span>        <span class="n">t1</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+<span class="ln">25</span>        <span class="n">t2</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+<span class="ln">26</span>        <span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="n">1000</span><span class="o">);</span>
+<span class="ln">27</span>        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&#34;num = &#34;</span> <span class="o">+</span> <span class="n">num</span><span class="o">);</span>
+<span class="ln">28</span>    <span class="o">}</span>
+<span class="ln">29</span><span class="o">}</span>
+</code></pre></div></li>
+</ul>
+</blockquote>
 <h1 id="2获取tid">2获取Tid</h1>
+<h2 id="21从源码中找线索">2.1从源码中找线索</h2>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Thread</span> <span class="kd">implements</span> <span class="n">Runnable</span> <span class="o">{</span>
+<span class="ln"> 2</span>
+<span class="ln"> 3</span>    <span class="kd">private</span> <span class="kd">volatile</span> <span class="kt">long</span> <span class="n">nativePeer</span><span class="o">;</span>
+<span class="ln"> 4</span>    <span class="kd">private</span> <span class="kd">volatile</span> <span class="n">String</span> <span class="n">name</span><span class="o">;</span>
+<span class="ln"> 5</span>	<span class="kd">private</span> <span class="kt">int</span>            <span class="n">priority</span><span class="o">;</span>
+<span class="ln"> 6</span>    <span class="cm">/* For autonumbering anonymous threads. */</span>
+<span class="ln"> 7</span>    <span class="kd">private</span> <span class="kd">static</span> <span class="kt">int</span> <span class="n">threadInitNumber</span><span class="o">;</span>
+<span class="ln"> 8</span>    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">synchronized</span> <span class="kt">int</span> <span class="nf">nextThreadNum</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 9</span>        <span class="k">return</span> <span class="n">threadInitNumber</span><span class="o">++;</span>
+<span class="ln">10</span>    <span class="o">}</span>
+<span class="ln">11</span>
+<span class="ln">12</span>    <span class="kd">private</span> <span class="kt">long</span> <span class="n">tid</span><span class="o">;</span>
+<span class="ln">13</span>    <span class="kd">private</span> <span class="kd">static</span> <span class="kt">long</span> <span class="n">threadSeqNumber</span><span class="o">;</span>
+<span class="ln">14</span>	<span class="c1">//thread构造方法
+</span><span class="ln">15</span><span class="c1"></span>    <span class="kd">public</span> <span class="nf">Thread</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln">16</span>        <span class="n">init</span><span class="o">(</span><span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="s">&#34;Thread-&#34;</span> <span class="o">+</span> <span class="n">nextThreadNum</span><span class="o">(),</span> <span class="n">0</span><span class="o">);</span>
+<span class="ln">17</span>    <span class="o">}</span>
+<span class="ln">18</span>
+<span class="ln">19</span>    <span class="kd">public</span> <span class="nf">Thread</span><span class="o">(</span><span class="n">Runnable</span> <span class="n">target</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">20</span>        <span class="n">init</span><span class="o">(</span><span class="kc">null</span><span class="o">,</span> <span class="n">target</span><span class="o">,</span> <span class="s">&#34;Thread-&#34;</span> <span class="o">+</span> <span class="n">nextThreadNum</span><span class="o">(),</span> <span class="n">0</span><span class="o">);</span>
+<span class="ln">21</span>    <span class="o">}</span>
+<span class="ln">22</span>    
+<span class="ln">23</span>    <span class="kd">public</span> <span class="nf">Thread</span><span class="o">(</span><span class="n">String</span> <span class="n">name</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">24</span>        <span class="n">init</span><span class="o">(</span><span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="n">name</span><span class="o">,</span> <span class="n">0</span><span class="o">);</span>
+<span class="ln">25</span>    <span class="o">}</span>
+<span class="ln">26</span>	<span class="c1">//初始化Thread
+</span><span class="ln">27</span><span class="c1"></span>    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">init</span><span class="o">(</span><span class="n">ThreadGroup</span> <span class="n">g</span><span class="o">,</span> <span class="n">Runnable</span> <span class="n">target</span><span class="o">,</span> <span class="n">String</span> <span class="n">name</span><span class="o">,</span>
+<span class="ln">28</span>                      <span class="kt">long</span> <span class="n">stackSize</span><span class="o">,</span> <span class="n">AccessControlContext</span> <span class="n">acc</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">29</span>        <span class="k">if</span> <span class="o">(</span><span class="n">name</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">30</span>            <span class="k">throw</span> <span class="k">new</span> <span class="n">NullPointerException</span><span class="o">(</span><span class="s">&#34;name cannot be null&#34;</span><span class="o">);</span>
+<span class="ln">31</span>        <span class="o">}</span>
+<span class="ln">32</span>
+<span class="ln">33</span>        <span class="k">this</span><span class="o">.</span><span class="na">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">;</span>
+<span class="ln">34</span>        <span class="n">init2</span><span class="o">(</span><span class="n">parent</span><span class="o">);</span>
+<span class="ln">35</span>        <span class="k">this</span><span class="o">.</span><span class="na">stackSize</span> <span class="o">=</span> <span class="n">stackSize</span><span class="o">;</span>
+<span class="ln">36</span>
+<span class="ln">37</span>        <span class="c1">//这里面的tid不是真实linux的tid，这个是按次序在java层分配的id
+</span><span class="ln">38</span><span class="c1"></span>        <span class="n">tid</span> <span class="o">=</span> <span class="n">nextThreadID</span><span class="o">();</span>
+<span class="ln">39</span>    <span class="o">}</span>
+<span class="ln">40</span>    
+<span class="ln">41</span><span class="o">}</span>
+</code></pre></div><h3 id="211startthread">2.1.1<strong>startThread</strong></h3>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//startThread创建线程工作
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">synchronized</span> <span class="kt">void</span> <span class="nf">start</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 3</span>    <span class="c1">//如果线程已启动过，抛出异常 
+</span><span class="ln"> 4</span><span class="c1"></span>    <span class="k">if</span> <span class="o">(</span><span class="n">started</span><span class="o">)</span>
+<span class="ln"> 5</span>        <span class="k">throw</span> <span class="k">new</span> <span class="n">IllegalThreadStateException</span><span class="o">();</span>
+<span class="ln"> 6</span>    <span class="c1">//添加线程到 group中
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="n">group</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span>    <span class="n">started</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+<span class="ln">10</span>    <span class="k">try</span> <span class="o">{</span>
+<span class="ln">11</span>        <span class="c1">//调用native 函数进行真正的线程创建工作，传入2个参数，分别为线程函数栈大小及daemon书写
+</span><span class="ln">12</span><span class="c1"></span>        <span class="n">nativeCreate</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="n">stackSize</span><span class="o">,</span> <span class="n">daemon</span><span class="o">);</span>
+<span class="ln">13</span>        <span class="n">started</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+<span class="ln">14</span>    <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+<span class="ln">15</span>        <span class="k">try</span> <span class="o">{</span>
+<span class="ln">16</span>            <span class="c1">//创建流程失败的逻辑处理
+</span><span class="ln">17</span><span class="c1"></span>            <span class="k">if</span> <span class="o">(!</span><span class="n">started</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">18</span>                <span class="n">group</span><span class="o">.</span><span class="na">threadStartFailed</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+<span class="ln">19</span>            <span class="o">}</span>
+<span class="ln">20</span>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Throwable</span> <span class="n">ignore</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">21</span>            <span class="cm">/* do nothing. If start0 threw a Throwable then
+</span><span class="ln">22</span><span class="cm">                  it will be passed up the call stack */</span>
+<span class="ln">23</span>        <span class="o">}</span>
+<span class="ln">24</span>    <span class="o">}</span>
+<span class="ln">25</span><span class="o">}</span>
+</code></pre></div><h3 id="212thread_nativecreate">2.1.2<strong>Thread_nativeCreate</strong></h3>
+<p>调用到真实的<code>thread</code>线程创建工作</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//art/runtime/thread.cc
+</span><span class="ln">2</span><span class="c1"></span><span class="kt">void</span> <span class="n">Thread</span><span class="o">::</span><span class="n">CreateNativeThread</span><span class="p">(</span><span class="n">JNIEnv</span><span class="o">*</span> <span class="n">env</span><span class="p">,</span> <span class="n">jobject</span> <span class="n">java_peer</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">stack_size</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">is_daemon</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">3</span>  <span class="p">...</span>
+<span class="ln">4</span><span class="p">}</span>
+</code></pre></div><p>这里面涉及到的代码比较复杂，会按照功能划分三段new Thread、pthread_create、Thread::Init</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//art/runtime/thread.h
+</span><span class="ln"> 2</span><span class="c1">//tid保存的地方tls32_结构体中
+</span><span class="ln"> 3</span><span class="c1"></span><span class="k">struct</span> <span class="nf">PACKED</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">tls_32bit_sized_values</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="k">typedef</span> <span class="kt">uint32_t</span> <span class="n">bool32_t</span><span class="p">;</span>
+<span class="ln"> 5</span>    <span class="k">union</span> <span class="nc">StateAndFlags</span> <span class="n">state_and_flags</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="kt">int</span> <span class="n">suspend_count</span> <span class="n">GUARDED_BY</span><span class="p">(</span><span class="n">Locks</span><span class="o">::</span><span class="n">thread_suspend_count_lock_</span><span class="p">);</span>
+<span class="ln"> 7</span>    <span class="kt">int</span> <span class="n">debug_suspend_count</span> <span class="n">GUARDED_BY</span><span class="p">(</span><span class="n">Locks</span><span class="o">::</span><span class="n">thread_suspend_count_lock_</span><span class="p">);</span>
+<span class="ln"> 8</span>    <span class="kt">uint32_t</span> <span class="n">thin_lock_thread_id</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="c1">// System thread id.
+</span><span class="ln">10</span><span class="c1"></span>    <span class="kt">uint32_t</span> <span class="n">tid</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="p">...</span>
+<span class="ln">12</span><span class="p">}</span> <span class="n">tls32_</span><span class="p">;</span>
+</code></pre></div><p>我们现在知道 <code>tid</code>是保存在 <code> tls32_</code>结构体 中，并且其位于<code> Thread</code>对象的开头，以<code>Android11</code>源码来看， <code>tid</code> 处于第<code>16</code>个字节(位于 <code>state_and_flags</code>、<code>suspend_count</code>、<code>debug_suspend_count</code>、<code>think_lock_thread_id</code>之后)开头。 因此我们只要能够获取  <code>native</code>层 该<code>thread</code>对象的指针 就可以通过 内存偏移的方式 获取<code>tid</code>。</p>
+<h2 id="22获取-java-thread对象对应的tid">2.2获取 Java Thread对象对应的tid</h2>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="kn">package</span> <span class="nn">com.example.nativetid</span><span class="o">;</span>
+<span class="ln"> 2</span>
+<span class="ln"> 3</span><span class="kn">import</span> <span class="nn">androidx.appcompat.app.AppCompatActivity</span><span class="o">;</span>
+<span class="ln"> 4</span>
+<span class="ln"> 5</span><span class="kn">import</span> <span class="nn">android.os.Bundle</span><span class="o">;</span>
+<span class="ln"> 6</span><span class="kn">import</span> <span class="nn">android.util.Log</span><span class="o">;</span>
+<span class="ln"> 7</span><span class="kn">import</span> <span class="nn">android.widget.TextView</span><span class="o">;</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span><span class="kn">import</span> <span class="nn">com.example.nativetid.databinding.ActivityMainBinding</span><span class="o">;</span>
+<span class="ln">10</span>
+<span class="ln">11</span><span class="kn">import</span> <span class="nn">java.lang.reflect.Field</span><span class="o">;</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MainActivity</span> <span class="kd">extends</span> <span class="n">AppCompatActivity</span> <span class="o">{</span>
+<span class="ln">14</span>
+<span class="ln">15</span>    <span class="c1">// Used to load the &#39;native-lib&#39; library on application startup.
+</span><span class="ln">16</span><span class="c1"></span>    <span class="kd">static</span> <span class="o">{</span>
+<span class="ln">17</span>        <span class="n">System</span><span class="o">.</span><span class="na">loadLibrary</span><span class="o">(</span><span class="s">&#34;native-lib&#34;</span><span class="o">);</span>
+<span class="ln">18</span>    <span class="o">}</span>
+<span class="ln">19</span>
+<span class="ln">20</span>    <span class="kd">private</span> <span class="n">ActivityMainBinding</span> <span class="n">binding</span><span class="o">;</span>
+<span class="ln">21</span>    <span class="kd">private</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">TAG</span> <span class="o">=</span> <span class="s">&#34;MainActivity&#34;</span><span class="o">;</span>
+<span class="ln">22</span>
+<span class="ln">23</span>    <span class="nd">@Override</span>
+<span class="ln">24</span>    <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onCreate</span><span class="o">(</span><span class="n">Bundle</span> <span class="n">savedInstanceState</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">25</span>        <span class="kd">super</span><span class="o">.</span><span class="na">onCreate</span><span class="o">(</span><span class="n">savedInstanceState</span><span class="o">);</span>
+<span class="ln">26</span>
+<span class="ln">27</span>        <span class="n">binding</span> <span class="o">=</span> <span class="n">ActivityMainBinding</span><span class="o">.</span><span class="na">inflate</span><span class="o">(</span><span class="n">getLayoutInflater</span><span class="o">());</span>
+<span class="ln">28</span>        <span class="n">setContentView</span><span class="o">(</span><span class="n">binding</span><span class="o">.</span><span class="na">getRoot</span><span class="o">());</span>
+<span class="ln">29</span>
+<span class="ln">30</span>        <span class="c1">// Example of a call to a native method
+</span><span class="ln">31</span><span class="c1"></span>        <span class="n">TextView</span> <span class="n">tv</span> <span class="o">=</span> <span class="n">binding</span><span class="o">.</span><span class="na">sampleText</span><span class="o">;</span>
+<span class="ln">32</span>        <span class="n">tv</span><span class="o">.</span><span class="na">setText</span><span class="o">(</span><span class="n">stringFromJNI</span><span class="o">());</span>
+<span class="ln">33</span>        <span class="k">try</span> <span class="o">{</span>
+<span class="ln">34</span>            <span class="n">init</span><span class="o">();</span>
+<span class="ln">35</span>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IllegalAccessException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">36</span>            <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="ln">37</span>        <span class="o">}</span>
+<span class="ln">38</span>    <span class="o">}</span>
+<span class="ln">39</span>
+<span class="ln">40</span>    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">init</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">IllegalAccessException</span> <span class="o">{</span>
+<span class="ln">41</span>        <span class="n">Thread</span> <span class="n">thread</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Thread</span><span class="o">(</span><span class="s">&#34;demo_thread&#34;</span><span class="o">){</span>
+<span class="ln">42</span>            <span class="nd">@Override</span>
+<span class="ln">43</span>            <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln">44</span>                <span class="k">try</span> <span class="o">{</span>
+<span class="ln">45</span>                    <span class="n">sleep</span><span class="o">(</span><span class="n">10</span> <span class="o">*</span> <span class="n">1000</span><span class="o">);</span>
+<span class="ln">46</span>                <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">47</span>                    <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="ln">48</span>                <span class="o">}</span>
+<span class="ln">49</span>                <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;-&gt;&gt;&gt;Thread对象的run方法被执行了&#34;</span><span class="o">);</span>
+<span class="ln">50</span>            <span class="o">}</span>
+<span class="ln">51</span>        <span class="o">};</span>
+<span class="ln">52</span>        <span class="c1">//线程启动
+</span><span class="ln">53</span><span class="c1"></span>        <span class="n">thread</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+<span class="ln">54</span>        <span class="kt">long</span> <span class="n">peer</span> <span class="o">=</span> <span class="n">getNativePeer</span><span class="o">(</span><span class="n">thread</span><span class="o">);</span>
+<span class="ln">55</span>        <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;-&gt;&gt;&gt;tid = &#34;</span> <span class="o">+</span> <span class="n">getTid</span><span class="o">(</span><span class="n">peer</span><span class="o">));</span>
+<span class="ln">56</span>
+<span class="ln">57</span>    <span class="o">}</span>
+<span class="ln">58</span>
+<span class="ln">59</span>    <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">long</span> <span class="nf">getNativePeer</span><span class="o">(</span><span class="n">Thread</span> <span class="n">t</span><span class="o">)</span><span class="kd">throws</span> <span class="n">IllegalAccessException</span><span class="o">{</span>
+<span class="ln">60</span>        <span class="k">try</span> <span class="o">{</span>
+<span class="ln">61</span>            <span class="n">Field</span> <span class="n">nativePeerField</span> <span class="o">=</span> <span class="n">Thread</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getDeclaredField</span><span class="o">(</span><span class="s">&#34;nativePeer&#34;</span><span class="o">);</span>
+<span class="ln">62</span>            <span class="n">nativePeerField</span><span class="o">.</span><span class="na">setAccessible</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+<span class="ln">63</span>            <span class="n">Long</span> <span class="n">nativePeer</span> <span class="o">=</span> <span class="o">(</span><span class="n">Long</span><span class="o">)</span> <span class="n">nativePeerField</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">t</span><span class="o">);</span>
+<span class="ln">64</span>            <span class="k">return</span> <span class="n">nativePeer</span><span class="o">;</span>
+<span class="ln">65</span>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">NoSuchFieldException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">66</span>            <span class="k">throw</span> <span class="k">new</span> <span class="n">IllegalAccessException</span><span class="o">(</span><span class="s">&#34;failed to get nativePeer value&#34;</span><span class="o">);</span>
+<span class="ln">67</span>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IllegalAccessException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">68</span>            <span class="k">throw</span> <span class="n">e</span><span class="o">;</span>
+<span class="ln">69</span>        <span class="o">}</span>
+<span class="ln">70</span>    <span class="o">}</span>
+<span class="ln">71</span>    <span class="cm">/**
+</span><span class="ln">72</span><span class="cm">     * A native method that is implemented by the &#39;native-lib&#39; native library,
+</span><span class="ln">73</span><span class="cm">     * which is packaged with this application.
+</span><span class="ln">74</span><span class="cm">     */</span>
+<span class="ln">75</span>    <span class="kd">public</span> <span class="kd">native</span> <span class="n">String</span> <span class="nf">stringFromJNI</span><span class="o">();</span>
+<span class="ln">76</span>    <span class="kd">public</span> <span class="kd">static</span> <span class="kd">native</span> <span class="kt">int</span> <span class="nf">getTid</span><span class="o">(</span><span class="kt">long</span> <span class="n">nativePeer</span><span class="o">);</span>
+<span class="ln">77</span><span class="o">}</span>
+</code></pre></div><p>笔者以红米手机测试ok</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/concurrent/thread_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/concurrent/thread_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/concurrent/thread_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/concurrent/thread_2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="本文源码">本文源码</h1>
+<p>下载点击<a href="https://github.com/YangYang48/project/tree/master/Thread">这里</a></p>
 <h1 id="参考">参考</h1>
 <p><a href="https://juejin.cn/post/7138690370694545415">[1] 卓修武_, Android虚拟机线程启动过程解析, 获取Java线程真实线程Id的方式, 2022.</a></p>
 <p><a href="https://mp.weixin.qq.com/s/he9Y3saAIYIMaU4XAHDPPw">[2] why技术, 没有二十年功力，写不出这一行“看似无用”的代码！, 2022.</a></p>

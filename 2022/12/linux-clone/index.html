@@ -274,14 +274,350 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">100 Words|Read in about 1 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">900 Words|Read in about 4 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
               <p>学习Linux中的clone函数。</p>
-<h1 id="linux-clone">Linux clone</h1>
+<h1 id="0简介">0简介</h1>
+<h2 id="1name">1NAME</h2>
+<p>​       clone, __clone2 - create a child process</p>
+<p>用于创建子进程和子线程</p>
+<h2 id="2synopsis">2SYNOPSIS</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="cm">/*glibc包装器函数的原型 */</span>
+<span class="ln"> 2</span><span class="cp">#include</span> <span class="cpf">&lt;sched.h&gt;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp"></span><span class="kt">int</span> <span class="nf">clone</span><span class="p">(</span><span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">fn</span><span class="p">)(</span><span class="kt">void</span> <span class="o">*</span><span class="p">),</span> <span class="kt">void</span> <span class="o">*</span><span class="n">child_stack</span><span class="p">,</span>
+<span class="ln"> 4</span>          <span class="kt">int</span> <span class="n">flags</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="p">...</span>
+<span class="ln"> 5</span>          <span class="cm">/* pid_t *ptid, struct user_desc *tls, pid_t *ctid */</span> <span class="p">);</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span><span class="cm">/* 原始系统调用的原型 */</span>
+<span class="ln"> 8</span><span class="kt">long</span> <span class="nf">clone</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">flags</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">child_stack</span><span class="p">,</span>
+<span class="ln"> 9</span>           <span class="kt">void</span> <span class="o">*</span><span class="n">ptid</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">ctid</span><span class="p">,</span>
+<span class="ln">10</span>           <span class="k">struct</span> <span class="n">pt_regs</span> <span class="o">*</span><span class="n">regs</span><span class="p">);</span>
+</code></pre></div><h2 id="3description">3DESCRIPTION</h2>
+<p><code>Clone()</code>以类似于<code>fork(2)</code>的方式创建一个新进程。</p>
+<p>​       本页描述了<code>glibc clone()</code>包装器函数和它所基于的底层系统调用。正文介绍了包装器的功能;原始系统调用的区别将在本页的末尾描述。与<code>fork(2)</code>不同，<code>clone()</code>允许子进程与调用进程共享部分执行上下文，例如内存空间、文件描述符表和信号处理程序表。(请注意，在本手册中，“调用进程”通常对应于“父进程”。但是请参阅下面对<code>CLONE_PARENT</code>的描述。)</p>
+<p>​       <code>clone()</code>的一个用途是实现线程:在一个程序中并发运行在共享内存空间中的多个控制线程。</p>
+<p>​       当使用<code>clone()</code>创建子进程时，它执行函数<code>fn(arg)</code>。(这与<code>fork(2)</code>不同，后者从<code>fork(2)</code>调用的点开始在子进程中继续执行。)<code>fn</code>参数是一个指向子进程在执行开始时调用的函数的指针。参数<code>arg</code>被传递给<code>fn</code>函数。</p>
+<p>​       当<code>fn(arg)</code>函数应用程序返回时，子进程终止。<code>fn</code>返回的整数是子进程的退出码。子进程也可以通过调用<code>exit(2)</code>或在接收到致命信号后显式终止。</p>
+<p>​       <code>child_stack</code>参数指定了子进程使用的堆栈的位置。由于子进程和调用进程可能共享内存，因此子进程不可能与调用进程在同一个堆栈中执行。因此，调用进程必须为子进程设置内存空间，并将指向该空间的指针传递给<code>clone()</code>。在所有运行Linux的处理器上(除了HP PA处理器)，堆栈向下增长，因此<code>child_stack</code>通常指向为子堆栈设置的内存空间的最顶层地址。标志的低字节包含子进程死亡时发送给父进程的终止信号的数目。<strong>如果这个信号不是被指定为<code>SIGCHLD</code>，那么父进程在使用<code>wait(2)</code>等待子进程时必须指定<code>__WAL</code>L或<code>__WCLONE</code>选项。如果未指定信号，则在子进程终止时不向父进程发出信号。</strong></p>
+<p>为了指定调用进程和子进程之间共享的内容，标志也可以用零个或多个以下常量进行位序运算:</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="n">CLONE_CHILD_CLEARTID</span> <span class="p">(</span><span class="n">since</span> <span class="n">Linux</span> <span class="mf">2.5.49</span><span class="p">)</span>
+<span class="ln"> 2</span>              <span class="err">当子线程退出时，在子内存中的</span><span class="n">ctid位置擦除子线程ID</span><span class="err">，并在该地址的</span><span class="n">futex上进行唤醒</span><span class="err">。所涉及的地址可以通过</span><span class="n">set_tid_address</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">系统调用改变。线程库使用它。</span>
+<span class="ln"> 3</span>
+<span class="ln"> 4</span><span class="n">CLONE_CHILD_SETTID</span> <span class="p">(</span><span class="n">since</span> <span class="n">Linux</span> <span class="mf">2.5.49</span><span class="p">)</span>
+<span class="ln"> 5</span>              <span class="err">将子线程</span><span class="n">ID存储在子内存中的ctid位置</span><span class="err">。</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span><span class="n">CLONE_FILES</span> <span class="p">(</span><span class="n">since</span> <span class="n">Linux</span> <span class="mf">2.0</span><span class="p">)</span>
+<span class="ln"> 8</span>              <span class="err">如果设置了</span><span class="n">CLONE_FILES</span><span class="err">，则调用进程和子进程共享相同的文件描述符表。由调用进程或子进程创建的任何文件描述符在其他进程中也有效。类似地，如果其中一个进程关闭了一个文件描述符，或者改变了它的相关标志</span><span class="p">(</span><span class="err">使用</span><span class="n">fcntl</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">F_SETFD操作</span><span class="p">)</span><span class="err">，另一个进程也会受到影响。如果共享文件描述符表的进程调用</span><span class="n">execve</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">，则其文件描述符表将被复制</span><span class="p">(</span><span class="err">非共享</span><span class="p">)</span><span class="err">。</span>
+<span class="ln"> 9</span>              <span class="err">如果没有设置</span><span class="n">CLONE_FILES</span><span class="err">，子进程将继承在</span><span class="n">clone</span><span class="p">()</span><span class="err">时调用进程中打开的所有文件描述符的副本。</span><span class="p">(</span><span class="err">子进程中复制的文件描述符与调用进程中对应的文件描述符引用相同的打开文件描述符</span><span class="p">(</span><span class="err">参见</span><span class="n">open</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="err">。</span><span class="p">)</span><span class="err">由调用进程或子进程执行的打开或关闭文件描述符或更改文件描述符标志的后续操作不会影响其他进程。</span>
+<span class="ln">10</span>
+<span class="ln">11</span><span class="n">CLONE_IO</span> <span class="p">(</span><span class="n">since</span> <span class="n">Linux</span> <span class="mf">2.6.25</span><span class="p">)</span>
+<span class="ln">12</span>              <span class="err">如果设置了</span><span class="n">CLONE_IO</span><span class="err">，则新进程与调用进程共享</span><span class="n">I</span><span class="o">/</span><span class="n">O上下文</span><span class="err">。如果没有设置这个标志，那么</span><span class="p">(</span><span class="err">就像</span><span class="n">fork</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">一样</span><span class="p">)</span><span class="err">新进程有自己的</span><span class="n">I</span><span class="o">/</span><span class="n">O上下文</span><span class="err">。</span><span class="n">I</span><span class="o">/</span><span class="n">O上下文是磁盘调度器的I</span><span class="o">/</span><span class="n">O范围</span><span class="p">(</span><span class="err">即</span><span class="n">I</span><span class="o">/</span><span class="n">O调度器用来模拟进程I</span><span class="o">/</span><span class="n">O的调度</span><span class="p">)</span><span class="err">。如果进程共享相同的</span><span class="n">I</span><span class="o">/</span><span class="n">O上下文</span><span class="err">，则</span><span class="n">I</span><span class="o">/</span><span class="n">O调度程序将它们视为一个进程</span><span class="err">。因此，它们可以共享磁盘时间。对于某些</span><span class="n">I</span><span class="o">/</span><span class="n">O调度器</span><span class="err">，如果两个进程共享一个</span><span class="n">I</span><span class="o">/</span><span class="n">O上下文</span><span class="err">，则允许它们交叉访问磁盘。如果几个线程代表同一个进程</span><span class="p">(</span><span class="err">例如</span><span class="n">aio_read</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span><span class="err">执行</span><span class="n">I</span><span class="o">/</span><span class="n">O</span><span class="err">，它们应该使用</span><span class="n">CLONE_IO来获得更好的I</span><span class="o">/</span><span class="n">O性能</span><span class="err">。如果内核没有配置</span><span class="n">CONFIG_BLOCK选项</span><span class="err">，这个标志是一个</span><span class="n">no</span><span class="o">-</span><span class="n">op</span><span class="err">。</span>
+<span class="ln">13</span>
+<span class="ln">14</span><span class="n">CLONE_NEWIPC</span> <span class="p">(</span><span class="n">since</span> <span class="n">Linux</span> <span class="mf">2.6.19</span><span class="p">)</span>
+<span class="ln">15</span>              <span class="err">如果设置了</span><span class="n">CLONE_NEWIPC</span><span class="err">，则在新的</span><span class="n">IPC命名空间中创建进程</span><span class="err">。如果没有设置这个标志，那么</span><span class="p">(</span><span class="err">就像</span><span class="n">fork</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">一样</span><span class="p">)</span><span class="err">，进程被创建在与调用进程相同的</span><span class="n">IPC命名空间中</span><span class="err">。此标志用于容器的实现。</span><span class="n">IPC命名空间提供了System</span> <span class="n">V</span> <span class="n">IPC对象</span><span class="p">(</span><span class="err">参见</span><span class="n">svipc</span><span class="p">(</span><span class="mi">7</span><span class="p">))</span><span class="err">和</span><span class="p">(</span><span class="err">自</span><span class="n">Linux</span> <span class="mf">2.6.30</span><span class="err">起</span><span class="p">)</span><span class="n">POSIX消息队列</span><span class="p">(</span><span class="err">参见</span><span class="n">mq_overview</span><span class="p">(</span><span class="mi">7</span><span class="p">))</span><span class="err">的隔离视图。这些</span><span class="n">IPC机制的共同特征是IPC对象由文件系统路径名以外的机制标识</span><span class="err">。在</span><span class="n">IPC名称空间中创建的对象对该名称空间的所有其他成员进程可见</span><span class="err">，但对其他</span><span class="n">IPC名称空间中的进程不可见</span><span class="err">。当一个</span><span class="n">IPC命名空间被销毁时</span><span class="p">(</span><span class="err">即，当作为该命名空间成员的最后一个进程终止时</span><span class="p">)</span><span class="err">，该命名空间中的所有</span><span class="n">IPC对象都将自动销毁</span><span class="err">。只有特权进程</span><span class="p">(</span><span class="n">CAP_SYS_ADMIN</span><span class="p">)</span><span class="err">可以使用</span><span class="n">CLONE_NEWIPC</span><span class="err">。此标志不能与</span><span class="n">CLONE_SYSVSEM一起指定</span><span class="err">。有关</span><span class="n">IPC名称空间的更多信息</span><span class="err">，请参见</span><span class="n">namespaces</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span><span class="err">。</span>
+<span class="ln">16</span>
+<span class="ln">17</span><span class="n">CLONE_NEWNET</span> <span class="p">(</span><span class="n">since</span> <span class="n">Linux</span> <span class="mf">2.6.24</span><span class="p">)</span>
+<span class="ln">18</span>              <span class="p">(</span><span class="err">该标志的实现仅在内核版本</span><span class="mf">2.6.29</span><span class="err">时完成。</span><span class="p">)</span>
+<span class="ln">19</span><span class="err">如果设置了</span><span class="n">CLONE_NEWNET</span><span class="err">，则在新的网络名称空间中创建进程。如果没有设置这个标志，那么</span><span class="p">(</span><span class="err">就像</span><span class="n">fork</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">一样</span><span class="p">)</span><span class="err">进程被创建在与调用进程相同的网络命名空间中。此标志用于容器的实现。</span>
+<span class="ln">20</span>              <span class="err">网络命名空间提供了网络堆栈</span><span class="p">(</span><span class="err">网络设备接口、</span><span class="n">IPv4和IPv6协议栈</span><span class="err">、</span><span class="n">IP路由表</span><span class="err">、防火墙规则、</span><span class="o">/</span><span class="n">proc</span><span class="o">/</span><span class="n">net和</span><span class="o">/</span><span class="n">sys</span><span class="o">/</span><span class="n">class</span><span class="o">/</span><span class="n">net目录树</span><span class="err">、套接字等</span><span class="p">)</span><span class="err">的隔离视图。一个物理网络设备只能存在于一个网络名称空间中。虚拟网络设备</span><span class="p">(</span><span class="err">“</span><span class="n">veth</span><span class="err">”</span><span class="p">)</span><span class="err">对提供了一个类似管道的抽象，可用于在网络名称空间之间创建隧道，并可用于创建到另一个名称空间中的物理网络设备的桥接。当网络命名空间被释放</span><span class="p">(</span><span class="err">即命名空间中的最后一个进程终止</span><span class="p">)</span><span class="err">时，其物理网络设备将被移回初始网络命名空间</span><span class="p">(</span><span class="err">而不是该进程的父进程</span><span class="p">)</span><span class="err">。有关网络名称空间的更多信息，请参见</span><span class="n">namespaces</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span><span class="err">。</span>
+<span class="ln">21</span><span class="err">只有特权进程</span><span class="p">(</span><span class="n">CAP_SYS_ADMIN</span><span class="p">)</span><span class="err">可以使用</span><span class="n">CLONE_NEWNET</span><span class="err">。</span>
+<span class="ln">22</span>
+<span class="ln">23</span><span class="n">CLONE_NEWNS</span> <span class="p">(</span><span class="n">since</span> <span class="n">Linux</span> <span class="mf">2.4.19</span><span class="p">)</span>
+<span class="ln">24</span>              <span class="err">如果设置了</span><span class="n">CLONE_NEWNS</span><span class="err">，克隆的子进程将在一个新的挂载名称空间中启动，并使用父进程名称空间的副本进行初始化。如果没有设置</span><span class="n">CLONE_NEWNS</span><span class="err">，则子进程与父进程位于相同的挂载名称空间中。只有特权进程</span><span class="p">(</span><span class="n">CAP_SYS_ADMIN</span><span class="p">)</span><span class="err">可以使用</span><span class="n">CLONE_NEWNS</span><span class="err">。不允许在同一个</span><span class="n">clone</span><span class="p">()</span><span class="err">调用中同时指定</span><span class="n">CLONE_NEWNS和CLONE_FS</span><span class="err">。</span>
+<span class="ln">25</span>
+<span class="ln">26</span><span class="n">CLONE_NEWPID</span> <span class="p">(</span><span class="n">since</span> <span class="n">Linux</span> <span class="mf">2.6.24</span><span class="p">)</span>
+<span class="ln">27</span>              <span class="err">如果设置了</span><span class="n">CLONE_NEWPID</span><span class="err">，则在新的</span><span class="n">PID名称空间中创建进程</span><span class="err">。如果没有设置这个标志，那么</span><span class="p">(</span><span class="err">和</span><span class="n">fork</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">一样</span><span class="p">)</span><span class="err">进程被创建在与调用进程相同的</span><span class="n">PID命名空间中</span><span class="err">。此标志用于容器的实现。只有特权进程</span><span class="p">(</span><span class="n">CAP_SYS_ADMIN</span><span class="p">)</span><span class="err">可以使用</span><span class="n">CLONE_NEWPID</span><span class="err">。此标志不能与</span><span class="n">CLONE_THREAD或CLONE_PARENT一起指定</span><span class="err">。</span>
+<span class="ln">28</span>
+<span class="ln">29</span><span class="n">CLONE_NEWUSER</span>
+<span class="ln">30</span>             <span class="p">(</span><span class="err">这个标志第一次在</span><span class="n">Linux</span> <span class="mf">2.6.23</span><span class="err">中对</span><span class="n">clone</span><span class="p">()</span><span class="err">有意义，当前的</span><span class="n">clone</span><span class="p">()</span><span class="err">语义在</span><span class="n">Linux</span> <span class="mf">3.5</span><span class="err">中合并，最后使用户名称空间完全可用的部分在</span><span class="n">Linux</span> <span class="mf">3.8</span><span class="err">中合并。</span><span class="p">)</span><span class="err">如果设置了</span><span class="n">CLONE_NEWUSER</span><span class="err">，则在新的用户名称空间中创建进程。如果没有设置这个标志，那么</span><span class="p">(</span><span class="err">与</span><span class="n">fork</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">一样</span><span class="p">)</span><span class="err">进程将被创建在与调用进程相同的用户命名空间中。在</span><span class="n">Linux</span> <span class="mf">3.8</span><span class="err">之前，使用</span><span class="nl">CLONE_NEWUSER要求调用者具有三个功能</span><span class="p">:</span><span class="n">CAP_SYS_ADMIN</span><span class="err">、</span><span class="n">CAP_SETUID和CAP_SETGID</span><span class="err">。从</span><span class="n">Linux</span> <span class="mf">3.8</span><span class="err">开始，创建用户名称空间不需要任何特权。</span>
+<span class="ln">31</span>
+<span class="ln">32</span><span class="err">此标志不能与</span><span class="n">CLONE_THREAD或CLONE_PARENT一起指定</span><span class="err">。出于安全原因，不能同时指定</span><span class="n">CLONE_NEWUSER和CLONE_FS</span><span class="err">。</span>
+<span class="ln">33</span>
+<span class="ln">34</span><span class="n">CLONE_NEWUTS</span> <span class="p">(</span><span class="n">since</span> <span class="n">Linux</span> <span class="mf">2.6.19</span><span class="p">)</span>
+<span class="ln">35</span>             <span class="err">如果设置了</span><span class="n">CLONE_NEWUTS</span><span class="err">，则在新的</span><span class="n">UTS名称空间中创建进程</span><span class="err">，其标识符通过复制调用进程的</span><span class="n">UTS名称空间中的标识符来初始化</span><span class="err">。如果未设置此标志，则</span><span class="p">(</span><span class="err">与</span><span class="n">fork</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">一样</span><span class="p">)</span><span class="err">在与调用进程相同的</span><span class="n">UTS名称空间中创建进程</span><span class="err">。此标志用于容器的实现。</span><span class="n">UTS名称空间是uname</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">返回的标识符集</span><span class="p">;</span><span class="err">其中，域名可以通过</span><span class="n">setdomainname</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">修改，主机名可以通过</span><span class="n">sethostname</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">修改。对</span><span class="n">UTS名称空间中的标识符所做的更改对同一名称空间中的所有其他进程可见</span><span class="err">，但对其他</span><span class="n">UTS名称空间中的进程不可见</span><span class="err">。只有特权进程</span><span class="p">(</span><span class="n">CAP_SYS_ADMIN</span><span class="p">)</span><span class="err">可以使用</span><span class="n">CLONE_NEWUTS</span><span class="err">。</span>
+<span class="ln">36</span>
+<span class="ln">37</span><span class="n">CLONE_PARENT</span> <span class="p">(</span><span class="n">since</span> <span class="n">Linux</span> <span class="mf">2.3.12</span><span class="p">)</span>
+<span class="ln">38</span>              <span class="err">如果设置了</span><span class="n">CLONE_PARENT</span><span class="err">，则新子进程的父进程</span><span class="p">(</span><span class="err">由</span><span class="n">getppid</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">返回</span><span class="p">)</span><span class="err">将与调用进程的父进程相同。如果没有设置</span><span class="n">CLONE_PARENT</span><span class="err">，那么</span><span class="p">(</span><span class="err">与</span><span class="n">fork</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">一样</span><span class="p">)</span><span class="err">子进程的父进程就是调用进程。请注意，它是由</span><span class="n">getppid</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">返回的父进程，当子进程终止时发出信号，因此如果设置了</span><span class="n">CLONE_PARENT</span><span class="err">，那么将发出信号的是调用进程的父进程，而不是调用进程本身。</span>
+<span class="ln">39</span>                  
+<span class="ln">40</span><span class="n">CLONE_PARENT_SETTID</span> <span class="p">(</span><span class="n">since</span> <span class="n">Linux</span> <span class="mf">2.5.49</span><span class="p">)</span>
+<span class="ln">41</span>              <span class="err">将子线程</span><span class="n">ID存储在父线程内存中的ptid位置</span><span class="err">。</span><span class="p">(</span><span class="err">在</span><span class="n">Linux</span> <span class="mf">2.5.32</span><span class="o">-</span><span class="mf">2.5.48</span><span class="err">中，有一个标记</span><span class="n">CLONE_SETTID可以做到这一点</span><span class="err">。</span><span class="p">)</span>
+<span class="ln">42</span>
+<span class="ln">43</span><span class="n">CLONE_PID</span> <span class="p">(</span><span class="n">obsolete</span><span class="p">)(</span><span class="err">废弃</span><span class="p">)</span>
+<span class="ln">44</span>              <span class="err">如果设置了</span><span class="n">CLONE_PID</span><span class="err">，则创建子进程时使用与调用进程相同的进程</span><span class="n">ID</span><span class="err">。这对入侵系统很有帮助，但在其他方面用处不大。从</span><span class="mf">2.3.21</span><span class="err">开始，这个标志只能由系统引导进程</span><span class="p">(</span><span class="n">PID</span> <span class="mi">0</span><span class="p">)</span><span class="err">指定。它在</span><span class="n">Linux</span> <span class="mf">2.5.16</span><span class="err">中消失了。从那时起，内核就会无声地忽略它而不会出错。</span>
+<span class="ln">45</span>
+<span class="ln">46</span><span class="n">CLONE_PTRACE</span> <span class="p">(</span><span class="n">since</span> <span class="n">Linux</span> <span class="mf">2.2</span><span class="p">)</span>
+<span class="ln">47</span>              <span class="err">如果指定了</span><span class="n">CLONE_PTRACE</span><span class="err">，并且正在跟踪调用进程，那么也要跟踪子进程</span><span class="p">(</span><span class="err">参见</span><span class="n">ptrace</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="err">。</span>
+<span class="ln">48</span>
+<span class="ln">49</span><span class="n">CLONE_SETTLS</span> <span class="p">(</span><span class="n">since</span> <span class="n">Linux</span> <span class="mf">2.5.32</span><span class="p">)</span>
+<span class="ln">50</span>              <span class="n">newtls参数是新的TLS</span><span class="p">(</span><span class="err">线程本地存储</span><span class="p">)</span><span class="err">描述符。</span><span class="p">(</span><span class="err">见</span><span class="n">set_thread_area</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="err">。</span>
+<span class="ln">51</span>
+<span class="ln">52</span><span class="n">CLONE_SIGHAND</span> <span class="p">(</span><span class="n">since</span> <span class="n">Linux</span> <span class="mf">2.0</span><span class="p">)</span>
+<span class="ln">53</span>             <span class="err">如果设置了</span><span class="n">CLONE_SIGHAND</span><span class="err">，则调用进程和子进程共享同一个信号处理程序表。如果调用进程或子进程调用</span><span class="n">sigaction</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">来更改与某个信号相关的行为，则该行为在其他进程中也会被更改。但是，调用进程和子进程仍然具有不同的信号掩码和挂起信号集。因此，其中一个进程可以使用</span><span class="n">sigprocmask</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">阻塞或解除阻塞某些信号，而不影响另一个进程。如果没有设置</span><span class="n">CLONE_SIGHAND</span><span class="err">，子进程将在调用</span><span class="n">clone</span><span class="p">()</span><span class="err">时继承调用进程的信号处理程序的副本。其中一个进程稍后执行的对</span><span class="n">sigaction</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">的调用对另一个进程没有影响。从</span><span class="n">Linux</span> <span class="mf">2.6.0</span><span class="o">-</span><span class="n">test6开始</span><span class="err">，如果指定了</span><span class="n">CLONE_SIGHAND</span><span class="err">，标志也必须包括</span><span class="n">CLONE_VM</span><span class="err">。</span>
+<span class="ln">54</span>
+<span class="ln">55</span><span class="n">CLONE_STOPPED</span> <span class="p">(</span><span class="n">since</span> <span class="n">Linux</span> <span class="mf">2.6.0</span><span class="o">-</span><span class="n">test2</span><span class="p">)</span>
+<span class="ln">56</span>              <span class="err">如果设置了</span><span class="n">CLONE_STOPPED</span><span class="err">，那么子进程最初会被停止</span><span class="p">(</span><span class="err">就像它被发送了</span><span class="n">SIGSTOP信号一样</span><span class="p">)</span><span class="err">，并且必须通过向它发送</span><span class="n">SIGCONT信号来恢复</span><span class="err">。这个标志从</span><span class="n">Linux</span> <span class="mf">2.6.25</span><span class="err">以后就被弃用了，在</span><span class="n">Linux</span> <span class="mf">2.6.38</span><span class="err">中完全被移除。从那时起，内核就会无声地忽略它而不会出错。</span>
+<span class="ln">57</span>
+<span class="ln">58</span><span class="n">CLONE_SYSVSEM</span> <span class="p">(</span><span class="n">since</span> <span class="n">Linux</span> <span class="mf">2.5.10</span><span class="p">)</span>
+<span class="ln">59</span>              <span class="err">如果设置了</span><span class="n">CLONE_SYSVSEM</span><span class="err">，那么子进程和调用进程共享一个</span><span class="n">System</span> <span class="n">V信号量调整</span><span class="p">(</span><span class="n">semadj</span><span class="p">)</span><span class="err">值列表</span><span class="p">(</span><span class="err">参见</span><span class="n">semop</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="err">。在这种情况下，共享列表在所有共享列表的进程中累积</span><span class="n">semadj值</span><span class="err">，只有当最后一个共享列表的进程终止</span><span class="p">(</span><span class="err">或使用</span><span class="n">unshare</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">停止共享列表</span><span class="p">)</span><span class="err">时才执行信号量调整。如果没有设置这个标志，那么子进程有一个单独的</span><span class="n">semadj列表</span><span class="err">，初始值为空。</span>
+<span class="ln">60</span>
+<span class="ln">61</span><span class="n">CLONE_THREAD</span> <span class="p">(</span><span class="n">since</span> <span class="n">Linux</span> <span class="mf">2.4.0</span><span class="o">-</span><span class="n">test8</span><span class="p">)</span>
+<span class="ln">62</span>              <span class="err">如果设置了</span><span class="n">CLONE_THREAD</span><span class="err">，则将子进程放在与调用进程相同的线程组中。为了使关于</span><span class="n">CLONE_THREAD的其余讨论更具可读性</span><span class="err">，使用术语“线程”来指代线程组中的进程。线程组是</span><span class="n">Linux</span> <span class="mf">2.4</span><span class="err">中添加的一个特性，用于支持</span><span class="n">POSIX线程概念</span><span class="err">，即一组线程共享一个</span><span class="n">PID</span><span class="err">。在内部，这个共享</span><span class="n">PID是线程组的所谓线程组标识符</span><span class="p">(</span><span class="n">TGID</span><span class="p">)</span><span class="err">。从</span><span class="n">Linux</span> <span class="mf">2.4</span><span class="err">开始，对</span><span class="n">getpid</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">的调用返回调用方的</span><span class="n">TGID</span><span class="err">。</span>
+<span class="ln">63</span>              <span class="err">一个组中的线程可以通过它们</span><span class="p">(</span><span class="err">系统范围内的</span><span class="p">)</span><span class="err">惟一线程</span><span class="n">id</span> <span class="p">(</span><span class="n">TID</span><span class="p">)</span><span class="err">来区分。一个新线程的</span><span class="n">TID作为返回给clone</span><span class="p">()</span><span class="err">调用者的函数结果是可用的，并且线程可以使用</span><span class="n">gettid</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">获得自己的</span><span class="n">TID</span><span class="err">。当调用</span><span class="n">clone</span><span class="p">()</span><span class="err">而不指定</span><span class="n">CLONE_THREAD时</span><span class="err">，生成的线程被放置在一个新的线程组中，该线程组的</span><span class="n">TGID与线程的TID相同</span><span class="err">。这个线程是新线程组的领导者。使用</span><span class="n">CLONE_THREAD创建的新线程具有与clone</span><span class="p">()</span><span class="err">调用方相同的父进程</span><span class="p">(</span><span class="err">例如，类似</span><span class="n">CLONE_PARENT</span><span class="p">)</span><span class="err">，因此调用</span><span class="n">getppid</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">将为线程组中的所有线程返回相同的值。当一个</span><span class="n">CLONE_THREAD线程终止时</span><span class="err">，使用</span><span class="n">clone</span><span class="p">()</span><span class="err">创建它的线程不会被发送一个</span><span class="n">SIGCHLD</span><span class="p">(</span><span class="err">或其他终止</span><span class="p">)</span><span class="err">信号</span><span class="p">;</span><span class="err">使用</span><span class="n">wait</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">也不能获得这样一个线程的状态。</span><span class="p">(</span><span class="err">线程被称为分离。</span><span class="p">)</span>
+<span class="ln">64</span>              <span class="err">当线程组中的所有线程终止后，线程组的父进程将被发送一个</span><span class="n">SIGCHLD</span><span class="p">(</span><span class="err">或其他终止</span><span class="p">)</span><span class="err">信号。如果线程组中的任何线程执行了</span><span class="n">execve</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">，则除线程组领导之外的所有线程都将终止，新程序将在线程组领导中执行。如果线程组中的一个线程使用</span><span class="n">fork</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">创建了一个子线程，那么该组中的任何线程都可以等待</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">这个子线程。从</span><span class="n">Linux</span> <span class="mf">2.5.35</span><span class="err">开始，如果指定了</span><span class="n">CLONE_THREAD</span><span class="err">，标志也必须包括</span><span class="n">CLONE_SIGHAND</span><span class="p">(</span><span class="err">注意，从</span><span class="n">Linux</span> <span class="mf">2.6.0</span><span class="o">-</span><span class="n">test6开始</span><span class="err">，</span><span class="n">CLONE_SIGHAND还要求包括CLONE_VM</span><span class="p">)</span><span class="err">。信号可以使用</span><span class="n">kill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">发送到整个线程组</span><span class="p">(</span><span class="err">即</span><span class="n">TGID</span><span class="p">)</span><span class="err">，也可以使用</span><span class="n">tgkill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">发送到特定线程</span><span class="p">(</span><span class="err">即</span><span class="n">TID</span><span class="p">)</span><span class="err">。</span>
+<span class="ln">65</span>			  <span class="err">信号配置和操作是进程范围的</span><span class="o">:</span><span class="err">如果一个未处理的信号被传递到一个线程，那么它将影响</span><span class="p">(</span><span class="err">终止、停止、继续、被忽略</span><span class="p">)</span><span class="err">线程组的所有成员。每个线程都有自己的信号掩码，由</span><span class="n">sigprocmask</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">设置，但信号也可以挂起</span><span class="o">:</span><span class="err">对于整个进程</span><span class="p">(</span><span class="err">即，可传递给线程组的任何成员</span><span class="p">)</span><span class="err">，当与</span><span class="n">kill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">一起发送时</span><span class="p">;</span><span class="err">或者对于单独的线程，当与</span><span class="n">tgkill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">一起发送时。调用</span><span class="n">sigpending</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">将返回一个信号集，该信号集是整个进程的挂起信号和调用线程的挂起信号的并集。</span>
+<span class="ln">66</span>			  <span class="err">如果</span><span class="n">kill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">被用于向线程组发送信号，并且线程组已经为该信号安装了处理程序，那么该处理程序将在未阻塞信号的线程组中任意选择的一个成员中调用。如果一个组中的多个线程正在使用</span><span class="n">sigwaitinfo</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">等待接受同一个信号，内核将任意选择其中一个线程来接收使用</span><span class="n">kill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">发送的信号。</span>
+<span class="ln">67</span>
+<span class="ln">68</span><span class="n">CLONE_UNTRACED</span> <span class="p">(</span><span class="n">since</span> <span class="n">Linux</span> <span class="mf">2.5.46</span><span class="p">)</span>
+<span class="ln">69</span>              <span class="err">如果指定了</span><span class="n">clone_untrace</span><span class="err">，则跟踪进程不能对该子进程强制执行</span><span class="n">CLONE_PTRACE</span><span class="err">。</span>
+<span class="ln">70</span>
+<span class="ln">71</span><span class="n">CLONE_VFORK</span> <span class="p">(</span><span class="n">since</span> <span class="n">Linux</span> <span class="mf">2.2</span><span class="p">)</span>
+<span class="ln">72</span>              <span class="err">如果设置了</span><span class="n">CLONE_VFORK</span><span class="err">，则调用进程的执行将被挂起，直到子进程通过调用</span><span class="n">execve</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">或</span><span class="n">_exit</span><span class="p">(</span><span class="mi">2</span><span class="p">)(</span><span class="err">与</span><span class="n">vfork</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">一样</span><span class="p">)</span><span class="err">释放其虚拟内存资源。如果没有设置</span><span class="n">CLONE_VFORK</span><span class="err">，那么调用进程和子进程在调用之后都是可调度的，应用程序不应该依赖于以任何特定顺序发生的执行。</span>
+<span class="ln">73</span>
+<span class="ln">74</span><span class="n">CLONE_VM</span> <span class="p">(</span><span class="n">since</span> <span class="n">Linux</span> <span class="mf">2.0</span><span class="p">)</span>
+<span class="ln">75</span>              <span class="err">如果设置了</span><span class="n">CLONE_VM</span><span class="err">，则调用进程和子进程运行在相同的内存空间中。特别是，调用进程或子进程执行的内存写入在其他进程中也是可见的。此外，由子进程或调用进程使用</span><span class="n">mmap</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">或</span><span class="n">munmap</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">执行的任何内存映射或取消映射也会影响其他进程。</span>
+<span class="ln">76</span>              <span class="err">如果没有设置</span><span class="n">CLONE_VM</span><span class="err">，子进程在</span><span class="n">clone</span><span class="p">()</span><span class="err">时运行在调用进程的内存空间的单独副本中。由一个进程执行的内存写入或文件映射</span><span class="o">/</span><span class="err">取消映射不会影响另一个进程，就像</span><span class="n">fork</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="err">一样。</span>
+</code></pre></div><h2 id="4return-value">4RETURN VALUE</h2>
+<div class="highlight"><pre class="chroma"><code class="language-text" data-lang="text"><span class="ln">1</span>成功时，在调用者的执行线程中返回子进程的线程ID。失败时，在调用者的上下文中返回-1，不创建任何子进程，并适当地设置errno。
+</code></pre></div><h1 id="1example">1example</h1>
+<p>更改子进程的主机名，但是不影响父进程的主机名</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="cp">#define _GNU_SOURCE
+</span><span class="ln"> 2</span><span class="cp">#include</span> <span class="cpf">&lt;sys/wait.h&gt;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp">#include</span> <span class="cpf">&lt;sys/utsname.h&gt;</span><span class="cp">
+</span><span class="ln"> 4</span><span class="cp">#include</span> <span class="cpf">&lt;sched.h&gt;</span><span class="cp">
+</span><span class="ln"> 5</span><span class="cp">#include</span> <span class="cpf">&lt;string.h&gt;</span><span class="cp">
+</span><span class="ln"> 6</span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="ln"> 7</span><span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span><span class="ln"> 8</span><span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span><span class="ln"> 9</span><span class="cp"></span>
+<span class="ln">10</span><span class="cp">#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
+</span><span class="ln">11</span><span class="cp">                               } while (0)
+</span><span class="ln">12</span><span class="cp"></span>
+<span class="ln">13</span><span class="k">static</span> <span class="kt">int</span>              <span class="cm">/* Start function for cloned child */</span>
+<span class="ln">14</span><span class="n">childFunc</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">)</span>
+<span class="ln">15</span><span class="p">{</span>
+<span class="ln">16</span>    <span class="k">struct</span> <span class="n">utsname</span> <span class="n">uts</span><span class="p">;</span>
+<span class="ln">17</span>    <span class="cm">/* 在子的UTS名称空间中更改主机名 */</span>
+<span class="ln">18</span>    <span class="k">if</span> <span class="p">(</span><span class="n">sethostname</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">strlen</span><span class="p">(</span><span class="n">arg</span><span class="p">))</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln">19</span>        <span class="n">errExit</span><span class="p">(</span><span class="s">&#34;sethostname&#34;</span><span class="p">);</span>
+<span class="ln">20</span>
+<span class="ln">21</span>    <span class="cm">/* 检索和显示主机名 */</span>
+<span class="ln">22</span>    <span class="k">if</span> <span class="p">(</span><span class="n">uname</span><span class="p">(</span><span class="o">&amp;</span><span class="n">uts</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln">23</span>        <span class="n">errExit</span><span class="p">(</span><span class="s">&#34;uname&#34;</span><span class="p">);</span>
+<span class="ln">24</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;uts.nodename in child:  %s</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">uts</span><span class="p">.</span><span class="n">nodename</span><span class="p">);</span>
+<span class="ln">25</span>    <span class="c1">//通过休眠使命名空间打开一段时间。这允许进行一些实验——例如，另一个进程可能加入名称空间。
+</span><span class="ln">26</span><span class="c1"></span>    <span class="n">sleep</span><span class="p">(</span><span class="mi">200</span><span class="p">);</span>
+<span class="ln">27</span>
+<span class="ln">28</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>           <span class="cm">/* Child terminates now */</span>
+<span class="ln">29</span><span class="p">}</span>
+<span class="ln">30</span><span class="c1">//这个空间至少是4k的整数倍
+</span><span class="ln">31</span><span class="c1"></span><span class="cp">#define STACK_SIZE (1024 * 1024)    </span><span class="cm">/* Stack size for cloned child */</span><span class="cp">
+</span><span class="ln">32</span><span class="cp"></span>
+<span class="ln">33</span><span class="kt">int</span> <span class="n">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
+<span class="ln">34</span><span class="p">{</span>
+<span class="ln">35</span>    <span class="kt">char</span> <span class="o">*</span><span class="n">stack</span><span class="p">;</span>                    <span class="cm">/* Start of stack buffer */</span>
+<span class="ln">36</span>    <span class="kt">char</span> <span class="o">*</span><span class="n">stackTop</span><span class="p">;</span>                 <span class="cm">/* End of stack buffer */</span>
+<span class="ln">37</span>    <span class="n">pid_t</span> <span class="n">pid</span><span class="p">;</span>
+<span class="ln">38</span>    <span class="k">struct</span> <span class="n">utsname</span> <span class="n">uts</span><span class="p">;</span>
+<span class="ln">39</span>
+<span class="ln">40</span>    <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">41</span>        <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&#34;Usage: %s &lt;child-hostname&gt;</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+<span class="ln">42</span>        <span class="n">exit</span><span class="p">(</span><span class="n">EXIT_SUCCESS</span><span class="p">);</span>
+<span class="ln">43</span>    <span class="p">}</span>
+<span class="ln">44</span>
+<span class="ln">45</span>    <span class="cm">/* 为子进程分配堆栈 */</span>
+<span class="ln">46</span>    <span class="n">stack</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="n">STACK_SIZE</span><span class="p">);</span>
+<span class="ln">47</span>    <span class="k">if</span> <span class="p">(</span><span class="n">stack</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+<span class="ln">48</span>        <span class="n">errExit</span><span class="p">(</span><span class="s">&#34;malloc&#34;</span><span class="p">);</span>
+<span class="ln">49</span>    <span class="c1">//假设堆栈向下增长
+</span><span class="ln">50</span><span class="c1"></span>    <span class="n">stackTop</span> <span class="o">=</span> <span class="n">stack</span> <span class="o">+</span> <span class="n">STACK_SIZE</span><span class="p">;</span>
+<span class="ln">51</span>
+<span class="ln">52</span>    <span class="cm">/* 创建具有自己的UTS名称空间的子程序;子程序在childFunc()中开始执行 */</span>
+<span class="ln">53</span>    <span class="n">pid</span> <span class="o">=</span> <span class="n">clone</span><span class="p">(</span><span class="n">childFunc</span><span class="p">,</span> <span class="n">stackTop</span><span class="p">,</span> <span class="n">CLONE_NEWUTS</span> <span class="o">|</span> <span class="n">SIGCHLD</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+<span class="ln">54</span>    <span class="k">if</span> <span class="p">(</span><span class="n">pid</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln">55</span>        <span class="n">errExit</span><span class="p">(</span><span class="s">&#34;clone&#34;</span><span class="p">);</span>
+<span class="ln">56</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;clone() returned %ld</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="p">(</span><span class="kt">long</span><span class="p">)</span> <span class="n">pid</span><span class="p">);</span>
+<span class="ln">57</span>
+<span class="ln">58</span>    <span class="cm">/* 父进程走这里 */</span>
+<span class="ln">59</span>    <span class="cm">/* 给子节点修改主机名的时间 */</span>
+<span class="ln">60</span>    <span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>           
+<span class="ln">61</span>    <span class="cm">/* 在父节点的UTS命名空间中显示主机名。这将不同于子节点的UTS名称空间中的主机名。 */</span>
+<span class="ln">62</span>    <span class="k">if</span> <span class="p">(</span><span class="n">uname</span><span class="p">(</span><span class="o">&amp;</span><span class="n">uts</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln">63</span>        <span class="n">errExit</span><span class="p">(</span><span class="s">&#34;uname&#34;</span><span class="p">);</span>
+<span class="ln">64</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;uts.nodename in parent: %s</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">uts</span><span class="p">.</span><span class="n">nodename</span><span class="p">);</span>
+<span class="ln">65</span>
+<span class="ln">66</span>    <span class="k">if</span> <span class="p">(</span><span class="n">waitpid</span><span class="p">(</span><span class="n">pid</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>    <span class="cm">/* Wait for child */</span>
+<span class="ln">67</span>        <span class="n">errExit</span><span class="p">(</span><span class="s">&#34;waitpid&#34;</span><span class="p">);</span>
+<span class="ln">68</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;child has terminated</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">69</span>
+<span class="ln">70</span>    <span class="n">exit</span><span class="p">(</span><span class="n">EXIT_SUCCESS</span><span class="p">);</span>
+<span class="ln">71</span><span class="p">}</span>
+</code></pre></div><p>可以看到子父进程中，通过参数<code>CLONE_NEWUTS</code>，可以设置不同的主机名</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/func/clone/clone_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/func/clone/clone_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/func/clone/clone_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/func/clone/clone_2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="2源码分析">2源码分析</h1>
+<p>以libc的Native crash为例</p>
+<h2 id="21clone-debuggerd_dispatch_pseudothread">2.1clone debuggerd_dispatch_pseudothread</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="k">static</span> <span class="kt">void</span> <span class="nf">debuggerd_signal_handler</span><span class="p">(</span><span class="kt">int</span> <span class="n">signal_number</span><span class="p">,</span> <span class="n">siginfo_t</span><span class="o">*</span> <span class="n">info</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 2</span>  <span class="c1">//CLONE_THREAD,说明clone不是进程是线程 
+</span><span class="ln"> 3</span><span class="c1"></span>  <span class="c1">//这里还是同一个进程，设置了不同的线程，其中CLONE_CHILD_SETTID设置之后，
+</span><span class="ln"> 4</span><span class="c1"></span>  <span class="c1">//进入debuggerd_dispatch_pseudothread线程之后，最后一个元素为子线程tid被保存起来  
+</span><span class="ln"> 5</span><span class="c1"></span>  <span class="n">pid_t</span> <span class="n">child_pid</span> <span class="o">=</span>
+<span class="ln"> 6</span>    <span class="n">clone</span><span class="p">(</span><span class="n">debuggerd_dispatch_pseudothread</span><span class="p">,</span> <span class="n">pseudothread_stack</span><span class="p">,</span>
+<span class="ln"> 7</span>          <span class="n">CLONE_THREAD</span> <span class="o">|</span> <span class="n">CLONE_SIGHAND</span> <span class="o">|</span> <span class="n">CLONE_VM</span> <span class="o">|</span> <span class="n">CLONE_CHILD_SETTID</span> <span class="o">|</span> <span class="n">CLONE_CHILD_CLEARTID</span><span class="p">,</span>
+<span class="ln"> 8</span>          <span class="o">&amp;</span><span class="n">thread_info</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">thread_info</span><span class="p">.</span><span class="n">pseudothread_tid</span><span class="p">);</span>
+<span class="ln"> 9</span>  <span class="k">if</span> <span class="p">(</span><span class="n">child_pid</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">10</span>    <span class="n">fatal_errno</span><span class="p">(</span><span class="s">&#34;failed to spawn debuggerd dispatch thread&#34;</span><span class="p">);</span>
+<span class="ln">11</span>  <span class="p">}</span>
+<span class="ln">12</span>
+<span class="ln">13</span>  <span class="c1">//等待子线程启动，这里的futex_wait功能实际上是后者的变量与前者指向元素相同，那就阻塞
+</span><span class="ln">14</span><span class="c1"></span>  <span class="n">futex_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">thread_info</span><span class="p">.</span><span class="n">pseudothread_tid</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln">15</span>
+<span class="ln">16</span>  <span class="c1">// 等待子线程结束，子线程启动后，thread_info.pseudothread_tid变量为子线程变量，直到退出恢复
+</span><span class="ln">17</span><span class="c1"></span>  <span class="n">futex_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">thread_info</span><span class="p">.</span><span class="n">pseudothread_tid</span><span class="p">,</span> <span class="n">child_pid</span><span class="p">);</span>
+<span class="ln">18</span><span class="p">}</span>
+<span class="ln">19</span>
+<span class="ln">20</span><span class="kt">void</span> <span class="nf">debuggerd_init</span><span class="p">(</span><span class="n">debuggerd_callbacks_t</span><span class="o">*</span> <span class="n">callbacks</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">21</span>  <span class="k">if</span> <span class="p">(</span><span class="n">callbacks</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">22</span>    <span class="n">g_callbacks</span> <span class="o">=</span> <span class="o">*</span><span class="n">callbacks</span><span class="p">;</span>
+<span class="ln">23</span>  <span class="p">}</span>
+<span class="ln">24</span>
+<span class="ln">25</span>  <span class="n">size_t</span> <span class="n">thread_stack_pages</span> <span class="o">=</span> <span class="mi">8</span><span class="p">;</span>
+<span class="ln">26</span>  <span class="kt">void</span><span class="o">*</span> <span class="n">thread_stack_allocation</span> <span class="o">=</span> <span class="n">mmap</span><span class="p">(</span><span class="k">nullptr</span><span class="p">,</span> <span class="n">PAGE_SIZE</span> <span class="o">*</span> <span class="p">(</span><span class="n">thread_stack_pages</span> <span class="o">+</span> <span class="mi">2</span><span class="p">),</span> <span class="n">PROT_NONE</span><span class="p">,</span>
+<span class="ln">27</span>                                       <span class="n">MAP_ANONYMOUS</span> <span class="o">|</span> <span class="n">MAP_PRIVATE</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="ln">28</span>  <span class="k">if</span> <span class="p">(</span><span class="n">thread_stack_allocation</span> <span class="o">==</span> <span class="n">MAP_FAILED</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">29</span>    <span class="n">fatal_errno</span><span class="p">(</span><span class="s">&#34;failed to allocate debuggerd thread stack&#34;</span><span class="p">);</span>
+<span class="ln">30</span>  <span class="p">}</span>
+<span class="ln">31</span>
+<span class="ln">32</span>  <span class="kt">char</span><span class="o">*</span> <span class="n">stack</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">thread_stack_allocation</span><span class="p">)</span> <span class="o">+</span> <span class="n">PAGE_SIZE</span><span class="p">;</span>
+<span class="ln">33</span>  <span class="k">if</span> <span class="p">(</span><span class="n">mprotect</span><span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="n">PAGE_SIZE</span> <span class="o">*</span> <span class="n">thread_stack_pages</span><span class="p">,</span> <span class="n">PROT_READ</span> <span class="o">|</span> <span class="n">PROT_WRITE</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">34</span>    <span class="n">fatal_errno</span><span class="p">(</span><span class="s">&#34;failed to mprotect debuggerd thread stack&#34;</span><span class="p">);</span>
+<span class="ln">35</span>  <span class="p">}</span>
+<span class="ln">36</span>
+<span class="ln">37</span>  <span class="c1">// Stack grows negatively, set it to the last byte in the page...
+</span><span class="ln">38</span><span class="c1"></span>  <span class="n">stack</span> <span class="o">=</span> <span class="p">(</span><span class="n">stack</span> <span class="o">+</span> <span class="n">thread_stack_pages</span> <span class="o">*</span> <span class="n">PAGE_SIZE</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
+<span class="ln">39</span>  <span class="c1">// and align it.
+</span><span class="ln">40</span><span class="c1"></span>  <span class="n">stack</span> <span class="o">-=</span> <span class="mi">15</span><span class="p">;</span>
+<span class="ln">41</span>  <span class="c1">//分配的栈顶在这里
+</span><span class="ln">42</span><span class="c1"></span>  <span class="n">pseudothread_stack</span> <span class="o">=</span> <span class="n">stack</span><span class="p">;</span>
+<span class="ln">43</span>
+<span class="ln">44</span>  <span class="k">struct</span> <span class="nc">sigaction</span> <span class="n">action</span><span class="p">;</span>
+<span class="ln">45</span>  <span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">action</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">action</span><span class="p">));</span>
+<span class="ln">46</span>  <span class="n">sigfillset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">action</span><span class="p">.</span><span class="n">sa_mask</span><span class="p">);</span>
+<span class="ln">47</span>  <span class="n">action</span><span class="p">.</span><span class="n">sa_sigaction</span> <span class="o">=</span> <span class="n">debuggerd_signal_handler</span><span class="p">;</span>
+<span class="ln">48</span>  <span class="n">action</span><span class="p">.</span><span class="n">sa_flags</span> <span class="o">=</span> <span class="n">SA_RESTART</span> <span class="o">|</span> <span class="n">SA_SIGINFO</span><span class="p">;</span>
+<span class="ln">49</span>
+<span class="ln">50</span>  <span class="c1">// Use the alternate signal stack if available so we can catch stack overflows.
+</span><span class="ln">51</span><span class="c1"></span>  <span class="n">action</span><span class="p">.</span><span class="n">sa_flags</span> <span class="o">|=</span> <span class="n">SA_ONSTACK</span><span class="p">;</span>
+<span class="ln">52</span>  <span class="n">debuggerd_register_handlers</span><span class="p">(</span><span class="o">&amp;</span><span class="n">action</span><span class="p">);</span>
+<span class="ln">53</span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/linux/func/clone/clone_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/linux/func/clone/clone_3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="22clone-_fork">2.2clone _fork</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="k">static</span> <span class="n">pid_t</span> <span class="nf">__fork</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 2</span>  <span class="k">return</span> <span class="n">clone</span><span class="p">(</span><span class="k">nullptr</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">);</span>
+<span class="ln"> 3</span><span class="p">}</span>
+<span class="ln"> 4</span>
+<span class="ln"> 5</span><span class="k">static</span> <span class="kt">int</span> <span class="nf">debuggerd_dispatch_pseudothread</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">arg</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 6</span>  <span class="n">pid_t</span> <span class="n">crash_dump_pid</span> <span class="o">=</span> <span class="n">__fork</span><span class="p">();</span>
+<span class="ln"> 7</span>  <span class="k">if</span> <span class="p">(</span><span class="n">crash_dump_pid</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 8</span>    <span class="n">async_safe_format_log</span><span class="p">(</span><span class="n">ANDROID_LOG_FATAL</span><span class="p">,</span> <span class="s">&#34;libc&#34;</span><span class="p">,</span>
+<span class="ln"> 9</span>                          <span class="s">&#34;failed to fork in debuggerd signal handler: %s&#34;</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">10</span>  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">crash_dump_pid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">11</span>	<span class="c1">//子进程
+</span><span class="ln">12</span><span class="c1"></span>  <span class="p">}</span>
+<span class="ln">13</span>  <span class="c1">//父进程
+</span><span class="ln">14</span><span class="c1"></span><span class="p">}</span>
+</code></pre></div><h1 id="源码下载">源码下载</h1>
+<p>点击<a href="https://github.com/YangYang48/project/tree/master/clone">这里</a></p>
 <h1 id="参考">参考</h1>
 <p><a href="https://cloud.tencent.com/developer/article/1776329?from=15425">[1] charlieroro, Linux Clone函数, 2021.</a></p>
+<p><a href="https://blog.csdn.net/hunter___/article/details/83063131">[2] nedwons, prctl()函数详解, 2018.</a></p>
+<p><a href="https://blog.csdn.net/mitushutong11/article/details/51336136/">[3] 沧海一粟之, Linux Futex浅析, 2016.</a></p>
               
             </div>
           </div>
