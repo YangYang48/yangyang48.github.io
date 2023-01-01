@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="Android中除了Binder之外，还有其他的跨进程通信。socket就是其中之一，多用于进程的启动还有日志等模块中的通信，是Android系统不可缺少的一部分。">
+
+
+<meta property="og:description" content="Android中除了Binder之外，还有其他的跨进程通信。socket就是其中之一，多用于进程的启动还有日志等模块中的通信，是Android系统不可缺少的一部分。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="socket简单实现（Java版）">
+<meta name="twitter:title" content="socket简单实现（Java版）">
+<meta property="og:url" content="https://yangyang48.github.io/2022/06/socket%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0java%E7%89%88/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2022/06/socket%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0java%E7%89%88/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="Android中除了Binder之外，还有其他的跨进程通信。socket就是其中之一，多用于进程的启动还有日志等模块中的通信，是Android系统不可缺少的一部分。">
+<meta name="twitter:description" content="Android中除了Binder之外，还有其他的跨进程通信。socket就是其中之一，多用于进程的启动还有日志等模块中的通信，是Android系统不可缺少的一部分。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2022-06-04T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2022-06-04T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="socket">
+    
+      <meta property="article:section" content="2022">
+    
+      <meta property="article:section" content="June">
+    
+  
+  
+    
+      <meta property="article:tag" content="Android">
+    
+      <meta property="article:tag" content="TCP">
+    
+      <meta property="article:tag" content="UDP">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/socket/socket_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/socket/socket_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/socket/socket_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/socket/socket_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>socket简单实现（Java版）</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2022/06/socket%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0java%E7%89%88/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/socket/socket_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      socket简单实现（Java版）
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2022-06-04T00:00:00Z">
+        
+  六月 4, 2022
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/socket">socket</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2022">2022</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/june">June</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">900 Words|Read in about 5 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>Android中除了Binder之外，还有其他的跨进程通信。socket就是其中之一，多用于进程的启动还有日志等模块中的通信，是Android系统不可缺少的一部分。</p>
+<p>socket简单实现（Java版）</p>
+<h1 id="1socket">1socket</h1>
+<p>专业术语来讲是套接字。<code>socket</code>的英文翻译为插座。把插座的含义引申开来，可以认为是一端接电源插头，另外插座上面的槽，可以提供多个其他设备使用。这里的电源插头端可以理解为是服务端，能够提供客户端交互的一端，插座上的槽可以理解为是客户端，能够尝试与服务端通信的一端。一旦通过<code>connect</code>连接(通电)起来就把的通信两端通过<code>socket</code>连接起来了。</p>
+<blockquote>
+<p><code>TCP</code>和<code>UDP</code></p>
+<p>解释<code>TCP</code>和<code>UDP</code>之前，先阐述一下<code>OSI</code>模型</p>
+<ol>
+<li>
+<p><strong>物理层(<code>Physical</code>)</strong>：单位是<code>bit比特</code></p>
+<p>设备之间的数据通信提供传输媒体及互连设备，为数据传输提供可靠的 环境。可以理解为网络传输的物理媒体部分，比如<strong>网卡，网线，集线器，中继器，调制解调器</strong>等。 在这一层，数据还没有被组织，仅作为原始的位流或电气电压处理</p>
+</li>
+<li>
+<p><strong>数据链路层(<code>Datalink</code>)</strong>：单位是<code>帧</code></p>
+<p>可以理解为数据通道，主要功能是如何在不可靠的物理线路上进行 数据的可靠传递，改层作用包括：物理地址寻址，数据的成帧，流量控制，数据检错以及重发等。 另外这个<strong>数据链路指的是</strong>：物理层要为终端设备间的数据通信提供传输媒体及其连接。媒体是 长期的，连接是有生存期的。在连接生存期内，收发两端可以进行不等的一次或多次数据通信。 每次通信都要经过建立通信联络和拆除通信联络两过程。这种建立起来的<strong>数据收发关系</strong>~ 该层的设备有：<strong>网卡，网桥，网路交换机</strong></p>
+</li>
+<li>
+<p><strong>网络层(<code>Network</code>)</strong>：单位是<code>数据包</code></p>
+<p>主要功能是将网络地址翻译成对应的物理地址，并决定如何将数据从发 送方路由到接收方，所谓的路由与寻径：一台终端可能需要与多台终端通信，这样就产生的了 把任意两台终端设备数据链接起来的问题。简单点说就是：建立网络连接和为上层提供服务！ 该层的设备有：<strong>路由</strong>。另外<code>IP</code>协议就在这一层。</p>
+</li>
+<li>
+<p><strong>传输层(<code>Transport</code>)</strong>：单位是<code>数据段</code></p>
+<p>向上面的应用层提供通信服务，面向通信部分的最高层，同时也是 用户功能中的最低层。接收会话层数据，在必要时将数据进行分割，并将这些数据交给网络 层，并且保证这些数据段有效的到达对端。而这层有两个很重要 的协议就是：<strong><code>TCP</code>传输控制协议</strong>与**<code>UDP</code>用户数据报协议**</p>
+</li>
+<li>
+<p><strong>会话层(<code>Session</code>)</strong></p>
+<p>负责在网络中的两节点之间建立、维持和终止通信。建立通信链接， 保持会话过程通信链接的畅通，同步两个节点之间的对话，决定通信是否被中断以及通信中断时 决定从何处重新发送，即不同机器上的用户之间会话的建立及管理！</p>
+</li>
+<li>
+<p><strong>表示层(<code>Presentation</code>)</strong></p>
+<p>对来自应用层的命令和数据进行解释，对各种语法赋予相应 的含义，并按照一定的格式传送给会话层。其主要功能是&quot;处理用户信息的表示问题，如编码、 数据格式转换和加密解密，压缩解压缩&quot;等</p>
+</li>
+<li>
+<p><strong>应用层(<code>Application</code>)</strong></p>
+<p><code>OSI</code>参考模型的最高层，为用户的应用程序提供网络服务。 它在其他6层工作的基础上，负责完成网络中应用程序与网络操作系统之间的联系，建立与结束使用者之间的联系，并完成网络用户提出的各种网络服务及应用所需的监督、管理和服务等各种协议。此外，该层还负责协调各个应用程序间的工作。应用层为用户提供的服务和协议有：文件服务、目录服务、文件传输服务（<code>FTP</code>）、远程登录服务（<code>Telnet</code>）、电子邮件服务（<code>E-mail</code>）、打印服务、安全服务、网络管理服务、数据库服务等。</p>
+</li>
+</ol>
+</blockquote>
+<h1 id="2android中socket通信的简单实现tcp">2Android中socket通信的简单实现(TCP)</h1>
+<p>考虑到<code>Android</code>中的<code>socket</code>实现，会被网络请求的框架封装起来，比如<code>Okhttp</code>，<code>Retrofit</code>等。所以下面所示都是直接使用<code>socket API</code>。</p>
+<p>这里先展示<code>TCP</code>传输协议的<code>socket</code>。</p>
+<h2 id="21java中的socket接口">2.1java中的socket接口</h2>
+<p>这要是需要认识两个类，一个是<code>ServerSocket.java</code>，另一个是<code>Socket.java</code>，这两个是对外提供的<code>API</code>接口。</p>
+<h2 id="22-serversocket构造">2.2 ServerSocket构造</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<ol>
+<li>有参构造方法都会使服务器与特定端口绑定，该端口由参数<code>port</code>指定。端口被占用或是没有以超级用户身份运行服务器程序(比如绑定到<code>1-1023</code>的端口)，会抛出<code>BindException</code>。</li>
+<li>有参构造里面还有一个<code>backlog</code>，用于<strong>设定客户连接请求队列的长度</strong>。服务端进程运行时，可同时监听到多个客户的连接请求。这里用于客户端请求连接服务端的队列，默认为<code>50</code>。</li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//服务端
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">ServerSocket</span> <span class="n">serverSocket</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln"> 3</span><span class="kd">public</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">port</span> <span class="o">=</span> <span class="n">2022</span><span class="o">;</span>
+<span class="ln"> 4</span><span class="k">try</span> <span class="o">{</span>
+<span class="ln"> 5</span>    <span class="n">InetAddress</span> <span class="n">addr</span> <span class="o">=</span> <span class="n">InetAddress</span><span class="o">.</span><span class="na">getLocalHost</span><span class="o">();</span>
+<span class="ln"> 6</span>    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&#34;local host:&#34;</span><span class="o">+</span><span class="n">addr</span><span class="o">);</span>
+<span class="ln"> 7</span>    <span class="n">serverSocket</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ServerSocket</span><span class="o">(</span><span class="n">port</span><span class="o">);</span>
+<span class="ln"> 8</span>    <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span><span class="s">&#34;-&gt;&gt;&gt;serverSocket success&#34;</span><span class="o">);</span>
+<span class="ln"> 9</span><span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">10</span>    <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="ln">11</span><span class="o">}</span>
+</code></pre></div><h2 id="23-accept">2.3 accept</h2>
+<p>一种阻塞的方法，如果没有客户端对其服务端有连接，那么就一直等待。</p>
+<p><code>ServerSocket</code>的<code>accept</code>方法从连接请求队列中取出一个客户的连接请求，然后创建与客户连接的<code>Socket</code>对象，并将它返回。如果队列中没有连接请求，<code>accept</code>方法就会一直等待，直到接收到了连接请求才返回。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//服务端
+</span><span class="ln"> 2</span><span class="c1">//考虑到不只有一个客户端连接，所以需要一个循环
+</span><span class="ln"> 3</span><span class="c1"></span><span class="k">try</span> <span class="o">{</span>
+<span class="ln"> 4</span>    <span class="n">Socket</span> <span class="n">socket</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln"> 5</span>    <span class="c1">//等待连接，每建立一个连接，就新建一个线程
+</span><span class="ln"> 6</span><span class="c1"></span>    <span class="k">while</span><span class="o">(</span><span class="kc">true</span><span class="o">){</span>
+<span class="ln"> 7</span>        <span class="c1">//等待一个客户端的连接，在连接之前，此方法是阻塞的
+</span><span class="ln"> 8</span><span class="c1"></span>        <span class="n">socket</span> <span class="o">=</span> <span class="n">serverSocket</span><span class="o">.</span><span class="na">accept</span><span class="o">();</span>
+<span class="ln"> 9</span>        <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;-&gt;&gt;&gt;connect to&#34;</span><span class="o">+</span><span class="n">socket</span><span class="o">.</span><span class="na">getInetAddress</span><span class="o">()+</span><span class="s">&#34;:&#34;</span><span class="o">+</span><span class="n">socket</span><span class="o">.</span><span class="na">getLocalPort</span><span class="o">());</span>
+<span class="ln">10</span>    <span class="o">}</span>
+<span class="ln">11</span><span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">12</span>    <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="ln">13</span><span class="o">}</span>
+</code></pre></div><h2 id="24-socket初始化">2.4 Socket初始化</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>无参构造可设置超时时间。当客户端Socket构造方法与服务器建立连接时，需要等待一段时间，默认会一直等待下去，直到连接成功，或出现异常。</p>
+<p>有参省略了无参的步骤，不需要设置远端地址和连接操作。</p>
+<blockquote>
+<p><code>IP</code>地址获取举例</p>
+<p>返回本地主机的<code>IP</code>地址</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="n">InetAddress</span> <span class="n">addr1</span> <span class="o">=</span> <span class="n">InetAddress</span><span class="o">.</span><span class="na">getLocalHost</span><span class="o">();</span>
+</code></pre></div><p>返回代表 &ldquo;36.152.44.95&quot;的<code> IP</code>地址，这个实际上是百度的<code>IP</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="n">InetAddress</span> <span class="n">addr2</span> <span class="o">=</span> <span class="n">InetAddress</span><span class="o">.</span><span class="na">getByName</span><span class="o">(</span><span class="s">&#34;36.152.44.95&#34;</span><span class="o">);</span>
+</code></pre></div><p>返回域名为&quot;yangyang48.github.io&quot;的域名</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="n">InetAddress</span> <span class="n">addr3</span> <span class="o">=</span> <span class="n">InetAddress</span><span class="o">.</span><span class="na">getByName</span><span class="o">(</span><span class="s">&#34;yangyang48.github.io&#34;</span><span class="o">);</span>
+<span class="ln">2</span><span class="n">String</span> <span class="n">name</span> <span class="o">=</span> <span class="n">address</span><span class="o">.</span><span class="na">getHostName</span><span class="o">();</span>
+<span class="ln">3</span><span class="n">String</span> <span class="n">ip</span> <span class="o">=</span> <span class="n">address</span><span class="o">.</span><span class="na">getHostAddress</span><span class="o">();</span>
+<span class="ln">4</span><span class="c1">//日志打印yangyang48.github.io---185.199.109.153
+</span><span class="ln">5</span><span class="c1"></span><span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="n">name</span> <span class="o">+</span> <span class="s">&#34;---&#34;</span> <span class="o">+</span> <span class="n">ip</span><span class="o">);</span>
+</code></pre></div><p><strong>注意点</strong>：<code>addr3</code>这个例子不能放在<code>UI</code>子线程中，可以放在子线程中。因为输入网址是一个耗时操作，主线程会因此异常。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_6.png" >
+  
+    </a>
+  
+  
+</div>
+
+</blockquote>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//客户端
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">static</span> <span class="n">String</span> <span class="n">IP_ADDRESS</span> <span class="o">=</span> <span class="s">&#34;&#34;</span><span class="o">;</span>
+<span class="ln"> 3</span><span class="kd">public</span> <span class="kd">static</span> <span class="kt">int</span> <span class="n">PORT</span> <span class="o">=</span> <span class="n">2022</span><span class="o">;</span>
+<span class="ln"> 4</span>
+<span class="ln"> 5</span><span class="n">IP_ADDRESS</span> <span class="o">=</span> <span class="n">tv_adress</span><span class="o">.</span><span class="na">getText</span><span class="o">().</span><span class="na">toString</span><span class="o">();</span>
+<span class="ln"> 6</span><span class="c1">//这里的message为自己手动输入的字符串
+</span><span class="ln"> 7</span><span class="c1"></span><span class="k">new</span> <span class="n">ConnectionThread</span><span class="o">(</span><span class="n">message</span><span class="o">).</span><span class="na">start</span><span class="o">();</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span><span class="c1">//新建一个子线程，实现socket通信
+</span><span class="ln">10</span><span class="c1"></span><span class="kd">class</span> <span class="nc">ConnectionThread</span> <span class="kd">extends</span> <span class="n">Thread</span> <span class="o">{</span>
+<span class="ln">11</span>    <span class="n">String</span> <span class="n">message</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">12</span>
+<span class="ln">13</span>    <span class="kd">public</span> <span class="nf">ConnectionThread</span><span class="o">(</span><span class="n">String</span> <span class="n">msg</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">14</span>        <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;-&gt;&gt;&gt;ConnectionThread|msg = &#34;</span> <span class="o">+</span> <span class="n">msg</span><span class="o">);</span>
+<span class="ln">15</span>        <span class="n">message</span> <span class="o">=</span> <span class="n">msg</span><span class="o">;</span>
+<span class="ln">16</span>    <span class="o">}</span>
+<span class="ln">17</span>
+<span class="ln">18</span>    <span class="nd">@Override</span>
+<span class="ln">19</span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln">20</span>        <span class="k">if</span> <span class="o">(</span><span class="n">soc</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">21</span>            <span class="k">try</span> <span class="o">{</span>
+<span class="ln">22</span>                <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span><span class="s">&#34;-&gt;&gt;&gt;new socket&#34;</span><span class="o">);</span>
+<span class="ln">23</span>                <span class="k">if</span> <span class="o">(</span><span class="s">&#34;&#34;</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">IP_ADDRESS</span><span class="o">))</span> <span class="o">{</span>
+<span class="ln">24</span>                    <span class="k">return</span><span class="o">;</span>
+<span class="ln">25</span>                <span class="o">}</span>
+<span class="ln">26</span>                <span class="c1">//这个是阻塞的方法，连接成功后才会执行后面的语句
+</span><span class="ln">27</span><span class="c1"></span>                <span class="n">soc</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Socket</span><span class="o">(</span><span class="n">IP_ADDRESS</span><span class="o">,</span> <span class="n">PORT</span><span class="o">);</span>
+<span class="ln">28</span>            <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">29</span>                <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="ln">30</span>            <span class="o">}</span>
+<span class="ln">31</span>        <span class="o">}</span>
+<span class="ln">32</span>    <span class="o">}</span>
+<span class="ln">33</span><span class="o">}</span>
+</code></pre></div><p>除上述之外，还有一些获取<code>Socket</code>方法的信息</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>getInetAddress</code></td>
+<td>获得连接的远程服务器的<code>IP</code>地址</td>
+</tr>
+<tr>
+<td><code>etRemoteSocketAddress</code></td>
+<td>获取连接的远程服务器地址</td>
+</tr>
+<tr>
+<td><code>getLocalSocketAddress</code></td>
+<td>获取本地绑定的地址</td>
+</tr>
+<tr>
+<td><code>getPort</code></td>
+<td>获得远程服务器的端口</td>
+</tr>
+<tr>
+<td><code>getLocalAddress</code></td>
+<td>获得客户本地的<code>IP</code>地址</td>
+</tr>
+<tr>
+<td><code>getLocalPort</code></td>
+<td>获得客户本地的端口</td>
+</tr>
+<tr>
+<td><code>getInputStream</code></td>
+<td>获得输入流。如果Socket还没有连接，或者已经关闭，或者已经通过<code>shutdownInput</code>方法关闭输入流，那么此方法会抛出<code>IOException</code></td>
+</tr>
+<tr>
+<td><code>getOutputStream</code></td>
+<td>获得输出流。如果Socket还没有连接，或者已经关闭，或者已经通过<code>shutdownOutput</code>方法关闭输出流，那么此方法会抛出<code>IOException</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="25获取输入输出流">2.5获取输入输出流</h2>
+<p>因为存在服务端具有同时为多个客户提供服务的能力，所以每一次服务端都新连接都需要起<strong>一个线程</strong>来满足应对多个客户端。</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//服务端
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">try</span> <span class="o">{</span>
+<span class="ln"> 3</span>    <span class="n">Socket</span> <span class="n">socket</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln"> 4</span>    <span class="k">while</span><span class="o">(</span><span class="kc">true</span><span class="o">){</span>
+<span class="ln"> 5</span>        <span class="n">socket</span> <span class="o">=</span> <span class="n">serverSocket</span><span class="o">.</span><span class="na">accept</span><span class="o">();</span>
+<span class="ln"> 6</span>        <span class="c1">//每次连接都开启一个线程，最好使用JDK的线程池
+</span><span class="ln"> 7</span><span class="c1"></span>        <span class="k">new</span> <span class="n">ConnectThread</span><span class="o">(</span><span class="n">socket</span><span class="o">).</span><span class="na">start</span><span class="o">();</span>
+<span class="ln"> 8</span>    <span class="o">}</span>
+<span class="ln"> 9</span><span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">10</span>    <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="ln">11</span><span class="o">}</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="c1">//向客户端发送信息
+</span><span class="ln">14</span><span class="c1"></span><span class="kd">class</span> <span class="nc">ConnectThread</span> <span class="kd">extends</span> <span class="n">Thread</span><span class="o">{</span>
+<span class="ln">15</span>    <span class="n">Socket</span> <span class="n">socket</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">16</span>    <span class="c1">//socket变量注入
+</span><span class="ln">17</span><span class="c1"></span>    <span class="kd">public</span> <span class="nf">ConnectThread</span><span class="o">(</span><span class="n">Socket</span> <span class="n">socket</span><span class="o">){</span>
+<span class="ln">18</span>        <span class="kd">super</span><span class="o">();</span>
+<span class="ln">19</span>        <span class="k">this</span><span class="o">.</span><span class="na">socket</span> <span class="o">=</span> <span class="n">socket</span><span class="o">;</span>
+<span class="ln">20</span>    <span class="o">}</span>
+<span class="ln">21</span>
+<span class="ln">22</span>    <span class="nd">@Override</span>
+<span class="ln">23</span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">(){</span>
+<span class="ln">24</span>        <span class="k">try</span> <span class="o">{</span>
+<span class="ln">25</span>            <span class="c1">//这里通过socket来获取二进制的输入输出流用于传递数据
+</span><span class="ln">26</span><span class="c1"></span>            <span class="n">DataInputStream</span> <span class="n">dis</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DataInputStream</span><span class="o">(</span><span class="n">socket</span><span class="o">.</span><span class="na">getInputStream</span><span class="o">());</span>
+<span class="ln">27</span>            <span class="n">DataOutputStream</span> <span class="n">dos</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DataOutputStream</span><span class="o">(</span><span class="n">socket</span><span class="o">.</span><span class="na">getOutputStream</span><span class="o">());</span>
+<span class="ln">28</span>            <span class="k">while</span><span class="o">(</span><span class="kc">true</span><span class="o">){</span>
+<span class="ln">29</span>                <span class="n">i</span><span class="o">++;</span>
+<span class="ln">30</span>                <span class="n">String</span> <span class="n">msgRecv</span> <span class="o">=</span> <span class="n">dis</span><span class="o">.</span><span class="na">readUTF</span><span class="o">();</span>
+<span class="ln">31</span>                <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;-&gt;&gt;&gt;msg from client: &#34;</span> <span class="o">+</span> <span class="n">msgRecv</span><span class="o">);</span>
+<span class="ln">32</span>                <span class="c1">//服务端的消息，只是在客户端的基本上加了一个符号
+</span><span class="ln">33</span><span class="c1"></span>                <span class="n">dos</span><span class="o">.</span><span class="na">writeUTF</span><span class="o">(</span><span class="n">msgRecv</span> <span class="o">+</span> <span class="n">i</span><span class="o">);</span>
+<span class="ln">34</span>                <span class="n">dos</span><span class="o">.</span><span class="na">flush</span><span class="o">();</span>
+<span class="ln">35</span>            <span class="o">}</span>
+<span class="ln">36</span>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">37</span>            <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="ln">38</span>        <span class="o">}</span>
+<span class="ln">39</span>    <span class="o">}</span>
+<span class="ln">40</span><span class="o">}</span>
+</code></pre></div><p>跟上面的服务端的流程类似，客户端也有相似的流程</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//客户端
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">static</span> <span class="n">String</span> <span class="n">IP_ADDRESS</span> <span class="o">=</span> <span class="s">&#34;&#34;</span><span class="o">;</span>
+<span class="ln"> 3</span><span class="kd">public</span> <span class="kd">static</span> <span class="kt">int</span> <span class="n">PORT</span> <span class="o">=</span> <span class="n">2022</span><span class="o">;</span>
+<span class="ln"> 4</span><span class="n">String</span> <span class="n">messageRecv</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span><span class="n">IP_ADDRESS</span> <span class="o">=</span> <span class="n">tv_adress</span><span class="o">.</span><span class="na">getText</span><span class="o">().</span><span class="na">toString</span><span class="o">();</span>
+<span class="ln"> 7</span><span class="c1">//这里的message为自己手动输入的字符串
+</span><span class="ln"> 8</span><span class="c1"></span><span class="k">new</span> <span class="n">ConnectionThread</span><span class="o">(</span><span class="n">message</span><span class="o">).</span><span class="na">start</span><span class="o">();</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span><span class="c1">//新建一个子线程，实现socket通信
+</span><span class="ln">11</span><span class="c1"></span><span class="kd">class</span> <span class="nc">ConnectionThread</span> <span class="kd">extends</span> <span class="n">Thread</span> <span class="o">{</span>
+<span class="ln">12</span>    <span class="nd">@Override</span>
+<span class="ln">13</span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln">14</span>        <span class="k">if</span> <span class="o">(</span><span class="n">soc</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">15</span>            <span class="k">try</span> <span class="o">{</span>
+<span class="ln">16</span>                <span class="n">soc</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Socket</span><span class="o">(</span><span class="n">IP_ADDRESS</span><span class="o">,</span> <span class="n">PORT</span><span class="o">);</span>
+<span class="ln">17</span>                <span class="c1">//这里通过socket来获取二进制的输入输出流用于传递数据
+</span><span class="ln">18</span><span class="c1"></span>                <span class="n">dis</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DataInputStream</span><span class="o">(</span><span class="n">soc</span><span class="o">.</span><span class="na">getInputStream</span><span class="o">());</span>
+<span class="ln">19</span>                <span class="n">dos</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DataOutputStream</span><span class="o">(</span><span class="n">soc</span><span class="o">.</span><span class="na">getOutputStream</span><span class="o">());</span>
+<span class="ln">20</span>            <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">21</span>                <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="ln">22</span>            <span class="o">}</span>
+<span class="ln">23</span>        <span class="o">}</span>
+<span class="ln">24</span>        <span class="k">try</span> <span class="o">{</span>
+<span class="ln">25</span>            <span class="c1">//客户端发送消息
+</span><span class="ln">26</span><span class="c1"></span>            <span class="n">dos</span><span class="o">.</span><span class="na">writeUTF</span><span class="o">(</span><span class="n">message</span><span class="o">);</span>
+<span class="ln">27</span>            <span class="n">dos</span><span class="o">.</span><span class="na">flush</span><span class="o">();</span>
+<span class="ln">28</span>            <span class="c1">//客户端接收消息
+</span><span class="ln">29</span><span class="c1"></span>            <span class="n">messageRecv</span> <span class="o">=</span> <span class="n">dis</span><span class="o">.</span><span class="na">readUTF</span><span class="o">();</span><span class="c1">//如果没有收到数据，会阻塞
+</span><span class="ln">30</span><span class="c1"></span>            <span class="n">Message</span> <span class="n">msg</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Message</span><span class="o">();</span>
+<span class="ln">31</span>            <span class="n">Bundle</span> <span class="n">b</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Bundle</span><span class="o">();</span>
+<span class="ln">32</span>            <span class="n">b</span><span class="o">.</span><span class="na">putString</span><span class="o">(</span><span class="s">&#34;data&#34;</span><span class="o">,</span> <span class="n">messageRecv</span><span class="o">);</span>
+<span class="ln">33</span>            <span class="n">msg</span><span class="o">.</span><span class="na">setData</span><span class="o">(</span><span class="n">b</span><span class="o">);</span>
+<span class="ln">34</span>            <span class="n">handler</span><span class="o">.</span><span class="na">sendMessage</span><span class="o">(</span><span class="n">msg</span><span class="o">);</span>
+<span class="ln">35</span>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">36</span>            <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+<span class="ln">37</span>        <span class="o">}</span>
+<span class="ln">38</span>    <span class="o">}</span>
+<span class="ln">39</span><span class="o">}</span>
+</code></pre></div><p>上述<code>socket</code>通信传递的信息，主要是通过<code>DataOutputStream</code>和<code>DataInputStream</code>来传递，本质上还是用于数据的收发。</p>
+<p><code>DataOutputStream</code>数据输出流允许应用程序将基本<code>Java</code>数据类型写到基础输出流中，而<code>DataInputStream</code>数据输入流允许应用程序以机器无关的方式从底层输入流中读取基本的<code>Java</code>类型。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<blockquote>
+<p><strong>demo中的注意点</strong></p>
+<p>1.<code>AndroidManifest.xml</code>中需要添加<code>&lt;uses-permission android:name=&quot;android.permission.INTERNET&quot; /&gt;</code></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>不添加上述权限，会影响下面检查权限时错误，在启动socket服务的时候会失败。</p>
+<div class="highlight"><pre class="chroma"><code class="language-text" data-lang="text"><span class="ln">1</span>java.net.SocketException: socket failed: EACCES (Permission denied)
+</code></pre></div><p>2.服务端和客户端的端口号需要相同，且需要大于<code>1023</code></p>
+<p>即使<code>IP</code>相同。端口号不同也是会正常连接。包括正常的<code>Socket</code>初始化，但是去读写获取二进制流的时候，会读写错误。</p>
+<p>端口号小于<code>1024</code>，可能需要设备的超级权限，默认设备<code>user</code>版本是无权限的。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_4.png" >
+  
+    </a>
+  
+  
+</div>
+
+</blockquote>
+<h1 id="3android中socket通信的简单实现udp">3Android中socket通信的简单实现(UDP)</h1>
+<p>上面的<code>TCP</code>协议的<code>Socket</code>学习之后，继续来学习<code>UDP</code>协议的<code>Socket</code>。</p>
+<p>进行数据传输时，首先需要将要传输的数据定义成数据报(<code>Datagram</code>)，在数据报中指明数据所要达到的<code>Socket</code>(主机地址和端口号)，然后再将数据报发送出去。</p>
+<p>除上述之外，还有一些获取<code>DatagramPacket</code>方法的信息</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DatagramPacket()</code></td>
+<td>构造数据报套接字并将其绑定到本地主机上任何可用的端口</td>
+</tr>
+<tr>
+<td><code>DatagramPacket(int port)</code></td>
+<td>创建数据报套接字并将其绑定到本地主机上的指定端口。</td>
+</tr>
+<tr>
+<td><code>DatagramPacket(int port, InetAddress laddr)</code></td>
+<td>创建数据报套接字，将其绑定到指定的本地地址。</td>
+</tr>
+<tr>
+<td><code>getInetAddress</code></td>
+<td>返回此套接字连接的地址</td>
+</tr>
+<tr>
+<td><code>getPort</code></td>
+<td>获得此套接字的端口</td>
+</tr>
+<tr>
+<td><code>receive</code></td>
+<td>从此套接字接收数据报包</td>
+</tr>
+<tr>
+<td><code>send</code></td>
+<td>从此套接字发送数据报包</td>
+</tr>
+<tr>
+<td><code>close</code></td>
+<td>关闭此数据报套接字</td>
+</tr>
+</tbody>
+</table>
+<h2 id="31创建服务端">3.1创建服务端</h2>
+<ol>
+<li>创建服务器端<code>DatagramSocket</code>，指定端口号</li>
+<li>创建数据报，用于接收客户端发送的数据</li>
+<li>接收客户端发送的数据</li>
+<li>读取数据</li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="kd">public</span> <span class="kt">void</span> <span class="nf">StartService</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+<span class="ln"> 2</span>    <span class="c1">//1.创建服务器端DatagramSocket，指定端口号
+</span><span class="ln"> 3</span><span class="c1"></span>    <span class="n">InetAddress</span> <span class="n">addr</span> <span class="o">=</span> <span class="n">InetAddress</span><span class="o">.</span><span class="na">getLocalHost</span><span class="o">();</span>
+<span class="ln"> 4</span>    <span class="n">datagramSocket</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DatagramSocket</span><span class="o">(</span><span class="n">PORT</span><span class="o">,</span> <span class="n">addr</span><span class="o">);</span>
+<span class="ln"> 5</span>    <span class="c1">//2.创建数据报，用于接收客户端发送的数据
+</span><span class="ln"> 6</span><span class="c1"></span>    <span class="kt">byte</span><span class="o">[]</span> <span class="n">data</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="n">1024</span><span class="o">];</span>
+<span class="ln"> 7</span>    <span class="n">datagramPacket</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DatagramPacket</span><span class="o">(</span><span class="n">data</span><span class="o">,</span> <span class="n">data</span><span class="o">.</span><span class="na">length</span><span class="o">);</span>
+<span class="ln"> 8</span>    <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;-&gt;&gt;&gt;UDP server is start ,wait client connected... &#34;</span><span class="o">);</span>
+<span class="ln"> 9</span>    <span class="c1">//3.接收客户端发送的数据
+</span><span class="ln">10</span><span class="c1"></span>    <span class="c1">//receive方法是阻塞方法
+</span><span class="ln">11</span><span class="c1"></span>    <span class="n">datagramSocket</span><span class="o">.</span><span class="na">receive</span><span class="o">(</span><span class="n">datagramPacket</span><span class="o">);</span>
+<span class="ln">12</span>    <span class="c1">//4.读取数据
+</span><span class="ln">13</span><span class="c1"></span>    <span class="n">String</span> <span class="n">info</span> <span class="o">=</span> <span class="k">new</span> <span class="n">String</span><span class="o">(</span><span class="n">data</span><span class="o">,</span> <span class="n">0</span><span class="o">,</span> <span class="n">datagramPacket</span><span class="o">.</span><span class="na">getLength</span><span class="o">());</span>
+<span class="ln">14</span>    <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;-&gt;&gt;&gt;UDP server : info = &#34;</span> <span class="o">+</span> <span class="n">info</span><span class="o">);</span>
+<span class="ln">15</span>
+<span class="ln">16</span>    <span class="c1">//响应客户端
+</span><span class="ln">17</span><span class="c1"></span>    <span class="c1">//1.定于客户端地址、端口号、数据
+</span><span class="ln">18</span><span class="c1"></span>    <span class="n">InetAddress</span> <span class="n">address</span> <span class="o">=</span> <span class="n">datagramPacket</span><span class="o">.</span><span class="na">getAddress</span><span class="o">();</span>
+<span class="ln">19</span>    <span class="kt">int</span> <span class="n">port</span> <span class="o">=</span> <span class="n">datagramPacket</span><span class="o">.</span><span class="na">getPort</span><span class="o">();</span>
+<span class="ln">20</span>    <span class="kt">byte</span><span class="o">[]</span> <span class="n">data2</span> <span class="o">=</span> <span class="s">&#34;hello&#34;</span><span class="o">.</span><span class="na">getBytes</span><span class="o">();</span>
+<span class="ln">21</span>    <span class="c1">//2.创建数据报，包含响应的数据信息
+</span><span class="ln">22</span><span class="c1"></span>    <span class="n">DatagramPacket</span> <span class="n">packet2</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DatagramPacket</span><span class="o">(</span><span class="n">data2</span><span class="o">,</span> <span class="n">data2</span><span class="o">.</span><span class="na">length</span><span class="o">,</span> <span class="n">address</span><span class="o">,</span> <span class="n">port</span><span class="o">);</span>
+<span class="ln">23</span>    <span class="n">datagramSocket</span><span class="o">.</span><span class="na">send</span><span class="o">(</span><span class="n">packet2</span><span class="o">);</span>
+<span class="ln">24</span>    <span class="c1">//4.关闭资源
+</span><span class="ln">25</span><span class="c1"></span>    <span class="c1">//datagramSocket.close();
+</span><span class="ln">26</span><span class="c1"></span><span class="o">}</span>
+</code></pre></div><h2 id="32创建客户端">3.2创建客户端</h2>
+<ol>
+<li>创建服务器端<code>DatagramSocket</code>，指定端口号</li>
+<li>创建数据报，包含发送的数据信息</li>
+<li>创建<code>DatagramSocket</code>对象</li>
+<li>向服务器端发送数据报</li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="kd">public</span> <span class="kt">void</span> <span class="nf">StartClient</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+<span class="ln"> 2</span>    <span class="c1">//1.创建服务器端DatagramSocket，指定端口号
+</span><span class="ln"> 3</span><span class="c1"></span>    <span class="n">addr</span> <span class="o">=</span> <span class="n">InetAddress</span><span class="o">.</span><span class="na">getLocalHost</span><span class="o">();</span>
+<span class="ln"> 4</span>    <span class="n">String</span> <span class="n">IP_ADDRESS</span> <span class="o">=</span> <span class="n">addr</span><span class="o">.</span><span class="na">toString</span><span class="o">().</span><span class="na">split</span><span class="o">(</span><span class="s">&#34;/&#34;</span><span class="o">)[</span><span class="n">1</span><span class="o">];</span>
+<span class="ln"> 5</span>    <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;-&gt;&gt;&gt;addr = &#34;</span> <span class="o">+</span> <span class="n">addr</span> <span class="o">+</span> <span class="s">&#34; , IP_ADDRESS = &#34;</span> <span class="o">+</span> <span class="n">IP_ADDRESS</span><span class="o">);</span>
+<span class="ln"> 6</span>    <span class="c1">//2.创建数据报，包含发送的数据信息
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="kt">byte</span><span class="o">[]</span> <span class="n">data</span> <span class="o">=</span> <span class="s">&#34;username:yangyang48;passwd:2023-01-01&#34;</span><span class="o">.</span><span class="na">getBytes</span><span class="o">();</span>
+<span class="ln"> 8</span>    <span class="n">datagramPacket</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DatagramPacket</span><span class="o">(</span><span class="n">data</span><span class="o">,</span> <span class="n">data</span><span class="o">.</span><span class="na">length</span><span class="o">,</span> <span class="n">addr</span><span class="o">,</span> <span class="n">PORT</span><span class="o">);</span>
+<span class="ln"> 9</span>    <span class="c1">//3.创建DatagramSocket对象
+</span><span class="ln">10</span><span class="c1"></span>    <span class="n">datagramSocket</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DatagramSocket</span><span class="o">();</span>
+<span class="ln">11</span>    <span class="c1">//4.向服务器端发送数据报
+</span><span class="ln">12</span><span class="c1"></span>    <span class="n">datagramSocket</span><span class="o">.</span><span class="na">send</span><span class="o">(</span><span class="n">datagramPacket</span><span class="o">);</span>
+<span class="ln">13</span>
+<span class="ln">14</span>    <span class="c1">//接收服务端信息
+</span><span class="ln">15</span><span class="c1"></span>    <span class="c1">//1.创建数据报，用于接收服务器端响应的数据
+</span><span class="ln">16</span><span class="c1"></span>    <span class="kt">byte</span><span class="o">[]</span> <span class="n">data2</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="n">1024</span><span class="o">];</span>
+<span class="ln">17</span>    <span class="n">DatagramPacket</span> <span class="n">packet2</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DatagramPacket</span><span class="o">(</span><span class="n">data2</span><span class="o">,</span> <span class="n">data2</span><span class="o">.</span><span class="na">length</span><span class="o">);</span>
+<span class="ln">18</span>    <span class="c1">//2.接收服务器响应的数据
+</span><span class="ln">19</span><span class="c1"></span>    <span class="n">datagramSocket</span><span class="o">.</span><span class="na">receive</span><span class="o">(</span><span class="n">packet2</span><span class="o">);</span>
+<span class="ln">20</span>    <span class="c1">//3.读取数据
+</span><span class="ln">21</span><span class="c1"></span>    <span class="n">String</span> <span class="n">reply</span> <span class="o">=</span> <span class="k">new</span> <span class="n">String</span><span class="o">(</span><span class="n">data2</span><span class="o">,</span> <span class="n">0</span><span class="o">,</span> <span class="n">packet2</span><span class="o">.</span><span class="na">getLength</span><span class="o">());</span>
+<span class="ln">22</span>    <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;-&gt;&gt;&gt;UDP client reply = &#34;</span> <span class="o">+</span> <span class="n">reply</span><span class="o">);</span>
+<span class="ln">23</span>    <span class="c1">//4.关闭资源
+</span><span class="ln">24</span><span class="c1"></span>    <span class="n">datagramSocket</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+<span class="ln">25</span><span class="o">}</span>
+</code></pre></div><blockquote>
+<p>特别注意</p>
+<p>不管是客户端还是服务端，如果里面有一个方法是阻塞的，是不能够放入<code>UI</code>主线程的，需要放到子线程中。类似出现下面错误</p>
+<div class="highlight"><pre class="chroma"><code class="language-text" data-lang="text"><span class="ln">1</span>Caused by: android.os.NetworkOnMainThreadException
+<span class="ln">2</span>            at android.os.StrictMode$AndroidBlockGuardPolicy.onNetwork(StrictMode.java:1145)
+<span class="ln">3</span>            at java.net.InetAddress.lookupHostByName(InetAddress.java:385)
+<span class="ln">4</span>            at java.net.InetAddress.getAllByNameImpl(InetAddress.java:236)
+<span class="ln">5</span>            at java.net.InetAddress.getAllByName(InetAddress.java:214)
+</code></pre></div><p>其中，<code>getLocalHost</code>和<code>receive</code>方法都是阻塞的</p>
+</blockquote>
+<h1 id="4总结">4总结</h1>
+<p>不管是<code>TCP</code>还是<code>UDP</code>，最根本的差异是传输层协议本身的差别，<code>API</code>的差异并不是很大，只要记住常见的<code>API</code>调用就能应付大多数的场景。在上层使用<code>Socket</code>相对比较少，更多的是<code>native</code>层使用进程<code>bin</code>，动态库<code>so</code>的方式调用底层<code>socket</code>方法建立网络连接。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">异同</th>
+<th style="text-align:center"><code>TCP</code></th>
+<th style="text-align:center"><code>UDP</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"><code>IP</code>地址（相同）</td>
+<td style="text-align:center">为了实现网络种不同的终端之间的通信，每个中断都必须有一个唯一的<code>IP</code>地址标识</td>
+<td style="text-align:center">为了实现网络种不同的终端之间的通信，每个中断都必须有一个唯一的<code>IP</code>地址标识</td>
+</tr>
+<tr>
+<td style="text-align:center">端口号（相同）</td>
+<td style="text-align:center">可使用的端口号是1024-65535</td>
+<td style="text-align:center">可使用的端口号是1024-65535</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>TCP</code>协议与<code>UDP</code>协议（差异）</td>
+<td style="text-align:center"><code>TCP</code>是可靠的链接，三次握手四次挥手</td>
+<td style="text-align:center">非连接的协议，<code>UDP</code>把每个消息段放在队列中，应用程序每次从队列中读一个消息段</td>
+</tr>
+</tbody>
+</table>
+<h1 id="5源码下载">5源码下载</h1>
+<p>源码下载，点击<a href="https://github.com/YangYang48/project/tree/master/MySocket">这里</a></p>
+<h1 id="参考">参考</h1>
+<p><a href="https://blog.csdn.net/ApolloNing/article/details/110522089">[1] 盖了帽, 简单说一下DataInputStream和DataOutputStream这两个流, 2020.</a></p>
+<p><a href="https://blog.csdn.net/qq_33782617/article/details/112719793">[2] 沉沦者,android socket 学习及示例, 2021.</a></p>
+<p><a href="https://blog.csdn.net/c19344881x/article/details/120455491?spm=1001.2101.3001.6650.1&amp;utm_medium=distribute.pc_relevant.none-task-blog-2~default~CTRLIST~default-1-120455491-blog-112719793.pc_relevant_default&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2~default~CTRLIST~default-1-120455491-blog-112719793.pc_relevant_default&amp;utm_relevant_index=2">[3] c小旭, Android Socket通信简单实现, 2021.</a></p>
+<p><a href="https://www.jb51.net/article/184151.htm">[4] feng海涛, Android中socket通信的简单实现, 2020.</a></p>
+<p><a href="https://blog.csdn.net/qq_31059475/article/details/77089650">[5] Sally-he, Java中Socket的用法&ndash;Spring MVC, 2017.</a></p>
+<p><a href="https://www.jianshu.com/p/46efb4b102d9">[6] yjy239, Android socket源码解析(一)socket的初始化原理, 2021.</a></p>
+<p><a href="https://www.jianshu.com/p/665994c2e784">[7] 桥头放牛娃, ServerSocket详解, 2018.</a></p>
+<p><a href="https://www.runoob.com/w3cnote/android-tutorial-socket-intro.html">[8] 菜鸟教程, 7.6.1 Socket学习网络基础准备, 2015.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/android/">Android</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/tcp/">TCP</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/udp/">UDP</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/06/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-1%E6%A6%82%E8%BF%B0/" data-tooltip="操作系统学习笔记 1概述">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/05/vsync%E4%BF%A1%E5%8F%B7%E6%9C%BA%E5%88%B6%E6%B5%85%E6%9E%90/" data-tooltip="Vsync信号机制浅析">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2023 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/06/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-1%E6%A6%82%E8%BF%B0/" data-tooltip="操作系统学习笔记 1概述">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/05/vsync%E4%BF%A1%E5%8F%B7%E6%9C%BA%E5%88%B6%E6%B5%85%E6%9E%90/" data-tooltip="Vsync信号机制浅析">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2022%2F06%2Fsocket%25E7%25AE%2580%25E5%258D%2595%25E5%25AE%259E%25E7%258E%25B0java%25E7%2589%2588%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2022%2F06%2Fsocket%25E7%25AE%2580%25E5%258D%2595%25E5%25AE%259E%25E7%258E%25B0java%25E7%2589%2588%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2022%2F06%2Fsocket%25E7%25AE%2580%25E5%258D%2595%25E5%25AE%259E%25E7%258E%25B0java%25E7%2589%2588%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2022\/06\/socket%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0java%E7%89%88\/';
+          
+            this.page.identifier = '\/2022\/06\/socket%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0java%E7%89%88\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
