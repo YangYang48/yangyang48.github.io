@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="在Linux中的socket用法，它是一种RPC的机制，通过通过客户端和服务端相连，产生socket句柄，通过句柄完成数据的传输通信。">
+
+
+<meta property="og:description" content="在Linux中的socket用法，它是一种RPC的机制，通过通过客户端和服务端相连，产生socket句柄，通过句柄完成数据的传输通信。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="socket简单实现（Linux附Android源码）">
+<meta name="twitter:title" content="socket简单实现（Linux附Android源码）">
+<meta property="og:url" content="https://yangyang48.github.io/2023/01/socket%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0linux%E9%99%84android%E6%BA%90%E7%A0%81/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2023/01/socket%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0linux%E9%99%84android%E6%BA%90%E7%A0%81/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="在Linux中的socket用法，它是一种RPC的机制，通过通过客户端和服务端相连，产生socket句柄，通过句柄完成数据的传输通信。">
+<meta name="twitter:description" content="在Linux中的socket用法，它是一种RPC的机制，通过通过客户端和服务端相连，产生socket句柄，通过句柄完成数据的传输通信。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2023-01-02T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2023-01-02T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="socket">
+    
+      <meta property="article:section" content="2023">
+    
+      <meta property="article:section" content="January">
+    
+  
+  
+    
+      <meta property="article:tag" content="Linux">
+    
+      <meta property="article:tag" content="Unix">
+    
+      <meta property="article:tag" content="TCP">
+    
+      <meta property="article:tag" content="UDP">
+    
+      <meta property="article:tag" content="源码">
+    
+      <meta property="article:tag" content="SOCK_RAW">
+    
+      <meta property="article:tag" content="PF_NETLINK">
+    
+      <meta property="article:tag" content="SOCK_SEQPACKET">
+    
+      <meta property="article:tag" content="SOCK_STREAM">
+    
+      <meta property="article:tag" content="SOCK_DGRAM">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/socket/socket_linux_thumb.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/socket/socket_linux_thumb.png">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/socket/socket_linux_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/socket/socket_linux_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>socket简单实现（Linux附Android源码）</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2023/01/socket%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0linux%E9%99%84android%E6%BA%90%E7%A0%81/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/socket/socket_linux_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      socket简单实现（Linux附Android源码）
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2023-01-02T00:00:00Z">
+        
+  一月 2, 2023
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/socket">socket</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2023">2023</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/january">January</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">2800 Words|Read in about 13 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>在Linux中的socket用法，它是一种RPC的机制，通过通过客户端和服务端相连，产生socket句柄，通过句柄完成数据的传输通信。</p>
+<h1 id="1linux-socket">1Linux socket</h1>
+<p>socket是一类接口，在Linux中，一切皆为文件，socket亦然。因此，在Linux中的socket用法，它是一种RPC的机制，通过通过客户端和服务端相连，产生socket句柄，通过句柄完成数据的传输通信。</p>
+<h1 id="2-socket用法">2 socket用法</h1>
+<p>为创建一个套接字，调用socket函数。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="cp">#include</span> <span class="cpf">&lt;sys/types.h&gt;          /* See NOTES */</span><span class="cp">
+</span><span class="ln">2</span><span class="cp">#include</span> <span class="cpf">&lt;sys/socket.h&gt;</span><span class="cp">
+</span><span class="ln">3</span><span class="cp"></span>
+<span class="ln">4</span><span class="kt">int</span> <span class="nf">socket</span><span class="p">(</span><span class="kt">int</span> <span class="n">domain</span><span class="p">,</span> <span class="kt">int</span> <span class="n">type</span><span class="p">,</span> <span class="kt">int</span> <span class="n">protocol</span><span class="p">);</span>
+</code></pre></div><p><img src="D:/hugo/MyBlog/static/socket/socket_7.png" alt="socket_7"></p>
+<p>关于socket中的send和write的区别</p>
+<blockquote>
+<p>对于linux来说,每个socket会有自己的send/receive buffer。调用write,只是说将用户进程的数据,拷贝到了内核的socket buffer里面,拷贝完之后,就没有write什么事了。内核自己会用自己的进程,调用TCP/IP协议栈,把用户进程的数据发出去。可以把内核的TCP/IP协议想象成另外一个进程,调用write的时候,只是把数据发给这个进程,这个进程会处理剩下的事情。</p>
+</blockquote>
+<p>socket_write写到缓冲(本地<a href="https://so.csdn.net/so/search?q=%E5%A5%97%E6%8E%A5%E5%AD%97&amp;spm=1001.2101.3001.7020">套接字</a>缓冲) 实际有可能未发送出去</p>
+<p>socket_send 已经从套接字缓冲发出</p>
+<h1 id="3-源码中的socket">3 源码中的socket</h1>
+<p>先介绍一下源码中封装的socket，由于Android系统中很多都是本地通信，回连127.0.0.1，所以单独封装了相对应的源码。</p>
+<p>客户端连接</p>
+<p>根据上面篇章可以知道客户端连接只需要创建socket，等待与服务端连接connect</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libcutils/socket_local_client_unix.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#define ANDROID_SOCKET_DIR		&#34;/dev/socket&#34;
+</span><span class="ln"> 3</span><span class="cp"></span><span class="c1">// Linux &#34;abstract&#34; (non-filesystem) namespace
+</span><span class="ln"> 4</span><span class="c1"></span><span class="cp">#define ANDROID_SOCKET_NAMESPACE_ABSTRACT 0
+</span><span class="ln"> 5</span><span class="cp"></span><span class="c1">// Android &#34;reserved&#34; (/dev/socket) namespace
+</span><span class="ln"> 6</span><span class="c1"></span><span class="cp">#define ANDROID_SOCKET_NAMESPACE_RESERVED 1
+</span><span class="ln"> 7</span><span class="cp"></span><span class="c1">// Normal filesystem namespace
+</span><span class="ln"> 8</span><span class="c1"></span><span class="cp">#define ANDROID_SOCKET_NAMESPACE_FILESYSTEM 2
+</span><span class="ln"> 9</span><span class="cp"></span>
+<span class="ln">10</span><span class="kt">int</span> <span class="nf">socket_local_client</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">,</span> <span class="kt">int</span> <span class="n">namespaceId</span><span class="p">,</span> <span class="kt">int</span> <span class="n">type</span><span class="p">)</span>
+<span class="ln">11</span><span class="p">{</span>
+<span class="ln">12</span>    <span class="kt">int</span> <span class="n">s</span><span class="p">;</span>
+<span class="ln">13</span>	<span class="c1">//1.创建socket，AF_LOCAL指定本地连接
+</span><span class="ln">14</span><span class="c1"></span>    <span class="n">s</span> <span class="o">=</span> <span class="n">socket</span><span class="p">(</span><span class="n">AF_LOCAL</span><span class="p">,</span> <span class="n">type</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="k">if</span><span class="p">(</span><span class="n">s</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">16</span>
+<span class="ln">17</span>    <span class="k">if</span> <span class="p">(</span> <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">socket_local_client_connect</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">namespaceId</span><span class="p">,</span> <span class="n">type</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">18</span>        <span class="n">close</span><span class="p">(</span><span class="n">s</span><span class="p">);</span>
+<span class="ln">19</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">20</span>    <span class="p">}</span>
+<span class="ln">21</span>
+<span class="ln">22</span>    <span class="k">return</span> <span class="n">s</span><span class="p">;</span>
+<span class="ln">23</span><span class="p">}</span>
+<span class="ln">24</span>
+<span class="ln">25</span><span class="kt">int</span> <span class="nf">socket_local_client_connect</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span><span class="p">,</span> <span class="kt">int</span> <span class="n">namespaceId</span><span class="p">,</span> <span class="kt">int</span> <span class="cm">/*type*/</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">26</span>    <span class="k">struct</span> <span class="nc">sockaddr_un</span> <span class="n">addr</span><span class="p">;</span>
+<span class="ln">27</span>    <span class="n">socklen_t</span> <span class="n">alen</span><span class="p">;</span>
+<span class="ln">28</span>    <span class="kt">int</span> <span class="n">err</span><span class="p">;</span>
+<span class="ln">29</span>	<span class="c1">//这里的addr是协议族，主要包含本地连接的路径名
+</span><span class="ln">30</span><span class="c1"></span>    <span class="n">err</span> <span class="o">=</span> <span class="n">socket_make_sockaddr_un</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">namespaceId</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">addr</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">alen</span><span class="p">);</span>
+<span class="ln">31</span>
+<span class="ln">32</span>    <span class="k">if</span> <span class="p">(</span><span class="n">err</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">33</span>        <span class="k">goto</span> <span class="n">error</span><span class="p">;</span>
+<span class="ln">34</span>    <span class="p">}</span>
+<span class="ln">35</span>	<span class="c1">//2.等待与服务端连接
+</span><span class="ln">36</span><span class="c1"></span>    <span class="k">if</span><span class="p">(</span><span class="n">connect</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="p">(</span><span class="k">struct</span> <span class="nc">sockaddr</span> <span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">addr</span><span class="p">,</span> <span class="n">alen</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">37</span>        <span class="k">goto</span> <span class="n">error</span><span class="p">;</span>
+<span class="ln">38</span>    <span class="p">}</span>
+<span class="ln">39</span>
+<span class="ln">40</span>    <span class="k">return</span> <span class="n">fd</span><span class="p">;</span>
+<span class="ln">41</span>
+<span class="ln">42</span><span class="nl">error</span><span class="p">:</span>
+<span class="ln">43</span>    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">44</span><span class="p">}</span>
+<span class="ln">45</span>
+<span class="ln">46</span><span class="kt">int</span> <span class="nf">socket_make_sockaddr_un</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">,</span> <span class="kt">int</span> <span class="n">namespaceId</span><span class="p">,</span> 
+<span class="ln">47</span>        <span class="k">struct</span> <span class="nc">sockaddr_un</span> <span class="o">*</span><span class="n">p_addr</span><span class="p">,</span> <span class="n">socklen_t</span> <span class="o">*</span><span class="n">alen</span><span class="p">)</span>
+<span class="ln">48</span><span class="p">{</span>
+<span class="ln">49</span>    <span class="n">memset</span> <span class="p">(</span><span class="n">p_addr</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span> <span class="p">(</span><span class="o">*</span><span class="n">p_addr</span><span class="p">));</span>
+<span class="ln">50</span>    <span class="n">size_t</span> <span class="n">namelen</span><span class="p">;</span>
+<span class="ln">51</span>	<span class="c1">//根据传入的id来区分sockaddr_un族中的socket文件路径
+</span><span class="ln">52</span><span class="c1"></span>    <span class="k">switch</span> <span class="p">(</span><span class="n">namespaceId</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">53</span>        <span class="c1">//这个协议通常是bt中使用比较多，类似在/data/misc/bluedroid/.sco_ctrl
+</span><span class="ln">54</span><span class="c1"></span>        <span class="k">case</span> <span class="nl">ANDROID_SOCKET_NAMESPACE_ABSTRACT</span><span class="p">:</span>
+<span class="ln">55</span>            <span class="n">namelen</span>  <span class="o">=</span> <span class="n">strlen</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+<span class="ln">56</span>
+<span class="ln">57</span>            <span class="k">if</span> <span class="p">((</span><span class="n">namelen</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">p_addr</span><span class="o">-&gt;</span><span class="n">sun_path</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">58</span>                <span class="k">goto</span> <span class="n">error</span><span class="p">;</span>
+<span class="ln">59</span>            <span class="p">}</span>
+<span class="ln">60</span>            <span class="n">p_addr</span><span class="o">-&gt;</span><span class="n">sun_path</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">61</span>            <span class="n">memcpy</span><span class="p">(</span><span class="n">p_addr</span><span class="o">-&gt;</span><span class="n">sun_path</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">namelen</span><span class="p">);</span>
+<span class="ln">62</span>        <span class="k">break</span><span class="p">;</span>
+<span class="ln">63</span>	    <span class="c1">//这个协议/dev/socket文件夹下面的socket文件，有日志相关的logd等
+</span><span class="ln">64</span><span class="c1"></span>        <span class="k">case</span> <span class="nl">ANDROID_SOCKET_NAMESPACE_RESERVED</span><span class="p">:</span>
+<span class="ln">65</span>            <span class="n">namelen</span> <span class="o">=</span> <span class="n">strlen</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">+</span> <span class="n">strlen</span><span class="p">(</span><span class="n">ANDROID_RESERVED_SOCKET_PREFIX</span><span class="p">);</span>
+<span class="ln">66</span>            <span class="k">if</span> <span class="p">(</span><span class="n">namelen</span> <span class="o">&gt;</span> <span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">p_addr</span><span class="p">)</span> 
+<span class="ln">67</span>                    <span class="o">-</span> <span class="n">offsetof</span><span class="p">(</span><span class="k">struct</span> <span class="nc">sockaddr_un</span><span class="p">,</span> <span class="n">sun_path</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">68</span>                <span class="k">goto</span> <span class="n">error</span><span class="p">;</span>
+<span class="ln">69</span>            <span class="p">}</span>
+<span class="ln">70</span>
+<span class="ln">71</span>            <span class="n">strcpy</span><span class="p">(</span><span class="n">p_addr</span><span class="o">-&gt;</span><span class="n">sun_path</span><span class="p">,</span> <span class="n">ANDROID_RESERVED_SOCKET_PREFIX</span><span class="p">);</span>
+<span class="ln">72</span>            <span class="n">strcat</span><span class="p">(</span><span class="n">p_addr</span><span class="o">-&gt;</span><span class="n">sun_path</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
+<span class="ln">73</span>        <span class="k">break</span><span class="p">;</span>
+<span class="ln">74</span>        <span class="c1">//这个协议是正常文件系统的协议，比如/data/system/ndebugsocket
+</span><span class="ln">75</span><span class="c1"></span>        <span class="k">case</span> <span class="nl">ANDROID_SOCKET_NAMESPACE_FILESYSTEM</span><span class="p">:</span>
+<span class="ln">76</span>            <span class="n">namelen</span> <span class="o">=</span> <span class="n">strlen</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+<span class="ln">77</span>            <span class="k">if</span> <span class="p">(</span><span class="n">namelen</span> <span class="o">&gt;</span> <span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">p_addr</span><span class="p">)</span> 
+<span class="ln">78</span>                    <span class="o">-</span> <span class="n">offsetof</span><span class="p">(</span><span class="k">struct</span> <span class="nc">sockaddr_un</span><span class="p">,</span> <span class="n">sun_path</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">79</span>                <span class="k">goto</span> <span class="n">error</span><span class="p">;</span>
+<span class="ln">80</span>            <span class="p">}</span>
+<span class="ln">81</span>
+<span class="ln">82</span>            <span class="n">strcpy</span><span class="p">(</span><span class="n">p_addr</span><span class="o">-&gt;</span><span class="n">sun_path</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
+<span class="ln">83</span>        <span class="k">break</span><span class="p">;</span>
+<span class="ln">84</span>        <span class="k">default</span><span class="o">:</span>
+<span class="ln">85</span>            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">86</span>    <span class="p">}</span>
+<span class="ln">87</span>
+<span class="ln">88</span>    <span class="n">p_addr</span><span class="o">-&gt;</span><span class="n">sun_family</span> <span class="o">=</span> <span class="n">AF_LOCAL</span><span class="p">;</span>
+<span class="ln">89</span>    <span class="o">*</span><span class="n">alen</span> <span class="o">=</span> <span class="n">namelen</span> <span class="o">+</span> <span class="n">offsetof</span><span class="p">(</span><span class="k">struct</span> <span class="nc">sockaddr_un</span><span class="p">,</span> <span class="n">sun_path</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">90</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">91</span><span class="nl">error</span><span class="p">:</span>
+<span class="ln">92</span>    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">93</span><span class="p">}</span>
+</code></pre></div><p>服务端连接</p>
+<p>根据上面篇章可以知道服务端连接需要创建socket，关联地址和套接字与创建监听队列。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libcutils/socket_local_server_unix.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#define LISTEN_BACKLOG 4
+</span><span class="ln"> 3</span><span class="cp">#define SOCK_TYPE_MASK 0xf
+</span><span class="ln"> 4</span><span class="cp"></span><span class="kt">int</span> <span class="nf">socket_local_server</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">,</span> <span class="kt">int</span> <span class="n">namespaceId</span><span class="p">,</span> <span class="kt">int</span> <span class="n">type</span><span class="p">)</span>
+<span class="ln"> 5</span><span class="p">{</span>
+<span class="ln"> 6</span>    <span class="kt">int</span> <span class="n">err</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="kt">int</span> <span class="n">s</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="c1">//1.创建socket，AF_LOCAL指定本地连接
+</span><span class="ln"> 9</span><span class="c1"></span>    <span class="n">s</span> <span class="o">=</span> <span class="n">socket</span><span class="p">(</span><span class="n">AF_LOCAL</span><span class="p">,</span> <span class="n">type</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="ln">10</span>    <span class="k">if</span> <span class="p">(</span><span class="n">s</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">11</span>
+<span class="ln">12</span>    <span class="n">err</span> <span class="o">=</span> <span class="n">socket_local_server_bind</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">namespaceId</span><span class="p">);</span>
+<span class="ln">13</span>
+<span class="ln">14</span>    <span class="k">if</span> <span class="p">(</span><span class="n">err</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">15</span>        <span class="n">close</span><span class="p">(</span><span class="n">s</span><span class="p">);</span>
+<span class="ln">16</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">17</span>    <span class="p">}</span>
+<span class="ln">18</span>	<span class="c1">//SOCK_STREAM表示这个服务端是以TCP协议的传输层的socket通信，否则就是UDP协议
+</span><span class="ln">19</span><span class="c1"></span>    <span class="k">if</span> <span class="p">((</span><span class="n">type</span> <span class="o">&amp;</span> <span class="n">SOCK_TYPE_MASK</span><span class="p">)</span> <span class="o">==</span> <span class="n">SOCK_STREAM</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">20</span>        <span class="kt">int</span> <span class="n">ret</span><span class="p">;</span>
+<span class="ln">21</span>		<span class="c1">//3.如果是TCP协议，那么创建监听队列，默认LISTEN_BACKLOG为4
+</span><span class="ln">22</span><span class="c1"></span>        <span class="n">ret</span> <span class="o">=</span> <span class="n">listen</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">LISTEN_BACKLOG</span><span class="p">);</span>
+<span class="ln">23</span>
+<span class="ln">24</span>        <span class="k">if</span> <span class="p">(</span><span class="n">ret</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">25</span>            <span class="n">close</span><span class="p">(</span><span class="n">s</span><span class="p">);</span>
+<span class="ln">26</span>            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">27</span>        <span class="p">}</span>
+<span class="ln">28</span>    <span class="p">}</span>
+<span class="ln">29</span>
+<span class="ln">30</span>    <span class="k">return</span> <span class="n">s</span><span class="p">;</span>
+<span class="ln">31</span><span class="p">}</span>
+<span class="ln">32</span>
+<span class="ln">33</span><span class="kt">int</span> <span class="nf">socket_local_server_bind</span><span class="p">(</span><span class="kt">int</span> <span class="n">s</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">,</span> <span class="kt">int</span> <span class="n">namespaceId</span><span class="p">)</span>
+<span class="ln">34</span><span class="p">{</span>
+<span class="ln">35</span>    <span class="k">struct</span> <span class="nc">sockaddr_un</span> <span class="n">addr</span><span class="p">;</span>
+<span class="ln">36</span>    <span class="n">socklen_t</span> <span class="n">alen</span><span class="p">;</span>
+<span class="ln">37</span>    <span class="kt">int</span> <span class="n">n</span><span class="p">;</span>
+<span class="ln">38</span>    <span class="kt">int</span> <span class="n">err</span><span class="p">;</span>
+<span class="ln">39</span>	<span class="c1">//同客户端类似，这里的服务端主要是生成addr
+</span><span class="ln">40</span><span class="c1"></span>    <span class="n">err</span> <span class="o">=</span> <span class="n">socket_make_sockaddr_un</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">namespaceId</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">addr</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">alen</span><span class="p">);</span>
+<span class="ln">41</span>
+<span class="ln">42</span>    <span class="k">if</span> <span class="p">(</span><span class="n">err</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">43</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">44</span>    <span class="p">}</span>
+<span class="ln">45</span>	<span class="c1">//因为是本地通信，所以当id是RESERVED和FILESYSTEM的时候，删除addr协议族的路径
+</span><span class="ln">46</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">namespaceId</span> <span class="o">==</span> <span class="n">ANDROID_SOCKET_NAMESPACE_RESERVED</span>
+<span class="ln">47</span>        <span class="o">||</span> <span class="n">namespaceId</span> <span class="o">==</span> <span class="n">ANDROID_SOCKET_NAMESPACE_FILESYSTEM</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">48</span>        <span class="n">unlink</span><span class="p">(</span><span class="n">addr</span><span class="p">.</span><span class="n">sun_path</span><span class="p">);</span>
+<span class="ln">49</span>    <span class="p">}</span>
+<span class="ln">50</span>
+<span class="ln">51</span>    <span class="n">n</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">52</span>    <span class="c1">//设置调用close(socket)后,仍可继续重用该socket
+</span><span class="ln">53</span><span class="c1"></span>    <span class="c1">//调用close(socket)一般不会立即关闭socket，而经历TIME_WAIT的过程
+</span><span class="ln">54</span><span class="c1"></span>    <span class="n">setsockopt</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">SOL_SOCKET</span><span class="p">,</span> <span class="n">SO_REUSEADDR</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">n</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">n</span><span class="p">));</span>
+<span class="ln">55</span>	<span class="c1">//2.关联地址和套接字
+</span><span class="ln">56</span><span class="c1"></span>    <span class="k">if</span><span class="p">(</span><span class="n">bind</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="p">(</span><span class="k">struct</span> <span class="nc">sockaddr</span> <span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">addr</span><span class="p">,</span> <span class="n">alen</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">57</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">58</span>    <span class="p">}</span>
+<span class="ln">59</span>
+<span class="ln">60</span>    <span class="k">return</span> <span class="n">s</span><span class="p">;</span>
+<span class="ln">61</span><span class="p">}</span>
+</code></pre></div><h2 id="31demo1">3.1demo1</h2>
+<p>这个是Java端服务端和C/C++层为客户端进行TCP协议的连接</p>
+<h3 id="311服务端">3.1.1服务端</h3>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//frameworks/base/services/core/java/com/android/server/am/ActivityManagerService.java
+</span><span class="ln">2</span><span class="c1"></span><span class="kd">public</span> <span class="kt">void</span> <span class="nf">startObservingNativeCrashes</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln">3</span>    <span class="kd">final</span> <span class="n">NativeCrashListener</span> <span class="n">ncl</span> <span class="o">=</span> <span class="k">new</span> <span class="n">NativeCrashListener</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+<span class="ln">4</span>    <span class="n">ncl</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+<span class="ln">5</span><span class="o">}</span>
+</code></pre></div><p>NativeCrashListener的Thread启动</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/base/services/core/java/com/android/server/am/NativeCrashListener.java
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">final</span> <span class="kd">class</span> <span class="nc">NativeCrashListener</span> <span class="kd">extends</span> <span class="n">Thread</span> <span class="o">{</span>
+<span class="ln"> 3</span>    <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">DEBUGGERD_SOCKET_PATH</span> <span class="o">=</span> <span class="s">&#34;/data/system/ndebugsocket&#34;</span><span class="o">;</span>
+<span class="ln"> 4</span>	<span class="nd">@Override</span>
+<span class="ln"> 5</span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 6</span>        <span class="c1">//这里是响应客户端的ack，为一个0值
+</span><span class="ln"> 7</span><span class="c1"></span>        <span class="kd">final</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">ackSignal</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="n">1</span><span class="o">];</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span>        <span class="k">if</span> <span class="o">(</span><span class="n">DEBUG</span><span class="o">)</span> <span class="n">Slog</span><span class="o">.</span><span class="na">i</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;Starting up&#34;</span><span class="o">);</span>
+<span class="ln">10</span>        <span class="o">{</span>
+<span class="ln">11</span>            <span class="c1">//创建一个socket文件，DEBUGGERD_SOCKET_PATH为/data/system/ndebugsocket
+</span><span class="ln">12</span><span class="c1"></span>            <span class="n">File</span> <span class="n">socketFile</span> <span class="o">=</span> <span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="n">DEBUGGERD_SOCKET_PATH</span><span class="o">);</span>
+<span class="ln">13</span>            <span class="k">if</span> <span class="o">(</span><span class="n">socketFile</span><span class="o">.</span><span class="na">exists</span><span class="o">())</span> <span class="o">{</span>
+<span class="ln">14</span>                <span class="n">socketFile</span><span class="o">.</span><span class="na">delete</span><span class="o">();</span>
+<span class="ln">15</span>            <span class="o">}</span>
+<span class="ln">16</span>        <span class="o">}</span>
+<span class="ln">17</span>
+<span class="ln">18</span>        <span class="k">try</span> <span class="o">{</span>
+<span class="ln">19</span>            <span class="c1">//1.创建服务端socket句柄，AF_UNIX为本地通信，SOCK_STREAM为TCP协议
+</span><span class="ln">20</span><span class="c1"></span>            <span class="n">FileDescriptor</span> <span class="n">serverFd</span> <span class="o">=</span> <span class="n">Os</span><span class="o">.</span><span class="na">socket</span><span class="o">(</span><span class="n">AF_UNIX</span><span class="o">,</span> <span class="n">SOCK_STREAM</span><span class="o">,</span> <span class="n">0</span><span class="o">);</span>
+<span class="ln">21</span>            <span class="c1">//获取DEBUGGERD_SOCKET_PATH，转化为UnixSocketAddress
+</span><span class="ln">22</span><span class="c1"></span>            <span class="kd">final</span> <span class="n">UnixSocketAddress</span> <span class="n">sockAddr</span> <span class="o">=</span> <span class="n">UnixSocketAddress</span><span class="o">.</span><span class="na">createFileSystem</span><span class="o">(</span>
+<span class="ln">23</span>                    <span class="n">DEBUGGERD_SOCKET_PATH</span><span class="o">);</span>
+<span class="ln">24</span>            <span class="c1">//2.关联地址和套接字
+</span><span class="ln">25</span><span class="c1"></span>            <span class="n">Os</span><span class="o">.</span><span class="na">bind</span><span class="o">(</span><span class="n">serverFd</span><span class="o">,</span> <span class="n">sockAddr</span><span class="o">);</span>
+<span class="ln">26</span>            <span class="c1">//3.如果是TCP协议，那么创建监听队列，这里队列只有一个，同时只能处理一个IO
+</span><span class="ln">27</span><span class="c1"></span>            <span class="n">Os</span><span class="o">.</span><span class="na">listen</span><span class="o">(</span><span class="n">serverFd</span><span class="o">,</span> <span class="n">1</span><span class="o">);</span>
+<span class="ln">28</span>            <span class="c1">//设置socket文件权限为可读可写可执行
+</span><span class="ln">29</span><span class="c1"></span>            <span class="n">Os</span><span class="o">.</span><span class="na">chmod</span><span class="o">(</span><span class="n">DEBUGGERD_SOCKET_PATH</span><span class="o">,</span> <span class="n">0777</span><span class="o">);</span>
+<span class="ln">30</span>			<span class="c1">//这里就是为了保证可以循环处理多个IO，服务端不能直接关闭
+</span><span class="ln">31</span><span class="c1"></span>            <span class="k">while</span> <span class="o">(</span><span class="kc">true</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">32</span>                <span class="n">FileDescriptor</span> <span class="n">peerFd</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">33</span>                <span class="k">try</span> <span class="o">{</span>
+<span class="ln">34</span>                    <span class="k">if</span> <span class="o">(</span><span class="n">MORE_DEBUG</span><span class="o">)</span> <span class="n">Slog</span><span class="o">.</span><span class="na">v</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;Waiting for debuggerd connection&#34;</span><span class="o">);</span>
+<span class="ln">35</span>                    <span class="c1">//4.服务端获取连接请求并建立连接
+</span><span class="ln">36</span><span class="c1"></span>                    <span class="n">peerFd</span> <span class="o">=</span> <span class="n">Os</span><span class="o">.</span><span class="na">accept</span><span class="o">(</span><span class="n">serverFd</span><span class="o">,</span> <span class="kc">null</span> <span class="cm">/* peerAddress */</span><span class="o">);</span>
+<span class="ln">37</span>                    <span class="k">if</span> <span class="o">(</span><span class="n">peerFd</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">38</span>						<span class="c1">//服务端处理客户端的请求
+</span><span class="ln">39</span><span class="c1"></span>                        <span class="n">consumeNativeCrashData</span><span class="o">(</span><span class="n">peerFd</span><span class="o">);</span>
+<span class="ln">40</span>                    <span class="o">}</span>
+<span class="ln">41</span>                <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">42</span>                    <span class="n">Slog</span><span class="o">.</span><span class="na">w</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;Error handling connection&#34;</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+<span class="ln">43</span>                <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+<span class="ln">44</span>                    <span class="k">if</span> <span class="o">(</span><span class="n">peerFd</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">45</span>                        <span class="k">try</span> <span class="o">{</span>
+<span class="ln">46</span>                            <span class="c1">//5.存在客户端，那么发送一个响应
+</span><span class="ln">47</span><span class="c1"></span>                            <span class="n">Os</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">peerFd</span><span class="o">,</span> <span class="n">ackSignal</span><span class="o">,</span> <span class="n">0</span><span class="o">,</span> <span class="n">1</span><span class="o">);</span>
+<span class="ln">48</span>                        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">49</span>                            <span class="o">...</span>
+<span class="ln">50</span>                        <span class="o">}</span>
+<span class="ln">51</span>                        <span class="k">try</span> <span class="o">{</span>
+<span class="ln">52</span>                            <span class="c1">//6.关闭客户端句柄
+</span><span class="ln">53</span><span class="c1"></span>                            <span class="n">Os</span><span class="o">.</span><span class="na">close</span><span class="o">(</span><span class="n">peerFd</span><span class="o">);</span>
+<span class="ln">54</span>                        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">ErrnoException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">55</span>                            <span class="o">...</span>
+<span class="ln">56</span>                        <span class="o">}</span>
+<span class="ln">57</span>                    <span class="o">}</span>
+<span class="ln">58</span>                <span class="o">}</span>
+<span class="ln">59</span>            <span class="o">}</span>
+<span class="ln">60</span>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">61</span>            <span class="n">Slog</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;Unable to init native debug socket!&#34;</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+<span class="ln">62</span>        <span class="o">}</span>
+<span class="ln">63</span>    <span class="o">}</span>
+</code></pre></div><h3 id="312客户端">3.1.2客户端</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/debuggerd/crash_dump.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="kt">bool</span> <span class="nf">activity_manager_notify</span><span class="p">(</span><span class="n">pid_t</span> <span class="n">pid</span><span class="p">,</span> <span class="kt">int</span> <span class="n">signal</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">amfd_data</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="c1">//获取句柄amfd， 
+</span><span class="ln"> 4</span><span class="c1"></span>  <span class="c1">// &#34;/data/system/ndebugsocket&#34;名称
+</span><span class="ln"> 5</span><span class="c1"></span>  <span class="c1">//ANDROID_SOCKET_NAMESPACE_FILESYSTEM类型为普通文件系统
+</span><span class="ln"> 6</span><span class="c1"></span>  <span class="c1">//SOCK_STREAM为TCP连接
+</span><span class="ln"> 7</span><span class="c1"></span>  <span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">unique_fd</span> <span class="n">amfd</span><span class="p">(</span><span class="n">socket_local_client</span><span class="p">(</span>
+<span class="ln"> 8</span>      <span class="s">&#34;/data/system/ndebugsocket&#34;</span><span class="p">,</span> <span class="n">ANDROID_SOCKET_NAMESPACE_FILESYSTEM</span><span class="p">,</span> <span class="n">SOCK_STREAM</span><span class="p">));</span>
+<span class="ln"> 9</span>  <span class="k">if</span> <span class="p">(</span><span class="n">amfd</span><span class="p">.</span><span class="n">get</span><span class="p">()</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">10</span>    <span class="n">PLOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;unable to connect to activity manager&#34;</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">12</span>  <span class="p">}</span>
+<span class="ln">13</span>  <span class="c1">//设置一个收发时间1s	
+</span><span class="ln">14</span><span class="c1"></span>  <span class="k">struct</span> <span class="nc">timeval</span> <span class="n">tv</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln">15</span>    <span class="p">.</span><span class="n">tv_sec</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+<span class="ln">16</span>    <span class="p">.</span><span class="n">tv_usec</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="ln">17</span>  <span class="p">};</span>
+<span class="ln">18</span>  <span class="c1">//发送时限为1s
+</span><span class="ln">19</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">amfd</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">SOL_SOCKET</span><span class="p">,</span> <span class="n">SO_SNDTIMEO</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tv</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">tv</span><span class="p">))</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">20</span>    <span class="n">PLOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;failed to set send timeout on activity manager socket&#34;</span><span class="p">;</span>
+<span class="ln">21</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">22</span>  <span class="p">}</span>
+<span class="ln">23</span>  <span class="n">tv</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+<span class="ln">24</span>  <span class="c1">//接收时限为3s  
+</span><span class="ln">25</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">amfd</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">SOL_SOCKET</span><span class="p">,</span> <span class="n">SO_RCVTIMEO</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tv</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">tv</span><span class="p">))</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">26</span>    <span class="n">PLOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;failed to set receive timeout on activity manager socket&#34;</span><span class="p">;</span>
+<span class="ln">27</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">28</span>  <span class="p">}</span>
+<span class="ln">29</span>
+<span class="ln">30</span>  <span class="c1">// 活动管理器协议:二进制32位网络字节顺序整数为pid和信号号，然后是转储的原始文本，最后是一个零字节，标志着数据结束。
+</span><span class="ln">31</span><span class="c1"></span>  <span class="c1">//TCP/IP协议栈使用大端字节序,地址用网络字节序来表示,所以应用程序有时需要在处理器的字节序与网络字节序之间转换
+</span><span class="ln">32</span><span class="c1"></span>  <span class="c1">//这里分别表示两个量，一个是pid，另外一个是信号量，分别以四个字节保存到网络字节序中
+</span><span class="ln">33</span><span class="c1"></span>  <span class="c1">//比如pid是2023，信号是11，那么表示为0x 00 00 07 E7 00 00 00 0B
+</span><span class="ln">34</span><span class="c1"></span>  <span class="kt">uint32_t</span> <span class="n">datum</span> <span class="o">=</span> <span class="n">htonl</span><span class="p">(</span><span class="n">pid</span><span class="p">);</span>
+<span class="ln">35</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">WriteFully</span><span class="p">(</span><span class="n">amfd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">datum</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">36</span>    <span class="n">PLOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;AM pid write failed&#34;</span><span class="p">;</span>
+<span class="ln">37</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">38</span>  <span class="p">}</span>
+<span class="ln">39</span>  <span class="n">datum</span> <span class="o">=</span> <span class="n">htonl</span><span class="p">(</span><span class="n">signal</span><span class="p">);</span>
+<span class="ln">40</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">WriteFully</span><span class="p">(</span><span class="n">amfd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">datum</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">41</span>    <span class="n">PLOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;AM signal write failed&#34;</span><span class="p">;</span>
+<span class="ln">42</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">43</span>  <span class="p">}</span>
+<span class="ln">44</span>  <span class="c1">//amfd_data为打印的错误信息log
+</span><span class="ln">45</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">WriteFully</span><span class="p">(</span><span class="n">amfd</span><span class="p">,</span> <span class="n">amfd_data</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="n">amfd_data</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">46</span>    <span class="n">PLOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;AM data write failed&#34;</span><span class="p">;</span>
+<span class="ln">47</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">48</span>  <span class="p">}</span>
+<span class="ln">49</span>
+<span class="ln">50</span>  <span class="c1">// 3s之后接收来自服务端的内容，这里是一个值为0的ack
+</span><span class="ln">51</span><span class="c1"></span>  <span class="kt">char</span> <span class="n">ack</span><span class="p">;</span>
+<span class="ln">52</span>  <span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">ReadFully</span><span class="p">(</span><span class="n">amfd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ack</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+<span class="ln">53</span>  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">54</span><span class="p">}</span>
+</code></pre></div><h2 id="32demo2">3.2demo2</h2>
+<p>一个具有报文服务的客户端和服务端传输</p>
+<blockquote>
+<p>SOCK_SEQPACKET套接字和SOCK_STREAM套接字很类似，只是从该套接字得到的是基于报文的服务而不是字节流服务。这意味着从SOCK_SEQPACKET套接字接收的数据量与对方所发送的一致。流控制传输协议(Stream Control Transmission Protocol,SCTP)提供了因特网域上的顺序数据包服务。</p>
+</blockquote>
+<h3 id="321服务端">3.2.1服务端</h3>
+<p>服务端的底层原理比较复杂，这里涉及到event原理，笔者不做展开。主要对socket是做一个逻辑上的梳理。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/debuggerd/tombstoned/tombstoned.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">constexpr</span> <span class="kt">char</span> <span class="n">kTombstonedCrashSocketName</span><span class="p">[]</span> <span class="o">=</span> <span class="s">&#34;tombstoned_crash&#34;</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="p">[])</span> <span class="p">{</span>
+<span class="ln"> 4</span>  <span class="c1">//1.生成一个socket句柄	
+</span><span class="ln"> 5</span><span class="c1"></span>  <span class="kt">int</span> <span class="n">crash_socket</span> <span class="o">=</span> <span class="n">android_get_control_socket</span><span class="p">(</span><span class="n">kTombstonedCrashSocketName</span><span class="p">);</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span>  <span class="k">if</span> <span class="p">(</span><span class="n">intercept_socket</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="o">||</span> <span class="n">crash_socket</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 8</span>    <span class="n">PLOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;failed to get socket from init&#34;</span><span class="p">;</span>
+<span class="ln"> 9</span>  <span class="p">}</span>
+<span class="ln">10</span>  <span class="c1">//设置服务端的socket句柄不阻塞	
+</span><span class="ln">11</span><span class="c1"></span>  <span class="n">evutil_make_socket_nonblocking</span><span class="p">(</span><span class="n">crash_socket</span><span class="p">);</span>
+<span class="ln">12</span>
+<span class="ln">13</span>  <span class="n">event_base</span><span class="o">*</span> <span class="n">base</span> <span class="o">=</span> <span class="n">event_base_new</span><span class="p">();</span>
+<span class="ln">14</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">base</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">15</span>    <span class="n">LOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;failed to create event_base&#34;</span><span class="p">;</span>
+<span class="ln">16</span>  <span class="p">}</span>
+<span class="ln">17</span>  <span class="n">intercept_manager</span> <span class="o">=</span> <span class="k">new</span> <span class="n">InterceptManager</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">intercept_socket</span><span class="p">);</span>
+<span class="ln">18</span>  <span class="c1">//2.建立客户端与服务端的连接，将句柄和函数crash_accept_cb绑定，一旦有客户端连接调用该函数
+</span><span class="ln">19</span><span class="c1"></span>  <span class="n">evconnlistener</span><span class="o">*</span> <span class="n">tombstone_listener</span> <span class="o">=</span>
+<span class="ln">20</span>      <span class="n">evconnlistener_new</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">crash_accept_cb</span><span class="p">,</span> <span class="n">CrashQueue</span><span class="o">::</span><span class="n">for_tombstones</span><span class="p">(),</span> <span class="n">LEV_OPT_CLOSE_ON_FREE</span><span class="p">,</span>
+<span class="ln">21</span>                         <span class="o">-</span><span class="mi">1</span> <span class="cm">/* backlog */</span><span class="p">,</span> <span class="n">crash_socket</span><span class="p">);</span>
+<span class="ln">22</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">tombstone_listener</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">23</span>    <span class="n">LOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;failed to create evconnlistener for tombstones.&#34;</span><span class="p">;</span>
+<span class="ln">24</span>  <span class="p">}</span>
+<span class="ln">25</span>  <span class="p">...</span>
+<span class="ln">26</span>  <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;tombstoned successfully initialized&#34;</span><span class="p">;</span>
+<span class="ln">27</span>  <span class="c1">//循环等待客户端连接
+</span><span class="ln">28</span><span class="c1"></span>  <span class="n">event_base_dispatch</span><span class="p">(</span><span class="n">base</span><span class="p">);</span>
+<span class="ln">29</span><span class="p">}</span>
+<span class="ln">30</span><span class="c1">//客户端连接成功，调用到这里
+</span><span class="ln">31</span><span class="c1"></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">crash_accept_cb</span><span class="p">(</span><span class="n">evconnlistener</span><span class="o">*</span> <span class="n">listener</span><span class="p">,</span> <span class="n">evutil_socket_t</span> <span class="n">sockfd</span><span class="p">,</span> <span class="n">sockaddr</span><span class="o">*</span><span class="p">,</span> <span class="kt">int</span><span class="p">,</span>
+<span class="ln">32</span>                            <span class="kt">void</span><span class="o">*</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">33</span>  <span class="c1">//3.设置一个监听
+</span><span class="ln">34</span><span class="c1"></span>  <span class="n">event_base</span><span class="o">*</span> <span class="n">base</span> <span class="o">=</span> <span class="n">evconnlistener_get_base</span><span class="p">(</span><span class="n">listener</span><span class="p">);</span>
+<span class="ln">35</span>  <span class="n">Crash</span><span class="o">*</span> <span class="n">crash</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Crash</span><span class="p">();</span>
+<span class="ln">36</span>  <span class="c1">//设置接收的超时时间1s
+</span><span class="ln">37</span><span class="c1"></span>  <span class="k">struct</span> <span class="nc">timeval</span> <span class="n">timeout</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span> <span class="p">};</span>
+<span class="ln">38</span>  <span class="c1">//创建接收函数，重新创建一个函数用于接收
+</span><span class="ln">39</span><span class="c1"></span>  <span class="n">event</span><span class="o">*</span> <span class="n">crash_event</span> <span class="o">=</span> <span class="n">event_new</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">sockfd</span><span class="p">,</span> <span class="n">EV_TIMEOUT</span> <span class="o">|</span> <span class="n">EV_READ</span><span class="p">,</span> <span class="n">crash_request_cb</span><span class="p">,</span> <span class="n">crash</span><span class="p">);</span>
+<span class="ln">40</span>  <span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_socket_fd</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="n">sockfd</span><span class="p">);</span>
+<span class="ln">41</span>  <span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_event</span> <span class="o">=</span> <span class="n">crash_event</span><span class="p">;</span>
+<span class="ln">42</span>  <span class="n">event_add</span><span class="p">(</span><span class="n">crash_event</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">timeout</span><span class="p">);</span>
+<span class="ln">43</span><span class="p">}</span>
+<span class="ln">44</span><span class="c1">//接收packet报文函数
+</span><span class="ln">45</span><span class="c1"></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">crash_request_cb</span><span class="p">(</span><span class="n">evutil_socket_t</span> <span class="n">sockfd</span><span class="p">,</span> <span class="kt">short</span> <span class="n">ev</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">arg</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">46</span>  <span class="n">ssize_t</span> <span class="n">rc</span><span class="p">;</span>
+<span class="ln">47</span>  <span class="n">Crash</span><span class="o">*</span> <span class="n">crash</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">Crash</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">arg</span><span class="p">);</span>
+<span class="ln">48</span>
+<span class="ln">49</span>  <span class="n">TombstonedCrashPacket</span> <span class="n">request</span> <span class="o">=</span> <span class="p">{};</span>
+<span class="ln">50</span>
+<span class="ln">51</span>  <span class="k">if</span> <span class="p">((</span><span class="n">ev</span> <span class="o">&amp;</span> <span class="n">EV_TIMEOUT</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">52</span>    <span class="n">LOG</span><span class="p">(</span><span class="n">WARNING</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;crash request timed out&#34;</span><span class="p">;</span>
+<span class="ln">53</span>    <span class="k">goto</span> <span class="n">fail</span><span class="p">;</span>
+<span class="ln">54</span>  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">((</span><span class="n">ev</span> <span class="o">&amp;</span> <span class="n">EV_READ</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">55</span>    <span class="n">LOG</span><span class="p">(</span><span class="n">WARNING</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;tombstoned received unexpected event from crash socket&#34;</span><span class="p">;</span>
+<span class="ln">56</span>    <span class="k">goto</span> <span class="n">fail</span><span class="p">;</span>
+<span class="ln">57</span>  <span class="p">}</span>
+<span class="ln">58</span>  <span class="c1">//3.接收packet的报文
+</span><span class="ln">59</span><span class="c1"></span>  <span class="n">rc</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">read</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">request</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">request</span><span class="p">)));</span>
+<span class="ln">60</span>  <span class="k">if</span> <span class="p">(</span><span class="n">rc</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">61</span>    <span class="n">PLOG</span><span class="p">(</span><span class="n">WARNING</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;failed to read from crash socket&#34;</span><span class="p">;</span>
+<span class="ln">62</span>    <span class="k">goto</span> <span class="n">fail</span><span class="p">;</span>
+<span class="ln">63</span>  <span class="p">}</span> 
+<span class="ln">64</span>
+<span class="ln">65</span>  <span class="k">if</span> <span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">packet_type</span> <span class="o">!=</span> <span class="n">CrashPacketType</span><span class="o">::</span><span class="n">kDumpRequest</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">66</span>    <span class="n">LOG</span><span class="p">(</span><span class="n">WARNING</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;unexpected crash packet type, expected kDumpRequest, received  &#34;</span>
+<span class="ln">67</span>                 <span class="o">&lt;&lt;</span> <span class="n">StringPrintf</span><span class="p">(</span><span class="s">&#34;%#2hhX&#34;</span><span class="p">,</span> <span class="n">request</span><span class="p">.</span><span class="n">packet_type</span><span class="p">);</span>
+<span class="ln">68</span>  <span class="p">}</span>
+<span class="ln">69</span>
+<span class="ln">70</span>  <span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_type</span> <span class="o">=</span> <span class="n">request</span><span class="p">.</span><span class="n">packet</span><span class="p">.</span><span class="n">dump_request</span><span class="p">.</span><span class="n">dump_type</span><span class="p">;</span>
+<span class="ln">71</span>  <span class="k">if</span> <span class="p">(</span><span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_type</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">||</span> <span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_type</span> <span class="o">&gt;</span> <span class="n">kDebuggerdAnyIntercept</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">72</span>    <span class="n">LOG</span><span class="p">(</span><span class="n">WARNING</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;unexpected crash dump type: &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_type</span><span class="p">;</span>
+<span class="ln">73</span>  <span class="p">}</span>
+<span class="ln">74</span>
+<span class="ln">75</span>  <span class="k">if</span> <span class="p">(</span><span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_type</span> <span class="o">!=</span> <span class="n">kDebuggerdJavaBacktrace</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">76</span>    <span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_pid</span> <span class="o">=</span> <span class="n">request</span><span class="p">.</span><span class="n">packet</span><span class="p">.</span><span class="n">dump_request</span><span class="p">.</span><span class="n">pid</span><span class="p">;</span>
+<span class="ln">77</span>  <span class="p">}</span> 
+<span class="ln">78</span>
+<span class="ln">79</span>  <span class="k">return</span><span class="p">;</span>
+<span class="ln">80</span><span class="p">}</span>
+</code></pre></div><h3 id="322客户端">3.2.2客户端</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/debuggerd/tombstoned/tombstoned_client.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">constexpr</span> <span class="kt">char</span> <span class="n">kTombstonedCrashSocketName</span><span class="p">[]</span> <span class="o">=</span> <span class="s">&#34;tombstoned_crash&#34;</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="k">enum</span> <span class="k">class</span> <span class="nc">CrashPacketType</span> <span class="o">:</span> <span class="kt">uint8_t</span> <span class="p">{</span>
+<span class="ln"> 4</span>  <span class="n">kDumpRequest</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="ln"> 5</span>  <span class="n">kCompletedDump</span><span class="p">,</span>
+<span class="ln"> 6</span>  <span class="n">kPerformDump</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+<span class="ln"> 7</span>  <span class="n">kAbortDump</span><span class="p">,</span>
+<span class="ln"> 8</span><span class="p">};</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span><span class="k">struct</span> <span class="nc">DumpRequest</span> <span class="p">{</span>
+<span class="ln">11</span>  <span class="n">DebuggerdDumpType</span> <span class="n">dump_type</span><span class="p">;</span>
+<span class="ln">12</span>  <span class="kt">int32_t</span> <span class="n">pid</span><span class="p">;</span>
+<span class="ln">13</span><span class="p">};</span>
+<span class="ln">14</span><span class="c1">//报文的结构体
+</span><span class="ln">15</span><span class="c1"></span><span class="k">struct</span> <span class="nc">TombstonedCrashPacket</span> <span class="p">{</span>
+<span class="ln">16</span>  <span class="n">CrashPacketType</span> <span class="n">packet_type</span><span class="p">;</span>
+<span class="ln">17</span>  <span class="k">union</span> <span class="p">{</span>
+<span class="ln">18</span>    <span class="n">DumpRequest</span> <span class="n">dump_request</span><span class="p">;</span>
+<span class="ln">19</span>  <span class="p">}</span> <span class="n">packet</span><span class="p">;</span>
+<span class="ln">20</span><span class="p">};</span>
+<span class="ln">21</span>
+<span class="ln">22</span><span class="kt">bool</span> <span class="nf">tombstoned_connect</span><span class="p">(</span><span class="n">pid_t</span> <span class="n">pid</span><span class="p">,</span> <span class="n">unique_fd</span><span class="o">*</span> <span class="n">tombstoned_socket</span><span class="p">,</span> <span class="n">unique_fd</span><span class="o">*</span> <span class="n">output_fd</span><span class="p">,</span>
+<span class="ln">23</span>                        <span class="n">DebuggerdDumpType</span> <span class="n">dump_type</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">24</span>  <span class="c1">//1.socket连接
+</span><span class="ln">25</span><span class="c1"></span>  <span class="c1">//name为tombstoned_crash
+</span><span class="ln">26</span><span class="c1"></span>  <span class="c1">//id为ANDROID_SOCKET_NAMESPACE_RESERVED,socket路径为/dev/socket/tombstoned_crash
+</span><span class="ln">27</span><span class="c1"></span>  <span class="c1">//SOCK_SEQPACKET为基于报文的服务  
+</span><span class="ln">28</span><span class="c1"></span>  <span class="n">unique_fd</span> <span class="n">sockfd</span><span class="p">(</span>
+<span class="ln">29</span>      <span class="n">socket_local_client</span><span class="p">((</span><span class="n">dump_type</span> <span class="o">!=</span> <span class="n">kDebuggerdJavaBacktrace</span> <span class="o">?</span> <span class="nl">kTombstonedCrashSocketName</span>
+<span class="ln">30</span>                                                                <span class="p">:</span> <span class="n">kTombstonedJavaTraceSocketName</span><span class="p">),</span>
+<span class="ln">31</span>                          <span class="n">ANDROID_SOCKET_NAMESPACE_RESERVED</span><span class="p">,</span> <span class="n">SOCK_SEQPACKET</span><span class="p">));</span>
+<span class="ln">32</span>  <span class="k">if</span> <span class="p">(</span><span class="n">sockfd</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">33</span>    <span class="n">async_safe_format_log</span><span class="p">(</span><span class="n">ANDROID_LOG_ERROR</span><span class="p">,</span> <span class="s">&#34;libc&#34;</span><span class="p">,</span> <span class="s">&#34;failed to connect to tombstoned: %s&#34;</span><span class="p">,</span>
+<span class="ln">34</span>                          <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">35</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">36</span>  <span class="p">}</span>
+<span class="ln">37</span>
+<span class="ln">38</span>  <span class="n">TombstonedCrashPacket</span> <span class="n">packet</span> <span class="o">=</span> <span class="p">{};</span>
+<span class="ln">39</span>  <span class="n">packet</span><span class="p">.</span><span class="n">packet_type</span> <span class="o">=</span> <span class="n">CrashPacketType</span><span class="o">::</span><span class="n">kDumpRequest</span><span class="p">;</span>
+<span class="ln">40</span>  <span class="n">packet</span><span class="p">.</span><span class="n">packet</span><span class="p">.</span><span class="n">dump_request</span><span class="p">.</span><span class="n">pid</span> <span class="o">=</span> <span class="n">pid</span><span class="p">;</span>
+<span class="ln">41</span>  <span class="n">packet</span><span class="p">.</span><span class="n">packet</span><span class="p">.</span><span class="n">dump_request</span><span class="p">.</span><span class="n">dump_type</span> <span class="o">=</span> <span class="n">dump_type</span><span class="p">;</span>
+<span class="ln">42</span>  <span class="c1">//2.发送packet的报文  
+</span><span class="ln">43</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">write</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">packet</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">packet</span><span class="p">)))</span> <span class="o">!=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">packet</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">44</span>    <span class="n">async_safe_format_log</span><span class="p">(</span><span class="n">ANDROID_LOG_ERROR</span><span class="p">,</span> <span class="s">&#34;libc&#34;</span><span class="p">,</span> <span class="s">&#34;failed to write DumpRequest packet: %s&#34;</span><span class="p">,</span>
+<span class="ln">45</span>                          <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">46</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">47</span>  <span class="p">}</span>
+<span class="ln">48</span>  <span class="p">...</span>
+<span class="ln">49</span>  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">50</span><span class="p">}</span>
+</code></pre></div><h2 id="33demo3">3.3demo3</h2>
+<p>这个demo是SElinux中的日志打印相关的socket，使用用户空间和内核空间的通信，且使用数据报接口用于直接访问网络层。</p>
+<blockquote>
+<p>SOCK_RAW套接字提供一个<strong>数据报接口</strong>，用于直接访问下面的网络层（即因特网域中的P层)。使用这个接口时，应用程序负责构造自己的协议头部，这是因为传输协议（如TCP和UDP)被绕过了。当创建一个原始套接字时，需要有超级用户特权，这样可以防止恶意应用程序绕过内建安全机制来创建报文。</p>
+</blockquote>
+<h3 id="331服务端">3.3.1服务端</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//kernel/audit.c
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="kt">int</span> <span class="n">__net_init</span> <span class="nf">audit_net_init</span><span class="p">(</span><span class="k">struct</span> <span class="nc">net</span> <span class="o">*</span><span class="n">net</span><span class="p">)</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>	<span class="k">struct</span> <span class="nc">netlink_kernel_cfg</span> <span class="n">cfg</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln"> 5</span>        <span class="c1">//2.这里的input就是用来接收用户空间的数据
+</span><span class="ln"> 6</span><span class="c1"></span>		<span class="p">.</span><span class="n">input</span>	<span class="o">=</span> <span class="n">audit_receive</span><span class="p">,</span>
+<span class="ln"> 7</span>		<span class="p">.</span><span class="n">bind</span>	<span class="o">=</span> <span class="n">audit_multicast_bind</span><span class="p">,</span>
+<span class="ln"> 8</span>		<span class="p">.</span><span class="n">unbind</span>	<span class="o">=</span> <span class="n">audit_multicast_unbind</span><span class="p">,</span>
+<span class="ln"> 9</span>		<span class="p">.</span><span class="n">flags</span>	<span class="o">=</span> <span class="n">NL_CFG_F_NONROOT_RECV</span><span class="p">,</span>
+<span class="ln">10</span>		<span class="p">.</span><span class="n">groups</span>	<span class="o">=</span> <span class="n">AUDIT_NLGRP_MAX</span><span class="p">,</span>
+<span class="ln">11</span>	<span class="p">};</span>
+<span class="ln">12</span>
+<span class="ln">13</span>	<span class="k">struct</span> <span class="nc">audit_net</span> <span class="o">*</span><span class="n">aunet</span> <span class="o">=</span> <span class="n">net_generic</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">audit_net_id</span><span class="p">);</span>
+<span class="ln">14</span>    <span class="c1">//1.建立连接NETLINK_AUDIT，采用了异步方式
+</span><span class="ln">15</span><span class="c1"></span>	<span class="n">aunet</span><span class="o">-&gt;</span><span class="n">sk</span> <span class="o">=</span> <span class="n">netlink_kernel_create</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">NETLINK_AUDIT</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">cfg</span><span class="p">);</span>
+<span class="ln">16</span>	<span class="k">if</span> <span class="p">(</span><span class="n">aunet</span><span class="o">-&gt;</span><span class="n">sk</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">17</span>		<span class="n">audit_panic</span><span class="p">(</span><span class="s">&#34;cannot initialize netlink socket in namespace&#34;</span><span class="p">);</span>
+<span class="ln">18</span>		<span class="k">return</span> <span class="o">-</span><span class="n">ENOMEM</span><span class="p">;</span>
+<span class="ln">19</span>	<span class="p">}</span>
+<span class="ln">20</span>	<span class="cm">/* limit the timeout in case auditd is blocked/stopped */</span>
+<span class="ln">21</span>	<span class="n">aunet</span><span class="o">-&gt;</span><span class="n">sk</span><span class="o">-&gt;</span><span class="n">sk_sndtimeo</span> <span class="o">=</span> <span class="n">HZ</span> <span class="o">/</span> <span class="mi">10</span><span class="p">;</span>
+<span class="ln">22</span>
+<span class="ln">23</span>	<span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">24</span><span class="p">}</span>
+</code></pre></div><p>其中NETLINK_AUDIT的定义</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//include/uapi/linux/netlink.h
+</span><span class="ln">2</span><span class="c1"></span><span class="cp">#define NETLINK_AUDIT		9	</span><span class="cm">/* auditing */</span><span class="cp">
+</span></code></pre></div><p>netlink_unicast采用的是单播消息。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//kernel/audit.c
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">audit_receive</span><span class="p">(</span><span class="k">struct</span> <span class="nc">sk_buff</span>  <span class="o">*</span><span class="n">skb</span><span class="p">)</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>	<span class="k">struct</span> <span class="nc">nlmsghdr</span> <span class="o">*</span><span class="n">nlh</span><span class="p">;</span>
+<span class="ln"> 5</span>	<span class="kt">int</span> <span class="n">len</span><span class="p">;</span>
+<span class="ln"> 6</span>	<span class="kt">int</span> <span class="n">err</span><span class="p">;</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span>	<span class="n">nlh</span> <span class="o">=</span> <span class="n">nlmsg_hdr</span><span class="p">(</span><span class="n">skb</span><span class="p">);</span>
+<span class="ln"> 9</span>	<span class="n">len</span> <span class="o">=</span> <span class="n">skb</span><span class="o">-&gt;</span><span class="n">len</span><span class="p">;</span>
+<span class="ln">10</span>
+<span class="ln">11</span>	<span class="n">audit_ctl_lock</span><span class="p">();</span>
+<span class="ln">12</span>	<span class="k">while</span> <span class="p">(</span><span class="n">nlmsg_ok</span><span class="p">(</span><span class="n">nlh</span><span class="p">,</span> <span class="n">len</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">13</span>		<span class="n">err</span> <span class="o">=</span> <span class="n">audit_receive_msg</span><span class="p">(</span><span class="n">skb</span><span class="p">,</span> <span class="n">nlh</span><span class="p">);</span>
+<span class="ln">14</span>		<span class="cm">/* if err or if this message says it wants a response */</span>
+<span class="ln">15</span>		<span class="k">if</span> <span class="p">(</span><span class="n">err</span> <span class="o">||</span> <span class="p">(</span><span class="n">nlh</span><span class="o">-&gt;</span><span class="n">nlmsg_flags</span> <span class="o">&amp;</span> <span class="n">NLM_F_ACK</span><span class="p">))</span>
+<span class="ln">16</span>			<span class="n">netlink_ack</span><span class="p">(</span><span class="n">skb</span><span class="p">,</span> <span class="n">nlh</span><span class="p">,</span> <span class="n">err</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+<span class="ln">17</span>
+<span class="ln">18</span>		<span class="n">nlh</span> <span class="o">=</span> <span class="n">nlmsg_next</span><span class="p">(</span><span class="n">nlh</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">len</span><span class="p">);</span>
+<span class="ln">19</span>	<span class="p">}</span>
+<span class="ln">20</span>	<span class="n">audit_ctl_unlock</span><span class="p">();</span>
+<span class="ln">21</span>    <span class="p">...</span>
+<span class="ln">22</span><span class="p">}</span>
+<span class="ln">23</span><span class="c1">//这里通常只有三种常见的AVC，初始化的时候用得AUDIT_SET(1001),与属性相关的AUDIT_USER_AVC(1107),其他AUDIT_AVC(1400)
+</span><span class="ln">24</span><span class="c1"></span><span class="k">static</span> <span class="kt">int</span> <span class="nf">audit_receive_msg</span><span class="p">(</span><span class="k">struct</span> <span class="nc">sk_buff</span> <span class="o">*</span><span class="n">skb</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">nlmsghdr</span> <span class="o">*</span><span class="n">nlh</span><span class="p">)</span>
+<span class="ln">25</span><span class="p">{</span>
+<span class="ln">26</span>	<span class="n">u32</span>			<span class="n">seq</span><span class="p">;</span>
+<span class="ln">27</span>	<span class="kt">void</span>			<span class="o">*</span><span class="n">data</span><span class="p">;</span>
+<span class="ln">28</span>	<span class="kt">int</span>			<span class="n">data_len</span><span class="p">;</span>
+<span class="ln">29</span>	<span class="kt">int</span>			<span class="n">err</span><span class="p">;</span>
+<span class="ln">30</span>	<span class="k">struct</span> <span class="nc">audit_buffer</span>	<span class="o">*</span><span class="n">ab</span><span class="p">;</span>
+<span class="ln">31</span>	<span class="n">u16</span>			<span class="n">msg_type</span> <span class="o">=</span> <span class="n">nlh</span><span class="o">-&gt;</span><span class="n">nlmsg_type</span><span class="p">;</span>
+<span class="ln">32</span>	<span class="k">struct</span> <span class="nc">audit_sig_info</span>   <span class="o">*</span><span class="n">sig_data</span><span class="p">;</span>
+<span class="ln">33</span>	<span class="kt">char</span>			<span class="o">*</span><span class="n">ctx</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="ln">34</span>	<span class="n">u32</span>			<span class="n">len</span><span class="p">;</span>
+<span class="ln">35</span>
+<span class="ln">36</span>	<span class="n">err</span> <span class="o">=</span> <span class="n">audit_netlink_ok</span><span class="p">(</span><span class="n">skb</span><span class="p">,</span> <span class="n">msg_type</span><span class="p">);</span>
+<span class="ln">37</span>	<span class="k">if</span> <span class="p">(</span><span class="n">err</span><span class="p">)</span>
+<span class="ln">38</span>		<span class="k">return</span> <span class="n">err</span><span class="p">;</span>
+<span class="ln">39</span>
+<span class="ln">40</span>	<span class="n">seq</span>  <span class="o">=</span> <span class="n">nlh</span><span class="o">-&gt;</span><span class="n">nlmsg_seq</span><span class="p">;</span>
+<span class="ln">41</span>	<span class="n">data</span> <span class="o">=</span> <span class="n">nlmsg_data</span><span class="p">(</span><span class="n">nlh</span><span class="p">);</span>
+<span class="ln">42</span>	<span class="n">data_len</span> <span class="o">=</span> <span class="n">nlmsg_len</span><span class="p">(</span><span class="n">nlh</span><span class="p">);</span>
+<span class="ln">43</span>
+<span class="ln">44</span>	<span class="k">switch</span> <span class="p">(</span><span class="n">msg_type</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">45</span>	<span class="k">case</span> <span class="nl">AUDIT_GET</span><span class="p">:</span> <span class="p">{</span>
+<span class="ln">46</span>		<span class="k">struct</span> <span class="nc">audit_status</span>	<span class="n">s</span><span class="p">;</span>
+<span class="ln">47</span>		<span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">s</span><span class="p">));</span>
+<span class="ln">48</span>		<span class="n">s</span><span class="p">.</span><span class="n">enabled</span>		   <span class="o">=</span> <span class="n">audit_enabled</span><span class="p">;</span>
+<span class="ln">49</span>		<span class="n">s</span><span class="p">.</span><span class="n">failure</span>		   <span class="o">=</span> <span class="n">audit_failure</span><span class="p">;</span>
+<span class="ln">50</span>		<span class="cm">/* NOTE: use pid_vnr() so the PID is relative to the current
+</span><span class="ln">51</span><span class="cm">		 *       namespace */</span>
+<span class="ln">52</span>		<span class="n">s</span><span class="p">.</span><span class="n">pid</span>			   <span class="o">=</span> <span class="n">auditd_pid_vnr</span><span class="p">();</span>
+<span class="ln">53</span>		<span class="n">s</span><span class="p">.</span><span class="n">rate_limit</span>		   <span class="o">=</span> <span class="n">audit_rate_limit</span><span class="p">;</span>
+<span class="ln">54</span>		<span class="n">s</span><span class="p">.</span><span class="n">backlog_limit</span>		   <span class="o">=</span> <span class="n">audit_backlog_limit</span><span class="p">;</span>
+<span class="ln">55</span>		<span class="n">s</span><span class="p">.</span><span class="n">lost</span>			   <span class="o">=</span> <span class="n">atomic_read</span><span class="p">(</span><span class="o">&amp;</span><span class="n">audit_lost</span><span class="p">);</span>
+<span class="ln">56</span>		<span class="n">s</span><span class="p">.</span><span class="n">backlog</span>		   <span class="o">=</span> <span class="n">skb_queue_len</span><span class="p">(</span><span class="o">&amp;</span><span class="n">audit_queue</span><span class="p">);</span>
+<span class="ln">57</span>		<span class="n">s</span><span class="p">.</span><span class="n">feature_bitmap</span>	   <span class="o">=</span> <span class="n">AUDIT_FEATURE_BITMAP_ALL</span><span class="p">;</span>
+<span class="ln">58</span>		<span class="n">s</span><span class="p">.</span><span class="n">backlog_wait_time</span>	   <span class="o">=</span> <span class="n">audit_backlog_wait_time</span><span class="p">;</span>
+<span class="ln">59</span>		<span class="n">s</span><span class="p">.</span><span class="n">backlog_wait_time_actual</span> <span class="o">=</span> <span class="n">atomic_read</span><span class="p">(</span><span class="o">&amp;</span><span class="n">audit_backlog_wait_time_actual</span><span class="p">);</span>
+<span class="ln">60</span>		<span class="n">audit_send_reply</span><span class="p">(</span><span class="n">skb</span><span class="p">,</span> <span class="n">seq</span><span class="p">,</span> <span class="n">AUDIT_GET</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">s</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">s</span><span class="p">));</span>
+<span class="ln">61</span>		<span class="k">break</span><span class="p">;</span>
+<span class="ln">62</span>	<span class="p">}</span>
+<span class="ln">63</span>	<span class="k">case</span> <span class="nl">AUDIT_SET</span><span class="p">:</span> <span class="p">{</span>
+<span class="ln">64</span>		<span class="p">...</span>
+<span class="ln">65</span>		<span class="k">break</span><span class="p">;</span>
+<span class="ln">66</span>	<span class="p">}</span>
+<span class="ln">67</span>	<span class="k">case</span> <span class="nl">AUDIT_USER</span><span class="p">:</span>
+<span class="ln">68</span>	<span class="k">case</span> <span class="n">AUDIT_FIRST_USER_MSG</span> <span class="p">...</span> <span class="nl">AUDIT_LAST_USER_MSG</span><span class="p">:</span>
+<span class="ln">69</span>	<span class="k">case</span> <span class="n">AUDIT_FIRST_USER_MSG2</span> <span class="p">...</span> <span class="nl">AUDIT_LAST_USER_MSG2</span><span class="p">:</span>
+<span class="ln">70</span>		<span class="p">...</span>
+<span class="ln">71</span>		<span class="k">break</span><span class="p">;</span>
+<span class="ln">72</span>	<span class="k">default</span><span class="o">:</span>
+<span class="ln">73</span>		<span class="n">err</span> <span class="o">=</span> <span class="o">-</span><span class="n">EINVAL</span><span class="p">;</span>
+<span class="ln">74</span>		<span class="k">break</span><span class="p">;</span>
+<span class="ln">75</span>	<span class="p">}</span>
+<span class="ln">76</span>	<span class="k">return</span> <span class="n">err</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">?</span> <span class="nl">err</span> <span class="p">:</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">77</span><span class="p">}</span>
+</code></pre></div><h3 id="332客户端">3.3.2客户端</h3>
+<p>随便的一句log输出</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//external/selinux/libselinux/src/selinux_restorecon.c
+</span><span class="ln">2</span><span class="c1"></span><span class="n">selinux_log</span><span class="p">(</span><span class="n">SELINUX_INFO</span><span class="p">,</span>
+<span class="ln">3</span> 		     <span class="s">&#34;filespec hash table stats: %d elements, %d/%d buckets used, longest chain length %d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span>
+<span class="ln">4</span> 		     <span class="n">nel</span><span class="p">,</span> <span class="n">used</span><span class="p">,</span> <span class="n">HASH_BUCKETS</span><span class="p">,</span> <span class="n">longest</span><span class="p">);</span>
+</code></pre></div><p>或者是AVC log</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//external/selinux/libselinux/src/avc.c
+</span><span class="ln">2</span><span class="c1"></span><span class="n">avc_log</span><span class="p">(</span><span class="n">SELINUX_AVC</span><span class="p">,</span> <span class="s">&#34;%s&#34;</span><span class="p">,</span> <span class="n">avc_audit_buf</span><span class="p">);</span>
+</code></pre></div><p>avc_log调用</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//external/selinux/libselinux/src/avc_internal.h
+</span><span class="ln">2</span><span class="c1">//因为设置了avc_func_log实际上就是selinux_log
+</span><span class="ln">3</span><span class="c1"></span><span class="cp">#define avc_log(type, format...) \
+</span><span class="ln">4</span><span class="cp"> if (avc_func_log) \
+</span><span class="ln">5</span><span class="cp">   avc_func_log(format); \
+</span><span class="ln">6</span><span class="cp"> else \
+</span><span class="ln">7</span><span class="cp">   selinux_log(type, format);
+</span></code></pre></div><p>反推到是否设置callback，没有设置按照默认stderr输出，设置则按照设置的输出</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//external/selinux/libselinux/src/callbacks.c
+</span><span class="ln"> 2</span><span class="c1">//如果callback没有设置任何值，默认按照stderr标准错误来输出
+</span><span class="ln"> 3</span><span class="c1"></span><span class="k">static</span> <span class="kt">int</span> <span class="nf">__attribute__</span> <span class="p">((</span><span class="n">format</span><span class="p">(</span><span class="n">printf</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)))</span>
+<span class="ln"> 4</span><span class="n">default_selinux_log</span><span class="p">(</span><span class="kt">int</span> <span class="n">type</span> <span class="n">__attribute__</span><span class="p">((</span><span class="n">unused</span><span class="p">)),</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">fmt</span><span class="p">,</span> <span class="p">...)</span>
+<span class="ln"> 5</span><span class="p">{</span>
+<span class="ln"> 6</span>	<span class="kt">int</span> <span class="n">rc</span><span class="p">;</span>
+<span class="ln"> 7</span>	<span class="n">va_list</span> <span class="n">ap</span><span class="p">;</span>
+<span class="ln"> 8</span>	<span class="n">va_start</span><span class="p">(</span><span class="n">ap</span><span class="p">,</span> <span class="n">fmt</span><span class="p">);</span>
+<span class="ln"> 9</span>	<span class="n">rc</span> <span class="o">=</span> <span class="n">vfprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">ap</span><span class="p">);</span>
+<span class="ln">10</span>	<span class="n">va_end</span><span class="p">(</span><span class="n">ap</span><span class="p">);</span>
+<span class="ln">11</span>	<span class="k">return</span> <span class="n">rc</span><span class="p">;</span>
+<span class="ln">12</span><span class="p">}</span>
+<span class="ln">13</span>
+<span class="ln">14</span><span class="k">static</span> <span class="kt">int</span>
+<span class="ln">15</span><span class="nf">default_selinux_audit</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">ptr</span> <span class="n">__attribute__</span><span class="p">((</span><span class="n">unused</span><span class="p">)),</span>
+<span class="ln">16</span>		      <span class="n">security_class_t</span> <span class="n">cls</span> <span class="n">__attribute__</span><span class="p">((</span><span class="n">unused</span><span class="p">)),</span>
+<span class="ln">17</span>		      <span class="kt">char</span> <span class="o">*</span><span class="n">buf</span> <span class="n">__attribute__</span><span class="p">((</span><span class="n">unused</span><span class="p">)),</span>
+<span class="ln">18</span>		      <span class="n">size_t</span> <span class="n">len</span> <span class="n">__attribute__</span><span class="p">((</span><span class="n">unused</span><span class="p">)))</span>
+<span class="ln">19</span><span class="p">{</span>
+<span class="ln">20</span>	<span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">21</span><span class="p">}</span>
+<span class="ln">22</span>
+<span class="ln">23</span><span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">selinux_audit</span><span class="p">)</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">,</span> <span class="n">security_class_t</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="p">,</span> <span class="n">size_t</span><span class="p">)</span> <span class="o">=</span>
+<span class="ln">24</span>	<span class="n">default_selinux_audit</span><span class="p">;</span>
+<span class="ln">25</span><span class="kt">int</span> <span class="nf">__attribute__</span> <span class="p">((</span><span class="n">format</span><span class="p">(</span><span class="n">printf</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)))</span>
+<span class="ln">26</span><span class="p">(</span><span class="o">*</span><span class="n">selinux_log</span><span class="p">)(</span><span class="kt">int</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="p">,</span> <span class="p">...)</span> <span class="o">=</span>
+<span class="ln">27</span>	<span class="n">default_selinux_log</span><span class="p">;</span>
+<span class="ln">28</span>
+<span class="ln">29</span><span class="cm">/* callback setting function */</span>
+<span class="ln">30</span><span class="kt">void</span> <span class="nf">selinux_set_callback</span><span class="p">(</span><span class="kt">int</span> <span class="n">type</span><span class="p">,</span> <span class="k">union</span> <span class="nc">selinux_callback</span> <span class="n">cb</span><span class="p">)</span>
+<span class="ln">31</span><span class="p">{</span>
+<span class="ln">32</span>	<span class="k">switch</span> <span class="p">(</span><span class="n">type</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">33</span>	<span class="k">case</span> <span class="nl">SELINUX_CB_LOG</span><span class="p">:</span>
+<span class="ln">34</span>		<span class="n">selinux_log</span> <span class="o">=</span> <span class="n">cb</span><span class="p">.</span><span class="n">func_log</span><span class="p">;</span>
+<span class="ln">35</span>		<span class="k">break</span><span class="p">;</span>
+<span class="ln">36</span>	<span class="k">case</span> <span class="nl">SELINUX_CB_AUDIT</span><span class="p">:</span>
+<span class="ln">37</span>		<span class="n">selinux_audit</span> <span class="o">=</span> <span class="n">cb</span><span class="p">.</span><span class="n">func_audit</span><span class="p">;</span>
+<span class="ln">38</span>		<span class="k">break</span><span class="p">;</span>
+<span class="ln">39</span>	<span class="k">case</span> <span class="nl">SELINUX_CB_VALIDATE</span><span class="p">:</span>
+<span class="ln">40</span>		<span class="n">selinux_validate</span> <span class="o">=</span> <span class="n">cb</span><span class="p">.</span><span class="n">func_validate</span><span class="p">;</span>
+<span class="ln">41</span>		<span class="k">break</span><span class="p">;</span>
+<span class="ln">42</span>	<span class="k">case</span> <span class="nl">SELINUX_CB_SETENFORCE</span><span class="p">:</span>
+<span class="ln">43</span>		<span class="n">selinux_netlink_setenforce</span> <span class="o">=</span> <span class="n">cb</span><span class="p">.</span><span class="n">func_setenforce</span><span class="p">;</span>
+<span class="ln">44</span>		<span class="k">break</span><span class="p">;</span>
+<span class="ln">45</span>	<span class="k">case</span> <span class="nl">SELINUX_CB_POLICYLOAD</span><span class="p">:</span>
+<span class="ln">46</span>		<span class="n">selinux_netlink_policyload</span> <span class="o">=</span> <span class="n">cb</span><span class="p">.</span><span class="n">func_policyload</span><span class="p">;</span>
+<span class="ln">47</span>		<span class="k">break</span><span class="p">;</span>
+<span class="ln">48</span>	<span class="p">}</span>
+<span class="ln">49</span><span class="p">}</span>
+</code></pre></div><p>继续反推，Android会在开机的时候设置callback，所以日志打印会在SelinuxKlogCallback体现</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/init/selinux.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="err">如果</span><span class="n">callback设置为func_log</span>
+<span class="ln"> 3</span><span class="kt">void</span> <span class="nf">SelinuxSetupKernelLogging</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="n">selinux_callback</span> <span class="n">cb</span><span class="p">;</span>
+<span class="ln"> 5</span>    <span class="n">cb</span><span class="p">.</span><span class="n">func_log</span> <span class="o">=</span> <span class="n">SelinuxKlogCallback</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="n">selinux_set_callback</span><span class="p">(</span><span class="n">SELINUX_CB_LOG</span><span class="p">,</span> <span class="n">cb</span><span class="p">);</span>
+<span class="ln"> 7</span><span class="p">}</span>
+<span class="ln"> 8</span><span class="c1">//日志打印会在这里体现
+</span><span class="ln"> 9</span><span class="c1"></span><span class="kt">int</span> <span class="nf">SelinuxKlogCallback</span><span class="p">(</span><span class="kt">int</span> <span class="n">type</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">fmt</span><span class="p">,</span> <span class="p">...)</span> <span class="p">{</span>
+<span class="ln">10</span>    <span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">LogSeverity</span> <span class="n">severity</span> <span class="o">=</span> <span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">ERROR</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="k">if</span> <span class="p">(</span><span class="n">type</span> <span class="o">==</span> <span class="n">SELINUX_WARNING</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">12</span>        <span class="n">severity</span> <span class="o">=</span> <span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">WARNING</span><span class="p">;</span>
+<span class="ln">13</span>    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">type</span> <span class="o">==</span> <span class="n">SELINUX_INFO</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">14</span>        <span class="n">severity</span> <span class="o">=</span> <span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">INFO</span><span class="p">;</span>
+<span class="ln">15</span>    <span class="p">}</span>
+<span class="ln">16</span>    <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="n">kKlogMessageSize</span><span class="p">];</span>
+<span class="ln">17</span>    <span class="n">va_list</span> <span class="n">ap</span><span class="p">;</span>
+<span class="ln">18</span>    <span class="n">va_start</span><span class="p">(</span><span class="n">ap</span><span class="p">,</span> <span class="n">fmt</span><span class="p">);</span>
+<span class="ln">19</span>    <span class="kt">int</span> <span class="n">length_written</span> <span class="o">=</span> <span class="n">vsnprintf</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">),</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">ap</span><span class="p">);</span>
+<span class="ln">20</span>    <span class="n">va_end</span><span class="p">(</span><span class="n">ap</span><span class="p">);</span>
+<span class="ln">21</span>    <span class="k">if</span> <span class="p">(</span><span class="n">length_written</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">22</span>        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">23</span>    <span class="p">}</span>
+<span class="ln">24</span>    <span class="c1">//如果是AVC log
+</span><span class="ln">25</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">type</span> <span class="o">==</span> <span class="n">SELINUX_AVC</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">26</span>        <span class="n">SelinuxAvcLog</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">));</span>
+<span class="ln">27</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">28</span>        <span class="c1">//如果是其他的log
+</span><span class="ln">29</span><span class="c1"></span>        <span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">KernelLogger</span><span class="p">(</span><span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">MAIN</span><span class="p">,</span> <span class="n">severity</span><span class="p">,</span> <span class="s">&#34;selinux&#34;</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">buf</span><span class="p">);</span>
+<span class="ln">30</span>    <span class="p">}</span>
+<span class="ln">31</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">32</span><span class="p">}</span>
+</code></pre></div><p>1）如果是AVC log</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/init/selinux.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">constexpr</span> <span class="n">size_t</span> <span class="n">kKlogMessageSize</span> <span class="o">=</span> <span class="mi">1024</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="kt">void</span> <span class="nf">SelinuxAvcLog</span><span class="p">(</span><span class="kt">char</span><span class="o">*</span> <span class="n">buf</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">buf_len</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="n">CHECK_GT</span><span class="p">(</span><span class="n">buf_len</span><span class="p">,</span> <span class="mi">0u</span><span class="p">);</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span>    <span class="n">size_t</span> <span class="n">str_len</span> <span class="o">=</span> <span class="n">strnlen</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">buf_len</span><span class="p">);</span>
+<span class="ln"> 7</span>    <span class="c1">// trim newline at end of string
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">buf</span><span class="p">[</span><span class="n">str_len</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="sc">&#39;\n&#39;</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 9</span>        <span class="n">buf</span><span class="p">[</span><span class="n">str_len</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;\0&#39;</span><span class="p">;</span>
+<span class="ln">10</span>    <span class="p">}</span>
+<span class="ln">11</span>
+<span class="ln">12</span>    <span class="k">struct</span> <span class="nc">NetlinkMessage</span> <span class="p">{</span>
+<span class="ln">13</span>        <span class="n">nlmsghdr</span> <span class="n">hdr</span><span class="p">;</span>
+<span class="ln">14</span>        <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="n">kKlogMessageSize</span><span class="p">];</span>
+<span class="ln">15</span>    <span class="p">}</span> <span class="n">request</span> <span class="o">=</span> <span class="p">{};</span>
+<span class="ln">16</span>
+<span class="ln">17</span>    <span class="n">request</span><span class="p">.</span><span class="n">hdr</span><span class="p">.</span><span class="n">nlmsg_flags</span> <span class="o">=</span> <span class="n">NLM_F_REQUEST</span><span class="p">;</span>
+<span class="ln">18</span>    <span class="n">request</span><span class="p">.</span><span class="n">hdr</span><span class="p">.</span><span class="n">nlmsg_type</span> <span class="o">=</span> <span class="n">AUDIT_USER_AVC</span><span class="p">;</span>
+<span class="ln">19</span>    <span class="n">request</span><span class="p">.</span><span class="n">hdr</span><span class="p">.</span><span class="n">nlmsg_len</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">request</span><span class="p">);</span>
+<span class="ln">20</span>    <span class="n">strlcpy</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">buf</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">buf</span><span class="p">));</span>
+<span class="ln">21</span>	<span class="c1">//1.创建socket句柄
+</span><span class="ln">22</span><span class="c1"></span>    <span class="c1">//PF_NETLINK是是一种在内核和用户应用间进行双向数据传输的非常好的方式
+</span><span class="ln">23</span><span class="c1"></span>    <span class="c1">//SOCK_RAW用于直接访问网络层
+</span><span class="ln">24</span><span class="c1"></span>    <span class="c1">//NETLINK_AUDIT定义的一个方式，NETLINK_AUDIT=9
+</span><span class="ln">25</span><span class="c1"></span>    <span class="k">auto</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">unique_fd</span><span class="p">{</span><span class="n">socket</span><span class="p">(</span><span class="n">PF_NETLINK</span><span class="p">,</span> <span class="n">SOCK_RAW</span> <span class="o">|</span> <span class="n">SOCK_CLOEXEC</span><span class="p">,</span> <span class="n">NETLINK_AUDIT</span><span class="p">)};</span>
+<span class="ln">26</span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">fd</span><span class="p">.</span><span class="n">ok</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln">27</span>        <span class="k">return</span><span class="p">;</span>
+<span class="ln">28</span>    <span class="p">}</span>
+<span class="ln">29</span>    <span class="c1">//2.数据报接口发送
+</span><span class="ln">30</span><span class="c1"></span>    <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">send</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">request</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">request</span><span class="p">),</span> <span class="mi">0</span><span class="p">));</span>
+<span class="ln">31</span><span class="p">}</span>
+</code></pre></div><blockquote>
+<p>其中nlmsghdr的定义</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//bionic/libc/kernel/uapi/linux/netlink.h
+</span><span class="ln">2</span><span class="c1"></span><span class="k">struct</span> <span class="nc">nlmsghdr</span> <span class="p">{</span>
+<span class="ln">3</span>  <span class="n">__u32</span> <span class="n">nlmsg_len</span><span class="p">;</span>
+<span class="ln">4</span>  <span class="n">__u16</span> <span class="n">nlmsg_type</span><span class="p">;</span>
+<span class="ln">5</span>  <span class="n">__u16</span> <span class="n">nlmsg_flags</span><span class="p">;</span>
+<span class="ln">6</span>  <span class="n">__u32</span> <span class="n">nlmsg_seq</span><span class="p">;</span>
+<span class="ln">7</span>  <span class="n">__u32</span> <span class="n">nlmsg_pid</span><span class="p">;</span>
+<span class="ln">8</span><span class="p">};</span>
+</code></pre></div></blockquote>
+<p>2）如果是其他的log</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/base/logging.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span> <span class="nf">KernelLogger</span><span class="p">(</span><span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">LogId</span><span class="p">,</span> <span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">LogSeverity</span> <span class="n">severity</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">tag</span><span class="p">,</span>
+<span class="ln"> 3</span>                  <span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">full_message</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 4</span>  <span class="n">SplitByLines</span><span class="p">(</span><span class="n">full_message</span><span class="p">,</span> <span class="n">KernelLogLine</span><span class="p">,</span> <span class="n">severity</span><span class="p">,</span> <span class="n">tag</span><span class="p">);</span>
+<span class="ln"> 5</span><span class="p">}</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span><span class="k">static</span> <span class="kt">void</span> <span class="nf">KernelLogLine</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">msg</span><span class="p">,</span> <span class="kt">int</span> <span class="n">length</span><span class="p">,</span> <span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">LogSeverity</span> <span class="n">severity</span><span class="p">,</span>
+<span class="ln"> 8</span>                          <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">tag</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 9</span>  <span class="c1">// 设置日志等级
+</span><span class="ln">10</span><span class="c1"></span>  <span class="k">static</span> <span class="k">constexpr</span> <span class="kt">int</span> <span class="n">kLogSeverityToKernelLogLevel</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln">11</span>      <span class="p">[</span><span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">VERBOSE</span><span class="p">]</span> <span class="o">=</span> <span class="mi">7</span><span class="p">,</span>              <span class="c1">// KERN_DEBUG (there is no verbose kernel log
+</span><span class="ln">12</span><span class="c1"></span>                                                 <span class="c1">//             level)
+</span><span class="ln">13</span><span class="c1"></span>      <span class="p">[</span><span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">DEBUG</span><span class="p">]</span> <span class="o">=</span> <span class="mi">7</span><span class="p">,</span>                <span class="c1">// KERN_DEBUG
+</span><span class="ln">14</span><span class="c1"></span>      <span class="p">[</span><span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">INFO</span><span class="p">]</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>                 <span class="c1">// KERN_INFO
+</span><span class="ln">15</span><span class="c1"></span>      <span class="p">[</span><span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">WARNING</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>              <span class="c1">// KERN_WARNING
+</span><span class="ln">16</span><span class="c1"></span>      <span class="p">[</span><span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">ERROR</span><span class="p">]</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>                <span class="c1">// KERN_ERROR
+</span><span class="ln">17</span><span class="c1"></span>      <span class="p">[</span><span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">FATAL_WITHOUT_ABORT</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>  <span class="c1">// KERN_CRIT
+</span><span class="ln">18</span><span class="c1"></span>      <span class="p">[</span><span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">FATAL</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>                <span class="c1">// KERN_CRIT
+</span><span class="ln">19</span><span class="c1"></span>  <span class="p">};</span>
+<span class="ln">20</span>  <span class="c1">// clang-format on
+</span><span class="ln">21</span><span class="c1"></span>  <span class="k">static_assert</span><span class="p">(</span><span class="n">arraysize</span><span class="p">(</span><span class="n">kLogSeverityToKernelLogLevel</span><span class="p">)</span> <span class="o">==</span> <span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">FATAL</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+<span class="ln">22</span>                <span class="s">&#34;Mismatch in size of kLogSeverityToKernelLogLevel and values in LogSeverity&#34;</span><span class="p">);</span>
+<span class="ln">23</span>  <span class="c1">//1.打开Kmsg句柄,这个并不是socket句柄，是linux中的文件句柄
+</span><span class="ln">24</span><span class="c1"></span>  <span class="k">static</span> <span class="kt">int</span> <span class="n">klog_fd</span> <span class="o">=</span> <span class="n">OpenKmsg</span><span class="p">();</span>
+<span class="ln">25</span>  <span class="k">if</span> <span class="p">(</span><span class="n">klog_fd</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+<span class="ln">26</span>
+<span class="ln">27</span>  <span class="kt">int</span> <span class="n">level</span> <span class="o">=</span> <span class="n">kLogSeverityToKernelLogLevel</span><span class="p">[</span><span class="n">severity</span><span class="p">];</span>
+<span class="ln">28</span>  <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">1024</span><span class="p">]</span> <span class="n">__attribute__</span><span class="p">((</span><span class="n">__uninitialized__</span><span class="p">));</span>
+<span class="ln">29</span>  <span class="n">size_t</span> <span class="n">size</span> <span class="o">=</span> <span class="n">snprintf</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">),</span> <span class="s">&#34;&lt;%d&gt;%s: %.*s</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">msg</span><span class="p">);</span>
+<span class="ln">30</span>  <span class="k">if</span> <span class="p">(</span><span class="n">size</span> <span class="o">&gt;</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">31</span>    <span class="n">size</span> <span class="o">=</span> <span class="n">snprintf</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">),</span> <span class="s">&#34;&lt;%d&gt;%s: %zu-byte message too long for printk</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span>
+<span class="ln">32</span>                    <span class="n">level</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">size</span><span class="p">);</span>
+<span class="ln">33</span>  <span class="p">}</span>
+<span class="ln">34</span>
+<span class="ln">35</span>  <span class="n">iovec</span> <span class="n">iov</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+<span class="ln">36</span>  <span class="n">iov</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">iov_base</span> <span class="o">=</span> <span class="n">buf</span><span class="p">;</span>
+<span class="ln">37</span>  <span class="n">iov</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">iov_len</span> <span class="o">=</span> <span class="n">size</span><span class="p">;</span>
+<span class="ln">38</span>  <span class="c1">//2.文件中写入内容
+</span><span class="ln">39</span><span class="c1"></span>  <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">writev</span><span class="p">(</span><span class="n">klog_fd</span><span class="p">,</span> <span class="n">iov</span><span class="p">,</span> <span class="mi">1</span><span class="p">));</span>
+<span class="ln">40</span><span class="p">}</span>
+<span class="ln">41</span>
+<span class="ln">42</span><span class="k">static</span> <span class="kt">int</span> <span class="nf">OpenKmsg</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">43</span>  <span class="c1">// pick up &#39;file w /dev/kmsg&#39; environment from daemon&#39;s init rc file
+</span><span class="ln">44</span><span class="c1"></span>  
+<span class="ln">45</span>  <span class="k">const</span> <span class="k">auto</span> <span class="n">val</span> <span class="o">=</span> <span class="n">getenv</span><span class="p">(</span><span class="s">&#34;ANDROID_FILE__dev_kmsg&#34;</span><span class="p">);</span>
+<span class="ln">46</span>  <span class="k">if</span> <span class="p">(</span><span class="n">val</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">47</span>    <span class="kt">int</span> <span class="n">fd</span><span class="p">;</span>
+<span class="ln">48</span>    <span class="k">if</span> <span class="p">(</span><span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">ParseInt</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">fd</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">49</span>      <span class="k">auto</span> <span class="n">flags</span> <span class="o">=</span> <span class="n">fcntl</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">F_GETFL</span><span class="p">);</span>
+<span class="ln">50</span>      <span class="k">if</span> <span class="p">((</span><span class="n">flags</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">((</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">O_ACCMODE</span><span class="p">)</span> <span class="o">==</span> <span class="n">O_WRONLY</span><span class="p">))</span> <span class="k">return</span> <span class="n">fd</span><span class="p">;</span>
+<span class="ln">51</span>    <span class="p">}</span>
+<span class="ln">52</span>  <span class="p">}</span>
+<span class="ln">53</span>  <span class="c1">//1.连接句柄，找到/dev/kmsg
+</span><span class="ln">54</span><span class="c1"></span>  <span class="k">return</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">open</span><span class="p">(</span><span class="s">&#34;/dev/kmsg&#34;</span><span class="p">,</span> <span class="n">O_WRONLY</span> <span class="o">|</span> <span class="n">O_CLOEXEC</span><span class="p">));</span>
+<span class="ln">55</span><span class="p">}</span>
+</code></pre></div><p>调用SplitByLines函数</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/base/logging_splitters.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">F</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="ln"> 3</span><span class="k">static</span> <span class="kt">void</span> <span class="n">SplitByLines</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">msg</span><span class="p">,</span> <span class="k">const</span> <span class="n">F</span><span class="o">&amp;</span> <span class="n">log_function</span><span class="p">,</span> <span class="n">Args</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">args</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 4</span>  <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">newline</span> <span class="o">=</span> <span class="n">strchr</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="sc">&#39;\n&#39;</span><span class="p">);</span>
+<span class="ln"> 5</span>  <span class="k">while</span> <span class="p">(</span><span class="n">newline</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 6</span>    <span class="n">log_function</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">newline</span> <span class="o">-</span> <span class="n">msg</span><span class="p">,</span> <span class="n">args</span><span class="p">...);</span>
+<span class="ln"> 7</span>    <span class="n">msg</span> <span class="o">=</span> <span class="n">newline</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="n">newline</span> <span class="o">=</span> <span class="n">strchr</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="sc">&#39;\n&#39;</span><span class="p">);</span>
+<span class="ln"> 9</span>  <span class="p">}</span>
+<span class="ln">10</span>  <span class="c1">//log_function最终会调用到KernelLogLine中
+</span><span class="ln">11</span><span class="c1"></span>  <span class="n">log_function</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">args</span><span class="p">...);</span>
+<span class="ln">12</span><span class="p">}</span>
+</code></pre></div><h1 id="4总结">4总结</h1>
+<p>本文介绍了Linux socket，包含以TCP和UDP协议传输层的socket用法，还介绍了几种Android中的socket用法，包含Java层，native层，还衍生出了一套封装的函数socket_local_client和socket_local_server，可以更简单的使用socket。</p>
+<h1 id="参考">参考</h1>
+<p><a href="https://www.jianshu.com/p/46efb4b102d9">[1] yjy239, Android socket源码解析(一)socket的初始化原理, 2021.</a></p>
+<p><a href="https://www.jianshu.com/p/62dd608667e2">[2] yjy239, Android socket源码解析(二)socket的绑定与监听, 2021.</a></p>
+<p><a href="https://www.jianshu.com/p/da6089fdcfe1">[3] yjy239, Android socket源码解析(三)socket的connect源码解析, 2021.</a></p>
+<p><a href="https://blog.csdn.net/weixin_36828200/article/details/123754901?ops_request_misc=&amp;request_id=&amp;biz_id=102&amp;utm_term=linux%20socket&amp;utm_medium=distribute.pc_search_result.none-task-blog-2~all~sobaiduweb~default-0-123754901.nonecase&amp;spm=1018.2226.3001.4187">[4] 段细狗, Linux中的socket编程, 2022.</a></p>
+<p><a href="https://blog.csdn.net/m0_53311279/article/details/125317083">[5] 李白不喝酒777777, 进程间通信——SOCKET（TCP）, 2022.</a></p>
+<p><a href="https://blog.csdn.net/m0_53311279/article/details/125441819">[6] 李白不喝酒777777, 进程间通信——SOCKET（UDP）, 2022.</a></p>
+<p><a href="https://blog.csdn.net/jiatingqiang/article/details/6438096">[7] jiatingqiang, sock结构和socket结构详解, 2011.</a></p>
+<p><a href="https://blog.csdn.net/linuxheik/article/details/76125411">[8] linuxheik, writev, 2017.</a></p>
+<p><a href="https://blog.csdn.net/weixin_43829445/article/details/116497954">[9] winsonCCCC, Linux网络编程之sockaddr与sockaddr_in,sockaddr_un分析, 2021.</a></p>
+<p><a href="https://blog.csdn.net/iteye_19603/article/details/82486053">[10] iteye_19603, 整理：Linux网络编程之sockaddr与sockaddr_in,sockaddr_un结构体详细讲解, 2013.</a></p>
+<p><a href="https://wangzhengyi.blog.csdn.net/article/details/44928691">[11] 低调小一, UNIX Domain Socket IPC, 2015.</a></p>
+<p><a href="https://wangzhengyi.blog.csdn.net/article/details/9226413">[12] 低调小一 Linux C编程一站式学习读书笔记——socket编程, 2013.</a></p>
+<p><a href="https://blog.csdn.net/linglongbayinhe/article/details/83214171">[13] linglongbayinhe, AF_INET与套接字, 2018.</a></p>
+<p><a href="https://blog.csdn.net/daocaokafei/article/details/115091271">[14] 一口Linux, Linux SOCKET介绍, 2021.</a></p>
+<p><a href="https://blog.csdn.net/qq_46323094/article/details/117704573">[15] 转角心静了, Linux下的Socket通信, 2021.</a></p>
+<p><a href="https://blog.csdn.net/daozi22/article/details/53344134">[16] penguin1990, LocalSocket实现进程间通信, 2016.</a></p>
+<p><a href="https://blog.csdn.net/tkwxty/article/details/103064321">[17] IT先森, Android Java层和Native层通信实战大荟萃之原生socket实现通信, 2020.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/linux/">Linux</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/unix/">Unix</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/tcp/">TCP</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/udp/">UDP</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%BA%90%E7%A0%81/">源码</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/sock_raw/">SOCK_RAW</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/pf_netlink/">PF_NETLINK</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/sock_seqpacket/">SOCK_SEQPACKET</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/sock_stream/">SOCK_STREAM</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/sock_dgram/">SOCK_DGRAM</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/12/java-thread/" data-tooltip="Java Thread">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2023 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2022/12/java-thread/" data-tooltip="Java Thread">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2023%2F01%2Fsocket%25E7%25AE%2580%25E5%258D%2595%25E5%25AE%259E%25E7%258E%25B0linux%25E9%2599%2584android%25E6%25BA%2590%25E7%25A0%2581%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2023%2F01%2Fsocket%25E7%25AE%2580%25E5%258D%2595%25E5%25AE%259E%25E7%258E%25B0linux%25E9%2599%2584android%25E6%25BA%2590%25E7%25A0%2581%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2023%2F01%2Fsocket%25E7%25AE%2580%25E5%258D%2595%25E5%25AE%259E%25E7%258E%25B0linux%25E9%2599%2584android%25E6%25BA%2590%25E7%25A0%2581%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2023\/01\/socket%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0linux%E9%99%84android%E6%BA%90%E7%A0%81\/';
+          
+            this.page.identifier = '\/2023\/01\/socket%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0linux%E9%99%84android%E6%BA%90%E7%A0%81\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
