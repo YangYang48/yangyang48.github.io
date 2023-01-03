@@ -286,7 +286,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">2800 Words|Read in about 13 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">2900 Words|Read in about 14 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -299,7 +299,35 @@
 </span><span class="ln">2</span><span class="cp">#include</span> <span class="cpf">&lt;sys/socket.h&gt;</span><span class="cp">
 </span><span class="ln">3</span><span class="cp"></span>
 <span class="ln">4</span><span class="kt">int</span> <span class="nf">socket</span><span class="p">(</span><span class="kt">int</span> <span class="n">domain</span><span class="p">,</span> <span class="kt">int</span> <span class="n">type</span><span class="p">,</span> <span class="kt">int</span> <span class="n">protocol</span><span class="p">);</span>
-</code></pre></div><p><img src="D:/hugo/MyBlog/static/socket/socket_7.png" alt="socket_7"></p>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_7.png" >
+  
+    </a>
+  
+  
+</div>
+
 <p>关于socket中的send和write的区别</p>
 <blockquote>
 <p>对于linux来说,每个socket会有自己的send/receive buffer。调用write,只是说将用户进程的数据,拷贝到了内核的socket buffer里面,拷贝完之后,就没有write什么事了。内核自己会用自己的进程,调用TCP/IP协议栈,把用户进程的数据发出去。可以把内核的TCP/IP协议想象成另外一个进程,调用write的时候,只是把数据发给这个进程,这个进程会处理剩下的事情。</p>
@@ -468,6 +496,35 @@
 <span class="ln">61</span><span class="p">}</span>
 </code></pre></div><h2 id="31demo1">3.1demo1</h2>
 <p>这个是Java端服务端和C/C++层为客户端进行TCP协议的连接</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_linux_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_linux_1.png" >
+  
+    </a>
+  
+  
+</div>
+
 <h3 id="311服务端">3.1.1服务端</h3>
 <div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//frameworks/base/services/core/java/com/android/server/am/ActivityManagerService.java
 </span><span class="ln">2</span><span class="c1"></span><span class="kd">public</span> <span class="kt">void</span> <span class="nf">startObservingNativeCrashes</span><span class="o">()</span> <span class="o">{</span>
@@ -598,6 +655,35 @@
 <blockquote>
 <p>SOCK_SEQPACKET套接字和SOCK_STREAM套接字很类似，只是从该套接字得到的是基于报文的服务而不是字节流服务。这意味着从SOCK_SEQPACKET套接字接收的数据量与对方所发送的一致。流控制传输协议(Stream Control Transmission Protocol,SCTP)提供了因特网域上的顺序数据包服务。</p>
 </blockquote>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_linux_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_linux_2.png" >
+  
+    </a>
+  
+  
+</div>
+
 <h3 id="321服务端">3.2.1服务端</h3>
 <p>服务端的底层原理比较复杂，这里涉及到event原理，笔者不做展开。主要对socket是做一个逻辑上的梳理。</p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/debuggerd/tombstoned/tombstoned.cpp
@@ -734,8 +820,37 @@
 </code></pre></div><h2 id="33demo3">3.3demo3</h2>
 <p>这个demo是SElinux中的日志打印相关的socket，使用用户空间和内核空间的通信，且使用数据报接口用于直接访问网络层。</p>
 <blockquote>
-<p>SOCK_RAW套接字提供一个<strong>数据报接口</strong>，用于直接访问下面的网络层（即因特网域中的P层)。使用这个接口时，应用程序负责构造自己的协议头部，这是因为传输协议（如TCP和UDP)被绕过了。当创建一个原始套接字时，需要有超级用户特权，这样可以防止恶意应用程序绕过内建安全机制来创建报文。</p>
+<p>SOCK RAW套接字提供一个<strong>数据报接口</strong>，用于直接访问下面的网络层（即因特网域中的P层)。使用这个接口时，应用程序负责构造自己的协议头部，这是因为传输协议（如TCP和UDP)被绕过了。当创建一个原始套接字时，需要有超级用户特权，这样可以防止恶意应用程序绕过内建安全机制来创建报文。</p>
 </blockquote>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_linux_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_linux_3.png" >
+  
+    </a>
+  
+  
+</div>
+
 <h3 id="331服务端">3.3.1服务端</h3>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//kernel/audit.c
 </span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="kt">int</span> <span class="n">__net_init</span> <span class="nf">audit_net_init</span><span class="p">(</span><span class="k">struct</span> <span class="nc">net</span> <span class="o">*</span><span class="n">net</span><span class="p">)</span>
@@ -764,84 +879,95 @@
 </code></pre></div><p>其中NETLINK_AUDIT的定义</p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//include/uapi/linux/netlink.h
 </span><span class="ln">2</span><span class="c1"></span><span class="cp">#define NETLINK_AUDIT		9	</span><span class="cm">/* auditing */</span><span class="cp">
-</span></code></pre></div><p>netlink_unicast采用的是单播消息。</p>
+</span></code></pre></div><p>netlink_unicast采用的是单播消息</p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//kernel/audit.c
-</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">audit_receive</span><span class="p">(</span><span class="k">struct</span> <span class="nc">sk_buff</span>  <span class="o">*</span><span class="n">skb</span><span class="p">)</span>
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="kt">int</span> <span class="nf">audit_multicast_bind</span><span class="p">(</span><span class="k">struct</span> <span class="nc">net</span> <span class="o">*</span><span class="n">net</span><span class="p">,</span> <span class="kt">int</span> <span class="n">group</span><span class="p">)</span>
 <span class="ln"> 3</span><span class="p">{</span>
-<span class="ln"> 4</span>	<span class="k">struct</span> <span class="nc">nlmsghdr</span> <span class="o">*</span><span class="n">nlh</span><span class="p">;</span>
-<span class="ln"> 5</span>	<span class="kt">int</span> <span class="n">len</span><span class="p">;</span>
-<span class="ln"> 6</span>	<span class="kt">int</span> <span class="n">err</span><span class="p">;</span>
-<span class="ln"> 7</span>
-<span class="ln"> 8</span>	<span class="n">nlh</span> <span class="o">=</span> <span class="n">nlmsg_hdr</span><span class="p">(</span><span class="n">skb</span><span class="p">);</span>
-<span class="ln"> 9</span>	<span class="n">len</span> <span class="o">=</span> <span class="n">skb</span><span class="o">-&gt;</span><span class="n">len</span><span class="p">;</span>
-<span class="ln">10</span>
-<span class="ln">11</span>	<span class="n">audit_ctl_lock</span><span class="p">();</span>
-<span class="ln">12</span>	<span class="k">while</span> <span class="p">(</span><span class="n">nlmsg_ok</span><span class="p">(</span><span class="n">nlh</span><span class="p">,</span> <span class="n">len</span><span class="p">))</span> <span class="p">{</span>
-<span class="ln">13</span>		<span class="n">err</span> <span class="o">=</span> <span class="n">audit_receive_msg</span><span class="p">(</span><span class="n">skb</span><span class="p">,</span> <span class="n">nlh</span><span class="p">);</span>
-<span class="ln">14</span>		<span class="cm">/* if err or if this message says it wants a response */</span>
-<span class="ln">15</span>		<span class="k">if</span> <span class="p">(</span><span class="n">err</span> <span class="o">||</span> <span class="p">(</span><span class="n">nlh</span><span class="o">-&gt;</span><span class="n">nlmsg_flags</span> <span class="o">&amp;</span> <span class="n">NLM_F_ACK</span><span class="p">))</span>
-<span class="ln">16</span>			<span class="n">netlink_ack</span><span class="p">(</span><span class="n">skb</span><span class="p">,</span> <span class="n">nlh</span><span class="p">,</span> <span class="n">err</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
-<span class="ln">17</span>
-<span class="ln">18</span>		<span class="n">nlh</span> <span class="o">=</span> <span class="n">nlmsg_next</span><span class="p">(</span><span class="n">nlh</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">len</span><span class="p">);</span>
-<span class="ln">19</span>	<span class="p">}</span>
-<span class="ln">20</span>	<span class="n">audit_ctl_unlock</span><span class="p">();</span>
-<span class="ln">21</span>    <span class="p">...</span>
-<span class="ln">22</span><span class="p">}</span>
-<span class="ln">23</span><span class="c1">//这里通常只有三种常见的AVC，初始化的时候用得AUDIT_SET(1001),与属性相关的AUDIT_USER_AVC(1107),其他AUDIT_AVC(1400)
-</span><span class="ln">24</span><span class="c1"></span><span class="k">static</span> <span class="kt">int</span> <span class="nf">audit_receive_msg</span><span class="p">(</span><span class="k">struct</span> <span class="nc">sk_buff</span> <span class="o">*</span><span class="n">skb</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">nlmsghdr</span> <span class="o">*</span><span class="n">nlh</span><span class="p">)</span>
-<span class="ln">25</span><span class="p">{</span>
-<span class="ln">26</span>	<span class="n">u32</span>			<span class="n">seq</span><span class="p">;</span>
-<span class="ln">27</span>	<span class="kt">void</span>			<span class="o">*</span><span class="n">data</span><span class="p">;</span>
-<span class="ln">28</span>	<span class="kt">int</span>			<span class="n">data_len</span><span class="p">;</span>
-<span class="ln">29</span>	<span class="kt">int</span>			<span class="n">err</span><span class="p">;</span>
-<span class="ln">30</span>	<span class="k">struct</span> <span class="nc">audit_buffer</span>	<span class="o">*</span><span class="n">ab</span><span class="p">;</span>
-<span class="ln">31</span>	<span class="n">u16</span>			<span class="n">msg_type</span> <span class="o">=</span> <span class="n">nlh</span><span class="o">-&gt;</span><span class="n">nlmsg_type</span><span class="p">;</span>
-<span class="ln">32</span>	<span class="k">struct</span> <span class="nc">audit_sig_info</span>   <span class="o">*</span><span class="n">sig_data</span><span class="p">;</span>
-<span class="ln">33</span>	<span class="kt">char</span>			<span class="o">*</span><span class="n">ctx</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-<span class="ln">34</span>	<span class="n">u32</span>			<span class="n">len</span><span class="p">;</span>
-<span class="ln">35</span>
-<span class="ln">36</span>	<span class="n">err</span> <span class="o">=</span> <span class="n">audit_netlink_ok</span><span class="p">(</span><span class="n">skb</span><span class="p">,</span> <span class="n">msg_type</span><span class="p">);</span>
-<span class="ln">37</span>	<span class="k">if</span> <span class="p">(</span><span class="n">err</span><span class="p">)</span>
-<span class="ln">38</span>		<span class="k">return</span> <span class="n">err</span><span class="p">;</span>
-<span class="ln">39</span>
-<span class="ln">40</span>	<span class="n">seq</span>  <span class="o">=</span> <span class="n">nlh</span><span class="o">-&gt;</span><span class="n">nlmsg_seq</span><span class="p">;</span>
-<span class="ln">41</span>	<span class="n">data</span> <span class="o">=</span> <span class="n">nlmsg_data</span><span class="p">(</span><span class="n">nlh</span><span class="p">);</span>
-<span class="ln">42</span>	<span class="n">data_len</span> <span class="o">=</span> <span class="n">nlmsg_len</span><span class="p">(</span><span class="n">nlh</span><span class="p">);</span>
-<span class="ln">43</span>
-<span class="ln">44</span>	<span class="k">switch</span> <span class="p">(</span><span class="n">msg_type</span><span class="p">)</span> <span class="p">{</span>
-<span class="ln">45</span>	<span class="k">case</span> <span class="nl">AUDIT_GET</span><span class="p">:</span> <span class="p">{</span>
-<span class="ln">46</span>		<span class="k">struct</span> <span class="nc">audit_status</span>	<span class="n">s</span><span class="p">;</span>
-<span class="ln">47</span>		<span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">s</span><span class="p">));</span>
-<span class="ln">48</span>		<span class="n">s</span><span class="p">.</span><span class="n">enabled</span>		   <span class="o">=</span> <span class="n">audit_enabled</span><span class="p">;</span>
-<span class="ln">49</span>		<span class="n">s</span><span class="p">.</span><span class="n">failure</span>		   <span class="o">=</span> <span class="n">audit_failure</span><span class="p">;</span>
-<span class="ln">50</span>		<span class="cm">/* NOTE: use pid_vnr() so the PID is relative to the current
-</span><span class="ln">51</span><span class="cm">		 *       namespace */</span>
-<span class="ln">52</span>		<span class="n">s</span><span class="p">.</span><span class="n">pid</span>			   <span class="o">=</span> <span class="n">auditd_pid_vnr</span><span class="p">();</span>
-<span class="ln">53</span>		<span class="n">s</span><span class="p">.</span><span class="n">rate_limit</span>		   <span class="o">=</span> <span class="n">audit_rate_limit</span><span class="p">;</span>
-<span class="ln">54</span>		<span class="n">s</span><span class="p">.</span><span class="n">backlog_limit</span>		   <span class="o">=</span> <span class="n">audit_backlog_limit</span><span class="p">;</span>
-<span class="ln">55</span>		<span class="n">s</span><span class="p">.</span><span class="n">lost</span>			   <span class="o">=</span> <span class="n">atomic_read</span><span class="p">(</span><span class="o">&amp;</span><span class="n">audit_lost</span><span class="p">);</span>
-<span class="ln">56</span>		<span class="n">s</span><span class="p">.</span><span class="n">backlog</span>		   <span class="o">=</span> <span class="n">skb_queue_len</span><span class="p">(</span><span class="o">&amp;</span><span class="n">audit_queue</span><span class="p">);</span>
-<span class="ln">57</span>		<span class="n">s</span><span class="p">.</span><span class="n">feature_bitmap</span>	   <span class="o">=</span> <span class="n">AUDIT_FEATURE_BITMAP_ALL</span><span class="p">;</span>
-<span class="ln">58</span>		<span class="n">s</span><span class="p">.</span><span class="n">backlog_wait_time</span>	   <span class="o">=</span> <span class="n">audit_backlog_wait_time</span><span class="p">;</span>
-<span class="ln">59</span>		<span class="n">s</span><span class="p">.</span><span class="n">backlog_wait_time_actual</span> <span class="o">=</span> <span class="n">atomic_read</span><span class="p">(</span><span class="o">&amp;</span><span class="n">audit_backlog_wait_time_actual</span><span class="p">);</span>
-<span class="ln">60</span>		<span class="n">audit_send_reply</span><span class="p">(</span><span class="n">skb</span><span class="p">,</span> <span class="n">seq</span><span class="p">,</span> <span class="n">AUDIT_GET</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">s</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">s</span><span class="p">));</span>
-<span class="ln">61</span>		<span class="k">break</span><span class="p">;</span>
-<span class="ln">62</span>	<span class="p">}</span>
-<span class="ln">63</span>	<span class="k">case</span> <span class="nl">AUDIT_SET</span><span class="p">:</span> <span class="p">{</span>
-<span class="ln">64</span>		<span class="p">...</span>
-<span class="ln">65</span>		<span class="k">break</span><span class="p">;</span>
-<span class="ln">66</span>	<span class="p">}</span>
-<span class="ln">67</span>	<span class="k">case</span> <span class="nl">AUDIT_USER</span><span class="p">:</span>
-<span class="ln">68</span>	<span class="k">case</span> <span class="n">AUDIT_FIRST_USER_MSG</span> <span class="p">...</span> <span class="nl">AUDIT_LAST_USER_MSG</span><span class="p">:</span>
-<span class="ln">69</span>	<span class="k">case</span> <span class="n">AUDIT_FIRST_USER_MSG2</span> <span class="p">...</span> <span class="nl">AUDIT_LAST_USER_MSG2</span><span class="p">:</span>
-<span class="ln">70</span>		<span class="p">...</span>
-<span class="ln">71</span>		<span class="k">break</span><span class="p">;</span>
-<span class="ln">72</span>	<span class="k">default</span><span class="o">:</span>
-<span class="ln">73</span>		<span class="n">err</span> <span class="o">=</span> <span class="o">-</span><span class="n">EINVAL</span><span class="p">;</span>
-<span class="ln">74</span>		<span class="k">break</span><span class="p">;</span>
-<span class="ln">75</span>	<span class="p">}</span>
-<span class="ln">76</span>	<span class="k">return</span> <span class="n">err</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">?</span> <span class="nl">err</span> <span class="p">:</span> <span class="mi">0</span><span class="p">;</span>
-<span class="ln">77</span><span class="p">}</span>
+<span class="ln"> 4</span>	<span class="kt">int</span> <span class="n">err</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span>	<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">capable</span><span class="p">(</span><span class="n">CAP_AUDIT_READ</span><span class="p">))</span>
+<span class="ln"> 7</span>		<span class="n">err</span> <span class="o">=</span> <span class="o">-</span><span class="n">EPERM</span><span class="p">;</span>
+<span class="ln"> 8</span>	<span class="n">audit_log_multicast</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="s">&#34;connect&#34;</span><span class="p">,</span> <span class="n">err</span><span class="p">);</span>
+<span class="ln"> 9</span>	<span class="k">return</span> <span class="n">err</span><span class="p">;</span>
+<span class="ln">10</span><span class="p">}</span>
+<span class="ln">11</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="k">static</span> <span class="kt">void</span> <span class="nf">audit_receive</span><span class="p">(</span><span class="k">struct</span> <span class="nc">sk_buff</span>  <span class="o">*</span><span class="n">skb</span><span class="p">)</span>
+<span class="ln">14</span><span class="p">{</span>
+<span class="ln">15</span>	<span class="k">struct</span> <span class="nc">nlmsghdr</span> <span class="o">*</span><span class="n">nlh</span><span class="p">;</span>
+<span class="ln">16</span>	<span class="kt">int</span> <span class="n">len</span><span class="p">;</span>
+<span class="ln">17</span>	<span class="kt">int</span> <span class="n">err</span><span class="p">;</span>
+<span class="ln">18</span>
+<span class="ln">19</span>	<span class="n">nlh</span> <span class="o">=</span> <span class="n">nlmsg_hdr</span><span class="p">(</span><span class="n">skb</span><span class="p">);</span>
+<span class="ln">20</span>	<span class="n">len</span> <span class="o">=</span> <span class="n">skb</span><span class="o">-&gt;</span><span class="n">len</span><span class="p">;</span>
+<span class="ln">21</span>
+<span class="ln">22</span>	<span class="n">audit_ctl_lock</span><span class="p">();</span>
+<span class="ln">23</span>	<span class="k">while</span> <span class="p">(</span><span class="n">nlmsg_ok</span><span class="p">(</span><span class="n">nlh</span><span class="p">,</span> <span class="n">len</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">24</span>		<span class="n">err</span> <span class="o">=</span> <span class="n">audit_receive_msg</span><span class="p">(</span><span class="n">skb</span><span class="p">,</span> <span class="n">nlh</span><span class="p">);</span>
+<span class="ln">25</span>		<span class="cm">/* if err or if this message says it wants a response */</span>
+<span class="ln">26</span>		<span class="k">if</span> <span class="p">(</span><span class="n">err</span> <span class="o">||</span> <span class="p">(</span><span class="n">nlh</span><span class="o">-&gt;</span><span class="n">nlmsg_flags</span> <span class="o">&amp;</span> <span class="n">NLM_F_ACK</span><span class="p">))</span>
+<span class="ln">27</span>			<span class="n">netlink_ack</span><span class="p">(</span><span class="n">skb</span><span class="p">,</span> <span class="n">nlh</span><span class="p">,</span> <span class="n">err</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+<span class="ln">28</span>
+<span class="ln">29</span>		<span class="n">nlh</span> <span class="o">=</span> <span class="n">nlmsg_next</span><span class="p">(</span><span class="n">nlh</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">len</span><span class="p">);</span>
+<span class="ln">30</span>	<span class="p">}</span>
+<span class="ln">31</span>	<span class="n">audit_ctl_unlock</span><span class="p">();</span>
+<span class="ln">32</span>    <span class="p">...</span>
+<span class="ln">33</span><span class="p">}</span>
+<span class="ln">34</span><span class="c1">//这里通常只有三种常见的AVC，初始化的时候用得AUDIT_SET(1001),与属性相关的AUDIT_USER_AVC(1107),其他AUDIT_AVC(1400)
+</span><span class="ln">35</span><span class="c1"></span><span class="k">static</span> <span class="kt">int</span> <span class="nf">audit_receive_msg</span><span class="p">(</span><span class="k">struct</span> <span class="nc">sk_buff</span> <span class="o">*</span><span class="n">skb</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">nlmsghdr</span> <span class="o">*</span><span class="n">nlh</span><span class="p">)</span>
+<span class="ln">36</span><span class="p">{</span>
+<span class="ln">37</span>	<span class="n">u32</span>			<span class="n">seq</span><span class="p">;</span>
+<span class="ln">38</span>	<span class="kt">void</span>			<span class="o">*</span><span class="n">data</span><span class="p">;</span>
+<span class="ln">39</span>	<span class="kt">int</span>			<span class="n">data_len</span><span class="p">;</span>
+<span class="ln">40</span>	<span class="kt">int</span>			<span class="n">err</span><span class="p">;</span>
+<span class="ln">41</span>	<span class="k">struct</span> <span class="nc">audit_buffer</span>	<span class="o">*</span><span class="n">ab</span><span class="p">;</span>
+<span class="ln">42</span>	<span class="n">u16</span>			<span class="n">msg_type</span> <span class="o">=</span> <span class="n">nlh</span><span class="o">-&gt;</span><span class="n">nlmsg_type</span><span class="p">;</span>
+<span class="ln">43</span>	<span class="k">struct</span> <span class="nc">audit_sig_info</span>   <span class="o">*</span><span class="n">sig_data</span><span class="p">;</span>
+<span class="ln">44</span>	<span class="kt">char</span>			<span class="o">*</span><span class="n">ctx</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="ln">45</span>	<span class="n">u32</span>			<span class="n">len</span><span class="p">;</span>
+<span class="ln">46</span>
+<span class="ln">47</span>	<span class="n">err</span> <span class="o">=</span> <span class="n">audit_netlink_ok</span><span class="p">(</span><span class="n">skb</span><span class="p">,</span> <span class="n">msg_type</span><span class="p">);</span>
+<span class="ln">48</span>	<span class="k">if</span> <span class="p">(</span><span class="n">err</span><span class="p">)</span>
+<span class="ln">49</span>		<span class="k">return</span> <span class="n">err</span><span class="p">;</span>
+<span class="ln">50</span>
+<span class="ln">51</span>	<span class="n">seq</span>  <span class="o">=</span> <span class="n">nlh</span><span class="o">-&gt;</span><span class="n">nlmsg_seq</span><span class="p">;</span>
+<span class="ln">52</span>	<span class="n">data</span> <span class="o">=</span> <span class="n">nlmsg_data</span><span class="p">(</span><span class="n">nlh</span><span class="p">);</span>
+<span class="ln">53</span>	<span class="n">data_len</span> <span class="o">=</span> <span class="n">nlmsg_len</span><span class="p">(</span><span class="n">nlh</span><span class="p">);</span>
+<span class="ln">54</span>
+<span class="ln">55</span>	<span class="k">switch</span> <span class="p">(</span><span class="n">msg_type</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">56</span>	<span class="k">case</span> <span class="nl">AUDIT_GET</span><span class="p">:</span> <span class="p">{</span>
+<span class="ln">57</span>		<span class="k">struct</span> <span class="nc">audit_status</span>	<span class="n">s</span><span class="p">;</span>
+<span class="ln">58</span>		<span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">s</span><span class="p">));</span>
+<span class="ln">59</span>		<span class="n">s</span><span class="p">.</span><span class="n">enabled</span>		   <span class="o">=</span> <span class="n">audit_enabled</span><span class="p">;</span>
+<span class="ln">60</span>		<span class="n">s</span><span class="p">.</span><span class="n">failure</span>		   <span class="o">=</span> <span class="n">audit_failure</span><span class="p">;</span>
+<span class="ln">61</span>		<span class="cm">/* NOTE: use pid_vnr() so the PID is relative to the current
+</span><span class="ln">62</span><span class="cm">		 *       namespace */</span>
+<span class="ln">63</span>		<span class="n">s</span><span class="p">.</span><span class="n">pid</span>			   <span class="o">=</span> <span class="n">auditd_pid_vnr</span><span class="p">();</span>
+<span class="ln">64</span>		<span class="n">s</span><span class="p">.</span><span class="n">rate_limit</span>		   <span class="o">=</span> <span class="n">audit_rate_limit</span><span class="p">;</span>
+<span class="ln">65</span>		<span class="n">s</span><span class="p">.</span><span class="n">backlog_limit</span>		   <span class="o">=</span> <span class="n">audit_backlog_limit</span><span class="p">;</span>
+<span class="ln">66</span>		<span class="n">s</span><span class="p">.</span><span class="n">lost</span>			   <span class="o">=</span> <span class="n">atomic_read</span><span class="p">(</span><span class="o">&amp;</span><span class="n">audit_lost</span><span class="p">);</span>
+<span class="ln">67</span>		<span class="n">s</span><span class="p">.</span><span class="n">backlog</span>		   <span class="o">=</span> <span class="n">skb_queue_len</span><span class="p">(</span><span class="o">&amp;</span><span class="n">audit_queue</span><span class="p">);</span>
+<span class="ln">68</span>		<span class="n">s</span><span class="p">.</span><span class="n">feature_bitmap</span>	   <span class="o">=</span> <span class="n">AUDIT_FEATURE_BITMAP_ALL</span><span class="p">;</span>
+<span class="ln">69</span>		<span class="n">s</span><span class="p">.</span><span class="n">backlog_wait_time</span>	   <span class="o">=</span> <span class="n">audit_backlog_wait_time</span><span class="p">;</span>
+<span class="ln">70</span>		<span class="n">s</span><span class="p">.</span><span class="n">backlog_wait_time_actual</span> <span class="o">=</span> <span class="n">atomic_read</span><span class="p">(</span><span class="o">&amp;</span><span class="n">audit_backlog_wait_time_actual</span><span class="p">);</span>
+<span class="ln">71</span>		<span class="n">audit_send_reply</span><span class="p">(</span><span class="n">skb</span><span class="p">,</span> <span class="n">seq</span><span class="p">,</span> <span class="n">AUDIT_GET</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">s</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">s</span><span class="p">));</span>
+<span class="ln">72</span>		<span class="k">break</span><span class="p">;</span>
+<span class="ln">73</span>	<span class="p">}</span>
+<span class="ln">74</span>	<span class="k">case</span> <span class="nl">AUDIT_SET</span><span class="p">:</span> <span class="p">{</span>
+<span class="ln">75</span>		<span class="p">...</span>
+<span class="ln">76</span>		<span class="k">break</span><span class="p">;</span>
+<span class="ln">77</span>	<span class="p">}</span>
+<span class="ln">78</span>	<span class="k">case</span> <span class="nl">AUDIT_USER</span><span class="p">:</span>
+<span class="ln">79</span>	<span class="k">case</span> <span class="n">AUDIT_FIRST_USER_MSG</span> <span class="p">...</span> <span class="nl">AUDIT_LAST_USER_MSG</span><span class="p">:</span>
+<span class="ln">80</span>	<span class="k">case</span> <span class="n">AUDIT_FIRST_USER_MSG2</span> <span class="p">...</span> <span class="nl">AUDIT_LAST_USER_MSG2</span><span class="p">:</span>
+<span class="ln">81</span>		<span class="p">...</span>
+<span class="ln">82</span>		<span class="k">break</span><span class="p">;</span>
+<span class="ln">83</span>	<span class="k">default</span><span class="o">:</span>
+<span class="ln">84</span>		<span class="n">err</span> <span class="o">=</span> <span class="o">-</span><span class="n">EINVAL</span><span class="p">;</span>
+<span class="ln">85</span>		<span class="k">break</span><span class="p">;</span>
+<span class="ln">86</span>	<span class="p">}</span>
+<span class="ln">87</span>	<span class="k">return</span> <span class="n">err</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">?</span> <span class="nl">err</span> <span class="p">:</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">88</span><span class="p">}</span>
 </code></pre></div><h3 id="332客户端">3.3.2客户端</h3>
 <p>随便的一句log输出</p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//external/selinux/libselinux/src/selinux_restorecon.c
@@ -1074,6 +1200,7 @@
 <p><a href="https://blog.csdn.net/qq_46323094/article/details/117704573">[15] 转角心静了, Linux下的Socket通信, 2021.</a></p>
 <p><a href="https://blog.csdn.net/daozi22/article/details/53344134">[16] penguin1990, LocalSocket实现进程间通信, 2016.</a></p>
 <p><a href="https://blog.csdn.net/tkwxty/article/details/103064321">[17] IT先森, Android Java层和Native层通信实战大荟萃之原生socket实现通信, 2020.</a></p>
+<p><a href="%5Bhttps://www.dazhuanlan.com/a370352701/topics/1014749">[18] a370352701, 人工智能 图解linux netlink, 2019.</a></p>
               
             </div>
           </div>
