@@ -336,7 +336,7 @@
 <p>socket_send 已经从套接字缓冲发出</p>
 <h1 id="3-源码中的socket">3 源码中的socket</h1>
 <p>先介绍一下源码中封装的socket，由于Android系统中很多都是本地通信，回连127.0.0.1，所以单独封装了相对应的源码。</p>
-<p>客户端连接</p>
+<h2 id="301客户端连接">3.0.1客户端连接</h2>
 <p>根据上面篇章可以知道客户端连接只需要创建socket，等待与服务端连接connect</p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libcutils/socket_local_client_unix.cpp
 </span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#define ANDROID_SOCKET_DIR		&#34;/dev/socket&#34;
@@ -431,7 +431,7 @@
 <span class="ln">91</span><span class="nl">error</span><span class="p">:</span>
 <span class="ln">92</span>    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
 <span class="ln">93</span><span class="p">}</span>
-</code></pre></div><p>服务端连接</p>
+</code></pre></div><h3 id="302服务端连接">3.0.2服务端连接</h3>
 <p>根据上面篇章可以知道服务端连接需要创建socket，关联地址和套接字与创建监听队列。</p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libcutils/socket_local_server_unix.cpp
 </span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#define LISTEN_BACKLOG 4
@@ -496,6 +496,10 @@
 <span class="ln">61</span><span class="p">}</span>
 </code></pre></div><h2 id="31demo1">3.1demo1</h2>
 <p>这个是Java端服务端和C/C++层为客户端进行TCP协议的连接</p>
+<blockquote>
+<p>在AF_INET通信域中，套接字类型<strong>SOCK_STREAM</strong>的默认协议是传输控制协议(Transmission Control Protocol,TCP)。字节流(SOCK_STREAM)要求在交换数据之前，在本地套接字和通信的对等进程的套接字之间建立一个逻辑连接。使用面向连接的协议通信就像与对方打电话。首先，需要通过电话建立一个连接，连接建立好之后，彼此能双向地通信。每个连接是端到端的通信链路。对话中不包含地址信息，就像呼叫两端存在一个点对点虚拟连接，并且连接本身暗示特定的源和目的地。</p>
+<p>SOCK_STREAM套接字提供字节流服务，所以应用程序分辨不出报文的界限。这意味着从SOCK_STREAM套接字读数据时，它也许不会返回所有由发送进程所写的字节数。最终可以获得发送过来的所有数据，但也许要通过若干次函数调用才能得到。</p>
+</blockquote>
 
 
  
@@ -653,7 +657,7 @@
 </code></pre></div><h2 id="32demo2">3.2demo2</h2>
 <p>一个具有报文服务的客户端和服务端传输</p>
 <blockquote>
-<p>SOCK_SEQPACKET套接字和SOCK_STREAM套接字很类似，只是从该套接字得到的是基于报文的服务而不是字节流服务。这意味着从SOCK_SEQPACKET套接字接收的数据量与对方所发送的一致。流控制传输协议(Stream Control Transmission Protocol,SCTP)提供了因特网域上的顺序数据包服务。</p>
+<p><strong>SOCK_SEQPACKET</strong>套接字和SOCK_STREAM套接字很类似，只是从该套接字得到的是基于报文的服务而不是字节流服务。这意味着从SOCK_SEQPACKET套接字接收的数据量与对方所发送的一致。流控制传输协议(Stream Control Transmission Protocol,SCTP)提供了因特网域上的顺序数据包服务。</p>
 </blockquote>
 
 
@@ -818,9 +822,44 @@
 <span class="ln">49</span>  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
 <span class="ln">50</span><span class="p">}</span>
 </code></pre></div><h2 id="33demo3">3.3demo3</h2>
+<p>这个demo是Android中的日志系统，主要是有两个线程，一个线程用于把日志写入到缓冲区，另一个线程用于把缓冲区的日志读出来。</p>
+<p>写的时候使用的是使用的是SOCK_DGRAM，读的时候用到的是SOCK_SEQPACKET，这个demo2已经使用过，就不再介绍。</p>
+<blockquote>
+<p>在AF_INET通信域中，套接字类型<strong>SOCK_DGRAM</strong>的默认协议是UDP。对于数据报（SOCK_DGRAM)接口，两个对等进程之间通信时不需要逻辑连接。只需要向对等进程所使用的套接字送出一个报文。因此数据报提供了一个无连接的服务。数据报是自包含报文。发送数据报近似于给某人邮寄信件。你能邮寄很多信，但你不能保证传递的次序，并且可能有些信件会丢失在路上。每封信件包含接收者地址，使这封信件独立于所有其他信件。每封信件可能送达不同的接收者。</p>
+</blockquote>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_linux_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_linux_4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="34demo4">3.4demo4</h2>
 <p>这个demo是SElinux中的日志打印相关的socket，使用用户空间和内核空间的通信，且使用数据报接口用于直接访问网络层。</p>
 <blockquote>
-<p>SOCK RAW套接字提供一个<strong>数据报接口</strong>，用于直接访问下面的网络层（即因特网域中的P层)。使用这个接口时，应用程序负责构造自己的协议头部，这是因为传输协议（如TCP和UDP)被绕过了。当创建一个原始套接字时，需要有超级用户特权，这样可以防止恶意应用程序绕过内建安全机制来创建报文。</p>
+<p><strong>SOCK RAW</strong>套接字提供一个<strong>数据报接口</strong>，用于直接访问下面的网络层（即因特网域中的P层)。使用这个接口时，应用程序负责构造自己的协议头部，这是因为传输协议（如TCP和UDP)被绕过了。当创建一个原始套接字时，需要有超级用户特权，这样可以防止恶意应用程序绕过内建安全机制来创建报文。</p>
 </blockquote>
 
 
@@ -851,7 +890,7 @@
   
 </div>
 
-<h3 id="331服务端">3.3.1服务端</h3>
+<h3 id="341服务端">3.4.1服务端</h3>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//kernel/audit.c
 </span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="kt">int</span> <span class="n">__net_init</span> <span class="nf">audit_net_init</span><span class="p">(</span><span class="k">struct</span> <span class="nc">net</span> <span class="o">*</span><span class="n">net</span><span class="p">)</span>
 <span class="ln"> 3</span><span class="p">{</span>
@@ -968,7 +1007,7 @@
 <span class="ln">86</span>	<span class="p">}</span>
 <span class="ln">87</span>	<span class="k">return</span> <span class="n">err</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">?</span> <span class="nl">err</span> <span class="p">:</span> <span class="mi">0</span><span class="p">;</span>
 <span class="ln">88</span><span class="p">}</span>
-</code></pre></div><h3 id="332客户端">3.3.2客户端</h3>
+</code></pre></div><h3 id="342客户端">3.4.2客户端</h3>
 <p>随便的一句log输出</p>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//external/selinux/libselinux/src/selinux_restorecon.c
 </span><span class="ln">2</span><span class="c1"></span><span class="n">selinux_log</span><span class="p">(</span><span class="n">SELINUX_INFO</span><span class="p">,</span>
