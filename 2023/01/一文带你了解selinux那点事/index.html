@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="SELinux(Security Enhanced Linux)是一个Linux内核模块，也是一个安全子系统。用于最大限度地减小系统中服务进程可访问的资源（最小权限原则）。">
+
+
+<meta property="og:description" content="SELinux(Security Enhanced Linux)是一个Linux内核模块，也是一个安全子系统。用于最大限度地减小系统中服务进程可访问的资源（最小权限原则）。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="一文带你了解SElinux那点事">
+<meta name="twitter:title" content="一文带你了解SElinux那点事">
+<meta property="og:url" content="https://yangyang48.github.io/2023/01/%E4%B8%80%E6%96%87%E5%B8%A6%E4%BD%A0%E4%BA%86%E8%A7%A3selinux%E9%82%A3%E7%82%B9%E4%BA%8B/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2023/01/%E4%B8%80%E6%96%87%E5%B8%A6%E4%BD%A0%E4%BA%86%E8%A7%A3selinux%E9%82%A3%E7%82%B9%E4%BA%8B/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="SELinux(Security Enhanced Linux)是一个Linux内核模块，也是一个安全子系统。用于最大限度地减小系统中服务进程可访问的资源（最小权限原则）。">
+<meta name="twitter:description" content="SELinux(Security Enhanced Linux)是一个Linux内核模块，也是一个安全子系统。用于最大限度地减小系统中服务进程可访问的资源（最小权限原则）。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2023-01-07T05:00:00">
+  
+  
+    <meta property="article:modified_time" content="2023-01-07T05:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="SElinux">
+    
+      <meta property="article:section" content="2023">
+    
+      <meta property="article:section" content="January">
+    
+  
+  
+    
+      <meta property="article:tag" content="DAC">
+    
+      <meta property="article:tag" content="MAC">
+    
+      <meta property="article:tag" content="TE">
+    
+      <meta property="article:tag" content="avc">
+    
+      <meta property="article:tag" content="cts">
+    
+      <meta property="article:tag" content="源码">
+    
+      <meta property="article:tag" content="makefile">
+    
+      <meta property="article:tag" content="正则表达式">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/SElinux/selinux_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/SElinux/selinux_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/SElinux/selinux_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/SElinux/selinux_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>一文带你了解SElinux那点事</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2023/01/%E4%B8%80%E6%96%87%E5%B8%A6%E4%BD%A0%E4%BA%86%E8%A7%A3selinux%E9%82%A3%E7%82%B9%E4%BA%8B/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/SElinux/selinux_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      一文带你了解SElinux那点事
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2023-01-07T05:00:00Z">
+        
+  一月 7, 2023
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/selinux">SElinux</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2023">2023</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/january">January</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">600 Words|Read in about 3 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>SELinux(Security Enhanced Linux)是一个Linux内核模块，也是一个安全子系统。用于最大限度地减小系统中服务进程可访问的资源（最小权限原则）。</p>
+<h1 id="1介绍">1介绍</h1>
+<h1 id="2selinux规则">2SElinux规则</h1>
+<h1 id="3源码分析简介">3源码分析简介</h1>
+<h2 id="31system模块">3.1system模块</h2>
+<h2 id="32external模块">3.2external模块</h2>
+<h2 id="33kernel模块">3.3kernel模块</h2>
+<blockquote>
+<p>关于mk相关的一些语法</p>
+<div class="highlight"><pre class="chroma"><code class="language-makefile" data-lang="makefile"><span class="ln">1</span><span class="c">#目标，:前面的变量
+</span><span class="ln">2</span><span class="c"></span><span class="k">$@</span> 
+<span class="ln">3</span><span class="c">#所有依赖，:后面的所有变量
+</span><span class="ln">4</span><span class="c"></span><span class="err">$^</span>
+<span class="ln">5</span><span class="c">#第一个依赖，:的第一个变量
+</span><span class="ln">6</span><span class="c"></span><span class="k">$&lt;</span>
+</code></pre></div><p>Linux中的sed使用</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span>sed <span class="s1">&#39;/^\s*dontaudit.*;/d&#39;</span> <span class="nv">$@</span> <span class="p">|</span> sed <span class="s1">&#39;/^\s*dontaudit/,/;/d&#39;</span> &gt; <span class="nv">$@</span>.dontaudit
+<span class="ln"> 2</span><span class="c1"># 分成两部分</span>
+<span class="ln"> 3</span><span class="c1">#Example1: sed &#39;/^\s*dontaudit.*;/d&#39; $@</span>
+<span class="ln"> 4</span><span class="c1">#Example2: sed &#39;/^\s*dontaudit/,/;/d&#39; &gt; $@.dontaudit</span>
+<span class="ln"> 5</span><span class="c1">#其中sed &#39;/string/d&#39; ,表示到匹配到string的字符串的行数删除</span>
+<span class="ln"> 6</span><span class="c1"># sed &#39;/string1/,/string2/d&#39;,表示匹配到string1开头，string2结尾的这一段字符串全部删除</span>
+<span class="ln"> 7</span><span class="c1"># \s 在正则中表示一个空白字符（可能是空格、制表符、其他空白）</span>
+<span class="ln"> 8</span><span class="c1"># \s* 在正则中表示匹配0个或多个空白字符，会尽可能多的匹配</span>
+<span class="ln"> 9</span><span class="c1"># ^\s* 在正则中表示匹配0个或多个非空白字符，会尽可能多的匹配</span>
+<span class="ln">10</span><span class="c1"># Example1表示在$@文件中去除包含dontaudit字符的行数，这里主要是dontaudit前后的括号且占单行</span>
+<span class="ln">11</span><span class="c1"># Example2表示在$@文件中去除包含dontaudit字符的行数，这里主要是dontaudit前后的括号且占多行</span>
+</code></pre></div></blockquote>
+<div class="highlight"><pre class="chroma"><code class="language-makefile" data-lang="makefile"><span class="ln"> 1</span><span class="nv">policy_files</span> <span class="o">:=</span> <span class="k">$(</span>call build_policy, <span class="k">$(</span>sepolicy_build_files<span class="k">)</span>, <span class="se">\
+</span><span class="ln"> 2</span><span class="se"></span>  <span class="k">$(</span>PLAT_PUBLIC_POLICY<span class="k">)</span> <span class="k">$(</span>PLAT_PRIVATE_POLICY<span class="k">)</span><span class="o">)</span>
+<span class="ln"> 3</span><span class="nv">plat_policy.conf</span> <span class="o">:=</span> <span class="k">$(</span>intermediates<span class="k">)</span>/plat_policy.conf
+<span class="ln"> 4</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="n">PRIVATE_MLS_SENS</span> := <span class="k">$(</span><span class="nv">MLS_SENS</span><span class="k">)</span>
+<span class="ln"> 5</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="n">PRIVATE_MLS_CATS</span> := <span class="k">$(</span><span class="nv">MLS_CATS</span><span class="k">)</span>
+<span class="ln"> 6</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="n">PRIVATE_TARGET_BUILD_VARIANT</span> := <span class="k">$(</span><span class="nv">TARGET_BUILD_VARIANT</span><span class="k">)</span>
+<span class="ln"> 7</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="n">PRIVATE_TGT_ARCH</span> := <span class="k">$(</span><span class="nv">my_target_arch</span><span class="k">)</span>
+<span class="ln"> 8</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="n">PRIVATE_TGT_WITH_ASAN</span> := <span class="k">$(</span><span class="nv">with_asan</span><span class="k">)</span>
+<span class="ln"> 9</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="n">PRIVATE_TGT_WITH_NATIVE_COVERAGE</span> := <span class="k">$(</span><span class="nv">with_native_coverage</span><span class="k">)</span>
+<span class="ln">10</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="n">PRIVATE_ADDITIONAL_M</span>4<span class="n">DEFS</span> := <span class="k">$(</span><span class="nv">LOCAL_ADDITIONAL_M</span>4<span class="nv">DEFS</span><span class="k">)</span>
+<span class="ln">11</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="n">PRIVATE_SEPOLICY_SPLIT</span> := <span class="k">$(</span><span class="nv">PRODUCT_SEPOLICY_SPLIT</span><span class="k">)</span>
+<span class="ln">12</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="n">PRIVATE_COMPATIBLE_PROPERTY</span> := <span class="k">$(</span><span class="nv">PRODUCT_COMPATIBLE_PROPERTY</span><span class="k">)</span>
+<span class="ln">13</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="n">PRIVATE_TREBLE_SYSPROP_NEVERALLOW</span> := <span class="k">$(</span><span class="nv">treble_sysprop_neverallow</span><span class="k">)</span>
+<span class="ln">14</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="n">PRIVATE_POLICY_FILES</span> := <span class="k">$(</span><span class="nv">policy_files</span><span class="k">)</span>
+<span class="ln">15</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="k">$(</span><span class="nv">policy_files</span><span class="k">)</span> <span class="k">$(</span><span class="nv">M</span>4<span class="k">)</span>
+<span class="ln">16</span>	<span class="k">$(</span>transform-policy-to-conf<span class="k">)</span>
+<span class="ln">17</span>	<span class="k">$(</span>hide<span class="k">)</span> sed <span class="s1">&#39;/^\s*dontaudit.*;/d&#39;</span> <span class="nv">$@</span> <span class="p">|</span> sed <span class="s1">&#39;/^\s*dontaudit/,/;/d&#39;</span> &gt; <span class="nv">$@</span>.dontaudit
+<span class="ln">18</span>
+<span class="ln">19</span><span class="nf">$(LOCAL_BUILT_MODULE)</span><span class="o">:</span> <span class="n">PRIVATE_ADDITIONAL_CIL_FILES</span> := \
+<span class="ln">20</span>  <span class="k">$(</span><span class="nv">call</span> <span class="nv">build_policy</span>, <span class="k">$(</span><span class="nv">sepolicy_build_cil_workaround_files</span><span class="k">)</span>, <span class="k">$(</span><span class="nv">PLAT_PRIVATE_POLICY</span><span class="k">))</span>
+<span class="ln">21</span><span class="nf">$(LOCAL_BUILT_MODULE)</span><span class="o">:</span> <span class="n">PRIVATE_NEVERALLOW_ARG</span> := <span class="k">$(</span><span class="nv">NEVERALLOW_ARG</span><span class="k">)</span>
+<span class="ln">22</span><span class="nf">$(LOCAL_BUILT_MODULE)</span><span class="o">:</span> <span class="k">$(</span><span class="nv">plat_policy</span>.<span class="nv">conf</span><span class="k">)</span> <span class="k">$(</span><span class="nv">HOST_OUT_EXECUTABLES</span><span class="k">)</span>/<span class="n">checkpolicy</span> \
+<span class="ln">23</span>  <span class="k">$(</span><span class="nv">HOST_OUT_EXECUTABLES</span><span class="k">)</span>/<span class="n">secilc</span> \
+<span class="ln">24</span>  <span class="k">$(</span><span class="nv">call</span> <span class="nv">build_policy</span>, <span class="k">$(</span><span class="nv">sepolicy_build_cil_workaround_files</span><span class="k">)</span>, <span class="k">$(</span><span class="nv">PLAT_PRIVATE_POLICY</span><span class="k">))</span> \
+<span class="ln">25</span>  <span class="k">$(</span><span class="nv">built_sepolicy_neverallows</span><span class="k">)</span>
+<span class="ln">26</span>	@mkdir -p <span class="k">$(</span>dir <span class="nv">$@</span><span class="k">)</span>
+<span class="ln">27</span>	<span class="k">$(</span>hide<span class="k">)</span> <span class="k">$(</span>CHECKPOLICY_ASAN_OPTIONS<span class="k">)</span> <span class="k">$(</span>HOST_OUT_EXECUTABLES<span class="k">)</span>/checkpolicy -M -C -c <span class="se">\
+</span><span class="ln">28</span><span class="se"></span>		<span class="k">$(</span>POLICYVERS<span class="k">)</span> -o <span class="nv">$@</span>.tmp $&lt;
+<span class="ln">29</span>	<span class="k">$(</span>hide<span class="k">)</span> cat <span class="k">$(</span>PRIVATE_ADDITIONAL_CIL_FILES<span class="k">)</span> &gt;&gt; <span class="nv">$@</span>.tmp
+<span class="ln">30</span>	<span class="k">$(</span>hide<span class="k">)</span> <span class="k">$(</span>HOST_OUT_EXECUTABLES<span class="k">)</span>/secilc -m -M <span class="nb">true</span> -G -c <span class="k">$(</span>POLICYVERS<span class="k">)</span> <span class="k">$(</span>PRIVATE_NEVERALLOW_ARG<span class="k">)</span> <span class="nv">$@</span>.tmp -o /dev/null -f /dev/null
+<span class="ln">31</span>	<span class="k">$(</span>hide<span class="k">)</span> mv <span class="nv">$@</span>.tmp <span class="nv">$@</span>
+<span class="ln">32</span>
+<span class="ln">33</span><span class="nv">built_plat_cil</span> <span class="o">:=</span> <span class="k">$(</span>LOCAL_BUILT_MODULE<span class="k">)</span>
+<span class="ln">34</span><span class="nv">plat_policy.conf</span> <span class="o">:=</span>
+</code></pre></div><p>把上面的变量替换之后就是</p>
+<div class="highlight"><pre class="chroma"><code class="language-makefile" data-lang="makefile"><span class="ln"> 1</span><span class="nv">policy_files</span> <span class="o">:=</span> <span class="k">$(</span>call build_policy, <span class="k">$(</span>sepolicy_build_files<span class="k">)</span>, <span class="se">\
+</span><span class="ln"> 2</span><span class="se"></span>  <span class="k">$(</span>PLAT_PUBLIC_POLICY<span class="k">)</span> <span class="k">$(</span>PLAT_PRIVATE_POLICY<span class="k">)</span><span class="o">)</span>
+<span class="ln"> 3</span><span class="nv">plat_policy.conf</span> <span class="o">:=</span> out/target/product/xxx/obj/ETC/plat_sepolicy.cil_intermediates/plat_policy.conf
+<span class="ln"> 4</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="n">PRIVATE_MLS_SENS</span> := 1
+<span class="ln"> 5</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="n">PRIVATE_MLS_CATS</span> := 1024
+<span class="ln"> 6</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="n">PRIVATE_TARGET_BUILD_VARIANT</span> := <span class="n">userdebug</span>
+<span class="ln"> 7</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="n">PRIVATE_TGT_ARCH</span> := <span class="n">arm</span>
+<span class="ln"> 8</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="n">PRIVATE_TGT_WITH_ASAN</span> := <span class="n">false</span>
+<span class="ln"> 9</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="n">PRIVATE_TGT_WITH_NATIVE_COVERAGE</span> := <span class="n">false</span>
+<span class="ln">10</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="n">PRIVATE_ADDITIONAL_M</span>4<span class="n">DEFS</span> :=
+<span class="ln">11</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="n">PRIVATE_SEPOLICY_SPLIT</span> := <span class="n">true</span>
+<span class="ln">12</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="n">PRIVATE_COMPATIBLE_PROPERTY</span> := <span class="n">true</span>
+<span class="ln">13</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="n">PRIVATE_TREBLE_SYSPROP_NEVERALLOW</span> := <span class="n">true</span>
+<span class="ln">14</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="n">PRIVATE_POLICY_FILES</span> := <span class="k">$(</span><span class="nv">policy_files</span><span class="k">)</span>
+<span class="ln">15</span><span class="nf">$(plat_policy.conf)</span><span class="o">:</span> <span class="k">$(</span><span class="nv">policy_files</span><span class="k">)</span> <span class="k">$(</span><span class="nv">M</span>4<span class="k">)</span>
+<span class="ln">16</span>	<span class="k">$(</span>transform-policy-to-conf<span class="k">)</span>
+<span class="ln">17</span>	<span class="k">$(</span>hide<span class="k">)</span> sed <span class="s1">&#39;/^\s*dontaudit.*;/d&#39;</span> plat_policy.conf <span class="p">|</span> sed <span class="s1">&#39;/^\s*dontaudit/,/;/d&#39;</span> &gt; plat_policy.conf.dontaudit
+<span class="ln">18</span>
+<span class="ln">19</span><span class="nf">$(LOCAL_BUILT_MODULE)</span><span class="o">:</span> <span class="n">PRIVATE_ADDITIONAL_CIL_FILES</span> := \
+<span class="ln">20</span>  <span class="n">system</span>/<span class="n">sepolicy</span>/<span class="n">private</span>/<span class="n">technical_debt</span>.<span class="n">cil</span>
+<span class="ln">21</span><span class="nf">$(LOCAL_BUILT_MODULE)</span><span class="o">:</span> <span class="n">PRIVATE_NEVERALLOW_ARG</span> :=
+<span class="ln">22</span><span class="nf">$(LOCAL_BUILT_MODULE)</span><span class="o">:</span> <span class="n">out</span>/<span class="n">target</span>/<span class="n">product</span>/<span class="n">xxx</span>/<span class="n">obj</span>/<span class="n">ETC</span>/<span class="n">plat_sepolicy</span>.<span class="n">cil_intermediates</span>/<span class="n">plat_policy</span>.<span class="n">conf</span> <span class="n">out</span>/<span class="n">target</span>/<span class="n">product</span>/<span class="n">xxx</span>/<span class="n">obj</span>/<span class="n">EXECUTABLES</span>/<span class="n">secilc_intermediates</span>/<span class="n">checkpolicy</span> \
+<span class="ln">23</span> <span class="n">out</span>/<span class="n">target</span>/<span class="n">product</span>/<span class="n">xxx</span>/<span class="n">obj</span>/<span class="n">EXECUTABLES</span>/<span class="n">secilc_intermediates</span>/<span class="n">secilc</span> \
+<span class="ln">24</span>  <span class="n">system</span>/<span class="n">sepolicy</span>/<span class="n">private</span>/<span class="n">technical_debt</span>.<span class="n">cil</span> \
+<span class="ln">25</span>  <span class="n">out</span>/<span class="n">target</span>/<span class="n">product</span>/<span class="n">xxx</span>/<span class="n">obj</span>/<span class="n">FAKE</span>/<span class="n">sepolicy_neverallows_intermediates</span>/<span class="n">sepolicy_neverallows</span>
+<span class="ln">26</span>	@mkdir -p <span class="k">$(</span>dir plat_sepolicy.cil<span class="k">)</span>
+<span class="ln">27</span>	<span class="k">$(</span>hide<span class="k">)</span> <span class="nv">detect_leaks</span><span class="o">=</span><span class="m">0</span> out/target/product/xxx/obj/EXECUTABLES/checkpolicy -M -C -c <span class="se">\
+</span><span class="ln">28</span><span class="se"></span>		<span class="m">30</span> -o plat_sepolicy.cil.tmp out/target/product/xxx/obj/ETC/plat_sepolicy.cil_intermediates/plat_policy.conf
+<span class="ln">29</span>	<span class="k">$(</span>hide<span class="k">)</span> cat system/sepolicy/private/technical_debt.cil &gt;&gt; plat_sepolicy.cil.tmp
+<span class="ln">30</span>	<span class="k">$(</span>hide<span class="k">)</span> out/target/product/xxx/obj/EXECUTABLES/secilc_intermediates/secilc -m -M <span class="nb">true</span> -G -c <span class="m">30</span> plat_sepolicy.cil.tmp -o /dev/null -f /dev/null
+<span class="ln">31</span>	<span class="k">$(</span>hide<span class="k">)</span> mv plat_sepolicy.cil.tmp plat_sepolicy.cil
+<span class="ln">32</span>
+<span class="ln">33</span><span class="nv">built_plat_cil</span> <span class="o">:=</span> out/target/product/xxx/obj/ETC/plat_sepolicy.cil_intermediates/plat_sepolicy.cil
+<span class="ln">34</span><span class="nv">plat_policy.conf</span> <span class="o">:=</span>
+</code></pre></div><p>其中<code>$(transform-policy-to-conf)</code>又是一个宏，展开显示</p>
+<div class="highlight"><pre class="chroma"><code class="language-makefile" data-lang="makefile"><span class="ln"> 1</span><span class="err">@mkdir</span> <span class="err">-p</span> <span class="k">$(</span><span class="nv">dir</span> <span class="k">$</span>@<span class="k">)</span>
+<span class="ln"> 2</span><span class="k">$(</span><span class="nv">hide</span><span class="k">)</span> <span class="k">$(</span><span class="nv">M</span>4<span class="k">)</span> <span class="err">--fatal-warnings</span>  <span class="err">\</span>
+<span class="ln"> 3</span>	<span class="err">-D</span> <span class="nv">mls_num_sens</span><span class="o">=</span><span class="m">1</span> -D <span class="nv">mls_num_cats</span><span class="o">=</span><span class="m">1024</span> <span class="se">\
+</span><span class="ln"> 4</span><span class="se"></span>	-D <span class="nv">target_build_variant</span><span class="o">=</span>userdebug <span class="se">\
+</span><span class="ln"> 5</span><span class="se"></span>	-D <span class="nv">target_with_dexpreopt</span><span class="o">=</span><span class="nb">true</span> <span class="se">\
+</span><span class="ln"> 6</span><span class="se"></span>	-D <span class="nv">target_arch</span><span class="o">=</span>arm <span class="se">\
+</span><span class="ln"> 7</span><span class="se"></span>	-D <span class="nv">target_with_asan</span><span class="o">=</span><span class="nb">false</span> <span class="se">\
+</span><span class="ln"> 8</span><span class="se"></span>	-D <span class="nv">target_with_native_coverage</span><span class="o">=</span><span class="nb">false</span> <span class="se">\
+</span><span class="ln"> 9</span><span class="se"></span>	-D <span class="nv">target_full_treble</span><span class="o">=</span><span class="nb">true</span> <span class="se">\
+</span><span class="ln">10</span><span class="se"></span>	-D <span class="nv">target_compatible_property</span><span class="o">=</span><span class="nb">true</span> <span class="se">\
+</span><span class="ln">11</span><span class="se"></span>	-D <span class="nv">target_treble_sysprop_neverallow</span><span class="o">=</span><span class="nb">true</span> <span class="se">\
+</span><span class="ln">12</span><span class="se"></span>	-D <span class="nv">target_exclude_build_test</span><span class="o">=</span> <span class="se">\
+</span><span class="ln">13</span><span class="se"></span>	-D <span class="nv">target_requires_insecure_execmem_for_swiftshader</span><span class="o">=</span> <span class="se">\
+</span><span class="ln">14</span><span class="se"></span>	-s <span class="k">$(</span>policy_files<span class="k">)</span> &gt; plat_policy.conf
+</code></pre></div><h1 id="参考">参考</h1>
+<p><a href="https://juejin.cn/post/7126884870999474184">[1] nianxing123, 【安卓】SELinux走过的坑, 2022.</a></p>
+<p><a href="https://blog.csdn.net/u014135607/article/details/78697587">[2] 沉默的过客, SELinux策略语言–客体类别和许可, 2017.</a></p>
+<p><a href="https://blog.csdn.net/Luoshengyang/article/details/37613135">[3] 罗升阳, SEAndroid安全机制框架分析, 2014.</a></p>
+<p><a href="https://headwind.blog.csdn.net/article/details/119704755">[4] headwind_, Android P SELinux (一) 基础概念, 2021.</a></p>
+<p><a href="https://headwind.blog.csdn.net/article/details/119707417">[5] headwind_, Android P SELinux (二) 开机初始化与策略文件编译过程, 2021.</a></p>
+<p><a href="https://headwind.blog.csdn.net/article/details/119709982">[6] headwind_, Android P SELinux (三) 权限检查原理与调试, 2022.</a></p>
+<p><a href="https://headwind.blog.csdn.net/article/details/119711869">[7] headwind_, Android P SELinux (四) CTS neverallow处理总结, 2022.</a></p>
+<p><a href="https://blog.csdn.net/tkwxty/article/details/104538447">[8] IT先森, Android SELinux开发入门指南之SELinux基础知识, 2020.</a></p>
+<p><a href="https://blog.csdn.net/tkwxty/article/details/103938287">[9] IT先森, 正确姿势临时和永久开启关闭Android的SELinux, 2020.</a></p>
+<p><a href="https://blog.csdn.net/fhaitao900310/article/details/108868103">[10] 冯疯子, 谈谈Android 安全策略SElinux, 2020.</a></p>
+<p><a href="https://juejin.cn/post/7051154021200953357">[11] 五菱宏光8PLUS, Android 添加 SELinux权限, 2022.</a></p>
+<p><a href="https://juejin.cn/post/6844903813195759624">[12] Android开发实践, Android安全策略Selinux小结, 2019.</a></p>
+<p><a href="https://cloud.tencent.com/developer/article/1730613">[13] 砸漏, 详解Android Selinux 权限及问题, 2020.</a></p>
+<p><a href="https://www.cnblogs.com/blogs-of-lxl/p/7515023.html">[14] sheldon_blogs, Android : SELinux 简析&amp;修改 , 2017.</a></p>
+<p><a href="https://www.pianshen.com/article/1843146239/">[15] 程序员大本营, SELinux简介, 2018.</a></p>
+<p><a href="https://blog.csdn.net/weixin_42082222/article/details/85239018">[16] markvz, SELinux简介, 2018.</a></p>
+<p><a href="https://blog.csdn.net/ch853199769/article/details/82498725">[17] 安德路, android sepolicy 最新小结, 2018.</a></p>
+<p><a href="%5Bmiroku_it%5D(https://blog.csdn.net/miroku_it)">[18] miroku_it, SELinux策略配置语言, 2009.</a></p>
+<p><a href="https://blog.csdn.net/qq_19923217/article/details/81240027">[19] 岁月斑驳7, android 8.1 安全机制 — SEAndroid &amp; SELinux, 2018.</a></p>
+<p><a href="https://blog.csdn.net/q1183345443/article/details/90438283">[20] _dowork, SELinux audit2allow命令使用, 2019.</a></p>
+<p><a href="https://blog.csdn.net/Donald_Zhuang/article/details/108786482">[21] Donald_Zhuang, selinux dac_override/dac_read_search问题处理思路, 2020.</a></p>
+<p><a href="https://m.sohu.com/a/141709117_467784/?pvid=000115_3w_a">[22] linux内核之旅, Linux多安全策略和动态安全策略框架模块代码分析报告(14), 2017.</a></p>
+<p><a href="https://blog.csdn.net/l173864930/article/details/17194899">[23] Boyliang1987, SEAndroid策略, 2013.</a></p>
+<p><a href="https://mp.weixin.qq.com/s/mdDLw6AIp9ws9LTaHg64pg">[24] KINGYT, 精致全景图 | linux内核输出的日志去哪里了, 2021.</a></p>
+<p><a href="https://zhuanlan.zhihu.com/p/406631271?utm_id=0">[25] 小武, kmsg日志的存储与读取, 2021.</a></p>
+<p><a href="https://www.cnblogs.com/cslunatic/p/3709356.html">[26] CSlunatic, Linux Security模块, 2014.</a></p>
+<p><a href="https://blog.csdn.net/jimbo_lee/article/details/51593513">[27] jimbo_lee, 常用正则表达式大全 &ndash; 正则表达式基本语法, 2011.</a></p>
+<p><a href="https://blog.csdn.net/qq_41663117/article/details/117411597">[28] Sherry Baron, Android.mk(持续补充中哦！！！), 2021.</a></p>
+<p><a href="https://weibo01.blog.csdn.net/article/details/115582646">[29] 魏波., Makefile_03：Makefile介绍（作用、例子、原理）, 2022.</a></p>
+<p><a href="https://blog.csdn.net/kc58236582/article/details/49795865">[30] kc专栏, Android.mk 小细节（LOCAL_CFLAGS 、BUILD_PREBUILT）, 2015.</a></p>
+<p><a href="https://blog.csdn.net/hjxu2016/article/details/101699484">[31] hjxu2016, Makefile入门二、理解$@、$^和$&lt;, 2019.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/dac/">DAC</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/mac/">MAC</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/te/">TE</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/avc/">avc</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/cts/">cts</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%BA%90%E7%A0%81/">源码</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/makefile/">makefile</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F/">正则表达式</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/01/android-nenative-exception/" data-tooltip="Android NE（Native Exception）">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2023 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/01/android-nenative-exception/" data-tooltip="Android NE（Native Exception）">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2023%2F01%2F%25E4%25B8%2580%25E6%2596%2587%25E5%25B8%25A6%25E4%25BD%25A0%25E4%25BA%2586%25E8%25A7%25A3selinux%25E9%2582%25A3%25E7%2582%25B9%25E4%25BA%258B%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2023%2F01%2F%25E4%25B8%2580%25E6%2596%2587%25E5%25B8%25A6%25E4%25BD%25A0%25E4%25BA%2586%25E8%25A7%25A3selinux%25E9%2582%25A3%25E7%2582%25B9%25E4%25BA%258B%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2023%2F01%2F%25E4%25B8%2580%25E6%2596%2587%25E5%25B8%25A6%25E4%25BD%25A0%25E4%25BA%2586%25E8%25A7%25A3selinux%25E9%2582%25A3%25E7%2582%25B9%25E4%25BA%258B%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2023\/01\/%E4%B8%80%E6%96%87%E5%B8%A6%E4%BD%A0%E4%BA%86%E8%A7%A3selinux%E9%82%A3%E7%82%B9%E4%BA%8B\/';
+          
+            this.page.identifier = '\/2023\/01\/%E4%B8%80%E6%96%87%E5%B8%A6%E4%BD%A0%E4%BA%86%E8%A7%A3selinux%E9%82%A3%E7%82%B9%E4%BA%8B\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
