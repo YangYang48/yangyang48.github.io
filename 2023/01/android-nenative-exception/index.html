@@ -288,15 +288,1107 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">100 Words|Read in about 1 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">4300 Words|Read in about 20 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
               <p>Android是基于Linux存在的，常常有使用c/c++代码库编写native进程或者动态库的情况，这些库在运行时发生的异常统称Native Exception。</p>
 <h1 id="0-ne简介">0 NE简介</h1>
-<h1 id="1-ne流程分析">1 NE流程分析</h1>
-<h1 id="2关于一些细节">2关于一些细节</h1>
-<h1 id="3总结">3总结</h1>
+<p>通常native代码，出现错误，比如空指针异常，出现signal 11的信号错误，会打印如下的堆栈信息</p>
+<div class="highlight"><pre class="chroma"><code class="language-text" data-lang="text"><span class="ln"> 1</span>--------- beginning of crash
+<span class="ln"> 2</span>08-04 17:02:06.305   361   361 F libc    : Fatal signal 11 (SIGSEGV), code 1, fault addr 0xa in tid 361 (demo), pid 361 (demo)
+<span class="ln"> 3</span>08-04 17:02:06.305   361   361 F libc    : -&gt;&gt;&gt;after clone|pseudothread_tid(-1)
+<span class="ln"> 4</span>08-04 17:02:06.306   361   361 F libc    : -&gt;&gt;&gt;debuggerd_dispatch_pseudothread_1|pseudothread_tid(1668)
+<span class="ln"> 5</span>08-04 17:02:06.312  1669  1669 F libc    : -&gt;&gt;&gt;main_tid(361),pseudothread_tid(1668),debuggerd_dump_type(1)
+<span class="ln"> 6</span>08-04 17:02:06.360   361   361 F libc    : -&gt;&gt;&gt;1-1buf[0][1][2][3](0x1 0x0 0x0 0x0),rc(1),pseudothread_tid(1668)
+<span class="ln"> 7</span>08-04 17:02:06.360   361   361 F libc    : -&gt;&gt;&gt;debuggerd_dispatch_pseudothread_1-2|pseudothread_tid(1668)
+<span class="ln"> 8</span>08-04 17:02:06.360   361   361 F libc    : -&gt;&gt;&gt;debuggerd_dispatch_pseudothread_2|pseudothread_tid(1668)
+<span class="ln"> 9</span>08-04 17:02:06.361   361   361 F libc    : -&gt;&gt;&gt;debuggerd_dispatch_pseudothread_3|pseudothread_tid(1668)
+<span class="ln">10</span>08-04 17:02:06.361   361   361 F libc    : -&gt;&gt;&gt;after futex_wait|pseudothread_tid(0)
+<span class="ln">11</span>08-04 17:02:06.366  1671  1671 F DEBUG   : *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+<span class="ln">12</span>08-04 17:02:06.366  1671  1671 F DEBUG   : Build fingerprint: &#39;xxx&#39;
+<span class="ln">13</span>08-04 17:02:06.366  1671  1671 F DEBUG   : Revision: &#39;0&#39;
+<span class="ln">14</span>08-04 17:02:06.366  1671  1671 F DEBUG   : ABI: &#39;arm&#39;
+<span class="ln">15</span>08-04 17:02:06.366  1671  1671 F DEBUG   : pid: 361, tid: 361, name: demo  &gt;&gt;&gt; /system/bin/demo &lt;&lt;&lt;
+<span class="ln">16</span>08-04 17:02:06.366  1671  1671 F DEBUG   : signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0xa
+<span class="ln">17</span>08-04 17:02:06.366  1671  1671 F DEBUG   : Cause: null pointer dereference
+<span class="ln">18</span>08-04 17:02:06.366  1671  1671 F DEBUG   :     r0 0000000a  r1 00000061  r2 0538ad06  r3 fff162b0
+<span class="ln">19</span>08-04 17:02:06.366  1671  1671 F DEBUG   :     r4 b91d04ed  r5 b91dde08  r6 00000004  r7 fff1639c
+<span class="ln">20</span>08-04 17:02:06.366  1671  1671 F DEBUG   :     r8 00000000  r9 00000000  sl 00000000  fp fff1638c
+<span class="ln">21</span>08-04 17:02:06.367  1671  1671 F DEBUG   :     ip fff1639c  sp fff16308  lr eb97f0eb  pc b91d0342  cpsr 20010030
+<span class="ln">22</span>08-04 17:02:06.373  1671  1671 F DEBUG   :
+<span class="ln">23</span>08-04 17:02:06.373  1671  1671 F DEBUG   : backtrace:
+<span class="ln">24</span>08-04 17:02:06.373  1671  1671 F DEBUG   :     #00 pc 00006342  /system/bin/demo (main+489)
+<span class="ln">25</span>08-04 17:02:06.373  1671  1671 F DEBUG   :     #01 pc 0007669d  /system/lib/libc.so (__libc_init+48)
+<span class="ln">26</span>08-04 17:02:06.373  1671  1671 F DEBUG   :     #02 pc 000024d8  /system/bin/demo (_start_main+88)
+</code></pre></div><h1 id="1-ne流程分析">1 NE流程分析</h1>
+<h2 id="11从架构begins开始">1.1从架构begin.S开始</h2>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>//bionic/linker/arch/arm/begin.S
+<span class="ln">2</span>ENTRY(_start)
+<span class="ln">3</span>  // Force unwinds to end in this function.
+<span class="ln">4</span>  .cfi_undefined r14
+<span class="ln">5</span>  mov r0, sp
+<span class="ln">6</span>  //汇编语言，开始调用函数__linker_init
+<span class="ln">7</span>  bl __linker_init
+<span class="ln">8</span>  bx r0
+<span class="ln">9</span>END(_start)
+</code></pre></div><blockquote>
+<p><code>sp</code>寄存器为堆栈指针寄存器，为<strong>栈顶指针</strong>，指向栈顶地址</p>
+<p><code>r0</code>寄存器用作传入函数参数，传出函数返回值，被调用函数在返回之前不必恢复<code>r0</code>寄存器</p>
+<p><code>bx</code>为16位<strong>基址寄存器</strong>，且<code>lr</code>起存器保存<code>r0</code>的地址，其中地址还可以分为高位低位（<code>BH</code>，<code>BL</code>），常存放访问内存的地址</p>
+<p><code>bl</code>调用子程序，其中<code>bl</code>跳转范围为（<code>-32MB~32MB</code>）</p>
+<p>1.将栈顶元素，赋值给<code>r0</code>寄存器（16位）</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>mov r0, sp
+</code></pre></div><p>2.调用子程序<code>__linker_init</code>，把返回地址保存在<code>lr</code>寄存器里面</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>bl __linker_init
+</code></pre></div><p>3.返回子程序，并出现返回值，指向<code>__linker_init</code>的下一个地址</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>bx r0
+</code></pre></div></blockquote>
+<h2 id="12__linker_init">1.2__linker_init</h2>
+<p>在<code>__linker_init()</code>方法中调用了<code>__linker_init_post_relocation()</code>，<code>__linker_init_post_relocation()</code>初始化<code>linker</code>的全局变量，之后调用<code>linker_main()</code>函数获取可执行程序的开始地址，然后跳转到开始地址继续执行。</p>
+<p>可以看到<code>linker_main()</code>函数中对系统环境进行了确认，对系统属性进行了初始化设置，之后调用</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/linker/linker_main.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="nf">ElfW</span><span class="p">(</span><span class="n">Addr</span><span class="p">)</span> <span class="n">linker_main</span><span class="p">(</span><span class="n">KernelArgumentBlock</span><span class="o">&amp;</span> <span class="n">args</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">exe_to_load</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="p">...</span>
+<span class="ln"> 4</span>  <span class="c1">// Sanitize the environment.
+</span><span class="ln"> 5</span><span class="c1"></span>  <span class="n">__libc_init_AT_SECURE</span><span class="p">(</span><span class="n">args</span><span class="p">.</span><span class="n">envp</span><span class="p">);</span>
+<span class="ln"> 6</span>  <span class="c1">// Initialize system properties
+</span><span class="ln"> 7</span><span class="c1"></span>  <span class="n">__system_properties_init</span><span class="p">();</span> <span class="c1">// may use &#39;environ&#39;
+</span><span class="ln"> 8</span><span class="c1"></span>  <span class="c1">// Register the debuggerd signal handler.
+</span><span class="ln"> 9</span><span class="c1"></span>  <span class="n">linker_debuggerd_init</span><span class="p">();</span>
+<span class="ln">10</span>  <span class="p">...</span>
+<span class="ln">11</span><span class="p">}</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="k">extern</span> <span class="s">&#34;C&#34;</span> <span class="n">ElfW</span><span class="p">(</span><span class="n">Addr</span><span class="p">)</span> <span class="n">__linker_init</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">raw_args</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">14</span>  <span class="p">...</span>  
+<span class="ln">15</span>  <span class="k">return</span> <span class="n">__linker_init_post_relocation</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">tmp_linker_so</span><span class="p">);</span>
+<span class="ln">16</span><span class="p">}</span>
+<span class="ln">17</span>
+<span class="ln">18</span><span class="k">static</span> <span class="nf">ElfW</span><span class="p">(</span><span class="n">Addr</span><span class="p">)</span> <span class="n">__attribute__</span><span class="p">((</span><span class="n">noinline</span><span class="p">))</span>
+<span class="ln">19</span><span class="n">__linker_init_post_relocation</span><span class="p">(</span><span class="n">KernelArgumentBlock</span><span class="o">&amp;</span> <span class="n">args</span><span class="p">,</span> <span class="n">soinfo</span><span class="o">&amp;</span> <span class="n">tmp_linker_so</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">20</span>  <span class="p">...</span>
+<span class="ln">21</span>  <span class="n">ElfW</span><span class="p">(</span><span class="n">Addr</span><span class="p">)</span> <span class="n">start_address</span> <span class="o">=</span> <span class="n">linker_main</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">exe_to_load</span><span class="p">);</span>
+<span class="ln">22</span>  <span class="p">...</span>  
+<span class="ln">23</span><span class="p">}</span>
+</code></pre></div><h2 id="13linker_debuggerd_init">1.3linker_debuggerd_init</h2>
+<p>设置几个回调方法，定义了一个callbacks结构体，之后把这个callbacks作为参数传递给debuggerd_init()</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/linker/linker_debuggerd_android.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span> <span class="nf">linker_debuggerd_init</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="n">debuggerd_callbacks_t</span> <span class="n">callbacks</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="p">.</span><span class="n">get_abort_message</span> <span class="o">=</span> <span class="p">[]()</span> <span class="p">{</span>
+<span class="ln"> 5</span>      <span class="k">return</span> <span class="n">__libc_shared_globals</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">abort_msg</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="p">},</span>
+<span class="ln"> 7</span>    <span class="p">.</span><span class="n">post_dump</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">notify_gdb_of_libraries</span><span class="p">,</span>
+<span class="ln"> 8</span>    <span class="p">.</span><span class="n">get_gwp_asan_state</span> <span class="o">=</span> <span class="p">[]()</span> <span class="p">{</span>
+<span class="ln"> 9</span>      <span class="k">return</span> <span class="n">__libc_shared_globals</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">gwp_asan_state</span><span class="p">;</span>
+<span class="ln">10</span>    <span class="p">},</span>
+<span class="ln">11</span>    <span class="p">.</span><span class="n">get_gwp_asan_metadata</span> <span class="o">=</span> <span class="p">[]()</span> <span class="p">{</span>
+<span class="ln">12</span>      <span class="k">return</span> <span class="n">__libc_shared_globals</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">gwp_asan_metadata</span><span class="p">;</span>
+<span class="ln">13</span>    <span class="p">},</span>
+<span class="ln">14</span>  <span class="p">};</span>
+<span class="ln">15</span>  <span class="n">debuggerd_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">callbacks</span><span class="p">);</span>
+<span class="ln">16</span><span class="p">}</span>
+</code></pre></div><h2 id="14debuggerd_init">1.4debuggerd_init</h2>
+<ul>
+<li>首先把<code>callbacks</code>赋给<code>g_callbacks</code></li>
+<li>之后调用<code>mmap</code>为线程的栈分配空间</li>
+<li>然后调用<code>mprotect</code>函数，设置<code>stack</code>对应的内存区的保护属性为可读可写，之后把栈的起始点定义在页末尾并对齐</li>
+<li>最后调用<code>debuggerd_register_handlers()</code>去注册一些异常信号，而异常信号的处理函数是<code>debuggerd_signal_handler()</code></li>
+</ul>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/debuggerd/handler/debuggerd_handler.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span> <span class="nf">debuggerd_init</span><span class="p">(</span><span class="n">debuggerd_callbacks_t</span><span class="o">*</span> <span class="n">callbacks</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="k">if</span> <span class="p">(</span><span class="n">callbacks</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="n">g_callbacks</span> <span class="o">=</span> <span class="o">*</span><span class="n">callbacks</span><span class="p">;</span>
+<span class="ln"> 5</span>  <span class="p">}</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span>  <span class="n">size_t</span> <span class="n">thread_stack_pages</span> <span class="o">=</span> <span class="mi">8</span><span class="p">;</span>
+<span class="ln"> 8</span>  <span class="c1">//设置一个mmap匿名的空间
+</span><span class="ln"> 9</span><span class="c1"></span>  <span class="kt">void</span><span class="o">*</span> <span class="n">thread_stack_allocation</span> <span class="o">=</span> <span class="n">mmap</span><span class="p">(</span><span class="k">nullptr</span><span class="p">,</span> <span class="n">PAGE_SIZE</span> <span class="o">*</span> <span class="p">(</span><span class="n">thread_stack_pages</span> <span class="o">+</span> <span class="mi">2</span><span class="p">),</span> <span class="n">PROT_NONE</span><span class="p">,</span>
+<span class="ln">10</span>                                       <span class="n">MAP_ANONYMOUS</span> <span class="o">|</span> <span class="n">MAP_PRIVATE</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="ln">11</span>  <span class="k">if</span> <span class="p">(</span><span class="n">thread_stack_allocation</span> <span class="o">==</span> <span class="n">MAP_FAILED</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">12</span>    <span class="n">fatal_errno</span><span class="p">(</span><span class="s">&#34;failed to allocate debuggerd thread stack&#34;</span><span class="p">);</span>
+<span class="ln">13</span>  <span class="p">}</span>
+<span class="ln">14</span>
+<span class="ln">15</span>  <span class="kt">char</span><span class="o">*</span> <span class="n">stack</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">thread_stack_allocation</span><span class="p">)</span> <span class="o">+</span> <span class="n">PAGE_SIZE</span><span class="p">;</span>
+<span class="ln">16</span>  <span class="k">if</span> <span class="p">(</span><span class="n">mprotect</span><span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="n">PAGE_SIZE</span> <span class="o">*</span> <span class="n">thread_stack_pages</span><span class="p">,</span> <span class="n">PROT_READ</span> <span class="o">|</span> <span class="n">PROT_WRITE</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">17</span>    <span class="n">fatal_errno</span><span class="p">(</span><span class="s">&#34;failed to mprotect debuggerd thread stack&#34;</span><span class="p">);</span>
+<span class="ln">18</span>  <span class="p">}</span>
+<span class="ln">19</span>
+<span class="ln">20</span>  <span class="c1">//设置一个栈，指向栈顶，大小为4*1024的整数倍，为后续clone的逻辑空间地址
+</span><span class="ln">21</span><span class="c1"></span>  <span class="n">stack</span> <span class="o">=</span> <span class="p">(</span><span class="n">stack</span> <span class="o">+</span> <span class="n">thread_stack_pages</span> <span class="o">*</span> <span class="n">PAGE_SIZE</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
+<span class="ln">22</span>  <span class="n">stack</span> <span class="o">-=</span> <span class="mi">15</span><span class="p">;</span>
+<span class="ln">23</span>  <span class="n">pseudothread_stack</span> <span class="o">=</span> <span class="n">stack</span><span class="p">;</span>
+<span class="ln">24</span>  <span class="c1">//为当前进程设置signal处理机制
+</span><span class="ln">25</span><span class="c1"></span>  <span class="k">struct</span> <span class="nc">sigaction</span> <span class="n">action</span><span class="p">;</span>
+<span class="ln">26</span>  <span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">action</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">action</span><span class="p">));</span>
+<span class="ln">27</span>  <span class="n">sigfillset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">action</span><span class="p">.</span><span class="n">sa_mask</span><span class="p">);</span>
+<span class="ln">28</span>  <span class="n">action</span><span class="p">.</span><span class="n">sa_sigaction</span> <span class="o">=</span> <span class="n">debuggerd_signal_handler</span><span class="p">;</span>
+<span class="ln">29</span>  <span class="c1">//SA_RESTART代表函数程序不会异常终止，比如read，write等
+</span><span class="ln">30</span><span class="c1"></span>  <span class="n">action</span><span class="p">.</span><span class="n">sa_flags</span> <span class="o">=</span> <span class="n">SA_RESTART</span> <span class="o">|</span> <span class="n">SA_SIGINFO</span><span class="p">;</span>
+<span class="ln">31</span>  <span class="c1">//如果可用，使用备用信号堆栈，这样我们可以捕捉堆栈溢出。
+</span><span class="ln">32</span><span class="c1"></span>  <span class="n">action</span><span class="p">.</span><span class="n">sa_flags</span> <span class="o">|=</span> <span class="n">SA_ONSTACK</span><span class="p">;</span>
+<span class="ln">33</span>  <span class="c1">//信号注册函数如下所示
+</span><span class="ln">34</span><span class="c1"></span>  <span class="n">debuggerd_register_handlers</span><span class="p">(</span><span class="o">&amp;</span><span class="n">action</span><span class="p">);</span>
+<span class="ln">35</span><span class="p">}</span>
+</code></pre></div><blockquote>
+<p><code>debuggerd_register_handlers</code>注册了8种信号，<code>SIGABRT(6)</code>、<code>SIGBUS(7)</code>、<code>SIGFPE(8)</code>、<code>SIGILL(4)</code>、<code>SIGSEGV(11)</code>、<code>SIGSTKFLT(16)</code>、<code>SIGSYS(31)</code>、<code>SIGTRAP(5)</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/debuggerd/include/debuggerd/handler.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">__attribute__</span><span class="p">((</span><span class="n">__unused__</span><span class="p">))</span> <span class="n">debuggerd_register_handlers</span><span class="p">(</span><span class="k">struct</span> <span class="nc">sigaction</span><span class="o">*</span> <span class="n">action</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="kt">char</span> <span class="n">value</span><span class="p">[</span><span class="n">PROP_VALUE_MAX</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#34;&#34;</span><span class="p">;</span>
+<span class="ln"> 4</span>  <span class="kt">bool</span> <span class="n">enabled</span> <span class="o">=</span>
+<span class="ln"> 5</span>      <span class="o">!</span><span class="p">(</span><span class="n">__system_property_get</span><span class="p">(</span><span class="s">&#34;ro.debuggable&#34;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">strcmp</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s">&#34;1&#34;</span><span class="p">)</span> <span class="o">&amp;&amp;</span>
+<span class="ln"> 6</span>        <span class="n">__system_property_get</span><span class="p">(</span><span class="s">&#34;debug.debuggerd.disable&#34;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">strcmp</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s">&#34;1&#34;</span><span class="p">));</span>
+<span class="ln"> 7</span>  <span class="k">if</span> <span class="p">(</span><span class="n">enabled</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 8</span>    <span class="n">sigaction</span><span class="p">(</span><span class="n">SIGABRT</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">);</span>
+<span class="ln"> 9</span>    <span class="n">sigaction</span><span class="p">(</span><span class="n">SIGBUS</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">);</span>
+<span class="ln">10</span>    <span class="n">sigaction</span><span class="p">(</span><span class="n">SIGFPE</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">);</span>
+<span class="ln">11</span>    <span class="n">sigaction</span><span class="p">(</span><span class="n">SIGILL</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">);</span>
+<span class="ln">12</span>    <span class="n">sigaction</span><span class="p">(</span><span class="n">SIGSEGV</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">);</span>
+<span class="ln">13</span>    <span class="n">sigaction</span><span class="p">(</span><span class="n">SIGSTKFLT</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">);</span>
+<span class="ln">14</span>    <span class="n">sigaction</span><span class="p">(</span><span class="n">SIGSYS</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="n">sigaction</span><span class="p">(</span><span class="n">SIGTRAP</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">);</span>
+<span class="ln">16</span>  <span class="p">}</span>
+<span class="ln">17</span>
+<span class="ln">18</span>  <span class="n">sigaction</span><span class="p">(</span><span class="n">BIONIC_SIGNAL_DEBUGGER</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">);</span>
+<span class="ln">19</span><span class="p">}</span>
+</code></pre></div><p>对应的信号为</p>
+<div class="highlight"><pre class="chroma"><code class="language-txt" data-lang="txt"><span class="ln"> 1</span> 1) SIGHUP       2) SIGINT       3) SIGQUIT      4) SIGILL       5) SIGTRAP
+<span class="ln"> 2</span> 6) SIGABRT      7) SIGBUS       8) SIGFPE       9) SIGKILL     10) SIGUSR1
+<span class="ln"> 3</span>11) SIGSEGV     12) SIGUSR2     13) SIGPIPE     14) SIGALRM     15) SIGTERM
+<span class="ln"> 4</span>16) SIGSTKFLT   17) SIGCHLD     18) SIGCONT     19) SIGSTOP     20) SIGTSTP
+<span class="ln"> 5</span>21) SIGTTIN     22) SIGTTOU     23) SIGURG      24) SIGXCPU     25) SIGXFSZ
+<span class="ln"> 6</span>26) SIGVTALRM   27) SIGPROF     28) SIGWINCH    29) SIGIO       30) SIGPWR
+<span class="ln"> 7</span>31) SIGSYS      34) SIGRTMIN    35) SIGRTMIN+1  36) SIGRTMIN+2  37) SIGRTMIN+3
+<span class="ln"> 8</span>38) SIGRTMIN+4  39) SIGRTMIN+5  40) SIGRTMIN+6  41) SIGRTMIN+7  42) SIGRTMIN+8
+<span class="ln"> 9</span>43) SIGRTMIN+9  44) SIGRTMIN+10 45) SIGRTMIN+11 46) SIGRTMIN+12 47) SIGRTMIN+13
+<span class="ln">10</span>48) SIGRTMIN+14 49) SIGRTMIN+15 50) SIGRTMAX-14 51) SIGRTMAX-13 52) SIGRTMAX-12
+<span class="ln">11</span>53) SIGRTMAX-11 54) SIGRTMAX-10 55) SIGRTMAX-9  56) SIGRTMAX-8  57) SIGRTMAX-7
+<span class="ln">12</span>58) SIGRTMAX-6  59) SIGRTMAX-5  60) SIGRTMAX-4  61) SIGRTMAX-3  62) SIGRTMAX-2
+<span class="ln">13</span>63) SIGRTMAX-1  64) SIGRTMAX
+</code></pre></div></blockquote>
+<h2 id="15debuggerd_signal_handler">1.5debuggerd_signal_handler</h2>
+<p>上述信号一旦产生，直接调用到这里</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/debuggerd/handler/debuggerd_handler.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">debuggerd_signal_handler</span><span class="p">(</span><span class="kt">int</span> <span class="n">signal_number</span><span class="p">,</span> <span class="n">siginfo_t</span><span class="o">*</span> <span class="n">info</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="p">...</span>
+<span class="ln"> 4</span>  <span class="k">if</span> <span class="p">(</span><span class="n">signal_number</span> <span class="o">==</span> <span class="n">BIONIC_SIGNAL_DEBUGGER</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 5</span>      <span class="p">...</span>
+<span class="ln"> 6</span>  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln"> 7</span>    <span class="k">if</span> <span class="p">(</span><span class="n">g_callbacks</span><span class="p">.</span><span class="n">get_abort_message</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 8</span>      <span class="n">abort_message</span> <span class="o">=</span> <span class="n">g_callbacks</span><span class="p">.</span><span class="n">get_abort_message</span><span class="p">();</span>
+<span class="ln"> 9</span>    <span class="p">}</span>
+<span class="ln">10</span>    <span class="k">if</span> <span class="p">(</span><span class="n">g_callbacks</span><span class="p">.</span><span class="n">get_gwp_asan_state</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">11</span>      <span class="n">gwp_asan_state</span> <span class="o">=</span> <span class="n">g_callbacks</span><span class="p">.</span><span class="n">get_gwp_asan_state</span><span class="p">();</span>
+<span class="ln">12</span>    <span class="p">}</span>
+<span class="ln">13</span>    <span class="k">if</span> <span class="p">(</span><span class="n">g_callbacks</span><span class="p">.</span><span class="n">get_gwp_asan_metadata</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">14</span>      <span class="n">gwp_asan_metadata</span> <span class="o">=</span> <span class="n">g_callbacks</span><span class="p">.</span><span class="n">get_gwp_asan_metadata</span><span class="p">();</span>
+<span class="ln">15</span>    <span class="p">}</span>
+<span class="ln">16</span>  <span class="p">}</span>
+<span class="ln">17</span>  <span class="c1">//打印第一句信息
+</span><span class="ln">18</span><span class="c1"></span>  <span class="c1">//Fatal signal 11 (SIGSEGV), code 1, fault addr 0xa in tid 361 (demo), pid 361 (demo)
+</span><span class="ln">19</span><span class="c1"></span>  <span class="n">log_signal_summary</span><span class="p">(</span><span class="n">info</span><span class="p">);</span>
+<span class="ln">20</span>
+<span class="ln">21</span>  <span class="n">debugger_thread_info</span> <span class="n">thread_info</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln">22</span>      <span class="p">.</span><span class="n">crashing_tid</span> <span class="o">=</span> <span class="n">__gettid</span><span class="p">(),</span>
+<span class="ln">23</span>      <span class="p">.</span><span class="n">pseudothread_tid</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+<span class="ln">24</span>      <span class="p">.</span><span class="n">siginfo</span> <span class="o">=</span> <span class="n">info</span><span class="p">,</span>
+<span class="ln">25</span>      <span class="p">.</span><span class="n">ucontext</span> <span class="o">=</span> <span class="n">context</span><span class="p">,</span>
+<span class="ln">26</span>      <span class="p">.</span><span class="n">abort_msg</span> <span class="o">=</span> <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">uintptr_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">abort_message</span><span class="p">),</span>
+<span class="ln">27</span>      <span class="p">.</span><span class="n">fdsan_table</span> <span class="o">=</span> <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">uintptr_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">android_fdsan_get_fd_table</span><span class="p">()),</span>
+<span class="ln">28</span>      <span class="p">.</span><span class="n">gwp_asan_state</span> <span class="o">=</span> <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">uintptr_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">gwp_asan_state</span><span class="p">),</span>
+<span class="ln">29</span>      <span class="p">.</span><span class="n">gwp_asan_metadata</span> <span class="o">=</span> <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">uintptr_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">gwp_asan_metadata</span><span class="p">),</span>
+<span class="ln">30</span>  <span class="p">};</span>
+<span class="ln">31</span>  <span class="c1">//开启一个新线程，设置CLONE_CHILD_SETTID之后会把thread_info.pseudothread_tid进入函数设置为新线程pid，退出又恢复
+</span><span class="ln">32</span><span class="c1"></span>  <span class="n">pid_t</span> <span class="n">child_pid</span> <span class="o">=</span>
+<span class="ln">33</span>    <span class="n">clone</span><span class="p">(</span><span class="n">debuggerd_dispatch_pseudothread</span><span class="p">,</span> <span class="n">pseudothread_stack</span><span class="p">,</span>
+<span class="ln">34</span>          <span class="n">CLONE_THREAD</span> <span class="o">|</span> <span class="n">CLONE_SIGHAND</span> <span class="o">|</span> <span class="n">CLONE_VM</span> <span class="o">|</span> <span class="n">CLONE_CHILD_SETTID</span> <span class="o">|</span> <span class="n">CLONE_CHILD_CLEARTID</span><span class="p">,</span>
+<span class="ln">35</span>          <span class="o">&amp;</span><span class="n">thread_info</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">thread_info</span><span class="p">.</span><span class="n">pseudothread_tid</span><span class="p">);</span>
+<span class="ln">36</span>  <span class="k">if</span> <span class="p">(</span><span class="n">child_pid</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">37</span>    <span class="n">fatal_errno</span><span class="p">(</span><span class="s">&#34;failed to spawn debuggerd dispatch thread&#34;</span><span class="p">);</span>
+<span class="ln">38</span>  <span class="p">}</span>
+<span class="ln">39</span>  <span class="c1">//主线程等待
+</span><span class="ln">40</span><span class="c1"></span>  <span class="c1">//正好对应上述线程的进入和退出，等待进入函数debuggerd_dispatch_pseudothread
+</span><span class="ln">41</span><span class="c1"></span>  <span class="n">futex_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">thread_info</span><span class="p">.</span><span class="n">pseudothread_tid</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln">42</span>  <span class="c1">//等待退出函数debuggerd_dispatch_pseudothread  
+</span><span class="ln">43</span><span class="c1"></span>  <span class="n">futex_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">thread_info</span><span class="p">.</span><span class="n">pseudothread_tid</span><span class="p">,</span> <span class="n">child_pid</span><span class="p">);</span>
+<span class="ln">44</span>  <span class="p">...</span>
+<span class="ln">45</span><span class="p">}</span>
+</code></pre></div><h2 id="16debuggerd_dispatch_pseudothread">1.6debuggerd_dispatch_pseudothread</h2>
+<p>开启子线程</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/debuggerd/handler/debuggerd_handler.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="kt">int</span> <span class="nf">debuggerd_dispatch_pseudothread</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">arg</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="n">debugger_thread_info</span><span class="o">*</span> <span class="n">thread_info</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">debugger_thread_info</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">arg</span><span class="p">);</span>
+<span class="ln"> 4</span>  <span class="c1">//使用系统调用关闭socket句柄，不使用close用来避免bionic的文件描述符所有权检查
+</span><span class="ln"> 5</span><span class="c1"></span>  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">1024</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 6</span>    <span class="n">syscall</span><span class="p">(</span><span class="n">__NR_close</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+<span class="ln"> 7</span>  <span class="p">}</span>
+<span class="ln"> 8</span>  <span class="c1">//创建四个管道，后续的操作主要在管道中进行	
+</span><span class="ln"> 9</span><span class="c1"></span>  <span class="n">unique_fd</span> <span class="n">input_read</span><span class="p">,</span> <span class="n">input_write</span><span class="p">;</span>
+<span class="ln">10</span>  <span class="n">unique_fd</span> <span class="n">output_read</span><span class="p">,</span> <span class="n">output_write</span><span class="p">;</span>
+<span class="ln">11</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">Pipe</span><span class="p">(</span><span class="o">&amp;</span><span class="n">input_read</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">input_write</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="o">||</span> <span class="o">!</span><span class="n">Pipe</span><span class="p">(</span><span class="o">&amp;</span><span class="n">output_read</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">output_write</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">12</span>    <span class="n">fatal_errno</span><span class="p">(</span><span class="s">&#34;failed to create pipe&#34;</span><span class="p">);</span>
+<span class="ln">13</span>  <span class="p">}</span>
+<span class="ln">14</span>  <span class="p">...</span>
+<span class="ln">15</span>  <span class="k">struct</span> <span class="nc">iovec</span> <span class="n">iovs</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln">16</span>      <span class="p">{.</span><span class="n">iov_base</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">version</span><span class="p">,</span> <span class="p">.</span><span class="n">iov_len</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">version</span><span class="p">)},</span>
+<span class="ln">17</span>      <span class="p">{.</span><span class="n">iov_base</span> <span class="o">=</span> <span class="n">thread_info</span><span class="o">-&gt;</span><span class="n">siginfo</span><span class="p">,</span> <span class="p">.</span><span class="n">iov_len</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">siginfo_t</span><span class="p">)},</span>
+<span class="ln">18</span>      <span class="p">{.</span><span class="n">iov_base</span> <span class="o">=</span> <span class="n">thread_info</span><span class="o">-&gt;</span><span class="n">ucontext</span><span class="p">,</span> <span class="p">.</span><span class="n">iov_len</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">ucontext_t</span><span class="p">)},</span>
+<span class="ln">19</span>      <span class="p">{.</span><span class="n">iov_base</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">thread_info</span><span class="o">-&gt;</span><span class="n">abort_msg</span><span class="p">,</span> <span class="p">.</span><span class="n">iov_len</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">uintptr_t</span><span class="p">)},</span>
+<span class="ln">20</span>      <span class="p">{.</span><span class="n">iov_base</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">thread_info</span><span class="o">-&gt;</span><span class="n">fdsan_table</span><span class="p">,</span> <span class="p">.</span><span class="n">iov_len</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">uintptr_t</span><span class="p">)},</span>
+<span class="ln">21</span>      <span class="p">{.</span><span class="n">iov_base</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">thread_info</span><span class="o">-&gt;</span><span class="n">gwp_asan_state</span><span class="p">,</span> <span class="p">.</span><span class="n">iov_len</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">uintptr_t</span><span class="p">)},</span>
+<span class="ln">22</span>      <span class="p">{.</span><span class="n">iov_base</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">thread_info</span><span class="o">-&gt;</span><span class="n">gwp_asan_metadata</span><span class="p">,</span> <span class="p">.</span><span class="n">iov_len</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">uintptr_t</span><span class="p">)},</span>
+<span class="ln">23</span>  <span class="p">};</span>
+<span class="ln">24</span>  <span class="c1">//当前线程写入一个iovs给管道句柄output_write，后续在crash_dump进程中接收
+</span><span class="ln">25</span><span class="c1"></span>  <span class="n">ssize_t</span> <span class="n">rc</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">writev</span><span class="p">(</span><span class="n">output_write</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">iovs</span><span class="p">,</span> <span class="n">arraysize</span><span class="p">(</span><span class="n">iovs</span><span class="p">)));</span>
+<span class="ln">26</span>
+<span class="ln">27</span>
+<span class="ln">28</span>  <span class="c1">//fork一个子进程，这里运用了clone的方式来fork，用来避免调用pthread_atfork处理程序
+</span><span class="ln">29</span><span class="c1"></span>  <span class="n">pid_t</span> <span class="n">crash_dump_pid</span> <span class="o">=</span> <span class="n">__fork</span><span class="p">();</span>
+<span class="ln">30</span>  <span class="k">if</span> <span class="p">(</span><span class="n">crash_dump_pid</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">31</span>    <span class="n">async_safe_format_log</span><span class="p">(</span><span class="n">ANDROID_LOG_FATAL</span><span class="p">,</span> <span class="s">&#34;libc&#34;</span><span class="p">,</span>
+<span class="ln">32</span>                          <span class="s">&#34;failed to fork in debuggerd signal handler: %s&#34;</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">33</span>  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">crash_dump_pid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">34</span>    <span class="c1">//子进程最终通过调用/system/bin/crash_dump调用到这个进程中
+</span><span class="ln">35</span><span class="c1"></span>    <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">dup2</span><span class="p">(</span><span class="n">input_write</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">STDOUT_FILENO</span><span class="p">));</span>
+<span class="ln">36</span>    <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">dup2</span><span class="p">(</span><span class="n">output_read</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">STDIN_FILENO</span><span class="p">));</span>
+<span class="ln">37</span>    <span class="n">input_read</span><span class="p">.</span><span class="n">reset</span><span class="p">();</span>
+<span class="ln">38</span>    <span class="n">input_write</span><span class="p">.</span><span class="n">reset</span><span class="p">();</span>
+<span class="ln">39</span>    <span class="n">output_read</span><span class="p">.</span><span class="n">reset</span><span class="p">();</span>
+<span class="ln">40</span>    <span class="n">output_write</span><span class="p">.</span><span class="n">reset</span><span class="p">();</span>
+<span class="ln">41</span>    <span class="p">...</span>  
+<span class="ln">42</span>    <span class="n">async_safe_format_buffer</span><span class="p">(</span><span class="n">main_tid</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">main_tid</span><span class="p">),</span> <span class="s">&#34;%d&#34;</span><span class="p">,</span> <span class="n">thread_info</span><span class="o">-&gt;</span><span class="n">crashing_tid</span><span class="p">);</span>
+<span class="ln">43</span>    <span class="n">async_safe_format_buffer</span><span class="p">(</span><span class="n">pseudothread_tid</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">pseudothread_tid</span><span class="p">),</span> <span class="s">&#34;%d&#34;</span><span class="p">,</span>
+<span class="ln">44</span>                             <span class="n">thread_info</span><span class="o">-&gt;</span><span class="n">pseudothread_tid</span><span class="p">);</span>
+<span class="ln">45</span>    <span class="n">async_safe_format_buffer</span><span class="p">(</span><span class="n">debuggerd_dump_type</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">debuggerd_dump_type</span><span class="p">),</span> <span class="s">&#34;%d&#34;</span><span class="p">,</span>
+<span class="ln">46</span>                             <span class="n">get_dump_type</span><span class="p">(</span><span class="n">thread_info</span><span class="p">));</span>
+<span class="ln">47</span>    <span class="c1">//这里传入三个参数
+</span><span class="ln">48</span><span class="c1"></span>    <span class="c1">//main_tid为当前crash进程号，
+</span><span class="ln">49</span><span class="c1"></span>    <span class="c1">//pseudothread_tid为当前的子线程号，即之前主线程clone出来的线程号
+</span><span class="ln">50</span><span class="c1"></span>    <span class="c1">//debuggerd_dump_type为kDebuggerdTombstone  
+</span><span class="ln">51</span><span class="c1"></span>    <span class="n">execle</span><span class="p">(</span><span class="n">CRASH_DUMP_PATH</span><span class="p">,</span> <span class="n">CRASH_DUMP_NAME</span><span class="p">,</span> <span class="n">main_tid</span><span class="p">,</span> <span class="n">pseudothread_tid</span><span class="p">,</span> <span class="n">debuggerd_dump_type</span><span class="p">,</span>
+<span class="ln">52</span>           <span class="k">nullptr</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">);</span>
+<span class="ln">53</span>    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">54</span>  <span class="p">}</span>
+<span class="ln">55</span>
+<span class="ln">56</span>  <span class="n">input_write</span><span class="p">.</span><span class="n">reset</span><span class="p">();</span>
+<span class="ln">57</span>  <span class="n">output_read</span><span class="p">.</span><span class="n">reset</span><span class="p">();</span>
+<span class="ln">58</span>  <span class="c1">//父进程等待，通过管道句柄input_read接收到刚刚已经fork的子进程的一个\1
+</span><span class="ln">59</span><span class="c1"></span>  <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">4</span><span class="p">];</span>
+<span class="ln">60</span>  <span class="n">rc</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">read</span><span class="p">(</span><span class="n">input_read</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="o">&amp;</span><span class="n">buf</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">)));</span>
+<span class="ln">61</span>  <span class="k">if</span> <span class="p">(</span><span class="n">rc</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">62</span>    <span class="n">async_safe_format_log</span><span class="p">(</span><span class="n">ANDROID_LOG_FATAL</span><span class="p">,</span> <span class="s">&#34;libc&#34;</span><span class="p">,</span> <span class="s">&#34;read of IPC pipe failed: %s&#34;</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">63</span>    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">64</span>  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">rc</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">65</span>    <span class="n">async_safe_format_log</span><span class="p">(</span><span class="n">ANDROID_LOG_FATAL</span><span class="p">,</span> <span class="s">&#34;libc&#34;</span><span class="p">,</span> <span class="s">&#34;crash_dump helper failed to exec&#34;</span><span class="p">);</span>
+<span class="ln">66</span>    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">67</span>  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">rc</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">68</span>    <span class="n">async_safe_format_log</span><span class="p">(</span><span class="n">ANDROID_LOG_FATAL</span><span class="p">,</span> <span class="s">&#34;libc&#34;</span><span class="p">,</span>
+<span class="ln">69</span>                          <span class="s">&#34;read of IPC pipe returned unexpected value: %zd&#34;</span><span class="p">,</span> <span class="n">rc</span><span class="p">);</span>
+<span class="ln">70</span>    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">71</span>  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">buf</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="sc">&#39;\1&#39;</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">72</span>    <span class="n">async_safe_format_log</span><span class="p">(</span><span class="n">ANDROID_LOG_FATAL</span><span class="p">,</span> <span class="s">&#34;libc&#34;</span><span class="p">,</span> <span class="s">&#34;crash_dump helper reported failure&#34;</span><span class="p">);</span>
+<span class="ln">73</span>    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">74</span>  <span class="p">}</span>
+<span class="ln">75</span>
+<span class="ln">76</span>  <span class="c1">// Crash_dump正在跟踪我们，复制我们的地址空间的副本供它使用
+</span><span class="ln">77</span><span class="c1"></span>  <span class="n">create_vm_process</span><span class="p">();</span>
+<span class="ln">78</span>  <span class="c1">//等待子进程结束，防止变成僵尸进程
+</span><span class="ln">79</span><span class="c1"></span>  <span class="kt">int</span> <span class="n">status</span><span class="p">;</span>
+<span class="ln">80</span>  <span class="k">if</span> <span class="p">(</span><span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">waitpid</span><span class="p">(</span><span class="n">crash_dump_pid</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">status</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">81</span>    <span class="n">async_safe_format_log</span><span class="p">(</span><span class="n">ANDROID_LOG_FATAL</span><span class="p">,</span> <span class="s">&#34;libc&#34;</span><span class="p">,</span> <span class="s">&#34;failed to wait for crash_dump helper: %s&#34;</span><span class="p">,</span>
+<span class="ln">82</span>                          <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">83</span>  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">WIFSTOPPED</span><span class="p">(</span><span class="n">status</span><span class="p">)</span> <span class="o">||</span> <span class="n">WIFSIGNALED</span><span class="p">(</span><span class="n">status</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">84</span>    <span class="n">async_safe_format_log</span><span class="p">(</span><span class="n">ANDROID_LOG_FATAL</span><span class="p">,</span> <span class="s">&#34;libc&#34;</span><span class="p">,</span> <span class="s">&#34;crash_dump helper crashed or stopped&#34;</span><span class="p">);</span>
+<span class="ln">85</span>  <span class="p">}</span>
+<span class="ln">86</span>  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">87</span><span class="p">}</span>
+</code></pre></div><h2 id="17crash_dump">1.7crash_dump</h2>
+<p>进入/system/bin/crash_dump进程的入口函数</p>
+<ul>
+<li>初始化，包括初始化相关信号处理，初始化管道，并且fork一个子进程</li>
+<li>子父进程处理，父进程等待子进程退出，子进程解析传入的三个参数，传入子进程的iovs，并将相关crash的子线程保存</li>
+<li>客户端连接tombstoned服务端，并且返回一个文件句柄g_output_fd</li>
+<li>打印部分堆栈信息，将所有堆栈信息写入到句柄g_output_fd中去</li>
+<li>通知AMS做进一步的堆栈处理</li>
+<li>通知tombstoned服务端，将<code>tombstone</code>文件生成</li>
+</ul>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">  1</span><span class="c1">//system/core/debuggerd/crash_dump.cpp
+</span><span class="ln">  2</span><span class="c1"></span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">**</span> <span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">  3</span>  <span class="c1">//初始化相关信号处理  
+</span><span class="ln">  4</span><span class="c1"></span>  <span class="n">DefuseSignalHandlers</span><span class="p">();</span>
+<span class="ln">  5</span>  <span class="n">InstallSigPipeHandler</span><span class="p">();</span>
+<span class="ln">  6</span>  <span class="c1">// 内核中似乎有一个错误，我们的死亡会导致SIGHUP发送到我们的进程组
+</span><span class="ln">  7</span><span class="c1"></span>  <span class="c1">//如果我们退出，而它已经停止了工作(例如，因为wait_for_gdb)。
+</span><span class="ln">  8</span><span class="c1"></span>  <span class="c1">//使用setsid创建一个新的进程组来避免碰到这个问题。
+</span><span class="ln">  9</span><span class="c1"></span>  <span class="n">setsid</span><span class="p">();</span>
+<span class="ln"> 10</span>  <span class="c1">//打开进程的/proc/pid作为target_proc_fd句柄
+</span><span class="ln"> 11</span><span class="c1"></span>  <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">target_proc_path</span> <span class="o">=</span> <span class="s">&#34;/proc/&#34;</span> <span class="o">+</span> <span class="n">std</span><span class="o">::</span><span class="n">to_string</span><span class="p">(</span><span class="n">target_process</span><span class="p">);</span>
+<span class="ln"> 12</span>  <span class="kt">int</span> <span class="n">target_proc_fd</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="n">target_proc_path</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="n">O_DIRECTORY</span> <span class="o">|</span> <span class="n">O_RDONLY</span><span class="p">);</span>
+<span class="ln"> 13</span>  <span class="c1">//把之前的两个句柄还原回来
+</span><span class="ln"> 14</span><span class="c1"></span>  <span class="n">unique_fd</span> <span class="n">output_pipe</span><span class="p">(</span><span class="n">dup</span><span class="p">(</span><span class="n">STDOUT_FILENO</span><span class="p">));</span>
+<span class="ln"> 15</span>  <span class="n">unique_fd</span> <span class="n">input_pipe</span><span class="p">(</span><span class="n">dup</span><span class="p">(</span><span class="n">STDIN_FILENO</span><span class="p">));</span>
+<span class="ln"> 16</span>  <span class="c1">//这里的句柄是为了判断是否还有数据
+</span><span class="ln"> 17</span><span class="c1"></span>  <span class="n">unique_fd</span> <span class="n">fork_exit_read</span><span class="p">,</span> <span class="n">fork_exit_write</span><span class="p">;</span>
+<span class="ln"> 18</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">Pipe</span><span class="p">(</span><span class="o">&amp;</span><span class="n">fork_exit_read</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">fork_exit_write</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln"> 19</span>    <span class="n">PLOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;failed to create pipe&#34;</span><span class="p">;</span>
+<span class="ln"> 20</span>  <span class="p">}</span>
+<span class="ln"> 21</span>  <span class="c1">//这里创建一个新子进程和当前进程一致
+</span><span class="ln"> 22</span><span class="c1"></span>  <span class="n">pid_t</span> <span class="n">forkpid</span> <span class="o">=</span> <span class="n">fork</span><span class="p">();</span>
+<span class="ln"> 23</span>  <span class="k">if</span> <span class="p">(</span><span class="n">forkpid</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 24</span>    <span class="n">PLOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;fork failed&#34;</span><span class="p">;</span>
+<span class="ln"> 25</span>  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">forkpid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 26</span>    <span class="c1">//子进程保留写，其实是没有数据可写  
+</span><span class="ln"> 27</span><span class="c1"></span>    <span class="n">fork_exit_read</span><span class="p">.</span><span class="n">reset</span><span class="p">();</span>
+<span class="ln"> 28</span>  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln"> 29</span>    <span class="c1">//我们需要伪线程存在，直到我们开始验证vm pid。它做的最后一件事是阻塞我们的waitpid，所以等待直到我们的child告诉我们死亡
+</span><span class="ln"> 30</span><span class="c1"></span>    <span class="c1">//阻塞，直到子进程退出，当前的父进程也退出  
+</span><span class="ln"> 31</span><span class="c1"></span>    <span class="n">fork_exit_write</span><span class="p">.</span><span class="n">reset</span><span class="p">();</span>
+<span class="ln"> 32</span>    <span class="kt">char</span> <span class="n">buf</span><span class="p">;</span>
+<span class="ln"> 33</span>    <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">read</span><span class="p">(</span><span class="n">fork_exit_read</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="o">&amp;</span><span class="n">buf</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">)));</span>
+<span class="ln"> 34</span>    <span class="n">_exit</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="ln"> 35</span>  <span class="p">}</span>
+<span class="ln"> 36</span>  <span class="c1">//子进程
+</span><span class="ln"> 37</span><span class="c1"></span>  <span class="c1">//提取出传入的三个参数，pseudothread_tid为上述clone的子线程号，dump_type为kDebuggerdTombstone
+</span><span class="ln"> 38</span><span class="c1"></span>  <span class="n">Initialize</span><span class="p">(</span><span class="n">argv</span><span class="p">);</span>
+<span class="ln"> 39</span>  <span class="n">ParseArgs</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">pseudothread_tid</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">dump_type</span><span class="p">);</span>
+<span class="ln"> 40</span>  <span class="c1">//获取crash进程所有的线程号
+</span><span class="ln"> 41</span><span class="c1"></span>  <span class="n">std</span><span class="o">::</span><span class="n">set</span><span class="o">&lt;</span><span class="n">pid_t</span><span class="o">&gt;</span> <span class="n">threads</span><span class="p">;</span>
+<span class="ln"> 42</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">android</span><span class="o">::</span><span class="n">procinfo</span><span class="o">::</span><span class="n">GetProcessTids</span><span class="p">(</span><span class="n">g_target_thread</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">threads</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln"> 43</span>    <span class="n">PLOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;failed to get process threads&#34;</span><span class="p">;</span>
+<span class="ln"> 44</span>  <span class="p">}</span>
+<span class="ln"> 45</span>
+<span class="ln"> 46</span>  <span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">pid_t</span><span class="p">,</span> <span class="n">ThreadInfo</span><span class="o">&gt;</span> <span class="n">thread_info</span><span class="p">;</span>
+<span class="ln"> 47</span>  <span class="n">siginfo_t</span> <span class="n">siginfo</span><span class="p">;</span>
+<span class="ln"> 48</span>  <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">error</span><span class="p">;</span>
+<span class="ln"> 49</span>
+<span class="ln"> 50</span>  <span class="p">{</span>
+<span class="ln"> 51</span>    <span class="n">ATRACE_NAME</span><span class="p">(</span><span class="s">&#34;ptrace&#34;</span><span class="p">);</span>
+<span class="ln"> 52</span>    <span class="k">for</span> <span class="p">(</span><span class="n">pid_t</span> <span class="kr">thread</span> <span class="o">:</span> <span class="n">threads</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 53</span>      <span class="k">if</span> <span class="p">(</span><span class="kr">thread</span> <span class="o">==</span> <span class="n">pseudothread_tid</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 54</span>        <span class="k">continue</span><span class="p">;</span>
+<span class="ln"> 55</span>      <span class="p">}</span>
+<span class="ln"> 56</span>      <span class="n">ThreadInfo</span> <span class="n">info</span><span class="p">;</span>
+<span class="ln"> 57</span>      <span class="n">info</span><span class="p">.</span><span class="n">pid</span> <span class="o">=</span> <span class="n">target_process</span><span class="p">;</span>
+<span class="ln"> 58</span>      <span class="n">info</span><span class="p">.</span><span class="n">tid</span> <span class="o">=</span> <span class="kr">thread</span><span class="p">;</span>
+<span class="ln"> 59</span>      <span class="n">info</span><span class="p">.</span><span class="n">uid</span> <span class="o">=</span> <span class="n">getuid</span><span class="p">();</span>
+<span class="ln"> 60</span>      <span class="n">info</span><span class="p">.</span><span class="n">process_name</span> <span class="o">=</span> <span class="n">process_name</span><span class="p">;</span>
+<span class="ln"> 61</span>      <span class="n">info</span><span class="p">.</span><span class="n">thread_name</span> <span class="o">=</span> <span class="n">get_thread_name</span><span class="p">(</span><span class="kr">thread</span><span class="p">);</span>
+<span class="ln"> 62</span>      <span class="k">if</span> <span class="p">(</span><span class="kr">thread</span> <span class="o">==</span> <span class="n">g_target_thread</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 63</span>        <span class="c1">//最重要的是这个，这里的input_pipe对应之前crash子线程中的iovs，这里是真正收集到堆栈信息的函数
+</span><span class="ln"> 64</span><span class="c1"></span>        <span class="n">ReadCrashInfo</span><span class="p">(</span><span class="n">input_pipe</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">siginfo</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">info</span><span class="p">.</span><span class="n">registers</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">abort_msg_address</span><span class="p">,</span>
+<span class="ln"> 65</span>                      <span class="o">&amp;</span><span class="n">fdsan_table_address</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">gwp_asan_state</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">gwp_asan_metadata</span><span class="p">);</span>
+<span class="ln"> 66</span>        <span class="n">info</span><span class="p">.</span><span class="n">siginfo</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">siginfo</span><span class="p">;</span>
+<span class="ln"> 67</span>        <span class="n">info</span><span class="p">.</span><span class="n">signo</span> <span class="o">=</span> <span class="n">info</span><span class="p">.</span><span class="n">siginfo</span><span class="o">-&gt;</span><span class="n">si_signo</span><span class="p">;</span>
+<span class="ln"> 68</span>      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln"> 69</span>        <span class="n">info</span><span class="p">.</span><span class="n">registers</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="n">unwindstack</span><span class="o">::</span><span class="n">Regs</span><span class="o">::</span><span class="n">RemoteGet</span><span class="p">(</span><span class="kr">thread</span><span class="p">));</span>
+<span class="ln"> 70</span>        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">info</span><span class="p">.</span><span class="n">registers</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 71</span>          <span class="n">PLOG</span><span class="p">(</span><span class="n">WARNING</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;failed to fetch registers for thread &#34;</span> <span class="o">&lt;&lt;</span> <span class="kr">thread</span><span class="p">;</span>
+<span class="ln"> 72</span>          <span class="n">ptrace</span><span class="p">(</span><span class="n">PTRACE_DETACH</span><span class="p">,</span> <span class="kr">thread</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="ln"> 73</span>          <span class="k">continue</span><span class="p">;</span>
+<span class="ln"> 74</span>        <span class="p">}</span>
+<span class="ln"> 75</span>      <span class="p">}</span>
+<span class="ln"> 76</span>
+<span class="ln"> 77</span>      <span class="n">thread_info</span><span class="p">[</span><span class="kr">thread</span><span class="p">]</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">info</span><span class="p">);</span>
+<span class="ln"> 78</span>    <span class="p">}</span>
+<span class="ln"> 79</span>  <span class="p">}</span>
+<span class="ln"> 80</span>
+<span class="ln"> 81</span>  <span class="c1">// Trace the pseudothread with PTRACE_O_TRACECLONE and tell it to fork.
+</span><span class="ln"> 82</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">ptrace_seize_thread</span><span class="p">(</span><span class="n">target_proc_fd</span><span class="p">,</span> <span class="n">pseudothread_tid</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">error</span><span class="p">,</span> <span class="n">PTRACE_O_TRACECLONE</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln"> 83</span>    <span class="n">LOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;failed to seize pseudothread: &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">error</span><span class="p">;</span>
+<span class="ln"> 84</span>  <span class="p">}</span>
+<span class="ln"> 85</span>  <span class="c1">//通过管道句柄output_pipe，回写给之前crash子线程
+</span><span class="ln"> 86</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">write</span><span class="p">(</span><span class="n">output_pipe</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="s">&#34;</span><span class="se">\1</span><span class="s">&#34;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 87</span>    <span class="n">PLOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;failed to write to pseudothread&#34;</span><span class="p">;</span>
+<span class="ln"> 88</span>  <span class="p">}</span>
+<span class="ln"> 89</span>  <span class="c1">//这里会double fork，用于作为守护进程
+</span><span class="ln"> 90</span><span class="c1"></span>  <span class="c1">//第一次fork是为了脱离父进程，setsid让子进程变成session leader，脱离控制终端
+</span><span class="ln"> 91</span><span class="c1"></span>  <span class="c1">//第二次fork是因为session leader有可能会获取控制终端，这样终端断开会发送信号到该进程，导致退出
+</span><span class="ln"> 92</span><span class="c1"></span>  <span class="c1">//并且开始ptrace各个线程
+</span><span class="ln"> 93</span><span class="c1"></span>  <span class="n">pid_t</span> <span class="n">vm_pid</span> <span class="o">=</span> <span class="n">wait_for_vm_process</span><span class="p">(</span><span class="n">pseudothread_tid</span><span class="p">);</span>
+<span class="ln"> 94</span>  <span class="k">if</span> <span class="p">(</span><span class="n">ptrace</span><span class="p">(</span><span class="n">PTRACE_DETACH</span><span class="p">,</span> <span class="n">pseudothread_tid</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 95</span>    <span class="n">PLOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;failed to detach from pseudothread&#34;</span><span class="p">;</span>
+<span class="ln"> 96</span>  <span class="p">}</span>
+<span class="ln"> 97</span>  <span class="n">fork_exit_write</span><span class="p">.</span><span class="n">reset</span><span class="p">();</span>
+<span class="ln"> 98</span>  <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="p">[</span><span class="n">tid</span><span class="p">,</span> <span class="kr">thread</span><span class="p">]</span> <span class="o">:</span> <span class="n">thread_info</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 99</span>    <span class="kt">int</span> <span class="n">resume_signal</span> <span class="o">=</span> <span class="kr">thread</span><span class="p">.</span><span class="n">signo</span> <span class="o">==</span> <span class="n">BIONIC_SIGNAL_DEBUGGER</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="kr">thread</span><span class="p">.</span><span class="n">signo</span><span class="p">;</span>
+<span class="ln">100</span>    <span class="n">LOG</span><span class="p">(</span><span class="n">DEBUG</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;detaching from thread &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">tid</span><span class="p">;</span>
+<span class="ln">101</span>    <span class="k">if</span> <span class="p">(</span><span class="n">ptrace</span><span class="p">(</span><span class="n">PTRACE_DETACH</span><span class="p">,</span> <span class="n">tid</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">resume_signal</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">102</span>      <span class="n">PLOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;failed to detach from thread &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">tid</span><span class="p">;</span>
+<span class="ln">103</span>    <span class="p">}</span>
+<span class="ln">104</span>  <span class="p">}</span>
+<span class="ln">105</span>
+<span class="ln">106</span>  <span class="c1">//tombstoned_connect连接，作为客户端连接tombstoned服务端，并且返回一个文件句柄g_output_fd
+</span><span class="ln">107</span><span class="c1"></span>  <span class="p">{</span>
+<span class="ln">108</span>    <span class="n">ATRACE_NAME</span><span class="p">(</span><span class="s">&#34;tombstoned_connect&#34;</span><span class="p">);</span>
+<span class="ln">109</span>    <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;obtaining output fd from tombstoned, type: &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">dump_type</span><span class="p">;</span>
+<span class="ln">110</span>    <span class="n">g_tombstoned_connected</span> <span class="o">=</span>
+<span class="ln">111</span>        <span class="n">tombstoned_connect</span><span class="p">(</span><span class="n">g_target_thread</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">g_tombstoned_socket</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">g_output_fd</span><span class="p">,</span> <span class="n">dump_type</span><span class="p">);</span>
+<span class="ln">112</span>  <span class="p">}</span>
+<span class="ln">113</span>
+<span class="ln">114</span>  <span class="kt">int</span> <span class="n">signo</span> <span class="o">=</span> <span class="n">siginfo</span><span class="p">.</span><span class="n">si_signo</span><span class="p">;</span>
+<span class="ln">115</span>  <span class="kt">bool</span> <span class="n">fatal_signal</span> <span class="o">=</span> <span class="n">signo</span> <span class="o">!=</span> <span class="n">BIONIC_SIGNAL_DEBUGGER</span><span class="p">;</span>
+<span class="ln">116</span>  <span class="kt">bool</span> <span class="n">backtrace</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">117</span>  <span class="c1">// si_value is special when used with BIONIC_SIGNAL_DEBUGGER.
+</span><span class="ln">118</span><span class="c1"></span>  <span class="c1">//   0: dump tombstone
+</span><span class="ln">119</span><span class="c1"></span>  <span class="c1">//   1: dump backtrace
+</span><span class="ln">120</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">fatal_signal</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">121</span>    <span class="kt">int</span> <span class="n">si_val</span> <span class="o">=</span> <span class="n">siginfo</span><span class="p">.</span><span class="n">si_value</span><span class="p">.</span><span class="n">sival_int</span><span class="p">;</span>
+<span class="ln">122</span>    <span class="k">if</span> <span class="p">(</span><span class="n">si_val</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">123</span>      <span class="n">backtrace</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">124</span>    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">si_val</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">125</span>      <span class="n">backtrace</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">126</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">127</span>      <span class="n">LOG</span><span class="p">(</span><span class="n">WARNING</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;unknown si_value value &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">si_val</span><span class="p">;</span>
+<span class="ln">128</span>    <span class="p">}</span>
+<span class="ln">129</span>  <span class="p">}</span>
+<span class="ln">130</span>
+<span class="ln">131</span>  <span class="c1">//初始化寄存器信息
+</span><span class="ln">132</span><span class="c1"></span>  <span class="n">unwindstack</span><span class="o">::</span><span class="n">UnwinderFromPid</span> <span class="n">unwinder</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="n">vm_pid</span><span class="p">);</span>
+<span class="ln">133</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">unwinder</span><span class="p">.</span><span class="n">Init</span><span class="p">(</span><span class="n">unwindstack</span><span class="o">::</span><span class="n">Regs</span><span class="o">::</span><span class="n">CurrentArch</span><span class="p">()))</span> <span class="p">{</span>
+<span class="ln">134</span>    <span class="n">LOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Failed to init unwinder object.&#34;</span><span class="p">;</span>
+<span class="ln">135</span>  <span class="p">}</span>
+<span class="ln">136</span>
+<span class="ln">137</span>  <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">amfd_data</span><span class="p">;</span>
+<span class="ln">138</span>  <span class="k">if</span> <span class="p">(</span><span class="n">backtrace</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">139</span>    <span class="p">...</span>
+<span class="ln">140</span>  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">141</span>      <span class="c1">//打印堆栈信息
+</span><span class="ln">142</span><span class="c1"></span>      <span class="n">engrave_tombstone</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">g_output_fd</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">unwinder</span><span class="p">,</span> <span class="n">thread_info</span><span class="p">,</span> <span class="n">g_target_thread</span><span class="p">,</span>
+<span class="ln">143</span>                        <span class="n">abort_msg_address</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">open_files</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">amfd_data</span><span class="p">,</span> <span class="n">gwp_asan_state</span><span class="p">,</span>
+<span class="ln">144</span>                        <span class="n">gwp_asan_metadata</span><span class="p">);</span>
+<span class="ln">145</span>
+<span class="ln">146</span>  <span class="p">}</span>
+<span class="ln">147</span>  <span class="c1">//通知AMS
+</span><span class="ln">148</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="n">fatal_signal</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">149</span>    <span class="k">if</span> <span class="p">(</span><span class="n">thread_info</span><span class="p">[</span><span class="n">target_process</span><span class="p">].</span><span class="n">thread_name</span> <span class="o">!=</span> <span class="s">&#34;system_server&#34;</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">150</span>      <span class="n">activity_manager_notify</span><span class="p">(</span><span class="n">target_process</span><span class="p">,</span> <span class="n">signo</span><span class="p">,</span> <span class="n">amfd_data</span><span class="p">);</span>
+<span class="ln">151</span>    <span class="p">}</span>
+<span class="ln">152</span>  <span class="p">}</span>
+<span class="ln">153</span>  <span class="n">close</span><span class="p">(</span><span class="n">STDOUT_FILENO</span><span class="p">);</span>
+<span class="ln">154</span>  <span class="c1">//通知写tombstoned文件  
+</span><span class="ln">155</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="n">g_tombstoned_connected</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">tombstoned_notify_completion</span><span class="p">(</span><span class="n">g_tombstoned_socket</span><span class="p">.</span><span class="n">get</span><span class="p">()))</span> <span class="p">{</span>
+<span class="ln">156</span>    <span class="n">LOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;failed to notify tombstoned of completion&#34;</span><span class="p">;</span>
+<span class="ln">157</span>  <span class="p">}</span>
+<span class="ln">158</span>
+<span class="ln">159</span>  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">160</span><span class="p">}</span>
+</code></pre></div><p>上述的内容比较的，主要是新建立的几个<code>socket</code>处理</p>
+<h3 id="171tombstoned_connect">1.7.1tombstoned_connect</h3>
+<p>客户端连接<code>tombstoned</code>服务端，并且返回一个文件句柄<code>g_output_fd</code></p>
+<h4 id="1711客户端">1.7.1.1客户端</h4>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/debuggerd/tombstoned/tombstoned_client.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">bool</span> <span class="nf">tombstoned_connect</span><span class="p">(</span><span class="n">pid_t</span> <span class="n">pid</span><span class="p">,</span> <span class="n">unique_fd</span><span class="o">*</span> <span class="n">tombstoned_socket</span><span class="p">,</span> <span class="n">unique_fd</span><span class="o">*</span> <span class="n">output_fd</span><span class="p">,</span>
+<span class="ln"> 3</span>                        <span class="n">DebuggerdDumpType</span> <span class="n">dump_type</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 4</span>  <span class="c1">//建立socket连接，这里是kTombstonedCrashSocketName,对应/dev/socket/crash_dump
+</span><span class="ln"> 5</span><span class="c1"></span>  <span class="c1">//使用SOCK_SEQPACKET传输  
+</span><span class="ln"> 6</span><span class="c1"></span>  <span class="n">unique_fd</span> <span class="n">sockfd</span><span class="p">(</span>
+<span class="ln"> 7</span>      <span class="n">socket_local_client</span><span class="p">((</span><span class="n">dump_type</span> <span class="o">!=</span> <span class="n">kDebuggerdJavaBacktrace</span> <span class="o">?</span> <span class="nl">kTombstonedCrashSocketName</span>
+<span class="ln"> 8</span>                                                                <span class="p">:</span> <span class="n">kTombstonedJavaTraceSocketName</span><span class="p">),</span>
+<span class="ln"> 9</span>                          <span class="n">ANDROID_SOCKET_NAMESPACE_RESERVED</span><span class="p">,</span> <span class="n">SOCK_SEQPACKET</span><span class="p">));</span>
+<span class="ln">10</span>  <span class="p">}</span>
+<span class="ln">11</span>  <span class="c1">//使用kDumpRequest，pid，kDebuggerdTombstone数据传输
+</span><span class="ln">12</span><span class="c1"></span>  <span class="n">TombstonedCrashPacket</span> <span class="n">packet</span> <span class="o">=</span> <span class="p">{};</span>
+<span class="ln">13</span>  <span class="n">packet</span><span class="p">.</span><span class="n">packet_type</span> <span class="o">=</span> <span class="n">CrashPacketType</span><span class="o">::</span><span class="n">kDumpRequest</span><span class="p">;</span>
+<span class="ln">14</span>  <span class="n">packet</span><span class="p">.</span><span class="n">packet</span><span class="p">.</span><span class="n">dump_request</span><span class="p">.</span><span class="n">pid</span> <span class="o">=</span> <span class="n">pid</span><span class="p">;</span>
+<span class="ln">15</span>  <span class="n">packet</span><span class="p">.</span><span class="n">packet</span><span class="p">.</span><span class="n">dump_request</span><span class="p">.</span><span class="n">dump_type</span> <span class="o">=</span> <span class="n">dump_type</span><span class="p">;</span>
+<span class="ln">16</span>  <span class="k">if</span> <span class="p">(</span><span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">write</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">packet</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">packet</span><span class="p">)))</span> <span class="o">!=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">packet</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">17</span>    <span class="n">async_safe_format_log</span><span class="p">(</span><span class="n">ANDROID_LOG_ERROR</span><span class="p">,</span> <span class="s">&#34;libc&#34;</span><span class="p">,</span> <span class="s">&#34;failed to write DumpRequest packet: %s&#34;</span><span class="p">,</span>
+<span class="ln">18</span>                          <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">19</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">20</span>  <span class="p">}</span>
+<span class="ln">21</span>  <span class="c1">//收到服务端的packet，并且多携带了一个文件句柄tmp_output_fd
+</span><span class="ln">22</span><span class="c1"></span>  <span class="n">unique_fd</span> <span class="n">tmp_output_fd</span><span class="p">;</span>
+<span class="ln">23</span>  <span class="n">ssize_t</span> <span class="n">rc</span> <span class="o">=</span> <span class="n">ReceiveFileDescriptors</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">packet</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">packet</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">tmp_output_fd</span><span class="p">);</span>
+<span class="ln">24</span>  <span class="o">*</span><span class="n">tombstoned_socket</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">sockfd</span><span class="p">);</span>
+<span class="ln">25</span>  <span class="o">*</span><span class="n">output_fd</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">tmp_output_fd</span><span class="p">);</span>
+<span class="ln">26</span>  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">27</span><span class="p">}</span>
+</code></pre></div><h4 id="1712服务端">1.7.1.2服务端</h4>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/debuggerd/tombstoned/tombstoned.cpp
+</span><span class="ln"> 2</span><span class="c1">//tombstoned是开机就启动的进程
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="p">[])</span> <span class="p">{</span>
+<span class="ln"> 4</span>  <span class="n">umask</span><span class="p">(</span><span class="mo">0137</span><span class="p">);</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span>  <span class="c1">//初始化信号量，并且注册进去
+</span><span class="ln"> 7</span><span class="c1"></span>  <span class="k">struct</span> <span class="nc">sigaction</span> <span class="n">action</span> <span class="o">=</span> <span class="p">{};</span>
+<span class="ln"> 8</span>  <span class="n">action</span><span class="p">.</span><span class="n">sa_handler</span> <span class="o">=</span> <span class="p">[](</span><span class="kt">int</span> <span class="n">signal</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 9</span>    <span class="n">LOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;received fatal signal &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">signal</span><span class="p">;</span>
+<span class="ln">10</span>    <span class="n">_exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln">11</span>  <span class="p">};</span>
+<span class="ln">12</span>  <span class="n">debuggerd_register_handlers</span><span class="p">(</span><span class="o">&amp;</span><span class="n">action</span><span class="p">);</span>
+<span class="ln">13</span>  <span class="c1">//初始化句柄，对应/dev/socket/tombstoned_java_trace
+</span><span class="ln">14</span><span class="c1"></span>  <span class="kt">int</span> <span class="n">intercept_socket</span> <span class="o">=</span> <span class="n">android_get_control_socket</span><span class="p">(</span><span class="n">kTombstonedInterceptSocketName</span><span class="p">);</span>
+<span class="ln">15</span>  <span class="c1">//初始化句柄，对应/dev/socket/crash_dump
+</span><span class="ln">16</span><span class="c1"></span>  <span class="kt">int</span> <span class="n">crash_socket</span> <span class="o">=</span> <span class="n">android_get_control_socket</span><span class="p">(</span><span class="n">kTombstonedCrashSocketName</span><span class="p">);</span>
+<span class="ln">17</span>
+<span class="ln">18</span>  <span class="n">evutil_make_socket_nonblocking</span><span class="p">(</span><span class="n">intercept_socket</span><span class="p">);</span>
+<span class="ln">19</span>  <span class="n">evutil_make_socket_nonblocking</span><span class="p">(</span><span class="n">crash_socket</span><span class="p">);</span>
+<span class="ln">20</span>  <span class="c1">//这里用到了event数据结构，最终回调到crash_accept_cb函数
+</span><span class="ln">21</span><span class="c1"></span>  <span class="n">evconnlistener</span><span class="o">*</span> <span class="n">tombstone_listener</span> <span class="o">=</span>
+<span class="ln">22</span>      <span class="n">evconnlistener_new</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">crash_accept_cb</span><span class="p">,</span> <span class="n">CrashQueue</span><span class="o">::</span><span class="n">for_tombstones</span><span class="p">(),</span> <span class="n">LEV_OPT_CLOSE_ON_FREE</span><span class="p">,</span>
+<span class="ln">23</span>                         <span class="o">-</span><span class="mi">1</span> <span class="cm">/* backlog */</span><span class="p">,</span> <span class="n">crash_socket</span><span class="p">);</span>
+<span class="ln">24</span>
+<span class="ln">25</span>  <span class="c1">//这里初始化成功，开始处理数据，因为这个函数是轮询，所以不会退出tombstoned进程
+</span><span class="ln">26</span><span class="c1"></span>  <span class="n">event_base_dispatch</span><span class="p">(</span><span class="n">base</span><span class="p">);</span>
+<span class="ln">27</span><span class="p">}</span>
+</code></pre></div><p>回调到<code>crash_accept_cb</code>函数</p>
+<p>服务端分别调用四个函数</p>
+<ol>
+<li><code>crash_accept_cb</code>，接收到客户端连接对应的句柄</li>
+<li><code>crash_request_cb</code>，接收客户端发的信息并校验</li>
+<li><code>perform_request</code>，发给客户端一个文件句柄</li>
+<li><code>crash_completed_cb</code>，接收客户端完成的信息并校验，通过<code>linkat</code>将之前的<code>fd</code>句柄对应到新文件名<code>/data/tombstones/tombstone_xxx</code></li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/debuggerd/tombstoned/tombstoned.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">crash_accept_cb</span><span class="p">(</span><span class="n">evconnlistener</span><span class="o">*</span> <span class="n">listener</span><span class="p">,</span> <span class="n">evutil_socket_t</span> <span class="n">sockfd</span><span class="p">,</span> <span class="n">sockaddr</span><span class="o">*</span><span class="p">,</span> <span class="kt">int</span><span class="p">,</span>
+<span class="ln"> 3</span>                            <span class="kt">void</span><span class="o">*</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 4</span>  <span class="n">event_base</span><span class="o">*</span> <span class="n">base</span> <span class="o">=</span> <span class="n">evconnlistener_get_base</span><span class="p">(</span><span class="n">listener</span><span class="p">);</span>
+<span class="ln"> 5</span>  <span class="n">Crash</span><span class="o">*</span> <span class="n">crash</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Crash</span><span class="p">();</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span>  <span class="c1">// TODO: Make sure that only java crashes come in on the java socket
+</span><span class="ln"> 8</span><span class="c1"></span>  <span class="c1">// and only native crashes on the native socket.
+</span><span class="ln"> 9</span><span class="c1"></span>  <span class="k">struct</span> <span class="nc">timeval</span> <span class="n">timeout</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span> <span class="p">};</span>
+<span class="ln">10</span>  <span class="c1">//注册crash_request_cb函数，并且函数参数为crash
+</span><span class="ln">11</span><span class="c1"></span>  <span class="n">event</span><span class="o">*</span> <span class="n">crash_event</span> <span class="o">=</span> <span class="n">event_new</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">sockfd</span><span class="p">,</span> <span class="n">EV_TIMEOUT</span> <span class="o">|</span> <span class="n">EV_READ</span><span class="p">,</span> <span class="n">crash_request_cb</span><span class="p">,</span> <span class="n">crash</span><span class="p">);</span>
+<span class="ln">12</span>  <span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_socket_fd</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="n">sockfd</span><span class="p">);</span>
+<span class="ln">13</span>  <span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_event</span> <span class="o">=</span> <span class="n">crash_event</span><span class="p">;</span>
+<span class="ln">14</span>  <span class="n">event_add</span><span class="p">(</span><span class="n">crash_event</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">timeout</span><span class="p">);</span>
+<span class="ln">15</span><span class="p">}</span>
+<span class="ln">16</span><span class="c1">//传入的参数args为上述的crash
+</span><span class="ln">17</span><span class="c1"></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">crash_request_cb</span><span class="p">(</span><span class="n">evutil_socket_t</span> <span class="n">sockfd</span><span class="p">,</span> <span class="kt">short</span> <span class="n">ev</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">arg</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">18</span>  <span class="n">ssize_t</span> <span class="n">rc</span><span class="p">;</span>
+<span class="ln">19</span>  <span class="n">Crash</span><span class="o">*</span> <span class="n">crash</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">Crash</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">arg</span><span class="p">);</span>
+<span class="ln">20</span>  <span class="c1">//服务端接收一个request，并且校验客户端传入的数据request
+</span><span class="ln">21</span><span class="c1"></span>  <span class="n">TombstonedCrashPacket</span> <span class="n">request</span> <span class="o">=</span> <span class="p">{};</span>
+<span class="ln">22</span>  <span class="n">rc</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">read</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">request</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">request</span><span class="p">)));</span>
+<span class="ln">23</span>  <span class="k">if</span> <span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">packet_type</span> <span class="o">!=</span> <span class="n">CrashPacketType</span><span class="o">::</span><span class="n">kDumpRequest</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">24</span>    <span class="n">LOG</span><span class="p">(</span><span class="n">WARNING</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;unexpected crash packet type, expected kDumpRequest, received  &#34;</span>
+<span class="ln">25</span>                 <span class="o">&lt;&lt;</span> <span class="n">StringPrintf</span><span class="p">(</span><span class="s">&#34;%#2hhX&#34;</span><span class="p">,</span> <span class="n">request</span><span class="p">.</span><span class="n">packet_type</span><span class="p">);</span>
+<span class="ln">26</span>    <span class="k">goto</span> <span class="n">fail</span><span class="p">;</span>
+<span class="ln">27</span>  <span class="p">}</span>
+<span class="ln">28</span>  <span class="p">...</span>
+<span class="ln">29</span>  <span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_type</span> <span class="o">=</span> <span class="n">request</span><span class="p">.</span><span class="n">packet</span><span class="p">.</span><span class="n">dump_request</span><span class="p">.</span><span class="n">dump_type</span><span class="p">;</span>
+<span class="ln">30</span>  <span class="k">if</span> <span class="p">(</span><span class="n">CrashQueue</span><span class="o">::</span><span class="n">for_crash</span><span class="p">(</span><span class="n">crash</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">maybe_enqueue_crash</span><span class="p">(</span><span class="n">crash</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">31</span>    <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;enqueueing crash request for pid &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_pid</span><span class="p">;</span>
+<span class="ln">32</span>  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">33</span>    <span class="c1">//调用到这里
+</span><span class="ln">34</span><span class="c1"></span>    <span class="n">perform_request</span><span class="p">(</span><span class="n">crash</span><span class="p">);</span>
+<span class="ln">35</span>  <span class="p">}</span>
+<span class="ln">36</span>
+<span class="ln">37</span>  <span class="k">return</span><span class="p">;</span>
+<span class="ln">38</span><span class="p">}</span>
+<span class="ln">39</span><span class="c1">//处理这个请求
+</span><span class="ln">40</span><span class="c1"></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">perform_request</span><span class="p">(</span><span class="n">Crash</span><span class="o">*</span> <span class="n">crash</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">41</span>  <span class="n">unique_fd</span> <span class="n">output_fd</span><span class="p">;</span>
+<span class="ln">42</span>  <span class="kt">bool</span> <span class="n">intercepted</span> <span class="o">=</span>
+<span class="ln">43</span>      <span class="n">intercept_manager</span><span class="o">-&gt;</span><span class="n">GetIntercept</span><span class="p">(</span><span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_pid</span><span class="p">,</span> <span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_type</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">output_fd</span><span class="p">);</span>
+<span class="ln">44</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">intercepted</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">45</span>    <span class="k">if</span> <span class="p">(</span><span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_type</span> <span class="o">==</span> <span class="n">kDebuggerdNativeBacktrace</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">46</span>      <span class="p">...</span>
+<span class="ln">47</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">48</span>      <span class="c1">//这里没有intercepted，会调用到这里，并且将/data/tombstone/tombstone_xxx文件的句柄传出，为output_fd
+</span><span class="ln">49</span><span class="c1"></span>      <span class="n">std</span><span class="o">::</span><span class="n">tie</span><span class="p">(</span><span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_tombstone_path</span><span class="p">,</span> <span class="n">output_fd</span><span class="p">)</span> <span class="o">=</span> <span class="n">CrashQueue</span><span class="o">::</span><span class="n">for_crash</span><span class="p">(</span><span class="n">crash</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">get_output</span><span class="p">();</span>
+<span class="ln">50</span>      <span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_tombstone_fd</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="n">dup</span><span class="p">(</span><span class="n">output_fd</span><span class="p">.</span><span class="n">get</span><span class="p">()));</span>
+<span class="ln">51</span>    <span class="p">}</span>
+<span class="ln">52</span>  <span class="p">}</span>
+<span class="ln">53</span>  <span class="c1">//传入的参数为kPerformDump，pid，output_fd
+</span><span class="ln">54</span><span class="c1"></span>  <span class="n">TombstonedCrashPacket</span> <span class="n">response</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln">55</span>    <span class="p">.</span><span class="n">packet_type</span> <span class="o">=</span> <span class="n">CrashPacketType</span><span class="o">::</span><span class="n">kPerformDump</span>
+<span class="ln">56</span>  <span class="p">};</span>
+<span class="ln">57</span>  <span class="n">ssize_t</span> <span class="n">rc</span> <span class="o">=</span>
+<span class="ln">58</span>      <span class="n">SendFileDescriptors</span><span class="p">(</span><span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_socket_fd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">response</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">response</span><span class="p">),</span> <span class="n">output_fd</span><span class="p">.</span><span class="n">get</span><span class="p">());</span>
+<span class="ln">59</span>  <span class="n">output_fd</span><span class="p">.</span><span class="n">reset</span><span class="p">();</span>
+<span class="ln">60</span>
+<span class="ln">61</span>    <span class="c1">// TODO: Make this configurable by the interceptor?
+</span><span class="ln">62</span><span class="c1"></span>    <span class="k">struct</span> <span class="nc">timeval</span> <span class="n">timeout</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">0</span> <span class="p">};</span>
+<span class="ln">63</span>
+<span class="ln">64</span>    <span class="n">event_base</span><span class="o">*</span> <span class="n">base</span> <span class="o">=</span> <span class="n">event_get_base</span><span class="p">(</span><span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_event</span><span class="p">);</span>
+<span class="ln">65</span>    <span class="c1">//最终调用crash_completed_cb,参数为crash
+</span><span class="ln">66</span><span class="c1"></span>    <span class="n">event_assign</span><span class="p">(</span><span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_event</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_socket_fd</span><span class="p">,</span> <span class="n">EV_TIMEOUT</span> <span class="o">|</span> <span class="n">EV_READ</span><span class="p">,</span>
+<span class="ln">67</span>                 <span class="n">crash_completed_cb</span><span class="p">,</span> <span class="n">crash</span><span class="p">);</span>
+<span class="ln">68</span>    <span class="n">event_add</span><span class="p">(</span><span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_event</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">timeout</span><span class="p">);</span>
+<span class="ln">69</span>
+<span class="ln">70</span>
+<span class="ln">71</span>  <span class="n">CrashQueue</span><span class="o">::</span><span class="n">for_crash</span><span class="p">(</span><span class="n">crash</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">on_crash_started</span><span class="p">();</span>
+<span class="ln">72</span>  <span class="k">return</span><span class="p">;</span>
+<span class="ln">73</span><span class="p">}</span>
+<span class="ln">74</span>
+<span class="ln">75</span><span class="k">static</span> <span class="kt">void</span> <span class="nf">crash_completed_cb</span><span class="p">(</span><span class="n">evutil_socket_t</span> <span class="n">sockfd</span><span class="p">,</span> <span class="kt">short</span> <span class="n">ev</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">arg</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">76</span>  <span class="n">ssize_t</span> <span class="n">rc</span><span class="p">;</span>
+<span class="ln">77</span>  <span class="n">Crash</span><span class="o">*</span> <span class="n">crash</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">Crash</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">arg</span><span class="p">);</span>
+<span class="ln">78</span>  <span class="n">TombstonedCrashPacket</span> <span class="n">request</span> <span class="o">=</span> <span class="p">{};</span>
+<span class="ln">79</span>  <span class="p">...</span>
+<span class="ln">80</span>  <span class="c1">//开始阻塞读取，直到有数据过来    
+</span><span class="ln">81</span><span class="c1"></span>  <span class="n">rc</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">read</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">request</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">request</span><span class="p">)));</span>
+<span class="ln">82</span>  <span class="c1">//数据过来之后，校验数据的合法性  
+</span><span class="ln">83</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">packet_type</span> <span class="o">!=</span> <span class="n">CrashPacketType</span><span class="o">::</span><span class="n">kCompletedDump</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">84</span>    <span class="n">LOG</span><span class="p">(</span><span class="n">WARNING</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;unexpected crash packet type, expected kCompletedDump, received &#34;</span>
+<span class="ln">85</span>                 <span class="o">&lt;&lt;</span> <span class="kt">uint32_t</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">packet_type</span><span class="p">);</span>
+<span class="ln">86</span>    <span class="k">goto</span> <span class="n">fail</span><span class="p">;</span>
+<span class="ln">87</span>  <span class="p">}</span>
+<span class="ln">88</span>  <span class="c1">//校验通过之后，通过linkat将之前的fd句柄对应到新文件名/data/tombstones/tombstone_xxx
+</span><span class="ln">89</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_tombstone_fd</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">90</span>    <span class="c1">//这个句柄就是之前的output_fd  
+</span><span class="ln">91</span><span class="c1"></span>    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">fd_path</span> <span class="o">=</span> <span class="n">StringPrintf</span><span class="p">(</span><span class="s">&#34;/proc/self/fd/%d&#34;</span><span class="p">,</span> <span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_tombstone_fd</span><span class="p">.</span><span class="n">get</span><span class="p">());</span>
+<span class="ln">92</span>    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">tombstone_path</span> <span class="o">=</span> <span class="n">CrashQueue</span><span class="o">::</span><span class="n">for_crash</span><span class="p">(</span><span class="n">crash</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">get_next_artifact_path</span><span class="p">();</span>
+<span class="ln">93</span>    <span class="n">rc</span> <span class="o">=</span> <span class="n">linkat</span><span class="p">(</span><span class="n">AT_FDCWD</span><span class="p">,</span> <span class="n">fd_path</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="n">AT_FDCWD</span><span class="p">,</span> <span class="n">tombstone_path</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="n">AT_SYMLINK_FOLLOW</span><span class="p">);</span>
+<span class="ln">94</span>    <span class="p">...</span>
+<span class="ln">95</span>  <span class="p">}</span>
+<span class="ln">96</span><span class="p">}</span>
+</code></pre></div><h3 id="172engrave_tombstone">1.7.2engrave_tombstone</h3>
+<p>打印部分堆栈信息，将所有堆栈信息写入到句柄<code>g_output_fd</code>中去</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/debuggerd/libdebuggerd/tombstone.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span> <span class="nf">engrave_tombstone_ucontext</span><span class="p">(</span><span class="kt">int</span> <span class="n">tombstone_fd</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">abort_msg_address</span><span class="p">,</span> <span class="n">siginfo_t</span><span class="o">*</span> <span class="n">siginfo</span><span class="p">,</span>
+<span class="ln"> 3</span>                                <span class="n">ucontext_t</span><span class="o">*</span> <span class="n">ucontext</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 4</span>  <span class="c1">//初始化信息
+</span><span class="ln"> 5</span><span class="c1"></span>  <span class="p">...</span>
+<span class="ln"> 6</span>  <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">unwindstack</span><span class="o">::</span><span class="n">Regs</span><span class="o">&gt;</span> <span class="n">regs</span><span class="p">(</span>
+<span class="ln"> 7</span>      <span class="n">unwindstack</span><span class="o">::</span><span class="n">Regs</span><span class="o">::</span><span class="n">CreateFromUcontext</span><span class="p">(</span><span class="n">unwindstack</span><span class="o">::</span><span class="n">Regs</span><span class="o">::</span><span class="n">CurrentArch</span><span class="p">(),</span> <span class="n">ucontext</span><span class="p">));</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span>  <span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">pid_t</span><span class="p">,</span> <span class="n">ThreadInfo</span><span class="o">&gt;</span> <span class="n">threads</span><span class="p">;</span>
+<span class="ln">10</span>  <span class="n">threads</span><span class="p">[</span><span class="n">gettid</span><span class="p">()]</span> <span class="o">=</span> <span class="n">ThreadInfo</span><span class="p">{</span>
+<span class="ln">11</span>      <span class="p">.</span><span class="n">registers</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">regs</span><span class="p">),</span>
+<span class="ln">12</span>      <span class="p">.</span><span class="n">uid</span> <span class="o">=</span> <span class="n">uid</span><span class="p">,</span>
+<span class="ln">13</span>      <span class="p">.</span><span class="n">tid</span> <span class="o">=</span> <span class="n">tid</span><span class="p">,</span>
+<span class="ln">14</span>      <span class="p">.</span><span class="n">thread_name</span> <span class="o">=</span> <span class="n">thread_name</span><span class="p">,</span>
+<span class="ln">15</span>      <span class="p">.</span><span class="n">pid</span> <span class="o">=</span> <span class="n">pid</span><span class="p">,</span>
+<span class="ln">16</span>      <span class="p">.</span><span class="n">process_name</span> <span class="o">=</span> <span class="n">process_name</span><span class="p">,</span>
+<span class="ln">17</span>      <span class="p">.</span><span class="n">siginfo</span> <span class="o">=</span> <span class="n">siginfo</span><span class="p">,</span>
+<span class="ln">18</span>  <span class="p">};</span>
+<span class="ln">19</span>  <span class="c1">//初始化寄存器
+</span><span class="ln">20</span><span class="c1"></span>  <span class="n">unwindstack</span><span class="o">::</span><span class="n">UnwinderFromPid</span> <span class="n">unwinder</span><span class="p">(</span><span class="n">kMaxFrames</span><span class="p">,</span> <span class="n">pid</span><span class="p">);</span>
+<span class="ln">21</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">unwinder</span><span class="p">.</span><span class="n">Init</span><span class="p">(</span><span class="n">unwindstack</span><span class="o">::</span><span class="n">Regs</span><span class="o">::</span><span class="n">CurrentArch</span><span class="p">()))</span> <span class="p">{</span>
+<span class="ln">22</span>    <span class="n">LOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Failed to init unwinder object.&#34;</span><span class="p">;</span>
+<span class="ln">23</span>  <span class="p">}</span>
+<span class="ln">24</span>
+<span class="ln">25</span>  <span class="n">engrave_tombstone</span><span class="p">(</span><span class="n">unique_fd</span><span class="p">(</span><span class="n">dup</span><span class="p">(</span><span class="n">tombstone_fd</span><span class="p">)),</span> <span class="o">&amp;</span><span class="n">unwinder</span><span class="p">,</span> <span class="n">threads</span><span class="p">,</span> <span class="n">tid</span><span class="p">,</span> <span class="n">abort_msg_address</span><span class="p">,</span>
+<span class="ln">26</span>                    <span class="k">nullptr</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">,</span> <span class="mi">0u</span><span class="p">,</span> <span class="mi">0u</span><span class="p">);</span>
+<span class="ln">27</span><span class="p">}</span>
+<span class="ln">28</span>
+<span class="ln">29</span><span class="kt">void</span> <span class="nf">engrave_tombstone</span><span class="p">(</span><span class="n">unique_fd</span> <span class="n">output_fd</span><span class="p">,</span> <span class="n">unwindstack</span><span class="o">::</span><span class="n">Unwinder</span><span class="o">*</span> <span class="n">unwinder</span><span class="p">,</span>
+<span class="ln">30</span>                       <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">pid_t</span><span class="p">,</span> <span class="n">ThreadInfo</span><span class="o">&gt;&amp;</span> <span class="n">threads</span><span class="p">,</span> <span class="n">pid_t</span> <span class="n">target_thread</span><span class="p">,</span>
+<span class="ln">31</span>                       <span class="kt">uint64_t</span> <span class="n">abort_msg_address</span><span class="p">,</span> <span class="n">OpenFilesList</span><span class="o">*</span> <span class="n">open_files</span><span class="p">,</span>
+<span class="ln">32</span>                       <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">*</span> <span class="n">amfd_data</span><span class="p">,</span> <span class="n">uintptr_t</span> <span class="n">gwp_asan_state_ptr</span><span class="p">,</span>
+<span class="ln">33</span>                       <span class="n">uintptr_t</span> <span class="n">gwp_asan_metadata_ptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">34</span>  <span class="c1">// don&#39;t copy log messages to tombstone unless this is a dev device
+</span><span class="ln">35</span><span class="c1"></span>  <span class="kt">bool</span> <span class="n">want_logs</span> <span class="o">=</span> <span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">GetBoolProperty</span><span class="p">(</span><span class="s">&#34;ro.debuggable&#34;</span><span class="p">,</span> <span class="nb">false</span><span class="p">);</span>
+<span class="ln">36</span>
+<span class="ln">37</span>  <span class="n">log_t</span> <span class="n">log</span><span class="p">;</span>
+<span class="ln">38</span>  <span class="n">log</span><span class="p">.</span><span class="n">current_tid</span> <span class="o">=</span> <span class="n">target_thread</span><span class="p">;</span>
+<span class="ln">39</span>  <span class="n">log</span><span class="p">.</span><span class="n">crashed_tid</span> <span class="o">=</span> <span class="n">target_thread</span><span class="p">;</span>
+<span class="ln">40</span>  <span class="c1">//设置log中的tfd的句柄为先前的文件句柄output_fd
+</span><span class="ln">41</span><span class="c1"></span>  <span class="n">log</span><span class="p">.</span><span class="n">tfd</span> <span class="o">=</span> <span class="n">output_fd</span><span class="p">.</span><span class="n">get</span><span class="p">();</span>
+<span class="ln">42</span>  <span class="n">log</span><span class="p">.</span><span class="n">amfd_data</span> <span class="o">=</span> <span class="n">amfd_data</span><span class="p">;</span>
+<span class="ln">43</span>  <span class="c1">//开始打印第一行
+</span><span class="ln">44</span><span class="c1"></span>  <span class="n">_LOG</span><span class="p">(</span><span class="o">&amp;</span><span class="n">log</span><span class="p">,</span> <span class="n">logtype</span><span class="o">::</span><span class="n">HEADER</span><span class="p">,</span> <span class="s">&#34;*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">45</span>  <span class="c1">//打印header，包括架构信息版本号等  
+</span><span class="ln">46</span><span class="c1"></span>  <span class="n">dump_header_info</span><span class="p">(</span><span class="o">&amp;</span><span class="n">log</span><span class="p">);</span>
+<span class="ln">47</span>  <span class="c1">//打印时间戳
+</span><span class="ln">48</span><span class="c1"></span>  <span class="n">dump_timestamp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">log</span><span class="p">,</span> <span class="n">time</span><span class="p">(</span><span class="k">nullptr</span><span class="p">));</span>
+<span class="ln">49</span>
+<span class="ln">50</span>  <span class="k">auto</span> <span class="n">it</span> <span class="o">=</span> <span class="n">threads</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">target_thread</span><span class="p">);</span>
+<span class="ln">51</span>  <span class="k">if</span> <span class="p">(</span><span class="n">it</span> <span class="o">==</span> <span class="n">threads</span><span class="p">.</span><span class="n">end</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln">52</span>    <span class="n">LOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;failed to find target thread&#34;</span><span class="p">;</span>
+<span class="ln">53</span>  <span class="p">}</span>
+<span class="ln">54</span>
+<span class="ln">55</span>  <span class="n">GwpAsanCrashData</span> <span class="n">gwp_asan_crash_data</span><span class="p">(</span><span class="n">unwinder</span><span class="o">-&gt;</span><span class="n">GetProcessMemory</span><span class="p">().</span><span class="n">get</span><span class="p">(),</span>
+<span class="ln">56</span>                                       <span class="n">gwp_asan_state_ptr</span><span class="p">,</span>
+<span class="ln">57</span>                                       <span class="n">gwp_asan_metadata_ptr</span><span class="p">,</span> <span class="n">it</span><span class="o">-&gt;</span><span class="n">second</span><span class="p">);</span>
+<span class="ln">58</span>  <span class="c1">//打印线程中的进程号线程号、信号及其产生原因、堆栈等信息
+</span><span class="ln">59</span><span class="c1"></span>  <span class="n">dump_thread</span><span class="p">(</span><span class="o">&amp;</span><span class="n">log</span><span class="p">,</span> <span class="n">unwinder</span><span class="p">,</span> <span class="n">it</span><span class="o">-&gt;</span><span class="n">second</span><span class="p">,</span> <span class="n">abort_msg_address</span><span class="p">,</span> <span class="nb">true</span><span class="p">,</span>
+<span class="ln">60</span>              <span class="n">gwp_asan_crash_data</span><span class="p">);</span>
+<span class="ln">61</span>
+<span class="ln">62</span>  <span class="k">if</span> <span class="p">(</span><span class="n">want_logs</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">63</span>    <span class="n">dump_logs</span><span class="p">(</span><span class="o">&amp;</span><span class="n">log</span><span class="p">,</span> <span class="n">it</span><span class="o">-&gt;</span><span class="n">second</span><span class="p">.</span><span class="n">pid</span><span class="p">,</span> <span class="mi">50</span><span class="p">);</span>
+<span class="ln">64</span>  <span class="p">}</span>
+<span class="ln">65</span>
+<span class="ln">66</span>  <span class="k">for</span> <span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span> <span class="p">[</span><span class="n">tid</span><span class="p">,</span> <span class="n">thread_info</span><span class="p">]</span> <span class="o">:</span> <span class="n">threads</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">67</span>    <span class="k">if</span> <span class="p">(</span><span class="n">tid</span> <span class="o">==</span> <span class="n">target_thread</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">68</span>      <span class="k">continue</span><span class="p">;</span>
+<span class="ln">69</span>    <span class="p">}</span>
+<span class="ln">70</span>    <span class="c1">//打印相关线程的相关信息
+</span><span class="ln">71</span><span class="c1"></span>    <span class="n">dump_thread</span><span class="p">(</span><span class="o">&amp;</span><span class="n">log</span><span class="p">,</span> <span class="n">unwinder</span><span class="p">,</span> <span class="n">thread_info</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">false</span><span class="p">,</span> <span class="n">gwp_asan_crash_data</span><span class="p">);</span>
+<span class="ln">72</span>  <span class="p">}</span>
+<span class="ln">73</span>
+<span class="ln">74</span>  <span class="k">if</span> <span class="p">(</span><span class="n">open_files</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">75</span>    <span class="n">_LOG</span><span class="p">(</span><span class="o">&amp;</span><span class="n">log</span><span class="p">,</span> <span class="n">logtype</span><span class="o">::</span><span class="n">OPEN_FILES</span><span class="p">,</span> <span class="s">&#34;</span><span class="se">\n</span><span class="s">open files:</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">76</span>    <span class="n">dump_open_files_list</span><span class="p">(</span><span class="o">&amp;</span><span class="n">log</span><span class="p">,</span> <span class="o">*</span><span class="n">open_files</span><span class="p">,</span> <span class="s">&#34;    &#34;</span><span class="p">);</span>
+<span class="ln">77</span>  <span class="p">}</span>
+<span class="ln">78</span>
+<span class="ln">79</span>  <span class="k">if</span> <span class="p">(</span><span class="n">want_logs</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">80</span>    <span class="n">dump_logs</span><span class="p">(</span><span class="o">&amp;</span><span class="n">log</span><span class="p">,</span> <span class="n">it</span><span class="o">-&gt;</span><span class="n">second</span><span class="p">.</span><span class="n">pid</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="ln">81</span>  <span class="p">}</span>
+<span class="ln">82</span><span class="p">}</span>
+</code></pre></div><blockquote>
+<p>这里的部分堆栈打印原理，只选择性的打印三类：<code>HEADER</code>、<code>REGISTERS</code>、<code>BACKTRACE</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="n">__attribute__</span><span class="p">((</span><span class="n">__weak__</span><span class="p">,</span> <span class="n">visibility</span><span class="p">(</span><span class="s">&#34;default&#34;</span><span class="p">)))</span>
+<span class="ln"> 2</span><span class="kt">void</span> <span class="n">_LOG</span><span class="p">(</span><span class="n">log_t</span><span class="o">*</span> <span class="n">log</span><span class="p">,</span> <span class="k">enum</span> <span class="nc">logtype</span> <span class="n">ltype</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">fmt</span><span class="p">,</span> <span class="p">...)</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="n">va_list</span> <span class="n">ap</span><span class="p">;</span>
+<span class="ln"> 4</span>  <span class="n">va_start</span><span class="p">(</span><span class="n">ap</span><span class="p">,</span> <span class="n">fmt</span><span class="p">);</span>
+<span class="ln"> 5</span>  <span class="n">_VLOG</span><span class="p">(</span><span class="n">log</span><span class="p">,</span> <span class="n">ltype</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">ap</span><span class="p">);</span>
+<span class="ln"> 6</span>  <span class="n">va_end</span><span class="p">(</span><span class="n">ap</span><span class="p">);</span>
+<span class="ln"> 7</span><span class="p">}</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span><span class="n">__attribute__</span><span class="p">((</span><span class="n">__weak__</span><span class="p">,</span> <span class="n">visibility</span><span class="p">(</span><span class="s">&#34;default&#34;</span><span class="p">)))</span>
+<span class="ln">10</span><span class="kt">void</span> <span class="n">_VLOG</span><span class="p">(</span><span class="n">log_t</span><span class="o">*</span> <span class="n">log</span><span class="p">,</span> <span class="k">enum</span> <span class="nc">logtype</span> <span class="n">ltype</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">va_list</span> <span class="n">ap</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">11</span>  <span class="kt">bool</span> <span class="n">write_to_tombstone</span> <span class="o">=</span> <span class="p">(</span><span class="n">log</span><span class="o">-&gt;</span><span class="n">tfd</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln">12</span>  <span class="kt">bool</span> <span class="n">write_to_logcat</span> <span class="o">=</span> <span class="n">is_allowed_in_logcat</span><span class="p">(</span><span class="n">ltype</span><span class="p">)</span>
+<span class="ln">13</span>                      <span class="o">&amp;&amp;</span> <span class="n">log</span><span class="o">-&gt;</span><span class="n">crashed_tid</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span>
+<span class="ln">14</span>                      <span class="o">&amp;&amp;</span> <span class="n">log</span><span class="o">-&gt;</span><span class="n">current_tid</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span>
+<span class="ln">15</span>                      <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">log</span><span class="o">-&gt;</span><span class="n">crashed_tid</span> <span class="o">==</span> <span class="n">log</span><span class="o">-&gt;</span><span class="n">current_tid</span><span class="p">);</span>
+<span class="ln">16</span>  <span class="c1">//是否加入kmsg日志  
+</span><span class="ln">17</span><span class="c1"></span>  <span class="k">static</span> <span class="kt">bool</span> <span class="n">write_to_kmsg</span> <span class="o">=</span> <span class="n">should_write_to_kmsg</span><span class="p">();</span>
+<span class="ln">18</span>
+<span class="ln">19</span>  <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">msg</span><span class="p">;</span>
+<span class="ln">20</span>  <span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">StringAppendV</span><span class="p">(</span><span class="o">&amp;</span><span class="n">msg</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">ap</span><span class="p">);</span>
+<span class="ln">21</span>
+<span class="ln">22</span>  <span class="k">if</span> <span class="p">(</span><span class="n">msg</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span> <span class="k">return</span><span class="p">;</span>
+<span class="ln">23</span>  <span class="c1">//之前传入的tfd已经是指定的文件句柄，所有的数据都会被写到该句柄中
+</span><span class="ln">24</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="n">write_to_tombstone</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">25</span>    <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">write</span><span class="p">(</span><span class="n">log</span><span class="o">-&gt;</span><span class="n">tfd</span><span class="p">,</span> <span class="n">msg</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="n">msg</span><span class="p">.</span><span class="n">size</span><span class="p">()));</span>
+<span class="ln">26</span>  <span class="p">}</span>
+<span class="ln">27</span>  <span class="c1">//根据是否是HEADER、REGISTERS、BACKTRACE判断是否需要部分写入logcat
+</span><span class="ln">28</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="n">write_to_logcat</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">29</span>    <span class="n">__android_log_buf_write</span><span class="p">(</span><span class="n">LOG_ID_CRASH</span><span class="p">,</span> <span class="n">ANDROID_LOG_FATAL</span><span class="p">,</span> <span class="n">LOG_TAG</span><span class="p">,</span> <span class="n">msg</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+<span class="ln">30</span>    <span class="k">if</span> <span class="p">(</span><span class="n">log</span><span class="o">-&gt;</span><span class="n">amfd_data</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">31</span>      <span class="o">*</span><span class="n">log</span><span class="o">-&gt;</span><span class="n">amfd_data</span> <span class="o">+=</span> <span class="n">msg</span><span class="p">;</span>
+<span class="ln">32</span>    <span class="p">}</span>
+<span class="ln">33</span>
+<span class="ln">34</span>    <span class="k">if</span> <span class="p">(</span><span class="n">write_to_kmsg</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">35</span>      <span class="n">unique_fd</span> <span class="nf">kmsg_fd</span><span class="p">(</span><span class="n">open</span><span class="p">(</span><span class="s">&#34;/dev/kmsg_debug&#34;</span><span class="p">,</span> <span class="n">O_WRONLY</span> <span class="o">|</span> <span class="n">O_APPEND</span> <span class="o">|</span> <span class="n">O_CLOEXEC</span><span class="p">));</span>
+<span class="ln">36</span>      <span class="k">if</span> <span class="p">(</span><span class="n">kmsg_fd</span><span class="p">.</span><span class="n">get</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">37</span>        <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">fragments</span> <span class="o">=</span> <span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">Split</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="s">&#34;</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">38</span>        <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="nl">fragment</span> <span class="p">:</span> <span class="n">fragments</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">39</span>          <span class="k">static</span> <span class="k">constexpr</span> <span class="kt">char</span> <span class="n">prefix</span><span class="p">[]</span> <span class="o">=</span> <span class="s">&#34;&lt;3&gt;DEBUG: &#34;</span><span class="p">;</span>
+<span class="ln">40</span>          <span class="k">struct</span> <span class="nc">iovec</span> <span class="n">iov</span><span class="p">[</span><span class="mi">3</span><span class="p">];</span>
+<span class="ln">41</span>          <span class="n">iov</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">iov_base</span> <span class="o">=</span> <span class="k">const_cast</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">prefix</span><span class="p">);</span>
+<span class="ln">42</span>          <span class="n">iov</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">iov_len</span> <span class="o">=</span> <span class="n">strlen</span><span class="p">(</span><span class="n">prefix</span><span class="p">);</span>
+<span class="ln">43</span>          <span class="n">iov</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">iov_base</span> <span class="o">=</span> <span class="k">const_cast</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">fragment</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+<span class="ln">44</span>          <span class="n">iov</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">iov_len</span> <span class="o">=</span> <span class="n">fragment</span><span class="p">.</span><span class="n">length</span><span class="p">();</span>
+<span class="ln">45</span>          <span class="n">iov</span><span class="p">[</span><span class="mi">2</span><span class="p">].</span><span class="n">iov_base</span> <span class="o">=</span> <span class="k">const_cast</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">*&gt;</span><span class="p">(</span><span class="s">&#34;</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">46</span>          <span class="n">iov</span><span class="p">[</span><span class="mi">2</span><span class="p">].</span><span class="n">iov_len</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">47</span>          <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">writev</span><span class="p">(</span><span class="n">kmsg_fd</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">iov</span><span class="p">,</span> <span class="mi">3</span><span class="p">));</span>
+<span class="ln">48</span>        <span class="p">}</span>
+<span class="ln">49</span>      <span class="p">}</span>
+<span class="ln">50</span>    <span class="p">}</span>
+<span class="ln">51</span>  <span class="p">}</span>
+<span class="ln">52</span><span class="p">}</span>
+<span class="ln">53</span>
+<span class="ln">54</span><span class="kt">bool</span> <span class="nf">is_allowed_in_logcat</span><span class="p">(</span><span class="k">enum</span> <span class="nc">logtype</span> <span class="n">ltype</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">55</span>  <span class="k">if</span> <span class="p">((</span><span class="n">ltype</span> <span class="o">==</span> <span class="n">HEADER</span><span class="p">)</span>
+<span class="ln">56</span>   <span class="o">||</span> <span class="p">(</span><span class="n">ltype</span> <span class="o">==</span> <span class="n">REGISTERS</span><span class="p">)</span>
+<span class="ln">57</span>   <span class="o">||</span> <span class="p">(</span><span class="n">ltype</span> <span class="o">==</span> <span class="n">BACKTRACE</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">58</span>    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">59</span>  <span class="p">}</span>
+<span class="ln">60</span>  <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">61</span><span class="p">}</span>
+</code></pre></div></blockquote>
+<p>着重突出</p>
+<p>1）</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="n">_LOG</span><span class="p">(</span><span class="o">&amp;</span><span class="n">log</span><span class="p">,</span> <span class="n">logtype</span><span class="o">::</span><span class="n">HEADER</span><span class="p">,</span> <span class="s">&#34;*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</code></pre></div><p>对应</p>
+<div class="highlight"><pre class="chroma"><code class="language-txt" data-lang="txt"><span class="ln">1</span>08-04 17:02:06.366  1671  1671 F DEBUG   : *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+</code></pre></div><p>2）<code>dump_header_info</code>对应</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="mi">08</span><span class="o">-</span><span class="mo">04</span> <span class="mi">17</span><span class="o">:</span><span class="mo">02</span><span class="o">:</span><span class="mf">06.366</span>  <span class="mi">1671</span>  <span class="mi">1671</span> <span class="n">F</span> <span class="nl">DEBUG</span>   <span class="p">:</span> <span class="n">Build</span> <span class="nl">fingerprint</span><span class="p">:</span> <span class="err">&#39;</span><span class="n">xxx</span><span class="err">&#39;</span>
+<span class="ln">2</span><span class="mi">08</span><span class="o">-</span><span class="mo">04</span> <span class="mi">17</span><span class="o">:</span><span class="mo">02</span><span class="o">:</span><span class="mf">06.366</span>  <span class="mi">1671</span>  <span class="mi">1671</span> <span class="n">F</span> <span class="nl">DEBUG</span>   <span class="p">:</span> <span class="nl">Revision</span><span class="p">:</span> <span class="sc">&#39;0&#39;</span>
+<span class="ln">3</span><span class="mi">08</span><span class="o">-</span><span class="mo">04</span> <span class="mi">17</span><span class="o">:</span><span class="mo">02</span><span class="o">:</span><span class="mf">06.366</span>  <span class="mi">1671</span>  <span class="mi">1671</span> <span class="n">F</span> <span class="nl">DEBUG</span>   <span class="p">:</span> <span class="nl">ABI</span><span class="p">:</span> <span class="err">&#39;</span><span class="n">arm</span><span class="err">&#39;</span>
+</code></pre></div><p>3）<code>dump_thread_info</code>对应</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="mi">08</span><span class="o">-</span><span class="mo">04</span> <span class="mi">17</span><span class="o">:</span><span class="mo">02</span><span class="o">:</span><span class="mf">06.366</span>  <span class="mi">1671</span>  <span class="mi">1671</span> <span class="n">F</span> <span class="nl">DEBUG</span>   <span class="p">:</span> <span class="nl">pid</span><span class="p">:</span> <span class="mi">361</span><span class="p">,</span> <span class="nl">tid</span><span class="p">:</span> <span class="mi">361</span><span class="p">,</span> <span class="nl">name</span><span class="p">:</span> <span class="n">demo</span>  <span class="o">&gt;&gt;&gt;</span> <span class="o">/</span><span class="n">system</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">demo</span> <span class="o">&lt;&lt;&lt;</span>
+</code></pre></div><p>4）<code>dump_signal_info</code>对应</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="mi">08</span><span class="o">-</span><span class="mo">04</span> <span class="mi">17</span><span class="o">:</span><span class="mo">02</span><span class="o">:</span><span class="mf">06.366</span>  <span class="mi">1671</span>  <span class="mi">1671</span> <span class="n">F</span> <span class="nl">DEBUG</span>   <span class="p">:</span> <span class="n">signal</span> <span class="mi">11</span> <span class="p">(</span><span class="n">SIGSEGV</span><span class="p">),</span> <span class="n">code</span> <span class="mi">1</span> <span class="p">(</span><span class="n">SEGV_MAPERR</span><span class="p">),</span> <span class="n">fault</span> <span class="n">addr</span> <span class="mh">0xa</span>
+</code></pre></div><p>5）<code>dump_probable_cause</code>对应</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="mi">08</span><span class="o">-</span><span class="mo">04</span> <span class="mi">17</span><span class="o">:</span><span class="mo">02</span><span class="o">:</span><span class="mf">06.366</span>  <span class="mi">1671</span>  <span class="mi">1671</span> <span class="n">F</span> <span class="nl">DEBUG</span>   <span class="p">:</span> <span class="nl">Cause</span><span class="p">:</span> <span class="n">null</span> <span class="n">pointer</span> <span class="n">dereference</span>
+</code></pre></div><p>6）<code>dump_registers</code>对应</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="mi">08</span><span class="o">-</span><span class="mo">04</span> <span class="mi">17</span><span class="o">:</span><span class="mo">02</span><span class="o">:</span><span class="mf">06.366</span>  <span class="mi">1671</span>  <span class="mi">1671</span> <span class="n">F</span> <span class="nl">DEBUG</span>   <span class="p">:</span>     <span class="n">r0</span> <span class="mo">0000000</span><span class="n">a</span>  <span class="n">r1</span> <span class="mo">00000061</span>  <span class="n">r2</span> <span class="mo">053</span><span class="mi">8</span><span class="n">ad06</span>  <span class="n">r3</span> <span class="n">fff162b0</span>
+<span class="ln">2</span><span class="mi">08</span><span class="o">-</span><span class="mo">04</span> <span class="mi">17</span><span class="o">:</span><span class="mo">02</span><span class="o">:</span><span class="mf">06.366</span>  <span class="mi">1671</span>  <span class="mi">1671</span> <span class="n">F</span> <span class="nl">DEBUG</span>   <span class="p">:</span>     <span class="n">r4</span> <span class="n">b91d04ed</span>  <span class="n">r5</span> <span class="n">b91dde08</span>  <span class="n">r6</span> <span class="mo">00000004</span>  <span class="n">r7</span> <span class="n">fff1639c</span>
+<span class="ln">3</span><span class="mi">08</span><span class="o">-</span><span class="mo">04</span> <span class="mi">17</span><span class="o">:</span><span class="mo">02</span><span class="o">:</span><span class="mf">06.366</span>  <span class="mi">1671</span>  <span class="mi">1671</span> <span class="n">F</span> <span class="nl">DEBUG</span>   <span class="p">:</span>     <span class="n">r8</span> <span class="mo">00000000</span>  <span class="n">r9</span> <span class="mo">00000000</span>  <span class="n">sl</span> <span class="mo">00000000</span>  <span class="n">fp</span> <span class="n">fff1638c</span>
+<span class="ln">4</span><span class="mi">08</span><span class="o">-</span><span class="mo">04</span> <span class="mi">17</span><span class="o">:</span><span class="mo">02</span><span class="o">:</span><span class="mf">06.367</span>  <span class="mi">1671</span>  <span class="mi">1671</span> <span class="n">F</span> <span class="nl">DEBUG</span>   <span class="p">:</span>     <span class="n">ip</span> <span class="n">fff1639c</span>  <span class="n">sp</span> <span class="n">fff16308</span>  <span class="n">lr</span> <span class="n">eb97f0eb</span>  <span class="n">pc</span> <span class="n">b91d0342</span>  <span class="n">cpsr</span> <span class="mi">20010030</span>
+</code></pre></div><p>7）<code>log_backtrace</code>对应</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="mi">08</span><span class="o">-</span><span class="mo">04</span> <span class="mi">17</span><span class="o">:</span><span class="mo">02</span><span class="o">:</span><span class="mf">06.373</span>  <span class="mi">1671</span>  <span class="mi">1671</span> <span class="n">F</span> <span class="nl">DEBUG</span>   <span class="p">:</span>
+<span class="ln">2</span><span class="mi">08</span><span class="o">-</span><span class="mo">04</span> <span class="mi">17</span><span class="o">:</span><span class="mo">02</span><span class="o">:</span><span class="mf">06.373</span>  <span class="mi">1671</span>  <span class="mi">1671</span> <span class="n">F</span> <span class="nl">DEBUG</span>   <span class="p">:</span> <span class="nl">backtrace</span><span class="p">:</span>
+<span class="ln">3</span><span class="mi">08</span><span class="o">-</span><span class="mo">04</span> <span class="mi">17</span><span class="o">:</span><span class="mo">02</span><span class="o">:</span><span class="mf">06.373</span>  <span class="mi">1671</span>  <span class="mi">1671</span> <span class="n">F</span> <span class="nl">DEBUG</span>   <span class="p">:</span>     <span class="err">#</span><span class="mo">00</span> <span class="n">pc</span> <span class="mo">00006342</span>  <span class="o">/</span><span class="n">system</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">demo</span> <span class="p">(</span><span class="n">main</span><span class="o">+</span><span class="mi">489</span><span class="p">)</span>
+<span class="ln">4</span><span class="mi">08</span><span class="o">-</span><span class="mo">04</span> <span class="mi">17</span><span class="o">:</span><span class="mo">02</span><span class="o">:</span><span class="mf">06.373</span>  <span class="mi">1671</span>  <span class="mi">1671</span> <span class="n">F</span> <span class="nl">DEBUG</span>   <span class="p">:</span>     <span class="err">#</span><span class="mo">01</span> <span class="n">pc</span> <span class="mo">000766</span><span class="mi">9</span><span class="n">d</span>  <span class="o">/</span><span class="n">system</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">libc</span><span class="p">.</span><span class="n">so</span> <span class="p">(</span><span class="n">__libc_init</span><span class="o">+</span><span class="mi">48</span><span class="p">)</span>
+<span class="ln">5</span><span class="mi">08</span><span class="o">-</span><span class="mo">04</span> <span class="mi">17</span><span class="o">:</span><span class="mo">02</span><span class="o">:</span><span class="mf">06.373</span>  <span class="mi">1671</span>  <span class="mi">1671</span> <span class="n">F</span> <span class="nl">DEBUG</span>   <span class="p">:</span>     <span class="err">#</span><span class="mo">02</span> <span class="n">pc</span> <span class="mo">000024</span><span class="n">d8</span>  <span class="o">/</span><span class="n">system</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">demo</span> <span class="p">(</span><span class="n">_start_main</span><span class="o">+</span><span class="mi">88</span><span class="p">)</span>
+</code></pre></div><h3 id="173activity_manager_notify">1.7.3activity_manager_notify</h3>
+<p>通知<code>AMS</code>做进一步的堆栈处理</p>
+<h4 id="1731客户端">1.7.3.1客户端</h4>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/debuggerd/crash_dump.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="kt">bool</span> <span class="nf">activity_manager_notify</span><span class="p">(</span><span class="n">pid_t</span> <span class="n">pid</span><span class="p">,</span> <span class="kt">int</span> <span class="n">signal</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">amfd_data</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="c1">//建立socket连接，连接本机socket路径为/data/system/ndebugsocket
+</span><span class="ln"> 4</span><span class="c1"></span>  <span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">unique_fd</span> <span class="n">amfd</span><span class="p">(</span><span class="n">socket_local_client</span><span class="p">(</span>
+<span class="ln"> 5</span>      <span class="s">&#34;/data/system/ndebugsocket&#34;</span><span class="p">,</span> <span class="n">ANDROID_SOCKET_NAMESPACE_FILESYSTEM</span><span class="p">,</span> <span class="n">SOCK_STREAM</span><span class="p">));</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span>  <span class="k">struct</span> <span class="nc">timeval</span> <span class="n">tv</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln"> 8</span>    <span class="p">.</span><span class="n">tv_sec</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+<span class="ln"> 9</span>    <span class="p">.</span><span class="n">tv_usec</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="ln">10</span>  <span class="p">};</span>
+<span class="ln">11</span>  <span class="c1">//设置发送超时时间为1s
+</span><span class="ln">12</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">amfd</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">SOL_SOCKET</span><span class="p">,</span> <span class="n">SO_SNDTIMEO</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tv</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">tv</span><span class="p">))</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">13</span>    <span class="n">PLOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;failed to set send timeout on activity manager socket&#34;</span><span class="p">;</span>
+<span class="ln">14</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">15</span>  <span class="p">}</span>
+<span class="ln">16</span>  <span class="c1">//设置接收超时时间为1s
+</span><span class="ln">17</span><span class="c1"></span>  <span class="n">tv</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>  <span class="c1">// 3 seconds on handshake read
+</span><span class="ln">18</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">amfd</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">SOL_SOCKET</span><span class="p">,</span> <span class="n">SO_RCVTIMEO</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tv</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">tv</span><span class="p">))</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">19</span>    <span class="n">PLOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;failed to set receive timeout on activity manager socket&#34;</span><span class="p">;</span>
+<span class="ln">20</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">21</span>  <span class="p">}</span>
+<span class="ln">22</span>
+<span class="ln">23</span>  <span class="c1">//下面传输的是crash进程的pid和signal
+</span><span class="ln">24</span><span class="c1"></span>  <span class="c1">//这里将主机字节序转化成网络字节序
+</span><span class="ln">25</span><span class="c1"></span>  <span class="kt">uint32_t</span> <span class="n">datum</span> <span class="o">=</span> <span class="n">htonl</span><span class="p">(</span><span class="n">pid</span><span class="p">);</span>
+<span class="ln">26</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">WriteFully</span><span class="p">(</span><span class="n">amfd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">datum</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">27</span>    <span class="n">PLOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;AM pid write failed&#34;</span><span class="p">;</span>
+<span class="ln">28</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">29</span>  <span class="p">}</span>
+<span class="ln">30</span>  <span class="n">datum</span> <span class="o">=</span> <span class="n">htonl</span><span class="p">(</span><span class="n">signal</span><span class="p">);</span>
+<span class="ln">31</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">WriteFully</span><span class="p">(</span><span class="n">amfd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">datum</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">32</span>    <span class="n">PLOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;AM signal write failed&#34;</span><span class="p">;</span>
+<span class="ln">33</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">34</span>  <span class="p">}</span>
+<span class="ln">35</span>  <span class="c1">//amfd_data就是先前crash进程的所有打印堆栈内容，就是0NE简介中的打印
+</span><span class="ln">36</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">WriteFully</span><span class="p">(</span><span class="n">amfd</span><span class="p">,</span> <span class="n">amfd_data</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="n">amfd_data</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">37</span>    <span class="n">PLOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;AM data write failed&#34;</span><span class="p">;</span>
+<span class="ln">38</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">39</span>  <span class="p">}</span>
+<span class="ln">40</span>
+<span class="ln">41</span>  <span class="c1">//最终回收到一个ack，这里服务端没有设置任何值，所以客户端实际上收到的是0x0
+</span><span class="ln">42</span><span class="c1"></span>  <span class="kt">char</span> <span class="n">ack</span><span class="p">;</span>
+<span class="ln">43</span>  <span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">ReadFully</span><span class="p">(</span><span class="n">amfd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ack</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+<span class="ln">44</span>  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">45</span><span class="p">}</span>
+</code></pre></div><blockquote>
+<p>关于这里为什么有<code>pid</code>和<code>signal</code>之后还需要重新拼接为网络字节序</p>
+<p>网络协议指定了字节序，因此异构计算机系统能够交换协议信息而不会被字节序所混淆。</p>
+<p>TCP/IP协议栈使用大端字节序。<strong>应用程序交换格式化数据时，字节序问题就会出现</strong>。对于TCP/IP，地址用网络字节序来表示，所以应用程序有时需要在处理器的字节序与网络字节序之间转换它们。例如，以一种易读的形式打印一个地址时，这种转换很常见。</p>
+</blockquote>
+<h4 id="1732服务端">1.7.3.2服务端</h4>
+<p>服务端即为AMS服务</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//frameworks/base/services/core/java/com/android/server/am/ActivityManagerService.java
+</span><span class="ln">2</span><span class="c1"></span><span class="kd">public</span> <span class="kt">void</span> <span class="nf">startObservingNativeCrashes</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln">3</span>    <span class="kd">final</span> <span class="n">NativeCrashListener</span> <span class="n">ncl</span> <span class="o">=</span> <span class="k">new</span> <span class="n">NativeCrashListener</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+<span class="ln">4</span>    <span class="n">ncl</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+<span class="ln">5</span><span class="o">}</span>
+</code></pre></div><p><code>NativeCrashListener</code>的<code>Thread</code>启动</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/base/services/core/java/com/android/server/am/NativeCrashListener.java
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">final</span> <span class="kd">class</span> <span class="nc">NativeCrashListener</span> <span class="kd">extends</span> <span class="n">Thread</span> <span class="o">{</span>
+<span class="ln"> 3</span>    <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">DEBUGGERD_SOCKET_PATH</span> <span class="o">=</span> <span class="s">&#34;/data/system/ndebugsocket&#34;</span><span class="o">;</span>
+<span class="ln"> 4</span>	<span class="nd">@Override</span>
+<span class="ln"> 5</span>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 6</span>        <span class="c1">//这里是响应客户端的ack，为一个0值
+</span><span class="ln"> 7</span><span class="c1"></span>        <span class="kd">final</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">ackSignal</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="n">1</span><span class="o">];</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span>        <span class="k">if</span> <span class="o">(</span><span class="n">DEBUG</span><span class="o">)</span> <span class="n">Slog</span><span class="o">.</span><span class="na">i</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;Starting up&#34;</span><span class="o">);</span>
+<span class="ln">10</span>        <span class="o">{</span>
+<span class="ln">11</span>            <span class="c1">//创建一个socket文件，DEBUGGERD_SOCKET_PATH为/data/system/ndebugsocket
+</span><span class="ln">12</span><span class="c1"></span>            <span class="n">File</span> <span class="n">socketFile</span> <span class="o">=</span> <span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="n">DEBUGGERD_SOCKET_PATH</span><span class="o">);</span>
+<span class="ln">13</span>            <span class="k">if</span> <span class="o">(</span><span class="n">socketFile</span><span class="o">.</span><span class="na">exists</span><span class="o">())</span> <span class="o">{</span>
+<span class="ln">14</span>                <span class="n">socketFile</span><span class="o">.</span><span class="na">delete</span><span class="o">();</span>
+<span class="ln">15</span>            <span class="o">}</span>
+<span class="ln">16</span>        <span class="o">}</span>
+<span class="ln">17</span>
+<span class="ln">18</span>        <span class="k">try</span> <span class="o">{</span>
+<span class="ln">19</span>            <span class="c1">//1.创建服务端socket句柄，AF_UNIX为本地通信，SOCK_STREAM为TCP协议
+</span><span class="ln">20</span><span class="c1"></span>            <span class="n">FileDescriptor</span> <span class="n">serverFd</span> <span class="o">=</span> <span class="n">Os</span><span class="o">.</span><span class="na">socket</span><span class="o">(</span><span class="n">AF_UNIX</span><span class="o">,</span> <span class="n">SOCK_STREAM</span><span class="o">,</span> <span class="n">0</span><span class="o">);</span>
+<span class="ln">21</span>            <span class="c1">//获取DEBUGGERD_SOCKET_PATH，转化为UnixSocketAddress
+</span><span class="ln">22</span><span class="c1"></span>            <span class="kd">final</span> <span class="n">UnixSocketAddress</span> <span class="n">sockAddr</span> <span class="o">=</span> <span class="n">UnixSocketAddress</span><span class="o">.</span><span class="na">createFileSystem</span><span class="o">(</span>
+<span class="ln">23</span>                    <span class="n">DEBUGGERD_SOCKET_PATH</span><span class="o">);</span>
+<span class="ln">24</span>            <span class="c1">//2.关联地址和套接字
+</span><span class="ln">25</span><span class="c1"></span>            <span class="n">Os</span><span class="o">.</span><span class="na">bind</span><span class="o">(</span><span class="n">serverFd</span><span class="o">,</span> <span class="n">sockAddr</span><span class="o">);</span>
+<span class="ln">26</span>            <span class="c1">//3.如果是TCP协议，那么创建监听队列，这里队列只有一个，同时只能处理一个IO
+</span><span class="ln">27</span><span class="c1"></span>            <span class="n">Os</span><span class="o">.</span><span class="na">listen</span><span class="o">(</span><span class="n">serverFd</span><span class="o">,</span> <span class="n">1</span><span class="o">);</span>
+<span class="ln">28</span>            <span class="c1">//设置socket文件权限为可读可写可执行
+</span><span class="ln">29</span><span class="c1"></span>            <span class="n">Os</span><span class="o">.</span><span class="na">chmod</span><span class="o">(</span><span class="n">DEBUGGERD_SOCKET_PATH</span><span class="o">,</span> <span class="n">0777</span><span class="o">);</span>
+<span class="ln">30</span>			<span class="c1">//这里就是为了保证可以循环处理多个IO，服务端不能直接关闭
+</span><span class="ln">31</span><span class="c1"></span>            <span class="k">while</span> <span class="o">(</span><span class="kc">true</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">32</span>                <span class="n">FileDescriptor</span> <span class="n">peerFd</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="ln">33</span>                <span class="k">try</span> <span class="o">{</span>
+<span class="ln">34</span>                    <span class="k">if</span> <span class="o">(</span><span class="n">MORE_DEBUG</span><span class="o">)</span> <span class="n">Slog</span><span class="o">.</span><span class="na">v</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;Waiting for debuggerd connection&#34;</span><span class="o">);</span>
+<span class="ln">35</span>                    <span class="c1">//4.服务端获取连接请求并建立连接
+</span><span class="ln">36</span><span class="c1"></span>                    <span class="n">peerFd</span> <span class="o">=</span> <span class="n">Os</span><span class="o">.</span><span class="na">accept</span><span class="o">(</span><span class="n">serverFd</span><span class="o">,</span> <span class="kc">null</span> <span class="cm">/* peerAddress */</span><span class="o">);</span>
+<span class="ln">37</span>                    <span class="k">if</span> <span class="o">(</span><span class="n">peerFd</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">38</span>						<span class="c1">//服务端处理客户端的请求
+</span><span class="ln">39</span><span class="c1"></span>                        <span class="n">consumeNativeCrashData</span><span class="o">(</span><span class="n">peerFd</span><span class="o">);</span>
+<span class="ln">40</span>                    <span class="o">}</span>
+<span class="ln">41</span>                <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">42</span>                    <span class="n">Slog</span><span class="o">.</span><span class="na">w</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;Error handling connection&#34;</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+<span class="ln">43</span>                <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+<span class="ln">44</span>                    <span class="k">if</span> <span class="o">(</span><span class="n">peerFd</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">45</span>                        <span class="k">try</span> <span class="o">{</span>
+<span class="ln">46</span>                            <span class="c1">//5.存在客户端，那么发送一个响应
+</span><span class="ln">47</span><span class="c1"></span>                            <span class="n">Os</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">peerFd</span><span class="o">,</span> <span class="n">ackSignal</span><span class="o">,</span> <span class="n">0</span><span class="o">,</span> <span class="n">1</span><span class="o">);</span>
+<span class="ln">48</span>                        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">49</span>                            <span class="o">...</span>
+<span class="ln">50</span>                        <span class="o">}</span>
+<span class="ln">51</span>                        <span class="k">try</span> <span class="o">{</span>
+<span class="ln">52</span>                            <span class="c1">//6.关闭客户端句柄
+</span><span class="ln">53</span><span class="c1"></span>                            <span class="n">Os</span><span class="o">.</span><span class="na">close</span><span class="o">(</span><span class="n">peerFd</span><span class="o">);</span>
+<span class="ln">54</span>                        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">ErrnoException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">55</span>                            <span class="o">...</span>
+<span class="ln">56</span>                        <span class="o">}</span>
+<span class="ln">57</span>                    <span class="o">}</span>
+<span class="ln">58</span>                <span class="o">}</span>
+<span class="ln">59</span>            <span class="o">}</span>
+<span class="ln">60</span>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">61</span>            <span class="n">Slog</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;Unable to init native debug socket!&#34;</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+<span class="ln">62</span>        <span class="o">}</span>
+<span class="ln">63</span>    <span class="o">}</span>
+</code></pre></div><p><code>consumeNativeCrashData</code>处理来自客户端的请求</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/base/services/core/java/com/android/server/am/NativeCrashListener.java
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span> <span class="nf">consumeNativeCrashData</span><span class="o">(</span><span class="n">FileDescriptor</span> <span class="n">fd</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 3</span>    <span class="kd">final</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">buf</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="n">4096</span><span class="o">];</span>
+<span class="ln"> 4</span>    <span class="kd">final</span> <span class="n">ByteArrayOutputStream</span> <span class="n">os</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ByteArrayOutputStream</span><span class="o">(</span><span class="n">4096</span><span class="o">);</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span>    <span class="k">try</span> <span class="o">{</span>
+<span class="ln"> 7</span>        <span class="n">StructTimeval</span> <span class="n">timeout</span> <span class="o">=</span> <span class="n">StructTimeval</span><span class="o">.</span><span class="na">fromMillis</span><span class="o">(</span><span class="n">SOCKET_TIMEOUT_MILLIS</span><span class="o">);</span>
+<span class="ln"> 8</span>        <span class="n">Os</span><span class="o">.</span><span class="na">setsockoptTimeval</span><span class="o">(</span><span class="n">fd</span><span class="o">,</span> <span class="n">SOL_SOCKET</span><span class="o">,</span> <span class="n">SO_RCVTIMEO</span><span class="o">,</span> <span class="n">timeout</span><span class="o">);</span>
+<span class="ln"> 9</span>        <span class="n">Os</span><span class="o">.</span><span class="na">setsockoptTimeval</span><span class="o">(</span><span class="n">fd</span><span class="o">,</span> <span class="n">SOL_SOCKET</span><span class="o">,</span> <span class="n">SO_SNDTIMEO</span><span class="o">,</span> <span class="n">timeout</span><span class="o">);</span>
+<span class="ln">10</span>        <span class="c1">//这里的buf实际上就是pid和signal的拼接，本文是0x169 0xB 对应正好pid为361和signal为11
+</span><span class="ln">11</span><span class="c1"></span>        <span class="kt">int</span> <span class="n">headerBytes</span> <span class="o">=</span> <span class="n">readExactly</span><span class="o">(</span><span class="n">fd</span><span class="o">,</span> <span class="n">buf</span><span class="o">,</span> <span class="n">0</span><span class="o">,</span> <span class="n">8</span><span class="o">);</span>
+<span class="ln">12</span>        <span class="kt">int</span> <span class="n">pid</span> <span class="o">=</span> <span class="n">unpackInt</span><span class="o">(</span><span class="n">buf</span><span class="o">,</span> <span class="n">0</span><span class="o">);</span>
+<span class="ln">13</span>        <span class="kt">int</span> <span class="n">signal</span> <span class="o">=</span> <span class="n">unpackInt</span><span class="o">(</span><span class="n">buf</span><span class="o">,</span> <span class="n">4</span><span class="o">);</span>
+<span class="ln">14</span>
+<span class="ln">15</span>        <span class="c1">// now the text of the dump
+</span><span class="ln">16</span><span class="c1"></span>        <span class="k">if</span> <span class="o">(</span><span class="n">pid</span> <span class="o">&gt;</span> <span class="n">0</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">17</span>            <span class="kd">final</span> <span class="n">ProcessRecord</span> <span class="n">pr</span><span class="o">;</span>
+<span class="ln">18</span>            <span class="kd">synchronized</span> <span class="o">(</span><span class="n">mAm</span><span class="o">.</span><span class="na">mPidsSelfLocked</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">19</span>                <span class="n">pr</span> <span class="o">=</span> <span class="n">mAm</span><span class="o">.</span><span class="na">mPidsSelfLocked</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">pid</span><span class="o">);</span>
+<span class="ln">20</span>            <span class="o">}</span>
+<span class="ln">21</span>            <span class="c1">//因为这个是自定义的native，没有涉及到system_server进程，所以不会找到对应的pr
+</span><span class="ln">22</span><span class="c1"></span>            <span class="k">if</span> <span class="o">(</span><span class="n">pr</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">23</span>                <span class="o">...</span>
+<span class="ln">24</span>            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln">25</span>                <span class="n">Slog</span><span class="o">.</span><span class="na">w</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;Couldn&#39;t find ProcessRecord for pid &#34;</span> <span class="o">+</span> <span class="n">pid</span><span class="o">);</span>
+<span class="ln">26</span>            <span class="o">}</span>
+<span class="ln">27</span>        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln">28</span>            <span class="n">Slog</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;Bogus pid!&#34;</span><span class="o">);</span>
+<span class="ln">29</span>        <span class="o">}</span>
+<span class="ln">30</span>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">31</span>        <span class="n">Slog</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;Exception dealing with report&#34;</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+<span class="ln">32</span>    <span class="o">}</span>
+<span class="ln">33</span><span class="o">}</span>
+</code></pre></div><p>这里最终会打印<code>Couldn't find ProcessRecord for pid 361</code></p>
+<h3 id="174tombstoned_notify_completion">1.7.4tombstoned_notify_completion</h3>
+<p>通知<code>tombstoned</code>服务端，将<code>tombstone_xxx</code>文件生成</p>
+<h4 id="1741客户端">1.7.4.1客户端</h4>
+<p>这里发送了一个包，类型为<code>kCompletedDump</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//system/core/debuggerd/tombstoned/tombstoned_client.cpp
+</span><span class="ln">2</span><span class="c1"></span><span class="kt">bool</span> <span class="nf">tombstoned_notify_completion</span><span class="p">(</span><span class="kt">int</span> <span class="n">tombstoned_socket</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">3</span>  <span class="n">TombstonedCrashPacket</span> <span class="n">packet</span> <span class="o">=</span> <span class="p">{};</span>
+<span class="ln">4</span>  <span class="n">packet</span><span class="p">.</span><span class="n">packet_type</span> <span class="o">=</span> <span class="n">CrashPacketType</span><span class="o">::</span><span class="n">kCompletedDump</span><span class="p">;</span>
+<span class="ln">5</span>  <span class="k">if</span> <span class="p">(</span><span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">write</span><span class="p">(</span><span class="n">tombstoned_socket</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">packet</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">packet</span><span class="p">)))</span> <span class="o">!=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">packet</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">6</span>    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">7</span>  <span class="p">}</span>
+<span class="ln">8</span>  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">9</span><span class="p">}</span>
+</code></pre></div><h4 id="1742服务端">1.7.4.2服务端</h4>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="k">static</span> <span class="kt">void</span> <span class="nf">crash_completed_cb</span><span class="p">(</span><span class="n">evutil_socket_t</span> <span class="n">sockfd</span><span class="p">,</span> <span class="kt">short</span> <span class="n">ev</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">arg</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 2</span>  <span class="p">...</span>
+<span class="ln"> 3</span>  <span class="c1">//之前在这里阻塞，现在可以接受到packet了    
+</span><span class="ln"> 4</span><span class="c1"></span>  <span class="n">rc</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">read</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">request</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">request</span><span class="p">)));</span>
+<span class="ln"> 5</span>  <span class="c1">//解析packet的合法性
+</span><span class="ln"> 6</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">packet_type</span> <span class="o">!=</span> <span class="n">CrashPacketType</span><span class="o">::</span><span class="n">kCompletedDump</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 7</span>    <span class="n">LOG</span><span class="p">(</span><span class="n">WARNING</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;unexpected crash packet type, expected kCompletedDump, received &#34;</span>
+<span class="ln"> 8</span>                 <span class="o">&lt;&lt;</span> <span class="kt">uint32_t</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">packet_type</span><span class="p">);</span>
+<span class="ln"> 9</span>    <span class="k">goto</span> <span class="n">fail</span><span class="p">;</span>
+<span class="ln">10</span>  <span class="p">}</span>
+<span class="ln">11</span>  <span class="c1">//这里这一步最关键，通过之前保存的output_fd文件句柄，通过linkat将tombstone文件生成
+</span><span class="ln">12</span><span class="c1"></span>  <span class="c1">//这里面的tombstone_path就是对应的/data/tombstones/tombstone_xxx
+</span><span class="ln">13</span><span class="c1"></span>  <span class="k">if</span> <span class="p">(</span><span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_tombstone_fd</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">14</span>    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">fd_path</span> <span class="o">=</span> <span class="n">StringPrintf</span><span class="p">(</span><span class="s">&#34;/proc/self/fd/%d&#34;</span><span class="p">,</span> <span class="n">crash</span><span class="o">-&gt;</span><span class="n">crash_tombstone_fd</span><span class="p">.</span><span class="n">get</span><span class="p">());</span>
+<span class="ln">15</span>    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">tombstone_path</span> <span class="o">=</span> <span class="n">CrashQueue</span><span class="o">::</span><span class="n">for_crash</span><span class="p">(</span><span class="n">crash</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">get_next_artifact_path</span><span class="p">();</span>
+<span class="ln">16</span>  <span class="p">}</span>
+<span class="ln">17</span>
+<span class="ln">18</span>  <span class="n">rc</span> <span class="o">=</span> <span class="n">linkat</span><span class="p">(</span><span class="n">AT_FDCWD</span><span class="p">,</span> <span class="n">fd_path</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="n">AT_FDCWD</span><span class="p">,</span> <span class="n">tombstone_path</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="n">AT_SYMLINK_FOLLOW</span><span class="p">);</span>
+<span class="ln">19</span>  <span class="c1">//成功之后会打印这句话
+</span><span class="ln">20</span><span class="c1"></span>  <span class="n">LOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Tombstone written to: &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">tombstone_path</span><span class="p">;</span>
+<span class="ln">21</span>  <span class="p">...</span>
+<span class="ln">22</span><span class="p">}</span>
+</code></pre></div><h1 id="2关于一些细节">2关于一些细节</h1>
+<p>1)堆栈信息是怎么打印出来的</p>
+<p>堆栈信息实际上是最后<code>tombstoned_notify_completion</code>去通知服务端，让其将将<code>tombstone_xxx</code>文件生成。对应<code>tombstone</code>也会出现对应的<code>tombstone_xxx </code>，里面有更加完整的堆栈信息</p>
+<p>2)这个堆栈信息是不是每次都会打印，什么情况不再打印</p>
+<p>如果拦截堆栈信息，即自定义<code>signal</code>信号处理就不会打印<code>signal</code>信息。但是如果使用<code>sigcation</code>之后，不做拦截，继续调用就会继续打印</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="cp">#include</span> <span class="cpf">&lt;signal.h&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp"></span><span class="k">struct</span> <span class="n">sigaction</span> <span class="n">newact</span><span class="p">,</span> <span class="n">oldact</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="kt">void</span> <span class="nf">sig_func</span><span class="p">(</span><span class="kt">int</span> <span class="n">signo</span><span class="p">,</span> <span class="n">siginfo_t</span> <span class="o">*</span><span class="n">info</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">context</span><span class="p">)</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span>    <span class="c1">//handler signal SIGINT
+</span><span class="ln"> 6</span><span class="c1"></span>    <span class="p">...</span>
+<span class="ln"> 7</span>    <span class="c1">//continue signal SIGINT,添加这句可以继续调用打印
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="n">sigaction</span><span class="p">(</span><span class="n">SIGINT</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">oldact</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+<span class="ln"> 9</span><span class="p">}</span>
+<span class="ln">10</span>
+<span class="ln">11</span><span class="kt">void</span> <span class="nf">func</span><span class="p">(){</span>
+<span class="ln">12</span>  
+<span class="ln">13</span>  <span class="n">newact</span><span class="p">.</span><span class="n">sa_handler</span> <span class="o">=</span> <span class="n">sig_func</span><span class="p">;</span>
+<span class="ln">14</span>  <span class="n">sigemptyset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">newact</span><span class="p">.</span><span class="n">sa_mask</span><span class="p">);</span>
+<span class="ln">15</span>  <span class="n">newact</span><span class="p">.</span><span class="n">sa_flags</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">16</span>  <span class="n">newact</span><span class="p">.</span><span class="n">sa_flags</span> <span class="o">|=</span> <span class="n">SA_SIGINFO</span><span class="p">;</span>
+<span class="ln">17</span>
+<span class="ln">18</span>  <span class="n">sigaction</span><span class="p">(</span><span class="n">SIGINT</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">newact</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">oldact</span><span class="p">);</span>
+<span class="ln">19</span><span class="p">}</span>
+</code></pre></div><h1 id="3总结">3总结</h1>
+<p>1）<strong>NE进程</strong>句柄之间的关系</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/NE/NE_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/NE/NE_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>2）<strong>NE进程</strong>的调用流程</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/NE/NE_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/NE/NE_4.png" >
+  
+    </a>
+  
+  
+</div>
+
 <h1 id="参考">参考</h1>
 <p><a href="https://blog.csdn.net/feelabclihu/article/details/113011145">[1] 内核工匠, Tombstone原理分析, 2021.</a></p>
 <p><a href="https://blog.csdn.net/feelabclihu/article/details/107724651">[2] 内核工匠, Android内存异常机制(用户空间)_NE, 2020.</a></p>
@@ -310,6 +1402,9 @@
 <p><a href="https://man7.org/linux/man-pages/man2/ptrace.2.html">[10] man7.org , ptrace(2) — Linux manual page, 2020.</a></p>
 <p><a href="http://gitbook.net/unix_system_calls/linkat.html">[11] gitbook.net, linkat()函数 Unix/Linux, 2020.</a></p>
 <p><a href="https://xiaolincoding.com/network/3_tcp/tcp_interview.html#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B-%E4%B8%8D%E6%98%AF%E4%B8%A4%E6%AC%A1%E3%80%81%E5%9B%9B%E6%AC%A1">[12] 小林code, TCP 三次握手与四次挥手面试题, 2022.</a></p>
+<p><a href="https://blog.csdn.net/weixin_43743847/article/details/90299204">[13] 皇甫懿, linux的SA_RESTART信号, 2019.</a></p>
+<p><a href="https://blog.csdn.net/weixin_43743847/article/details/90299204">[14] Spring__Rider, 函数link、linkat、unlink、unlinkat和remove, 2018.</a></p>
+<p><a href="https://blog.csdn.net/wangtaomtk/article/details/52489390">[15] xinjing_wangtao, 高性能网络编程(4)&ndash;TCP连接的关闭 (B), 2016.</a></p>
               
             </div>
           </div>

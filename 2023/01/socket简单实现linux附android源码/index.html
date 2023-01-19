@@ -286,7 +286,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">2900 Words|Read in about 14 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">5100 Words|Read in about 24 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -856,7 +856,733 @@
   
 </div>
 
-<h2 id="34demo4">3.4demo4</h2>
+<h3 id="331服务端">3.3.1服务端</h3>
+<p>这里的服务端主要是以logd进程开启的两个线程作为服务端，分别是使用UDP协议的logd.writer线程和使用SEQPACKET基于报文的传输的logd.reader线程。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/logd/main.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="p">...</span>
+<span class="ln"> 4</span>    <span class="c1">// LogReader监听/dev/socket/logdr .当客户端连接时，LogBuffer中的日志条目被写入客户端。
+</span><span class="ln"> 5</span><span class="c1"></span>    <span class="n">LogReader</span><span class="o">*</span> <span class="n">reader</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LogReader</span><span class="p">(</span><span class="n">logBuf</span><span class="p">);</span>
+<span class="ln"> 6</span>    <span class="k">if</span> <span class="p">(</span><span class="n">reader</span><span class="o">-&gt;</span><span class="n">startListener</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln"> 7</span>        <span class="k">return</span> <span class="n">EXIT_FAILURE</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="p">}</span>
+<span class="ln"> 9</span>    <span class="c1">// LogListener监听/dev/socket/logdw上客户端发起的日志消息。
+</span><span class="ln">10</span><span class="c1"></span>    <span class="c1">//新的日志条目被添加到LogBuffer中，LogReader被通知向连接的客户端发送更新。
+</span><span class="ln">11</span><span class="c1"></span>    <span class="n">LogListener</span><span class="o">*</span> <span class="n">swl</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LogListener</span><span class="p">(</span><span class="n">logBuf</span><span class="p">,</span> <span class="n">reader</span><span class="p">);</span>
+<span class="ln">12</span>    <span class="c1">// Backlog and /proc/sys/net/unix/max_dgram_qlen set to large value
+</span><span class="ln">13</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">swl</span><span class="o">-&gt;</span><span class="n">startListener</span><span class="p">(</span><span class="mi">600</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">14</span>        <span class="k">return</span> <span class="n">EXIT_FAILURE</span><span class="p">;</span>
+<span class="ln">15</span>    <span class="p">}</span>
+<span class="ln">16</span>    <span class="p">...</span>
+<span class="ln">17</span><span class="p">}</span>
+</code></pre></div><h4 id="3311logreader服务端">3.3.1.1LogReader服务端</h4>
+<p>1）构造LogReader</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/logd/LogReader.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">LogReader</span><span class="o">::</span><span class="n">LogReader</span><span class="p">(</span><span class="n">LogBuffer</span><span class="o">*</span> <span class="n">logbuf</span><span class="p">)</span>
+<span class="ln"> 3</span>    <span class="o">:</span> <span class="n">SocketListener</span><span class="p">(</span><span class="n">getLogSocket</span><span class="p">(),</span> <span class="nb">true</span><span class="p">),</span> <span class="n">mLogbuf</span><span class="p">(</span><span class="o">*</span><span class="n">logbuf</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 4</span><span class="p">}</span>
+<span class="ln"> 5</span><span class="c1">//根据上面可以得知实际上是开启一个logdr的socket服务端
+</span><span class="ln"> 6</span><span class="c1"></span><span class="kt">int</span> <span class="n">LogReader</span><span class="o">::</span><span class="n">getLogSocket</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 7</span>    <span class="k">static</span> <span class="k">const</span> <span class="kt">char</span> <span class="n">socketName</span><span class="p">[]</span> <span class="o">=</span> <span class="s">&#34;logdr&#34;</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="n">sock</span> <span class="o">=</span> <span class="n">socket_local_server</span><span class="p">(</span>
+<span class="ln"> 9</span>        <span class="n">socketName</span><span class="p">,</span> <span class="n">ANDROID_SOCKET_NAMESPACE_RESERVED</span><span class="p">,</span> <span class="n">SOCK_SEQPACKET</span><span class="p">);</span>
+<span class="ln">10</span>    <span class="k">return</span> <span class="n">sock</span><span class="p">;</span>
+<span class="ln">11</span><span class="p">}</span>
+</code></pre></div><p>2）基类最先完成构造</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libsysutils/src/SocketListener.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">SocketListener</span><span class="o">::</span><span class="n">SocketListener</span><span class="p">(</span><span class="kt">int</span> <span class="n">socketFd</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">listen</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="n">init</span><span class="p">(</span><span class="k">nullptr</span><span class="p">,</span> <span class="n">socketFd</span><span class="p">,</span> <span class="n">listen</span><span class="p">,</span> <span class="nb">false</span><span class="p">);</span>
+<span class="ln"> 4</span><span class="p">}</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span><span class="kt">void</span> <span class="n">SocketListener</span><span class="o">::</span><span class="n">init</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">socketName</span><span class="p">,</span> <span class="kt">int</span> <span class="n">socketFd</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">listen</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">useCmdNum</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 7</span>    <span class="n">mListen</span> <span class="o">=</span> <span class="n">listen</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="n">mSocketName</span> <span class="o">=</span> <span class="n">socketName</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="n">mSock</span> <span class="o">=</span> <span class="n">socketFd</span><span class="p">;</span>
+<span class="ln">10</span>    <span class="n">mUseCmdNum</span> <span class="o">=</span> <span class="n">useCmdNum</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="n">pthread_mutex_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mClientsLock</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">);</span>
+<span class="ln">12</span><span class="p">}</span>
+</code></pre></div><p>3）LogReader开启logd.reader线程</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">  1</span><span class="c1">//system/core/libsysutils/src/SocketListener.cpp
+</span><span class="ln">  2</span><span class="c1"></span><span class="kt">int</span> <span class="n">SocketListener</span><span class="o">::</span><span class="n">startListener</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">  3</span>    <span class="k">return</span> <span class="nf">startListener</span><span class="p">(</span><span class="mi">4</span><span class="p">);</span>
+<span class="ln">  4</span><span class="p">}</span>
+<span class="ln">  5</span>
+<span class="ln">  6</span><span class="c1">//这里的mListen构造时候传入就是true
+</span><span class="ln">  7</span><span class="c1"></span><span class="kt">int</span> <span class="n">SocketListener</span><span class="o">::</span><span class="n">startListener</span><span class="p">(</span><span class="kt">int</span> <span class="n">backlog</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">  8</span>    <span class="p">...</span>
+<span class="ln">  9</span>    <span class="c1">//在 Linux 内核 2.2 之后，backlog 是已完成连接建立的队列长度，所以现在通常认为 backlog 是 accept 队列。
+</span><span class="ln"> 10</span><span class="c1"></span>    <span class="c1">//这里使用的是默认值4
+</span><span class="ln"> 11</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">mListen</span> <span class="o">&amp;&amp;</span> <span class="n">listen</span><span class="p">(</span><span class="n">mSock</span><span class="p">,</span> <span class="n">backlog</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 12</span>        <span class="n">SLOGE</span><span class="p">(</span><span class="s">&#34;Unable to listen on socket (%s)&#34;</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln"> 13</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln"> 14</span>    <span class="p">}</span>
+<span class="ln"> 15</span>    <span class="c1">//管道创建，最终用于关闭子线程使用
+</span><span class="ln"> 16</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">pipe2</span><span class="p">(</span><span class="n">mCtrlPipe</span><span class="p">,</span> <span class="n">O_CLOEXEC</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln"> 17</span>        <span class="n">SLOGE</span><span class="p">(</span><span class="s">&#34;pipe failed (%s)&#34;</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln"> 18</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln"> 19</span>    <span class="p">}</span>
+<span class="ln"> 20</span>    <span class="c1">//开启一个子线程
+</span><span class="ln"> 21</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mThread</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">,</span> <span class="n">SocketListener</span><span class="o">::</span><span class="n">threadStart</span><span class="p">,</span> <span class="k">this</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln"> 22</span>        <span class="n">SLOGE</span><span class="p">(</span><span class="s">&#34;pthread_create (%s)&#34;</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln"> 23</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln"> 24</span>    <span class="p">}</span>
+<span class="ln"> 25</span>
+<span class="ln"> 26</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 27</span><span class="p">}</span>
+<span class="ln"> 28</span><span class="c1">//开启一个线程
+</span><span class="ln"> 29</span><span class="c1"></span><span class="kt">void</span> <span class="o">*</span><span class="n">SocketListener</span><span class="o">::</span><span class="n">threadStart</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">obj</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 30</span>    <span class="n">SocketListener</span> <span class="o">*</span><span class="n">me</span> <span class="o">=</span> <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">SocketListener</span> <span class="o">*&gt;</span><span class="p">(</span><span class="n">obj</span><span class="p">);</span>
+<span class="ln"> 31</span>
+<span class="ln"> 32</span>    <span class="n">me</span><span class="o">-&gt;</span><span class="n">runListener</span><span class="p">();</span>
+<span class="ln"> 33</span>    <span class="n">pthread_exit</span><span class="p">(</span><span class="k">nullptr</span><span class="p">);</span>
+<span class="ln"> 34</span>    <span class="k">return</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln"> 35</span><span class="p">}</span>
+<span class="ln"> 36</span><span class="c1">//这里使用了poll机制，使得客户端连接能够IO多路复用
+</span><span class="ln"> 37</span><span class="c1"></span><span class="kt">void</span> <span class="n">SocketListener</span><span class="o">::</span><span class="n">runListener</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 38</span>    <span class="k">while</span> <span class="p">(</span><span class="nb">true</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 39</span>        <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">pollfd</span><span class="o">&gt;</span> <span class="n">fds</span><span class="p">;</span>
+<span class="ln"> 40</span>
+<span class="ln"> 41</span>        <span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mClientsLock</span><span class="p">);</span>
+<span class="ln"> 42</span>        <span class="n">fds</span><span class="p">.</span><span class="n">reserve</span><span class="p">(</span><span class="mi">2</span> <span class="o">+</span> <span class="n">mClients</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+<span class="ln"> 43</span>        <span class="n">fds</span><span class="p">.</span><span class="n">push_back</span><span class="p">({.</span><span class="n">fd</span> <span class="o">=</span> <span class="n">mCtrlPipe</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">POLLIN</span><span class="p">});</span>
+<span class="ln"> 44</span>        <span class="k">if</span> <span class="p">(</span><span class="n">mListen</span><span class="p">)</span> <span class="n">fds</span><span class="p">.</span><span class="n">push_back</span><span class="p">({.</span><span class="n">fd</span> <span class="o">=</span> <span class="n">mSock</span><span class="p">,</span> <span class="p">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">POLLIN</span><span class="p">});</span>
+<span class="ln"> 45</span>        <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="nl">pair</span> <span class="p">:</span> <span class="n">mClients</span><span class="p">)</span> <span class="p">{</span>  
+<span class="ln"> 46</span>            <span class="k">const</span> <span class="kt">int</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">pair</span><span class="p">.</span><span class="n">second</span><span class="o">-&gt;</span><span class="n">getSocket</span><span class="p">();</span>
+<span class="ln"> 47</span>            <span class="n">fds</span><span class="p">.</span><span class="n">push_back</span><span class="p">({.</span><span class="n">fd</span> <span class="o">=</span> <span class="n">fd</span><span class="p">,</span> <span class="p">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">POLLIN</span><span class="p">});</span>
+<span class="ln"> 48</span>        <span class="p">}</span>
+<span class="ln"> 49</span>        <span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mClientsLock</span><span class="p">);</span>
+<span class="ln"> 50</span>
+<span class="ln"> 51</span>        <span class="kt">int</span> <span class="n">rc</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">poll</span><span class="p">(</span><span class="n">fds</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">fds</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="o">-</span><span class="mi">1</span><span class="p">));</span>
+<span class="ln"> 52</span>        <span class="c1">//轮询是否收到管道的关闭或者是唤醒
+</span><span class="ln"> 53</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="n">fds</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">revents</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">POLLIN</span> <span class="o">|</span> <span class="n">POLLERR</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln"> 54</span>            <span class="kt">char</span> <span class="n">c</span> <span class="o">=</span> <span class="n">CtrlPipe_Shutdown</span><span class="p">;</span>
+<span class="ln"> 55</span>            <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">read</span><span class="p">(</span><span class="n">mCtrlPipe</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">&amp;</span><span class="n">c</span><span class="p">,</span> <span class="mi">1</span><span class="p">));</span>
+<span class="ln"> 56</span>            <span class="k">if</span> <span class="p">(</span><span class="n">c</span> <span class="o">==</span> <span class="n">CtrlPipe_Shutdown</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 57</span>                <span class="k">break</span><span class="p">;</span>
+<span class="ln"> 58</span>            <span class="p">}</span>
+<span class="ln"> 59</span>            <span class="k">continue</span><span class="p">;</span>
+<span class="ln"> 60</span>        <span class="p">}</span>
+<span class="ln"> 61</span>        <span class="c1">//这里的fds[1]实际上是logdr的服务端的socket句柄，用来接收客户端的队列，并将队列存在客户端关联容器mClients中
+</span><span class="ln"> 62</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="n">mListen</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">fds</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">revents</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">POLLIN</span> <span class="o">|</span> <span class="n">POLLERR</span><span class="p">)))</span> <span class="p">{</span>
+<span class="ln"> 63</span>            <span class="kt">int</span> <span class="n">c</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">accept4</span><span class="p">(</span><span class="n">mSock</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">,</span> <span class="n">SOCK_CLOEXEC</span><span class="p">));</span>
+<span class="ln"> 64</span>            <span class="k">if</span> <span class="p">(</span><span class="n">c</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 65</span>                <span class="n">SLOGE</span><span class="p">(</span><span class="s">&#34;accept failed (%s)&#34;</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln"> 66</span>                <span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln"> 67</span>                <span class="k">continue</span><span class="p">;</span>
+<span class="ln"> 68</span>            <span class="p">}</span>
+<span class="ln"> 69</span>            <span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mClientsLock</span><span class="p">);</span>
+<span class="ln"> 70</span>            <span class="n">mClients</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SocketClient</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="nb">true</span><span class="p">,</span> <span class="n">mUseCmdNum</span><span class="p">);</span>
+<span class="ln"> 71</span>            <span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mClientsLock</span><span class="p">);</span>
+<span class="ln"> 72</span>        <span class="p">}</span>
+<span class="ln"> 73</span>        <span class="c1">//最终从fds的句柄中找出对应的accept句柄，并且在关联容器mClients中将句柄对应的SocketClient数据结构保存起来
+</span><span class="ln"> 74</span><span class="c1"></span>        <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">SocketClient</span><span class="o">*&gt;</span> <span class="n">pending</span><span class="p">;</span>
+<span class="ln"> 75</span>        <span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mClientsLock</span><span class="p">);</span>
+<span class="ln"> 76</span>        <span class="k">const</span> <span class="kt">int</span> <span class="n">size</span> <span class="o">=</span> <span class="n">fds</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
+<span class="ln"> 77</span>        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">mListen</span> <span class="o">?</span> <span class="mi">2</span> <span class="o">:</span> <span class="mi">1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">size</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 78</span>            <span class="k">const</span> <span class="k">struct</span> <span class="nc">pollfd</span><span class="o">&amp;</span> <span class="n">p</span> <span class="o">=</span> <span class="n">fds</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="ln"> 79</span>            <span class="k">if</span> <span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">revents</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">POLLIN</span> <span class="o">|</span> <span class="n">POLLERR</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln"> 80</span>                <span class="k">auto</span> <span class="n">it</span> <span class="o">=</span> <span class="n">mClients</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">fd</span><span class="p">);</span>
+<span class="ln"> 81</span>                <span class="k">if</span> <span class="p">(</span><span class="n">it</span> <span class="o">==</span> <span class="n">mClients</span><span class="p">.</span><span class="n">end</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln"> 82</span>                    <span class="n">SLOGE</span><span class="p">(</span><span class="s">&#34;fd vanished: %d&#34;</span><span class="p">,</span> <span class="n">p</span><span class="p">.</span><span class="n">fd</span><span class="p">);</span>
+<span class="ln"> 83</span>                    <span class="k">continue</span><span class="p">;</span>
+<span class="ln"> 84</span>                <span class="p">}</span>
+<span class="ln"> 85</span>                <span class="n">SocketClient</span><span class="o">*</span> <span class="n">c</span> <span class="o">=</span> <span class="n">it</span><span class="o">-&gt;</span><span class="n">second</span><span class="p">;</span>
+<span class="ln"> 86</span>                <span class="n">pending</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">c</span><span class="p">);</span>
+<span class="ln"> 87</span>                <span class="n">c</span><span class="o">-&gt;</span><span class="n">incRef</span><span class="p">();</span>
+<span class="ln"> 88</span>            <span class="p">}</span>
+<span class="ln"> 89</span>        <span class="p">}</span>
+<span class="ln"> 90</span>        <span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mClientsLock</span><span class="p">);</span>
+<span class="ln"> 91</span>
+<span class="ln"> 92</span>        <span class="k">for</span> <span class="p">(</span><span class="n">SocketClient</span><span class="o">*</span> <span class="nl">c</span> <span class="p">:</span> <span class="n">pending</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 93</span>            <span class="c1">//最终每一个客户端连接对应获取的accept句柄，都会有独立访问onDataAvailable函数
+</span><span class="ln"> 94</span><span class="c1"></span>            <span class="n">SLOGV</span><span class="p">(</span><span class="s">&#34;processing fd %d&#34;</span><span class="p">,</span> <span class="n">c</span><span class="o">-&gt;</span><span class="n">getSocket</span><span class="p">());</span>
+<span class="ln"> 95</span>            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">onDataAvailable</span><span class="p">(</span><span class="n">c</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln"> 96</span>                <span class="n">release</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="nb">false</span><span class="p">);</span>
+<span class="ln"> 97</span>            <span class="p">}</span>
+<span class="ln"> 98</span>            <span class="n">c</span><span class="o">-&gt;</span><span class="n">decRef</span><span class="p">();</span>
+<span class="ln"> 99</span>        <span class="p">}</span>
+<span class="ln">100</span>    <span class="p">}</span>
+<span class="ln">101</span><span class="p">}</span>
+</code></pre></div><blockquote>
+<p>1）关于<strong>backlog相关</strong>，可以点击<a href="https://xiaolincoding.com/network/3_tcp/tcp_interview.html">这里</a></p>
+<p>补充关于tcp相关的backlog</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_linux_5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_linux_5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>2）另外关于poll的IO多路复用机制</p>
+<p>上面的poll机制如下图所示</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_linux_6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_linux_6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>poll() 的机制与 select() 类似，与 select() 在本质上没有多大差别，管理多个描述符也是进行<strong>轮询</strong>，根据描述符的状态进行处理。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="cp">#include</span> <span class="cpf">&lt;poll.h&gt;</span><span class="cp">
+</span><span class="ln">2</span><span class="cp"></span><span class="kt">int</span> <span class="nf">poll</span><span class="p">(</span><span class="k">struct</span> <span class="nc">pollfd</span> <span class="o">*</span><span class="n">fds</span><span class="p">,</span> <span class="n">nfds_t</span> <span class="n">nfds</span><span class="p">,</span> <span class="kt">int</span> <span class="n">timeout</span><span class="p">);</span>
+</code></pre></div><p>定义的结构体</p>
+<ol>
+<li>fd：每一个 pollfd 结构体指定了一个被监视的文件描述符，可以传递多个结构体，指示 poll() 监视多个文件描述符。</li>
+<li>events：表示要告诉操作系统需要监测fd的事件（输入、输出、错误），每一个事件有多个取值</li>
+<li>revents：revents 域是文件描述符的操作结果事件，内核在调用返回时设置这个域。events 域中请求的任何事件都可能在 revents 域中返回。</li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="k">struct</span> <span class="nc">pollfd</span> <span class="p">{</span>
+<span class="ln">2</span>    <span class="kt">int</span>   <span class="n">fd</span><span class="p">;</span>         <span class="cm">/* file descriptor */</span>
+<span class="ln">3</span>    <span class="kt">short</span> <span class="n">events</span><span class="p">;</span>     <span class="cm">/* requested events */</span>
+<span class="ln">4</span>    <span class="kt">short</span> <span class="n">revents</span><span class="p">;</span>    <span class="cm">/* returned events */</span>
+<span class="ln">5</span><span class="p">};</span>
+</code></pre></div><p>成员变量说明：</p>
+<ol>
+<li>fd：每一个 pollfd 结构体指定了一个被监视的文件描述符，可以传递多个结构体，指示 poll() 监视多个文件描述符。</li>
+<li>events：表示要告诉操作系统需要监测fd的事件（输入、输出、错误），每一个事件有多个取值</li>
+<li>revents：revents 域是文件描述符的操作结果事件，内核在调用返回时设置这个域。events 域中请求的任何事件都可能在 revents 域中返回。</li>
+</ol>
+<p><strong>events&amp;revents的取值如下：</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">事件</th>
+<th style="text-align:center">描述</th>
+<th style="text-align:center">是否可作为输入（events）</th>
+<th style="text-align:center">是否可作为输出（revents）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">POLLIN</td>
+<td style="text-align:center">数据可读（包括普通数据&amp;优先数据）</td>
+<td style="text-align:center">是</td>
+<td style="text-align:center">是</td>
+</tr>
+<tr>
+<td style="text-align:center">POLLOUT</td>
+<td style="text-align:center">数据可写（普通数据&amp;优先数据）</td>
+<td style="text-align:center">是</td>
+<td style="text-align:center">是</td>
+</tr>
+<tr>
+<td style="text-align:center">POLLRDNORM</td>
+<td style="text-align:center">普通数据可读</td>
+<td style="text-align:center">是</td>
+<td style="text-align:center">是</td>
+</tr>
+<tr>
+<td style="text-align:center">POLLRDBAND</td>
+<td style="text-align:center">优先级带数据可读（linux不支持）</td>
+<td style="text-align:center">是</td>
+<td style="text-align:center">是</td>
+</tr>
+<tr>
+<td style="text-align:center">POLLPRI</td>
+<td style="text-align:center">高优先级数据可读，比如TCP带外数据</td>
+<td style="text-align:center">是</td>
+<td style="text-align:center">是</td>
+</tr>
+<tr>
+<td style="text-align:center">POLLWRNORM</td>
+<td style="text-align:center">普通数据可写</td>
+<td style="text-align:center">是</td>
+<td style="text-align:center">是</td>
+</tr>
+<tr>
+<td style="text-align:center">POLLWRBAND</td>
+<td style="text-align:center">优先级带数据可写</td>
+<td style="text-align:center">是</td>
+<td style="text-align:center">是</td>
+</tr>
+<tr>
+<td style="text-align:center">POLLRDHUP</td>
+<td style="text-align:center">TCP连接被对端关闭，或者关闭了写操作，由GNU引入</td>
+<td style="text-align:center">是</td>
+<td style="text-align:center">是</td>
+</tr>
+<tr>
+<td style="text-align:center">POPPHUP</td>
+<td style="text-align:center">挂起</td>
+<td style="text-align:center">否</td>
+<td style="text-align:center">是</td>
+</tr>
+<tr>
+<td style="text-align:center">POLLERR</td>
+<td style="text-align:center">错误</td>
+<td style="text-align:center">否</td>
+<td style="text-align:center">是</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>注意：</strong></p>
+<p>每个结构体的 <strong>events 域</strong>是由<strong>用户</strong>来设置，告诉内核我们关注的是什么，而 revents 域是<strong>返回时内核设置</strong>的，以说明对该描述符发生了什么事件</p>
+</blockquote>
+</blockquote>
+<p>4）onDataAvailable</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/logd/LogReader.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">bool</span> <span class="n">LogReader</span><span class="o">::</span><span class="n">onDataAvailable</span><span class="p">(</span><span class="n">SocketClient</span><span class="o">*</span> <span class="n">cli</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="k">static</span> <span class="kt">bool</span> <span class="n">name_set</span><span class="p">;</span>
+<span class="ln"> 4</span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">name_set</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 5</span>        <span class="n">prctl</span><span class="p">(</span><span class="n">PR_SET_NAME</span><span class="p">,</span> <span class="s">&#34;logd.reader&#34;</span><span class="p">);</span>
+<span class="ln"> 6</span>        <span class="n">name_set</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="p">}</span>
+<span class="ln"> 8</span>    <span class="c1">//读取对应的客户端发送的类似stream lids=0,1,2,3,4,6 timeout=xx start=xx.xx pid=xx
+</span><span class="ln"> 9</span><span class="c1"></span>    <span class="kt">char</span> <span class="n">buffer</span><span class="p">[</span><span class="mi">255</span><span class="p">];</span>
+<span class="ln">10</span>    <span class="kt">int</span> <span class="n">len</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="n">cli</span><span class="o">-&gt;</span><span class="n">getSocket</span><span class="p">(),</span> <span class="n">buffer</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
+<span class="ln">11</span>    <span class="n">buffer</span><span class="p">[</span><span class="n">len</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;\0&#39;</span><span class="p">;</span>
+<span class="ln">12</span>    <span class="c1">//这里开始解析收到的socket数据
+</span><span class="ln">13</span><span class="c1"></span>    <span class="k">static</span> <span class="k">const</span> <span class="kt">char</span> <span class="n">_tail</span><span class="p">[]</span> <span class="o">=</span> <span class="s">&#34; tail=&#34;</span><span class="p">;</span>
+<span class="ln">14</span>    <span class="kt">char</span><span class="o">*</span> <span class="n">cp</span> <span class="o">=</span> <span class="n">strstr</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">_tail</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="n">tail</span> <span class="o">=</span> <span class="n">atol</span><span class="p">(</span><span class="n">cp</span> <span class="o">+</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">_tail</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
+<span class="ln">16</span>    <span class="k">static</span> <span class="k">const</span> <span class="kt">char</span> <span class="n">_start</span><span class="p">[]</span> <span class="o">=</span> <span class="s">&#34; start=&#34;</span><span class="p">;</span>
+<span class="ln">17</span>    <span class="n">cp</span> <span class="o">=</span> <span class="n">strstr</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">_start</span><span class="p">);</span>
+<span class="ln">18</span>    <span class="n">start</span><span class="p">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">cp</span> <span class="o">+</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">_start</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#34;%s.%q&#34;</span><span class="p">);</span>
+<span class="ln">19</span>    <span class="k">static</span> <span class="k">const</span> <span class="kt">char</span> <span class="n">_timeout</span><span class="p">[]</span> <span class="o">=</span> <span class="s">&#34; timeout=&#34;</span><span class="p">;</span>
+<span class="ln">20</span>    <span class="n">cp</span> <span class="o">=</span> <span class="n">strstr</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">_timeout</span><span class="p">);</span>
+<span class="ln">21</span>    <span class="n">timeout</span> <span class="o">=</span> <span class="n">atol</span><span class="p">(</span><span class="n">cp</span> <span class="o">+</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">_timeout</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">NS_PER_SEC</span> <span class="o">+</span>
+<span class="ln">22</span>                  <span class="n">log_time</span><span class="p">(</span><span class="n">CLOCK_REALTIME</span><span class="p">).</span><span class="n">nsec</span><span class="p">();</span>
+<span class="ln">23</span>    <span class="k">static</span> <span class="k">const</span> <span class="kt">char</span> <span class="n">_logIds</span><span class="p">[]</span> <span class="o">=</span> <span class="s">&#34; lids=&#34;</span><span class="p">;</span>
+<span class="ln">24</span>    <span class="n">cp</span> <span class="o">=</span> <span class="n">strstr</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">_logIds</span><span class="p">);</span>
+<span class="ln">25</span>    <span class="n">logMask</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">26</span>    <span class="n">cp</span> <span class="o">+=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">_logIds</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">27</span>    <span class="k">while</span> <span class="p">(</span><span class="o">*</span><span class="n">cp</span> <span class="o">&amp;&amp;</span> <span class="o">*</span><span class="n">cp</span> <span class="o">!=</span> <span class="sc">&#39;\0&#39;</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">28</span>        <span class="kt">int</span> <span class="n">val</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">29</span>        <span class="k">while</span> <span class="p">(</span><span class="n">isdigit</span><span class="p">(</span><span class="o">*</span><span class="n">cp</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">30</span>            <span class="n">val</span> <span class="o">=</span> <span class="n">val</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">+</span> <span class="o">*</span><span class="n">cp</span> <span class="o">-</span> <span class="sc">&#39;0&#39;</span><span class="p">;</span>
+<span class="ln">31</span>            <span class="o">++</span><span class="n">cp</span><span class="p">;</span>
+<span class="ln">32</span>        <span class="p">}</span>
+<span class="ln">33</span>        <span class="n">logMask</span> <span class="o">|=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">val</span><span class="p">;</span>
+<span class="ln">34</span>        <span class="k">if</span> <span class="p">(</span><span class="o">*</span><span class="n">cp</span> <span class="o">!=</span> <span class="sc">&#39;,&#39;</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">35</span>            <span class="k">break</span><span class="p">;</span>
+<span class="ln">36</span>        <span class="p">}</span>
+<span class="ln">37</span>        <span class="o">++</span><span class="n">cp</span><span class="p">;</span>
+<span class="ln">38</span>    <span class="p">}</span>
+<span class="ln">39</span>    <span class="k">static</span> <span class="k">const</span> <span class="kt">char</span> <span class="n">_pid</span><span class="p">[]</span> <span class="o">=</span> <span class="s">&#34; pid=&#34;</span><span class="p">;</span>
+<span class="ln">40</span>    <span class="n">cp</span> <span class="o">=</span> <span class="n">strstr</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">_pid</span><span class="p">);</span>
+<span class="ln">41</span>    <span class="n">pid</span> <span class="o">=</span> <span class="n">atol</span><span class="p">(</span><span class="n">cp</span> <span class="o">+</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">_pid</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
+<span class="ln">42</span>    <span class="p">...</span>
+<span class="ln">43</span>    <span class="c1">//开始发送数据给客户端，客户端就可以收到对应的日志了
+</span><span class="ln">44</span><span class="c1"></span>    <span class="n">logbuf</span><span class="p">().</span><span class="n">flushTo</span><span class="p">(</span><span class="n">cli</span><span class="p">,</span> <span class="n">sequence</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">,</span> <span class="n">FlushCommand</span><span class="o">::</span><span class="n">hasReadLogs</span><span class="p">(</span><span class="n">cli</span><span class="p">),</span>
+<span class="ln">45</span>                     <span class="n">FlushCommand</span><span class="o">::</span><span class="n">hasSecurityLogs</span><span class="p">(</span><span class="n">cli</span><span class="p">),</span>
+<span class="ln">46</span>                     <span class="n">logFindStart</span><span class="p">.</span><span class="n">callback</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">logFindStart</span><span class="p">);</span>
+<span class="ln">47</span>    <span class="p">...</span>
+<span class="ln">48</span>    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">49</span><span class="p">}</span>
+</code></pre></div><p>5）flushTo</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/logd/LogBufferElement.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">log_time</span> <span class="n">LogBufferElement</span><span class="o">::</span><span class="n">flushTo</span><span class="p">(</span><span class="n">SocketClient</span><span class="o">*</span> <span class="n">reader</span><span class="p">,</span> <span class="n">LogBuffer</span><span class="o">*</span> <span class="n">parent</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">lastSame</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="k">struct</span> <span class="nc">logger_entry</span> <span class="n">entry</span> <span class="o">=</span> <span class="p">{};</span>
+<span class="ln"> 4</span>
+<span class="ln"> 5</span>    <span class="n">entry</span><span class="p">.</span><span class="n">hdr_size</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="nc">logger_entry</span><span class="p">);</span>
+<span class="ln"> 6</span>    <span class="n">entry</span><span class="p">.</span><span class="n">lid</span> <span class="o">=</span> <span class="n">mLogId</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="n">entry</span><span class="p">.</span><span class="n">pid</span> <span class="o">=</span> <span class="n">mPid</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="n">entry</span><span class="p">.</span><span class="n">tid</span> <span class="o">=</span> <span class="n">mTid</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="n">entry</span><span class="p">.</span><span class="n">uid</span> <span class="o">=</span> <span class="n">mUid</span><span class="p">;</span>
+<span class="ln">10</span>    <span class="n">entry</span><span class="p">.</span><span class="n">sec</span> <span class="o">=</span> <span class="n">mRealTime</span><span class="p">.</span><span class="n">tv_sec</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="n">entry</span><span class="p">.</span><span class="n">nsec</span> <span class="o">=</span> <span class="n">mRealTime</span><span class="p">.</span><span class="n">tv_nsec</span><span class="p">;</span>
+<span class="ln">12</span>
+<span class="ln">13</span>    <span class="k">struct</span> <span class="nc">iovec</span> <span class="n">iovec</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+<span class="ln">14</span>    <span class="n">iovec</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">iov_base</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">entry</span><span class="p">;</span>
+<span class="ln">15</span>    <span class="n">iovec</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">iov_len</span> <span class="o">=</span> <span class="n">entry</span><span class="p">.</span><span class="n">hdr_size</span><span class="p">;</span>
+<span class="ln">16</span>
+<span class="ln">17</span>    <span class="kt">char</span><span class="o">*</span> <span class="n">buffer</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln">18</span>
+<span class="ln">19</span>    <span class="k">if</span> <span class="p">(</span><span class="n">mDropped</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">20</span>        <span class="n">entry</span><span class="p">.</span><span class="n">len</span> <span class="o">=</span> <span class="n">populateDroppedMessage</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">lastSame</span><span class="p">);</span>
+<span class="ln">21</span>        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">entry</span><span class="p">.</span><span class="n">len</span><span class="p">)</span> <span class="k">return</span> <span class="n">mRealTime</span><span class="p">;</span>
+<span class="ln">22</span>        <span class="n">iovec</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">iov_base</span> <span class="o">=</span> <span class="n">buffer</span><span class="p">;</span>
+<span class="ln">23</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">24</span>        <span class="n">entry</span><span class="p">.</span><span class="n">len</span> <span class="o">=</span> <span class="n">mMsgLen</span><span class="p">;</span>
+<span class="ln">25</span>        <span class="n">iovec</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">iov_base</span> <span class="o">=</span> <span class="n">mMsg</span><span class="p">;</span>
+<span class="ln">26</span>    <span class="p">}</span>
+<span class="ln">27</span>    <span class="n">iovec</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">iov_len</span> <span class="o">=</span> <span class="n">entry</span><span class="p">.</span><span class="n">len</span><span class="p">;</span>
+<span class="ln">28</span>    <span class="c1">//最终在这里发送给客户端
+</span><span class="ln">29</span><span class="c1"></span>    <span class="n">log_time</span> <span class="n">retval</span> <span class="o">=</span> <span class="n">reader</span><span class="o">-&gt;</span><span class="n">sendDatav</span><span class="p">(</span><span class="n">iovec</span><span class="p">,</span> <span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="n">entry</span><span class="p">.</span><span class="n">len</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">))</span>
+<span class="ln">30</span>                          <span class="o">?</span> <span class="nl">FLUSH_ERROR</span>
+<span class="ln">31</span>                          <span class="p">:</span> <span class="n">mRealTime</span><span class="p">;</span>
+<span class="ln">32</span>
+<span class="ln">33</span>    <span class="k">if</span> <span class="p">(</span><span class="n">buffer</span><span class="p">)</span> <span class="n">free</span><span class="p">(</span><span class="n">buffer</span><span class="p">);</span>
+<span class="ln">34</span>
+<span class="ln">35</span>    <span class="k">return</span> <span class="n">retval</span><span class="p">;</span>
+<span class="ln">36</span><span class="p">}</span>
+</code></pre></div><h4 id="3312loglistener服务端">3.3.1.2LogListener服务端</h4>
+<p>1）构造LogListener</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/logd/LogListener.cpp
+</span><span class="ln"> 2</span><span class="c1">//与上面的区别是这里在基类构造SocketListener传入false，等同mListener为false
+</span><span class="ln"> 3</span><span class="c1"></span><span class="n">LogListener</span><span class="o">::</span><span class="n">LogListener</span><span class="p">(</span><span class="n">LogBuffer</span><span class="o">*</span> <span class="n">buf</span><span class="p">,</span> <span class="n">LogReader</span><span class="o">*</span> <span class="n">reader</span><span class="p">)</span>
+<span class="ln"> 4</span>    <span class="o">:</span> <span class="n">SocketListener</span><span class="p">(</span><span class="n">getLogSocket</span><span class="p">(),</span> <span class="nb">false</span><span class="p">),</span> <span class="n">logbuf</span><span class="p">(</span><span class="n">buf</span><span class="p">),</span> <span class="n">reader</span><span class="p">(</span><span class="n">reader</span><span class="p">)</span> <span class="p">{}</span>
+<span class="ln"> 5</span><span class="c1">//根据上面可以得知实际上是开启一个logdw的socket服务端
+</span><span class="ln"> 6</span><span class="c1"></span><span class="kt">int</span> <span class="n">LogListener</span><span class="o">::</span><span class="n">getLogSocket</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 7</span>    <span class="k">static</span> <span class="k">const</span> <span class="kt">char</span> <span class="n">socketName</span><span class="p">[]</span> <span class="o">=</span> <span class="s">&#34;logdw&#34;</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="n">sock</span> <span class="o">=</span> <span class="n">socket_local_server</span><span class="p">(</span>
+<span class="ln"> 9</span>        <span class="n">socketName</span><span class="p">,</span> <span class="n">ANDROID_SOCKET_NAMESPACE_RESERVED</span><span class="p">,</span> <span class="n">SOCK_DGRAM</span><span class="p">);</span>
+<span class="ln">10</span>    <span class="kt">int</span> <span class="n">on</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="k">if</span> <span class="p">(</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">SOL_SOCKET</span><span class="p">,</span> <span class="n">SO_PASSCRED</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">on</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">on</span><span class="p">)))</span> <span class="p">{</span>
+<span class="ln">12</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">13</span>    <span class="p">}</span>
+<span class="ln">14</span>    <span class="k">return</span> <span class="n">sock</span><span class="p">;</span>
+<span class="ln">15</span><span class="p">}</span>
+</code></pre></div><blockquote>
+<p>UDP的连接，设置SO_PASSCRED</p>
+<p>在辅助消息中启用接收发送过程的凭据。当设置了此选项并且套接字尚未连接时，将<strong>自动生成抽象名称空间中的唯一名称</strong>。期望一个整数布尔标志。</p>
+</blockquote>
+<p>2）LogListener开启logd.writer线程</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libsysutils/src/SocketListener.cpp
+</span><span class="ln"> 2</span><span class="c1">//与logd.reader线程区别是backlog这里传入了600，且传入的mListen=false
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kt">int</span> <span class="n">SocketListener</span><span class="o">::</span><span class="n">startListener</span><span class="p">(</span><span class="kt">int</span> <span class="n">backlog</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">mListen</span><span class="p">)</span>
+<span class="ln"> 5</span>        <span class="c1">//这里默认就会创建一个SocketClient对象作为客户端接收的句柄
+</span><span class="ln"> 6</span><span class="c1"></span>        <span class="n">mClients</span><span class="p">[</span><span class="n">mSock</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SocketClient</span><span class="p">(</span><span class="n">mSock</span><span class="p">,</span> <span class="nb">false</span><span class="p">,</span> <span class="n">mUseCmdNum</span><span class="p">);</span>
+<span class="ln"> 7</span>    <span class="c1">//管道创建，最终用于关闭子线程使用
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">pipe2</span><span class="p">(</span><span class="n">mCtrlPipe</span><span class="p">,</span> <span class="n">O_CLOEXEC</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln"> 9</span>        <span class="n">SLOGE</span><span class="p">(</span><span class="s">&#34;pipe failed (%s)&#34;</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">10</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="p">}</span>
+<span class="ln">12</span>    <span class="c1">//创建子线程
+</span><span class="ln">13</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mThread</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">,</span> <span class="n">SocketListener</span><span class="o">::</span><span class="n">threadStart</span><span class="p">,</span> <span class="k">this</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">14</span>        <span class="n">SLOGE</span><span class="p">(</span><span class="s">&#34;pthread_create (%s)&#34;</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">15</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">16</span>    <span class="p">}</span>
+<span class="ln">17</span>
+<span class="ln">18</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">19</span><span class="p">}</span>
+<span class="ln">20</span>
+<span class="ln">21</span><span class="p">...</span>
+<span class="ln">22</span><span class="c1">//这个线程中没有accept，因为是UDP协议，另外多路复用主要是监听管道句柄和线程创建前的一个SocketClient对象作为客户端接收的句柄 
+</span><span class="ln">23</span><span class="c1"></span><span class="kt">void</span> <span class="n">SocketListener</span><span class="o">::</span><span class="n">runListener</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">24</span>    <span class="k">while</span> <span class="p">(</span><span class="nb">true</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">25</span>        <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">pollfd</span><span class="o">&gt;</span> <span class="n">fds</span><span class="p">;</span>
+<span class="ln">26</span>
+<span class="ln">27</span>        <span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mClientsLock</span><span class="p">);</span>
+<span class="ln">28</span>        <span class="n">fds</span><span class="p">.</span><span class="n">reserve</span><span class="p">(</span><span class="mi">2</span> <span class="o">+</span> <span class="n">mClients</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+<span class="ln">29</span>        <span class="n">fds</span><span class="p">.</span><span class="n">push_back</span><span class="p">({.</span><span class="n">fd</span> <span class="o">=</span> <span class="n">mCtrlPipe</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">POLLIN</span><span class="p">});</span>
+<span class="ln">30</span>        <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="nl">pair</span> <span class="p">:</span> <span class="n">mClients</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">31</span>            <span class="k">const</span> <span class="kt">int</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">pair</span><span class="p">.</span><span class="n">second</span><span class="o">-&gt;</span><span class="n">getSocket</span><span class="p">();</span>
+<span class="ln">32</span>            <span class="n">fds</span><span class="p">.</span><span class="n">push_back</span><span class="p">({.</span><span class="n">fd</span> <span class="o">=</span> <span class="n">fd</span><span class="p">,</span> <span class="p">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">POLLIN</span><span class="p">});</span>
+<span class="ln">33</span>        <span class="p">}</span>
+<span class="ln">34</span>        <span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mClientsLock</span><span class="p">);</span>
+<span class="ln">35</span>
+<span class="ln">36</span>        <span class="kt">int</span> <span class="n">rc</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">poll</span><span class="p">(</span><span class="n">fds</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">fds</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="o">-</span><span class="mi">1</span><span class="p">));</span>
+<span class="ln">37</span>        <span class="k">if</span> <span class="p">(</span><span class="n">fds</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">revents</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">POLLIN</span> <span class="o">|</span> <span class="n">POLLERR</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">38</span>            <span class="kt">char</span> <span class="n">c</span> <span class="o">=</span> <span class="n">CtrlPipe_Shutdown</span><span class="p">;</span>
+<span class="ln">39</span>            <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">read</span><span class="p">(</span><span class="n">mCtrlPipe</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">&amp;</span><span class="n">c</span><span class="p">,</span> <span class="mi">1</span><span class="p">));</span>
+<span class="ln">40</span>            <span class="k">if</span> <span class="p">(</span><span class="n">c</span> <span class="o">==</span> <span class="n">CtrlPipe_Shutdown</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">41</span>                <span class="k">break</span><span class="p">;</span>
+<span class="ln">42</span>            <span class="p">}</span>
+<span class="ln">43</span>            <span class="k">continue</span><span class="p">;</span>
+<span class="ln">44</span>        <span class="p">}</span>
+<span class="ln">45</span>
+<span class="ln">46</span>        <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">SocketClient</span><span class="o">*&gt;</span> <span class="n">pending</span><span class="p">;</span>
+<span class="ln">47</span>        <span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mClientsLock</span><span class="p">);</span>
+<span class="ln">48</span>        <span class="c1">//实际上size只有2，位置0位管道句柄，位置1为线程创建前的一个SocketClient对象作为客户端接收的句柄
+</span><span class="ln">49</span><span class="c1"></span>        <span class="k">const</span> <span class="kt">int</span> <span class="n">size</span> <span class="o">=</span> <span class="n">fds</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
+<span class="ln">50</span>        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">mListen</span> <span class="o">?</span> <span class="mi">2</span> <span class="o">:</span> <span class="mi">1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">size</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">51</span>            <span class="k">const</span> <span class="k">struct</span> <span class="nc">pollfd</span><span class="o">&amp;</span> <span class="n">p</span> <span class="o">=</span> <span class="n">fds</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="ln">52</span>            <span class="k">if</span> <span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">revents</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">POLLIN</span> <span class="o">|</span> <span class="n">POLLERR</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">53</span>                <span class="k">auto</span> <span class="n">it</span> <span class="o">=</span> <span class="n">mClients</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">fd</span><span class="p">);</span>
+<span class="ln">54</span>                <span class="k">if</span> <span class="p">(</span><span class="n">it</span> <span class="o">==</span> <span class="n">mClients</span><span class="p">.</span><span class="n">end</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln">55</span>                    <span class="n">SLOGE</span><span class="p">(</span><span class="s">&#34;fd vanished: %d&#34;</span><span class="p">,</span> <span class="n">p</span><span class="p">.</span><span class="n">fd</span><span class="p">);</span>
+<span class="ln">56</span>                    <span class="k">continue</span><span class="p">;</span>
+<span class="ln">57</span>                <span class="p">}</span>
+<span class="ln">58</span>                <span class="n">SocketClient</span><span class="o">*</span> <span class="n">c</span> <span class="o">=</span> <span class="n">it</span><span class="o">-&gt;</span><span class="n">second</span><span class="p">;</span>
+<span class="ln">59</span>                <span class="n">pending</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">c</span><span class="p">);</span>
+<span class="ln">60</span>                <span class="n">c</span><span class="o">-&gt;</span><span class="n">incRef</span><span class="p">();</span>
+<span class="ln">61</span>            <span class="p">}</span>
+<span class="ln">62</span>        <span class="p">}</span>
+<span class="ln">63</span>        <span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mClientsLock</span><span class="p">);</span>
+<span class="ln">64</span>
+<span class="ln">65</span>        <span class="k">for</span> <span class="p">(</span><span class="n">SocketClient</span><span class="o">*</span> <span class="nl">c</span> <span class="p">:</span> <span class="n">pending</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">66</span>            <span class="c1">// Process it, if false is returned, remove from the map
+</span><span class="ln">67</span><span class="c1"></span>            <span class="n">SLOGV</span><span class="p">(</span><span class="s">&#34;processing fd %d&#34;</span><span class="p">,</span> <span class="n">c</span><span class="o">-&gt;</span><span class="n">getSocket</span><span class="p">());</span>
+<span class="ln">68</span>            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">onDataAvailable</span><span class="p">(</span><span class="n">c</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">69</span>                <span class="n">release</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="nb">false</span><span class="p">);</span>
+<span class="ln">70</span>            <span class="p">}</span>
+<span class="ln">71</span>            <span class="n">c</span><span class="o">-&gt;</span><span class="n">decRef</span><span class="p">();</span>
+<span class="ln">72</span>        <span class="p">}</span>
+<span class="ln">73</span>    <span class="p">}</span>
+<span class="ln">74</span><span class="p">}</span>
+</code></pre></div><p>3）onDataAvailable</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/logd/LogListener.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">bool</span> <span class="n">LogListener</span><span class="o">::</span><span class="n">onDataAvailable</span><span class="p">(</span><span class="n">SocketClient</span><span class="o">*</span> <span class="n">cli</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="k">static</span> <span class="kt">bool</span> <span class="n">name_set</span><span class="p">;</span>
+<span class="ln"> 4</span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">name_set</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 5</span>        <span class="n">prctl</span><span class="p">(</span><span class="n">PR_SET_NAME</span><span class="p">,</span> <span class="s">&#34;logd.writer&#34;</span><span class="p">);</span>
+<span class="ln"> 6</span>        <span class="n">name_set</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="p">}</span>
+<span class="ln"> 8</span>    
+<span class="ln"> 9</span>    <span class="kt">char</span> <span class="n">buffer</span><span class="p">[</span><span class="k">sizeof</span><span class="p">(</span><span class="n">android_log_header_t</span><span class="p">)</span> <span class="o">+</span> <span class="n">LOGGER_ENTRY_MAX_PAYLOAD</span> <span class="o">+</span> <span class="mi">1</span><span class="p">];</span>
+<span class="ln">10</span>    <span class="k">struct</span> <span class="nc">iovec</span> <span class="n">iov</span> <span class="o">=</span> <span class="p">{</span> <span class="n">buffer</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="p">};</span>
+<span class="ln">11</span>    <span class="k">alignas</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="kt">char</span> <span class="n">control</span><span class="p">[</span><span class="n">CMSG_SPACE</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="nc">ucred</span><span class="p">))];</span>
+<span class="ln">12</span>    <span class="k">struct</span> <span class="nc">msghdr</span> <span class="n">hdr</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln">13</span>        <span class="k">nullptr</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">iov</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">control</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">control</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span>
+<span class="ln">14</span>    <span class="p">};</span>
+<span class="ln">15</span>
+<span class="ln">16</span>    <span class="kt">int</span> <span class="n">socket</span> <span class="o">=</span> <span class="n">cli</span><span class="o">-&gt;</span><span class="n">getSocket</span><span class="p">();</span>
+<span class="ln">17</span>    <span class="c1">//接收来自客户端的数据
+</span><span class="ln">18</span><span class="c1"></span>    <span class="n">ssize_t</span> <span class="n">n</span> <span class="o">=</span> <span class="n">recvmsg</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">hdr</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="ln">19</span>    <span class="c1">//处理保存数据到缓存中
+</span><span class="ln">20</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">res</span> <span class="o">=</span> <span class="n">logbuf</span><span class="o">-&gt;</span><span class="n">log</span><span class="p">(</span><span class="n">logId</span><span class="p">,</span> <span class="n">header</span><span class="o">-&gt;</span><span class="n">realtime</span><span class="p">,</span> <span class="n">cred</span><span class="o">-&gt;</span><span class="n">uid</span><span class="p">,</span> <span class="n">cred</span><span class="o">-&gt;</span><span class="n">pid</span><span class="p">,</span> <span class="n">header</span><span class="o">-&gt;</span><span class="n">tid</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span>
+<span class="ln">21</span>                          <span class="p">((</span><span class="n">size_t</span><span class="p">)</span><span class="n">n</span> <span class="o">&lt;=</span> <span class="n">UINT16_MAX</span><span class="p">)</span> <span class="o">?</span> <span class="p">(</span><span class="kt">uint16_t</span><span class="p">)</span><span class="nl">n</span> <span class="p">:</span> <span class="n">UINT16_MAX</span><span class="p">);</span>
+<span class="ln">22</span>    <span class="k">if</span> <span class="p">(</span><span class="n">res</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">23</span>        <span class="c1">//通知另外一个logd.reader线程开始读取缓存数据
+</span><span class="ln">24</span><span class="c1"></span>        <span class="n">reader</span><span class="o">-&gt;</span><span class="n">notifyNewLog</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">log_mask_t</span><span class="o">&gt;</span><span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">logId</span><span class="p">));</span>
+<span class="ln">25</span>    <span class="p">}</span>
+<span class="ln">26</span>
+<span class="ln">27</span>    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">28</span><span class="p">}</span>
+</code></pre></div><h3 id="332客户端">3.3.2客户端</h3>
+<p>客户端其实就是进程使用liblog动态库</p>
+<h4 id="3321日志从缓存中读取">3.3.2.1日志从缓存中读取</h4>
+<p>读取通常是用户通过logcat来主动获取缓存中的logcat数据</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/logcat/logcat.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="n">Logcat</span><span class="o">::</span><span class="n">Run</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">**</span> <span class="n">argv</span><span class="p">)</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="p">...</span>
+<span class="ln"> 5</span>    <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">max_count_</span> <span class="o">||</span> <span class="n">print_count_</span> <span class="o">&lt;</span> <span class="n">max_count_</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 6</span>        <span class="p">...</span>
+<span class="ln"> 7</span>        <span class="kt">int</span> <span class="n">ret</span> <span class="o">=</span> <span class="n">android_logger_list_read</span><span class="p">(</span><span class="n">logger_list</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">log_msg</span><span class="p">);</span>  
+<span class="ln"> 8</span>        <span class="p">...</span>
+<span class="ln"> 9</span>    <span class="p">}</span>  
+<span class="ln">10</span>    <span class="p">...</span>
+<span class="ln">11</span><span class="p">}</span>
+</code></pre></div><p>1）android_logger_list_read</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/liblog/logger_read.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="nf">android_logger_list_read</span><span class="p">(</span><span class="k">struct</span> <span class="nc">logger_list</span><span class="o">*</span> <span class="n">logger_list</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">log_msg</span><span class="o">*</span> <span class="n">log_msg</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="p">...</span>
+<span class="ln"> 4</span>  <span class="k">if</span> <span class="p">(</span><span class="n">logger_list</span><span class="o">-&gt;</span><span class="n">mode</span> <span class="o">&amp;</span> <span class="n">ANDROID_LOG_PSTORE</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 5</span>    <span class="n">ret</span> <span class="o">=</span> <span class="n">PmsgRead</span><span class="p">(</span><span class="n">logger_list</span><span class="p">,</span> <span class="n">log_msg</span><span class="p">);</span>
+<span class="ln"> 6</span>  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln"> 7</span>    <span class="c1">//读取logcat LOG_ID_MAIN主日志
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="n">ret</span> <span class="o">=</span> <span class="n">LogdRead</span><span class="p">(</span><span class="n">logger_list</span><span class="p">,</span> <span class="n">log_msg</span><span class="p">);</span>
+<span class="ln"> 9</span>  <span class="p">}</span>
+<span class="ln">10</span>  <span class="p">...</span>
+<span class="ln">11</span>  <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+<span class="ln">12</span><span class="p">}</span>
+</code></pre></div><p>2）LogdRead</p>
+<p>这里主要有两个操作</p>
+<ol>
+<li>logdOpen获取路径为/dev/socket/logdr的socket句柄，并发送一次数据给服务端</li>
+<li>recv接收数据结构为log_msg的logcat数据</li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//system/core/liblog/logd_reader.cpp
+</span><span class="ln">2</span><span class="c1"></span><span class="kt">int</span> <span class="nf">LogdRead</span><span class="p">(</span><span class="k">struct</span> <span class="nc">logger_list</span><span class="o">*</span> <span class="n">logger_list</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">log_msg</span><span class="o">*</span> <span class="n">log_msg</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">3</span>  <span class="kt">int</span> <span class="n">ret</span> <span class="o">=</span> <span class="n">logdOpen</span><span class="p">(</span><span class="n">logger_list</span><span class="p">);</span>
+<span class="ln">4</span>  <span class="cm">/* NOTE: SOCK_SEQPACKET guarantees we read exactly one full entry */</span>
+<span class="ln">5</span>  <span class="n">ret</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">recv</span><span class="p">(</span><span class="n">ret</span><span class="p">,</span> <span class="n">log_msg</span><span class="p">,</span> <span class="n">LOGGER_ENTRY_MAX_LEN</span><span class="p">,</span> <span class="mi">0</span><span class="p">));</span>
+<span class="ln">6</span>  <span class="p">...</span>
+<span class="ln">7</span>  <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+<span class="ln">8</span><span class="p">}</span>
+</code></pre></div><p>logdOpen</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="k">static</span> <span class="kt">int</span> <span class="nf">logdOpen</span><span class="p">(</span><span class="k">struct</span> <span class="nc">logger_list</span><span class="o">*</span> <span class="n">logger_list</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 2</span>  <span class="kt">char</span> <span class="n">buffer</span><span class="p">[</span><span class="mi">256</span><span class="p">],</span> <span class="o">*</span><span class="n">cp</span><span class="p">,</span> <span class="n">c</span><span class="p">;</span>
+<span class="ln"> 3</span>  <span class="kt">int</span> <span class="n">ret</span><span class="p">,</span> <span class="n">remaining</span><span class="p">,</span> <span class="n">sock</span><span class="p">;</span>
+<span class="ln"> 4</span>
+<span class="ln"> 5</span>  <span class="n">sock</span> <span class="o">=</span> <span class="n">atomic_load</span><span class="p">(</span><span class="o">&amp;</span><span class="n">logger_list</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">);</span>
+<span class="ln"> 6</span>  <span class="k">if</span> <span class="p">(</span><span class="n">sock</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 7</span>    <span class="k">return</span> <span class="n">sock</span><span class="p">;</span>
+<span class="ln"> 8</span>  <span class="p">}</span>
+<span class="ln"> 9</span>  <span class="c1">//创建以报文传输的socket句柄的客户端，路径为/dev/socket/logdr
+</span><span class="ln">10</span><span class="c1"></span>  <span class="n">sock</span> <span class="o">=</span> <span class="n">socket_local_client</span><span class="p">(</span><span class="s">&#34;logdr&#34;</span><span class="p">,</span> <span class="n">SOCK_SEQPACKET</span><span class="p">);</span>
+<span class="ln">11</span>  <span class="c1">//开始拼接字符串，这里以stream开头，类似stream lids=0,1,2,3,4,6 timeout=xx start=xx.xx pid=xx
+</span><span class="ln">12</span><span class="c1"></span>  <span class="n">strcpy</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="p">(</span><span class="n">logger_list</span><span class="o">-&gt;</span><span class="n">mode</span> <span class="o">&amp;</span> <span class="n">ANDROID_LOG_NONBLOCK</span><span class="p">)</span> <span class="o">?</span> <span class="s">&#34;dumpAndClose&#34;</span> <span class="o">:</span> <span class="s">&#34;stream&#34;</span><span class="p">);</span>
+<span class="ln">13</span>  <span class="n">cp</span> <span class="o">=</span> <span class="n">buffer</span> <span class="o">+</span> <span class="n">strlen</span><span class="p">(</span><span class="n">buffer</span><span class="p">);</span>
+<span class="ln">14</span>  <span class="n">strcpy</span><span class="p">(</span><span class="n">cp</span><span class="p">,</span> <span class="s">&#34; lids&#34;</span><span class="p">);</span>
+<span class="ln">15</span>  <span class="n">cp</span> <span class="o">+=</span> <span class="mi">5</span><span class="p">;</span>
+<span class="ln">16</span>  <span class="n">c</span> <span class="o">=</span> <span class="sc">&#39;=&#39;</span><span class="p">;</span>
+<span class="ln">17</span>  <span class="n">remaining</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">cp</span> <span class="o">-</span> <span class="n">buffer</span><span class="p">);</span>
+<span class="ln">18</span>  <span class="k">for</span> <span class="p">(</span><span class="n">size_t</span> <span class="n">log_id</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">log_id</span> <span class="o">&lt;</span> <span class="n">LOG_ID_MAX</span><span class="p">;</span> <span class="o">++</span><span class="n">log_id</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">19</span>    <span class="k">if</span> <span class="p">((</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">log_id</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">logger_list</span><span class="o">-&gt;</span><span class="n">log_mask</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">20</span>      <span class="n">ret</span> <span class="o">=</span> <span class="n">snprintf</span><span class="p">(</span><span class="n">cp</span><span class="p">,</span> <span class="n">remaining</span><span class="p">,</span> <span class="s">&#34;%c%zu&#34;</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">log_id</span><span class="p">);</span>
+<span class="ln">21</span>      <span class="n">ret</span> <span class="o">=</span> <span class="n">MIN</span><span class="p">(</span><span class="n">ret</span><span class="p">,</span> <span class="n">remaining</span><span class="p">);</span>
+<span class="ln">22</span>      <span class="n">remaining</span> <span class="o">-=</span> <span class="n">ret</span><span class="p">;</span>
+<span class="ln">23</span>      <span class="n">cp</span> <span class="o">+=</span> <span class="n">ret</span><span class="p">;</span>
+<span class="ln">24</span>      <span class="n">c</span> <span class="o">=</span> <span class="sc">&#39;,&#39;</span><span class="p">;</span>
+<span class="ln">25</span>    <span class="p">}</span>
+<span class="ln">26</span>  <span class="p">}</span>
+<span class="ln">27</span>
+<span class="ln">28</span>  <span class="k">if</span> <span class="p">(</span><span class="n">logger_list</span><span class="o">-&gt;</span><span class="n">tail</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">29</span>    <span class="n">ret</span> <span class="o">=</span> <span class="n">snprintf</span><span class="p">(</span><span class="n">cp</span><span class="p">,</span> <span class="n">remaining</span><span class="p">,</span> <span class="s">&#34; tail=%u&#34;</span><span class="p">,</span> <span class="n">logger_list</span><span class="o">-&gt;</span><span class="n">tail</span><span class="p">);</span>
+<span class="ln">30</span>    <span class="n">ret</span> <span class="o">=</span> <span class="n">MIN</span><span class="p">(</span><span class="n">ret</span><span class="p">,</span> <span class="n">remaining</span><span class="p">);</span>
+<span class="ln">31</span>    <span class="n">remaining</span> <span class="o">-=</span> <span class="n">ret</span><span class="p">;</span>
+<span class="ln">32</span>    <span class="n">cp</span> <span class="o">+=</span> <span class="n">ret</span><span class="p">;</span>
+<span class="ln">33</span>  <span class="p">}</span>
+<span class="ln">34</span>
+<span class="ln">35</span>  <span class="k">if</span> <span class="p">(</span><span class="n">logger_list</span><span class="o">-&gt;</span><span class="n">start</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">||</span> <span class="n">logger_list</span><span class="o">-&gt;</span><span class="n">start</span><span class="p">.</span><span class="n">tv_nsec</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">36</span>    <span class="k">if</span> <span class="p">(</span><span class="n">logger_list</span><span class="o">-&gt;</span><span class="n">mode</span> <span class="o">&amp;</span> <span class="n">ANDROID_LOG_WRAP</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">37</span>      <span class="c1">// ToDo: alternate API to allow timeout to be adjusted.
+</span><span class="ln">38</span><span class="c1"></span>      <span class="n">ret</span> <span class="o">=</span> <span class="n">snprintf</span><span class="p">(</span><span class="n">cp</span><span class="p">,</span> <span class="n">remaining</span><span class="p">,</span> <span class="s">&#34; timeout=%u&#34;</span><span class="p">,</span> <span class="n">ANDROID_LOG_WRAP_DEFAULT_TIMEOUT</span><span class="p">);</span>
+<span class="ln">39</span>      <span class="n">ret</span> <span class="o">=</span> <span class="n">MIN</span><span class="p">(</span><span class="n">ret</span><span class="p">,</span> <span class="n">remaining</span><span class="p">);</span>
+<span class="ln">40</span>      <span class="n">remaining</span> <span class="o">-=</span> <span class="n">ret</span><span class="p">;</span>
+<span class="ln">41</span>      <span class="n">cp</span> <span class="o">+=</span> <span class="n">ret</span><span class="p">;</span>
+<span class="ln">42</span>    <span class="p">}</span>
+<span class="ln">43</span>    <span class="n">ret</span> <span class="o">=</span> <span class="n">snprintf</span><span class="p">(</span><span class="n">cp</span><span class="p">,</span> <span class="n">remaining</span><span class="p">,</span> <span class="s">&#34; start=%&#34;</span> <span class="n">PRIu32</span> <span class="s">&#34;.%09&#34;</span> <span class="n">PRIu32</span><span class="p">,</span> <span class="n">logger_list</span><span class="o">-&gt;</span><span class="n">start</span><span class="p">.</span><span class="n">tv_sec</span><span class="p">,</span>
+<span class="ln">44</span>                   <span class="n">logger_list</span><span class="o">-&gt;</span><span class="n">start</span><span class="p">.</span><span class="n">tv_nsec</span><span class="p">);</span>
+<span class="ln">45</span>    <span class="n">ret</span> <span class="o">=</span> <span class="n">MIN</span><span class="p">(</span><span class="n">ret</span><span class="p">,</span> <span class="n">remaining</span><span class="p">);</span>
+<span class="ln">46</span>    <span class="n">remaining</span> <span class="o">-=</span> <span class="n">ret</span><span class="p">;</span>
+<span class="ln">47</span>    <span class="n">cp</span> <span class="o">+=</span> <span class="n">ret</span><span class="p">;</span>
+<span class="ln">48</span>  <span class="p">}</span>
+<span class="ln">49</span>
+<span class="ln">50</span>  <span class="k">if</span> <span class="p">(</span><span class="n">logger_list</span><span class="o">-&gt;</span><span class="n">pid</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">51</span>    <span class="n">ret</span> <span class="o">=</span> <span class="n">snprintf</span><span class="p">(</span><span class="n">cp</span><span class="p">,</span> <span class="n">remaining</span><span class="p">,</span> <span class="s">&#34; pid=%u&#34;</span><span class="p">,</span> <span class="n">logger_list</span><span class="o">-&gt;</span><span class="n">pid</span><span class="p">);</span>
+<span class="ln">52</span>    <span class="n">ret</span> <span class="o">=</span> <span class="n">MIN</span><span class="p">(</span><span class="n">ret</span><span class="p">,</span> <span class="n">remaining</span><span class="p">);</span>
+<span class="ln">53</span>    <span class="n">cp</span> <span class="o">+=</span> <span class="n">ret</span><span class="p">;</span>
+<span class="ln">54</span>  <span class="p">}</span>
+<span class="ln">55</span>  <span class="c1">//发送上述字符串给服务端
+</span><span class="ln">56</span><span class="c1"></span>  <span class="n">ret</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">write</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">cp</span> <span class="o">-</span> <span class="n">buffer</span><span class="p">));</span>
+<span class="ln">57</span>  <span class="kt">int</span> <span class="n">write_errno</span> <span class="o">=</span> <span class="n">errno</span><span class="p">;</span>
+<span class="ln">58</span>  <span class="p">...</span>
+<span class="ln">59</span>  <span class="k">return</span> <span class="n">sock</span><span class="p">;</span>
+<span class="ln">60</span><span class="p">}</span>
+</code></pre></div><h4 id="3322日志写入到缓存中">3.3.2.2日志写入到缓存中</h4>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/liblog/logger_write.cpp
+</span><span class="ln"> 2</span><span class="c1">//LOG_ID_MAIN为主日志，prio为日志的等级，Verbose、Debug、Info、Warning、Error、Fatal、Silent(不输出)
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kt">int</span> <span class="nf">__android_log_write</span><span class="p">(</span><span class="kt">int</span> <span class="n">prio</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">tag</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">msg</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="k">return</span> <span class="n">__android_log_buf_write</span><span class="p">(</span><span class="n">LOG_ID_MAIN</span><span class="p">,</span> <span class="n">prio</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">msg</span><span class="p">);</span>
+<span class="ln"> 5</span><span class="p">}</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span><span class="kt">int</span> <span class="nf">__android_log_buf_write</span><span class="p">(</span><span class="kt">int</span> <span class="n">bufID</span><span class="p">,</span> <span class="kt">int</span> <span class="n">prio</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">tag</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">msg</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 8</span>  <span class="p">...</span>
+<span class="ln"> 9</span>  <span class="n">__android_log_message</span> <span class="n">log_message</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln">10</span>      <span class="k">sizeof</span><span class="p">(</span><span class="n">__android_log_message</span><span class="p">),</span> <span class="n">bufID</span><span class="p">,</span> <span class="n">prio</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">msg</span><span class="p">};</span>
+<span class="ln">11</span>  <span class="n">__android_log_write_log_message</span><span class="p">(</span><span class="o">&amp;</span><span class="n">log_message</span><span class="p">);</span>
+<span class="ln">12</span>  <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">13</span><span class="p">}</span>
+<span class="ln">14</span>
+<span class="ln">15</span><span class="kt">void</span> <span class="nf">__android_log_write_log_message</span><span class="p">(</span><span class="n">__android_log_message</span><span class="o">*</span> <span class="n">log_message</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">16</span>  <span class="p">...</span>
+<span class="ln">17</span>  <span class="n">logger_function</span><span class="p">(</span><span class="n">log_message</span><span class="p">);</span>
+<span class="ln">18</span><span class="p">}</span>
+</code></pre></div><p>又因为logger_function在初始化的时候就已经赋值，这里直接找到赋值的地方</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//system/core/liblog/logger_write.cpp
+</span><span class="ln">2</span><span class="c1"></span><span class="cp">#ifdef __ANDROID__
+</span><span class="ln">3</span><span class="cp"></span><span class="k">static</span> <span class="n">__android_logger_function</span> <span class="n">logger_function</span> <span class="o">=</span> <span class="n">__android_log_logd_logger</span><span class="p">;</span>
+<span class="ln">4</span><span class="cp">#else
+</span><span class="ln">5</span><span class="cp"></span><span class="k">static</span> <span class="n">__android_logger_function</span> <span class="n">logger_function</span> <span class="o">=</span> <span class="n">__android_log_stderr_logger</span><span class="p">;</span>
+<span class="ln">6</span><span class="cp">#endif
+</span></code></pre></div><p>最终调用__android_log_logd_logger</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/liblog/logger_write.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span> <span class="nf">__android_log_logd_logger</span><span class="p">(</span><span class="k">const</span> <span class="k">struct</span> <span class="nc">__android_log_message</span><span class="o">*</span> <span class="n">log_message</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="kt">int</span> <span class="n">buffer_id</span> <span class="o">=</span> <span class="n">log_message</span><span class="o">-&gt;</span><span class="n">buffer_id</span> <span class="o">==</span> <span class="n">LOG_ID_DEFAULT</span> <span class="o">?</span> <span class="nl">LOG_ID_MAIN</span> <span class="p">:</span> <span class="n">log_message</span><span class="o">-&gt;</span><span class="n">buffer_id</span><span class="p">;</span>
+<span class="ln"> 4</span>
+<span class="ln"> 5</span>  <span class="k">struct</span> <span class="nc">iovec</span> <span class="n">vec</span><span class="p">[</span><span class="mi">3</span><span class="p">];</span>
+<span class="ln"> 6</span>  <span class="n">vec</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">iov_base</span> <span class="o">=</span>
+<span class="ln"> 7</span>      <span class="k">const_cast</span><span class="o">&lt;</span><span class="kt">unsigned</span> <span class="kt">char</span><span class="o">*&gt;</span><span class="p">(</span><span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">char</span><span class="o">*&gt;</span><span class="p">(</span><span class="o">&amp;</span><span class="n">log_message</span><span class="o">-&gt;</span><span class="n">priority</span><span class="p">));</span>
+<span class="ln"> 8</span>  <span class="n">vec</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">iov_len</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln"> 9</span>  <span class="n">vec</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">iov_base</span> <span class="o">=</span> <span class="k">const_cast</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">*&gt;</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">void</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">log_message</span><span class="o">-&gt;</span><span class="n">tag</span><span class="p">));</span>
+<span class="ln">10</span>  <span class="n">vec</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">iov_len</span> <span class="o">=</span> <span class="n">strlen</span><span class="p">(</span><span class="n">log_message</span><span class="o">-&gt;</span><span class="n">tag</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">11</span>  <span class="n">vec</span><span class="p">[</span><span class="mi">2</span><span class="p">].</span><span class="n">iov_base</span> <span class="o">=</span> <span class="k">const_cast</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">*&gt;</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">void</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">log_message</span><span class="o">-&gt;</span><span class="n">message</span><span class="p">));</span>
+<span class="ln">12</span>  <span class="n">vec</span><span class="p">[</span><span class="mi">2</span><span class="p">].</span><span class="n">iov_len</span> <span class="o">=</span> <span class="n">strlen</span><span class="p">(</span><span class="n">log_message</span><span class="o">-&gt;</span><span class="n">message</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">13</span>  <span class="c1">//buffer_id传入的就是LOG_ID_MAIN
+</span><span class="ln">14</span><span class="c1"></span>  <span class="n">write_to_log</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">log_id_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">buffer_id</span><span class="p">),</span> <span class="n">vec</span><span class="p">,</span> <span class="mi">3</span><span class="p">);</span>
+<span class="ln">15</span><span class="p">}</span>
+<span class="ln">16</span>
+<span class="ln">17</span><span class="k">static</span> <span class="kt">int</span> <span class="nf">write_to_log</span><span class="p">(</span><span class="n">log_id_t</span> <span class="n">log_id</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">iovec</span><span class="o">*</span> <span class="n">vec</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">nr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">18</span>  <span class="p">...</span>
+<span class="ln">19</span>  <span class="n">ret</span> <span class="o">=</span> <span class="n">LogdWrite</span><span class="p">(</span><span class="n">log_id</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ts</span><span class="p">,</span> <span class="n">vec</span><span class="p">,</span> <span class="n">nr</span><span class="p">);</span>
+<span class="ln">20</span>  <span class="p">...</span>
+<span class="ln">21</span>  <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+<span class="ln">22</span><span class="p">}</span>
+</code></pre></div><p>LogdWrite</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/liblog/logd_writer.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="nf">LogdWrite</span><span class="p">(</span><span class="n">log_id_t</span> <span class="n">logId</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">timespec</span><span class="o">*</span> <span class="n">ts</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">iovec</span><span class="o">*</span> <span class="n">vec</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">nr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="n">ssize_t</span> <span class="n">ret</span><span class="p">;</span>
+<span class="ln"> 4</span>  <span class="k">static</span> <span class="k">const</span> <span class="kt">unsigned</span> <span class="n">headerLength</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln"> 5</span>  <span class="k">struct</span> <span class="nc">iovec</span> <span class="n">newVec</span><span class="p">[</span><span class="n">nr</span> <span class="o">+</span> <span class="n">headerLength</span><span class="p">];</span>
+<span class="ln"> 6</span>  <span class="n">android_log_header_t</span> <span class="n">header</span><span class="p">;</span>
+<span class="ln"> 7</span>  <span class="n">size_t</span> <span class="n">i</span><span class="p">,</span> <span class="n">payloadSize</span><span class="p">;</span>
+<span class="ln"> 8</span>  <span class="k">static</span> <span class="n">atomic_int</span> <span class="n">dropped</span><span class="p">;</span>
+<span class="ln"> 9</span>  <span class="k">static</span> <span class="n">atomic_int</span> <span class="n">droppedSecurity</span><span class="p">;</span>
+<span class="ln">10</span>  <span class="c1">//获取客户端的socket句柄
+</span><span class="ln">11</span><span class="c1"></span>  <span class="n">GetSocket</span><span class="p">();</span>
+<span class="ln">12</span>
+<span class="ln">13</span>  <span class="n">header</span><span class="p">.</span><span class="n">tid</span> <span class="o">=</span> <span class="n">gettid</span><span class="p">();</span>
+<span class="ln">14</span>  <span class="n">header</span><span class="p">.</span><span class="n">realtime</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">=</span> <span class="n">ts</span><span class="o">-&gt;</span><span class="n">tv_sec</span><span class="p">;</span>
+<span class="ln">15</span>  <span class="n">header</span><span class="p">.</span><span class="n">realtime</span><span class="p">.</span><span class="n">tv_nsec</span> <span class="o">=</span> <span class="n">ts</span><span class="o">-&gt;</span><span class="n">tv_nsec</span><span class="p">;</span>
+<span class="ln">16</span>
+<span class="ln">17</span>  <span class="n">newVec</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">iov_base</span> <span class="o">=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">header</span><span class="p">;</span>
+<span class="ln">18</span>  <span class="n">newVec</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">iov_len</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">header</span><span class="p">);</span>
+<span class="ln">19</span>
+<span class="ln">20</span>  <span class="kt">int32_t</span> <span class="n">snapshot</span> <span class="o">=</span> <span class="n">atomic_exchange_explicit</span><span class="p">(</span><span class="o">&amp;</span><span class="n">droppedSecurity</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">memory_order_relaxed</span><span class="p">);</span>
+<span class="ln">21</span>  <span class="k">if</span> <span class="p">(</span><span class="n">snapshot</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">22</span>    <span class="n">android_log_event_int_t</span> <span class="n">buffer</span><span class="p">;</span>
+<span class="ln">23</span>
+<span class="ln">24</span>    <span class="n">header</span><span class="p">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">LOG_ID_SECURITY</span><span class="p">;</span>
+<span class="ln">25</span>    <span class="n">buffer</span><span class="p">.</span><span class="n">header</span><span class="p">.</span><span class="n">tag</span> <span class="o">=</span> <span class="n">LIBLOG_LOG_TAG</span><span class="p">;</span>
+<span class="ln">26</span>    <span class="n">buffer</span><span class="p">.</span><span class="n">payload</span><span class="p">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">EVENT_TYPE_INT</span><span class="p">;</span>
+<span class="ln">27</span>    <span class="n">buffer</span><span class="p">.</span><span class="n">payload</span><span class="p">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">snapshot</span><span class="p">;</span>
+<span class="ln">28</span>
+<span class="ln">29</span>    <span class="n">newVec</span><span class="p">[</span><span class="n">headerLength</span><span class="p">].</span><span class="n">iov_base</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">buffer</span><span class="p">;</span>
+<span class="ln">30</span>    <span class="n">newVec</span><span class="p">[</span><span class="n">headerLength</span><span class="p">].</span><span class="n">iov_len</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buffer</span><span class="p">);</span>
+<span class="ln">31</span>    <span class="c1">//客户端发送给服务端
+</span><span class="ln">32</span><span class="c1"></span>    <span class="n">ret</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">writev</span><span class="p">(</span><span class="n">logd_socket</span><span class="p">,</span> <span class="n">newVec</span><span class="p">,</span> <span class="mi">2</span><span class="p">));</span>
+<span class="ln">33</span>    <span class="k">if</span> <span class="p">(</span><span class="n">ret</span> <span class="o">!=</span> <span class="p">(</span><span class="n">ssize_t</span><span class="p">)(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">header</span><span class="p">)</span> <span class="o">+</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buffer</span><span class="p">)))</span> <span class="p">{</span>
+<span class="ln">34</span>      <span class="n">atomic_fetch_add_explicit</span><span class="p">(</span><span class="o">&amp;</span><span class="n">droppedSecurity</span><span class="p">,</span> <span class="n">snapshot</span><span class="p">,</span> <span class="n">memory_order_relaxed</span><span class="p">);</span>
+<span class="ln">35</span>    <span class="p">}</span>
+<span class="ln">36</span>  <span class="p">}</span>
+<span class="ln">37</span>  <span class="p">...</span>
+<span class="ln">38</span>  <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+<span class="ln">39</span><span class="p">}</span>
+<span class="ln">40</span><span class="c1">//获取客户端的socket句柄
+</span><span class="ln">41</span><span class="c1"></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">GetSocket</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">42</span>  <span class="kt">int</span> <span class="n">new_socket</span> <span class="o">=</span>
+<span class="ln">43</span>      <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">socket</span><span class="p">(</span><span class="n">PF_UNIX</span><span class="p">,</span> <span class="n">SOCK_DGRAM</span> <span class="o">|</span> <span class="n">SOCK_CLOEXEC</span> <span class="o">|</span> <span class="n">SOCK_NONBLOCK</span><span class="p">,</span> <span class="mi">0</span><span class="p">));</span>
+<span class="ln">44</span>  <span class="n">LogdConnect</span><span class="p">();</span>
+<span class="ln">45</span><span class="p">}</span>
+<span class="ln">46</span>
+<span class="ln">47</span><span class="k">static</span> <span class="kt">void</span> <span class="nf">LogdConnect</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">48</span>  <span class="c1">//使用UDP协议的本地socket，路径为/dev/socket/logdw
+</span><span class="ln">49</span><span class="c1"></span>  <span class="n">sockaddr_un</span> <span class="n">un</span> <span class="o">=</span> <span class="p">{};</span>
+<span class="ln">50</span>  <span class="n">un</span><span class="p">.</span><span class="n">sun_family</span> <span class="o">=</span> <span class="n">AF_UNIX</span><span class="p">;</span>
+<span class="ln">51</span>  <span class="n">strcpy</span><span class="p">(</span><span class="n">un</span><span class="p">.</span><span class="n">sun_path</span><span class="p">,</span> <span class="s">&#34;/dev/socket/logdw&#34;</span><span class="p">);</span>
+<span class="ln">52</span>  <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">connect</span><span class="p">(</span><span class="n">logd_socket</span><span class="p">,</span> <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">sockaddr</span><span class="o">*&gt;</span><span class="p">(</span><span class="o">&amp;</span><span class="n">un</span><span class="p">),</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">sockaddr_un</span><span class="p">)));</span>
+<span class="ln">53</span><span class="p">}</span>
+</code></pre></div><h2 id="34demo4">3.4demo4</h2>
 <p>这个demo是SElinux中的日志打印相关的socket，使用用户空间和内核空间的通信，且使用数据报接口用于直接访问网络层。</p>
 <blockquote>
 <p><strong>SOCK RAW</strong>套接字提供一个<strong>数据报接口</strong>，用于直接访问下面的网络层（即因特网域中的P层)。使用这个接口时，应用程序负责构造自己的协议头部，这是因为传输协议（如TCP和UDP)被绕过了。当创建一个原始套接字时，需要有超级用户特权，这样可以防止恶意应用程序绕过内建安全机制来创建报文。</p>
@@ -1239,7 +1965,8 @@
 <p><a href="https://blog.csdn.net/qq_46323094/article/details/117704573">[15] 转角心静了, Linux下的Socket通信, 2021.</a></p>
 <p><a href="https://blog.csdn.net/daozi22/article/details/53344134">[16] penguin1990, LocalSocket实现进程间通信, 2016.</a></p>
 <p><a href="https://blog.csdn.net/tkwxty/article/details/103064321">[17] IT先森, Android Java层和Native层通信实战大荟萃之原生socket实现通信, 2020.</a></p>
-<p><a href="%5Bhttps://www.dazhuanlan.com/a370352701/topics/1014749">[18] a370352701, 人工智能 图解linux netlink, 2019.</a></p>
+<p><a href="https://www.dazhuanlan.com/a370352701/topics/1014749">[18] a370352701, 人工智能 图解linux netlink, 2019.</a></p>
+<p><a href="https://blog.csdn.net/qq_37964547/article/details/80697530">[19] Shining-LY, poll方法的基本概念, 2018.</a></p>
               
             </div>
           </div>
