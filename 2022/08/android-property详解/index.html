@@ -288,7 +288,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">9600 Words|Read in about 45 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">9800 Words|Read in about 46 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -2485,7 +2485,7 @@
 <span class="ln"> 8</span>  <span class="p">}</span>
 <span class="ln"> 9</span>  <span class="c1">//同前面一样  
 </span><span class="ln">10</span><span class="c1"></span>  <span class="n">prop_area</span><span class="o">*</span> <span class="n">pa</span> <span class="o">=</span> <span class="n">contexts_</span><span class="o">-&gt;</span><span class="n">GetPropAreaForName</span><span class="p">(</span><span class="n">pi</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">);</span>
-<span class="ln">11</span>  <span class="c1">//找到prop_info中的serial
+<span class="ln">11</span>  <span class="c1">//找到prop_info中的serial，这里的组成是 value长度(8位) + 更新或者添加*2(24位)
 </span><span class="ln">12</span><span class="c1"></span>  <span class="kt">uint32_t</span> <span class="n">serial</span> <span class="o">=</span> <span class="n">atomic_load_explicit</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pi</span><span class="o">-&gt;</span><span class="n">serial</span><span class="p">,</span> <span class="n">memory_order_relaxed</span><span class="p">);</span>
 <span class="ln">13</span>  <span class="c1">//SERIAL_VALUE_LEN这个操作是右移运算，右移32位，得到value的长度
 </span><span class="ln">14</span><span class="c1"></span>  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">old_len</span> <span class="o">=</span> <span class="n">SERIAL_VALUE_LEN</span><span class="p">(</span><span class="n">serial</span><span class="p">);</span>
@@ -2498,7 +2498,7 @@
 <span class="ln">21</span>  <span class="c1">//更新value的值  
 </span><span class="ln">22</span><span class="c1"></span>  <span class="n">strlcpy</span><span class="p">(</span><span class="n">pi</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">len</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
 <span class="ln">23</span>  <span class="n">atomic_thread_fence</span><span class="p">(</span><span class="n">memory_order_release</span><span class="p">);</span>
-<span class="ln">24</span>  <span class="c1">//serial,这里的prop_info中的serial，前八位是value的长度，后32位为序列数，如果开始更新则为奇数，更新完成则为偶数
+<span class="ln">24</span>  <span class="c1">//serial,这里的prop_info中的serial，前8位是value的长度，后24位为序列数，如果开始更新则为奇数，更新完成则为偶数
 </span><span class="ln">25</span><span class="c1"></span>  <span class="n">atomic_store_explicit</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pi</span><span class="o">-&gt;</span><span class="n">serial</span><span class="p">,</span> <span class="p">(</span><span class="n">len</span> <span class="o">&lt;&lt;</span> <span class="mi">24</span><span class="p">)</span> <span class="o">|</span> <span class="p">((</span><span class="n">serial</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xffffff</span><span class="p">),</span> <span class="n">memory_order_relaxed</span><span class="p">);</span>
 <span class="ln">26</span>  <span class="n">__futex_wake</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pi</span><span class="o">-&gt;</span><span class="n">serial</span><span class="p">,</span> <span class="n">INT32_MAX</span><span class="p">);</span>  <span class="c1">// Fence by side effect
 </span><span class="ln">27</span><span class="c1"></span>  <span class="c1">//只要有操作update的函数，就会对serial_pa中的serial_加1
@@ -2510,8 +2510,13 @@
 <span class="ln">33</span>
 <span class="ln">34</span>  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 <span class="ln">35</span><span class="p">}</span>
-</code></pre></div><p>每次<code>Update</code>的时候，会更新几处地方，第一<code>prop_info</code>的<code>value</code>会更新，第二<code>prop_info</code>的<code>serial</code>会更新，前八位是新<code>value</code>的长度，后32位记录数值，这个数值是被修改次数的2倍，如果为奇数，说明这个<code>value</code>正在写入<code>prop_info</code>中。第三，会更新<code>/dev/__properties__/properties_serial</code>所在的<code>prop_area</code>中的<code>serial_</code>值，目前有两种情况会变化，<code>Update</code>和<code>Add</code>的时候，都会增加1。</p>
-<p>下面举例说明，在总共只有三个属性的情况下，对于<code>aaudio.hw_burst_min_usec</code>这个属性中，第一次更新了一次属性，那么<code>prop_info</code>中的<code>serial</code>为<code>0x04000002</code>，并且<code>/dev/__properties__/properties_serial</code>所在的<code>prop_area</code>中的<code>serial_</code>值为4。</p>
+</code></pre></div><p>每次<code>Update</code>的时候，会更新几处地方</p>
+<ol>
+<li><code>prop_info</code>的<code>value</code>会更新</li>
+<li><code>prop_info</code>的<code>serial</code>会更新，前8位是新<code>value</code>的长度，后24位记录数值，这个数值是被修改次数的2倍，如果为奇数，说明这个<code>value</code>正在写入<code>prop_info</code>中</li>
+<li>会更新<code>/dev/__properties__/properties_serial</code>所在的<code>prop_area</code>中的<code>serial_</code>值，目前有两种情况会变化，<code>Update</code>和<code>Add</code>的时候，都会增加1。</li>
+</ol>
+<p>下面举例说明，在总共只有三个属性的情况下，对于<code>aaudio.hw_burst_min_usec</code>这个属性中，第一次更新了一次属性，那么<code>prop_info</code>中的<code>serial</code>为<code>0x04000004</code>(前8位的4是<code>value</code>的长度4，后32位的4指的是(<code>Add</code>+<code>Update</code>)*2)，并且<code>/dev/__properties__/properties_serial</code>所在的<code>prop_area</code>中的<code>serial_</code>值为4。</p>
 
 
  
@@ -2532,15 +2537,75 @@
 
 <div class="figure center fig-100" >
   
-    <a class="fancybox" href="https://yangyang48.github.io/property/property_23.png" data-fancybox-group="">
+    <a class="fancybox" href="https://yangyang48.github.io/property/property_36.png" data-fancybox-group="">
   
-    <img class="fig-img" src="https://yangyang48.github.io/property/property_23.png" >
+    <img class="fig-img" src="https://yangyang48.github.io/property/property_36.png" >
   
     </a>
   
   
 </div>
 
+<blockquote>
+<p>补充关于Android属性中的脏区，<strong>主要为了防止多线程时候发生读写错误</strong>。</p>
+<p>脏区在属性系统中只有两处地方调用和一处地方定义。</p>
+<p>1）一处读取</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/system_properties/system_properties.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">uint32_t</span> <span class="n">SystemProperties</span><span class="o">::</span><span class="n">ReadMutablePropertyValue</span><span class="p">(</span><span class="k">const</span> <span class="n">prop_info</span><span class="o">*</span> <span class="n">pi</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="c1">//获取prop_info中的serial  
+</span><span class="ln"> 4</span><span class="c1"></span>  <span class="kt">uint32_t</span> <span class="n">new_serial</span> <span class="o">=</span> <span class="n">load_const_atomic</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pi</span><span class="o">-&gt;</span><span class="n">serial</span><span class="p">,</span> <span class="n">memory_order_acquire</span><span class="p">);</span>
+<span class="ln"> 5</span>  <span class="kt">uint32_t</span> <span class="n">serial</span><span class="p">;</span>
+<span class="ln"> 6</span>  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">len</span><span class="p">;</span>
+<span class="ln"> 7</span>  <span class="k">for</span> <span class="p">(;;)</span> <span class="p">{</span>
+<span class="ln"> 8</span>    <span class="n">serial</span> <span class="o">=</span> <span class="n">new_serial</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="c1">//获取前8位的值
+</span><span class="ln">10</span><span class="c1"></span>    <span class="n">len</span> <span class="o">=</span> <span class="n">SERIAL_VALUE_LEN</span><span class="p">(</span><span class="n">serial</span><span class="p">);</span>
+<span class="ln">11</span>    <span class="c1">//如果serial为奇数，那么读取脏区内容拷贝到value变量，反之直接拷贝prop_info中的value值到value变量  
+</span><span class="ln">12</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">__predict_false</span><span class="p">(</span><span class="n">SERIAL_DIRTY</span><span class="p">(</span><span class="n">serial</span><span class="p">)))</span> <span class="p">{</span>
+<span class="ln">13</span>      <span class="n">prop_area</span><span class="o">*</span> <span class="n">pa</span> <span class="o">=</span> <span class="n">contexts_</span><span class="o">-&gt;</span><span class="n">GetPropAreaForName</span><span class="p">(</span><span class="n">pi</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">);</span>
+<span class="ln">14</span>      <span class="n">memcpy</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">pa</span><span class="o">-&gt;</span><span class="n">dirty_backup_area</span><span class="p">(),</span> <span class="n">len</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">16</span>      <span class="n">memcpy</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">pi</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">,</span> <span class="n">len</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+<span class="ln">17</span>    <span class="p">}</span>
+<span class="ln">18</span>    <span class="n">atomic_thread_fence</span><span class="p">(</span><span class="n">memory_order_acquire</span><span class="p">);</span>
+<span class="ln">19</span>    <span class="n">new_serial</span> <span class="o">=</span> <span class="n">load_const_atomic</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pi</span><span class="o">-&gt;</span><span class="n">serial</span><span class="p">,</span> <span class="n">memory_order_relaxed</span><span class="p">);</span>
+<span class="ln">20</span>    <span class="k">if</span> <span class="p">(</span><span class="n">__predict_true</span><span class="p">(</span><span class="n">serial</span> <span class="o">==</span> <span class="n">new_serial</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">21</span>      <span class="k">break</span><span class="p">;</span>
+<span class="ln">22</span>    <span class="p">}</span>
+<span class="ln">23</span>    <span class="n">atomic_thread_fence</span><span class="p">(</span><span class="n">memory_order_acquire</span><span class="p">);</span>
+<span class="ln">24</span>  <span class="p">}</span>
+<span class="ln">25</span>  <span class="k">return</span> <span class="n">serial</span><span class="p">;</span>
+<span class="ln">26</span><span class="p">}</span>
+</code></pre></div><p>2）一处写入</p>
+<p>详见上述<code>SystemProperties::Update</code>，每次更新都会调用。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="n">memcpy</span><span class="p">(</span><span class="n">pa</span><span class="o">-&gt;</span><span class="n">dirty_backup_area</span><span class="p">(),</span> <span class="n">pi</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">,</span> <span class="n">old_len</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+</code></pre></div><p>3）一处声明</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//bionic/libc/system_properties/include/system_properties/prop_area.h
+</span><span class="ln">2</span><span class="c1"></span><span class="kt">char</span><span class="o">*</span> <span class="nf">dirty_backup_area</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">3</span>    <span class="k">return</span> <span class="n">data_</span> <span class="o">+</span> <span class="k">sizeof</span> <span class="p">(</span><span class="n">prop_bt</span><span class="p">);</span>
+<span class="ln">4</span><span class="p">}</span>
+</code></pre></div><p>关于<code>memcpy</code>如果第三个参数小于目标区域，正常把内容拷贝；如果第三个参数大于目前区域，会发生<code>memcpy</code>内存越界，造成段错误。这里所谓的&quot;<strong>脏区</strong>&quot;，就是<code>prop_bt</code>后面的空间。可以在<code>map_prop_area_rw</code>中知道，每一个<code>prop_area</code>定义的共享内存大小都为128k，所以<strong>拷贝到脏区不会内存越界</strong>。因此，保证传入的<code>value</code>大小小于92长度，必定能保证目前区域有足够的空间。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//bionic/libc/system_properties/prop_area.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">prop_area</span><span class="o">*</span> <span class="n">prop_area</span><span class="o">::</span><span class="n">map_prop_area_rw</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">filename</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">context</span><span class="p">,</span>
+<span class="ln"> 3</span>                                       <span class="kt">bool</span><span class="o">*</span> <span class="n">fsetxattr_failed</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 4</span>  <span class="k">const</span> <span class="kt">int</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">O_RDWR</span> <span class="o">|</span> <span class="n">O_CREAT</span> <span class="o">|</span> <span class="n">O_NOFOLLOW</span> <span class="o">|</span> <span class="n">O_CLOEXEC</span> <span class="o">|</span> <span class="n">O_EXCL</span><span class="p">,</span> <span class="mo">0444</span><span class="p">);</span>
+<span class="ln"> 5</span>  <span class="p">...</span>
+<span class="ln"> 6</span>  <span class="c1">//PA_SIZE大小为128k，sizeof(prop_area)为124字节，pa_data_size_大小为128k-124
+</span><span class="ln"> 7</span><span class="c1"></span>  <span class="n">pa_size_</span> <span class="o">=</span> <span class="n">PA_SIZE</span><span class="p">;</span>
+<span class="ln"> 8</span>  <span class="n">pa_data_size_</span> <span class="o">=</span> <span class="n">pa_size_</span> <span class="o">-</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">prop_area</span><span class="p">);</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span>  <span class="kt">void</span><span class="o">*</span> <span class="k">const</span> <span class="n">memory_area</span> <span class="o">=</span> <span class="n">mmap</span><span class="p">(</span><span class="k">nullptr</span><span class="p">,</span> <span class="n">pa_size_</span><span class="p">,</span> <span class="n">PROT_READ</span> <span class="o">|</span> <span class="n">PROT_WRITE</span><span class="p">,</span> <span class="n">MAP_SHARED</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="ln">11</span>  <span class="k">if</span> <span class="p">(</span><span class="n">memory_area</span> <span class="o">==</span> <span class="n">MAP_FAILED</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">12</span>    <span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
+<span class="ln">13</span>    <span class="k">return</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln">14</span>  <span class="p">}</span>
+<span class="ln">15</span>
+<span class="ln">16</span>  <span class="n">prop_area</span><span class="o">*</span> <span class="n">pa</span> <span class="o">=</span> <span class="k">new</span> <span class="p">(</span><span class="n">memory_area</span><span class="p">)</span> <span class="n">prop_area</span><span class="p">(</span><span class="n">PROP_AREA_MAGIC</span><span class="p">,</span> <span class="n">PROP_AREA_VERSION</span><span class="p">);</span>
+<span class="ln">17</span>
+<span class="ln">18</span>  <span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
+<span class="ln">19</span>  <span class="k">return</span> <span class="n">pa</span><span class="p">;</span>
+<span class="ln">20</span><span class="p">}</span>
+</code></pre></div></blockquote>
 <h5 id="23233__system_property_add">2.3.2.3.3__system_property_add</h5>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//bionic/libc/bionic/system_property_api.cpp
 </span><span class="ln">2</span><span class="c1"></span><span class="n">__BIONIC_WEAK_FOR_NATIVE_BRIDGE</span>
@@ -3866,7 +3931,7 @@
 </code></pre></div><p><code>QueuePropertyChange</code> 函数同样填充了 <code>event_queue_</code> 队列，将已改变属性的键值对作为参数。</p>
 <p>运行队列中已经添加了该属性的变化触发条件，同样通过 <code>am.ExecuteOneCommand()</code> 函数遍历所有的 <code>_actions</code> 链表，执行相应的 <code>commands</code>。</p>
 <h1 id="总结">总结</h1>
-<p>本文主要对属性系统的初始化原理<code>PropertyInit</code>、<code>StartPropertyService</code>，获取属性、设置属性和属性变化这五个方面来展开详解，围绕着属性，<code>SElinux</code>，<code>mmap</code>，共享内存，匿名私有内存，<code>Trie</code>，<code>rc文件</code>，<code>persist</code>属性做了一个流程的介绍和分析。总的来说，属性看起来简单，内部机制还是比较复杂的。特别是由于笔者水平有限，关于设置属性的脏区和属性变化的介绍不够深入，这个需要读者发挥自己的主观能动性进一步完善。</p>
+<p>本文主要对属性系统的初始化原理<code>PropertyInit</code>、<code>StartPropertyService</code>，获取属性、设置属性和属性变化这五个方面来展开详解，围绕着属性，<code>SElinux</code>，<code>mmap</code>，共享内存，匿名私有内存，<code>Trie</code>，<code>rc文件</code>，<code>persist</code>属性做了一个流程的介绍和分析。总的来说，属性看起来简单，内部机制还是比较复杂的。特别是由于笔者水平有限，可能属性系统某些细节的介绍不够深入，这个需要读者发挥自己的主观能动性进一步完善。</p>
 <h1 id="下载">下载</h1>
 <p>本文源码<a href="https://github.com/YangYang48/project/tree/master/property">点击这里</a></p>
 <h1 id="几个问题">几个问题</h1>

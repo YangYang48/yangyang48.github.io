@@ -286,7 +286,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">5100 Words|Read in about 24 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">6400 Words|Read in about 30 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -294,12 +294,197 @@
 <h1 id="1linux-socket">1Linux socket</h1>
 <p>socket是一类接口，在Linux中，一切皆为文件，socket亦然。因此，在Linux中的socket用法，它是一种RPC的机制，通过通过客户端和服务端相连，产生socket句柄，通过句柄完成数据的传输通信。</p>
 <h1 id="2-socket用法">2 socket用法</h1>
-<p>为创建一个套接字，调用socket函数。</p>
+<p>为创建一个套接字，调用socket函数</p>
+<h2 id="21函数原型">2.1函数原型</h2>
 <div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="cp">#include</span> <span class="cpf">&lt;sys/types.h&gt;          /* See NOTES */</span><span class="cp">
 </span><span class="ln">2</span><span class="cp">#include</span> <span class="cpf">&lt;sys/socket.h&gt;</span><span class="cp">
 </span><span class="ln">3</span><span class="cp"></span>
 <span class="ln">4</span><span class="kt">int</span> <span class="nf">socket</span><span class="p">(</span><span class="kt">int</span> <span class="n">domain</span><span class="p">,</span> <span class="kt">int</span> <span class="n">type</span><span class="p">,</span> <span class="kt">int</span> <span class="n">protocol</span><span class="p">);</span>
-</code></pre></div>
+</code></pre></div><h2 id="22-描述">2.2 描述</h2>
+<p>socket()为通信创建一个端点并返回一个描述符。</p>
+<h3 id="221第一个参数">2.2.1第一个参数</h3>
+<p>domain参数指定通信域;这将选择用于通信的协议族。这些族定义在&lt;sys/socket.h&gt;中。目前理解的格式包括</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">Name</th>
+<th style="text-align:center">Purpose</th>
+<th style="text-align:center">Man page</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">AF_UNIX, AF_LOCAL</td>
+<td style="text-align:center">本地通信</td>
+<td style="text-align:center">unix(7)</td>
+</tr>
+<tr>
+<td style="text-align:center">AF_INET</td>
+<td style="text-align:center">IPv4网络通信协议</td>
+<td style="text-align:center">ip(7)</td>
+</tr>
+<tr>
+<td style="text-align:center">AF_INET6</td>
+<td style="text-align:center">IPv6网络通信协议</td>
+<td style="text-align:center">ipv6(7)</td>
+</tr>
+<tr>
+<td style="text-align:center">AF_IPX</td>
+<td style="text-align:center">IPX - Novell专用协议</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td style="text-align:center">AF_NETLINK</td>
+<td style="text-align:center">内核用户界面设备通信</td>
+<td style="text-align:center">netlink(7)</td>
+</tr>
+<tr>
+<td style="text-align:center">AF_PACKET</td>
+<td style="text-align:center">低层分组接口通信</td>
+<td style="text-align:center">packet(7)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="222第二个参数">2.2.2第二个参数</h3>
+<p>套接字具有指定的类型，该类型指定通信语义。当前定义的类型有</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">类型</th>
+<th style="text-align:center">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">SOCK_STREAM</td>
+<td style="text-align:center">（<strong>TCP</strong>）提供有序的、可靠的、双向的、基于连接的字节流。可以支持带外数据传输机制。</td>
+</tr>
+<tr>
+<td style="text-align:center">SOCK_DGRAM</td>
+<td style="text-align:center">（<strong>UDP</strong>）支持数据报(无连接，固定最大长度的不可靠消息)。</td>
+</tr>
+<tr>
+<td style="text-align:center">SOCK_SEQPACKET</td>
+<td style="text-align:center">为固定最大长度的数据报提供一个有序的、可靠的、基于双向连接的数据传输路径<!-- raw HTML omitted -->消费者在每次输入系统调用时都需要读取整个数据包。</td>
+</tr>
+<tr>
+<td style="text-align:center">SOCK_RAW</td>
+<td style="text-align:center">提供原始网络协议访问。</td>
+</tr>
+<tr>
+<td style="text-align:center">SOCK_RDM</td>
+<td style="text-align:center">提供一个不保证排序的可靠数据报层。</td>
+</tr>
+</tbody>
+</table>
+<p>从Linux 2.6.27开始，type参数还有第二个用途:除了指定套接字类型外，它还可以包括按位的修改socket()的行为</p>
+<blockquote>
+<ul>
+<li>
+<p><strong>SOCK_NONBLOCK</strong></p>
+<p>在新打开的文件描述中设置<code>O_NONBLOCK</code>文件状态标志。使用这个标志可以节省对<code>fcntl(2)</code>的额外调用，以达到相同的结果。</p>
+</li>
+<li>
+<p><strong>SOCK_CLOEXEC</strong></p>
+<p>在进程执行exec系统调用时关闭此打开的文件描述符。在子进程没有相应权限的情况下，防止父进程将打开的文件描述符泄露给子进程，防止子进程间接获得权限。</p>
+</li>
+</ul>
+</blockquote>
+<h3 id="223第三个参数">2.2.3第三个参数</h3>
+<p>协议指定了套接字使用的特定协议。在给定的协议族中，通常只有一个协议支持特定的套接字类型，在这种情况下，protocol可以指定为0。然而，可能存在许多协议，在这种情况下，必须以这种方式指定特定的协议。要使用的协议号是特定于将要发生通信的“通信域”的;看到协议(5)。关于如何将协议名字符串映射到协议号，请参见getprotoent(3)。</p>
+<p><strong>1）SOCK_STREAM</strong></p>
+<p>这个类型的套接字是<strong>全双工字节流</strong>。它们不保留记录边界。流套接字在发送或接收任何数据之前必须处于连接状态。到另一个套接字的连接是通过<code>connect(2)</code>调用创建的。一旦连接，数据可以使用<code>read(2)</code>和<code>write(2)</code>调用或<code>send(2)</code>和<code>recv(2)</code>调用的一些变体来传输。当一个会话完成时，可以执行<code>close(2)</code>。带外数据也可以像send(2)中描述的那样传输，并像recv(2)中描述的那样接收。</p>
+<p>实现SOCK_STREAM的通信协议<strong>确保数据不会丢失或重复</strong>。如果对端协议有缓冲空间的一段数据不能在合理的时间内成功传输，则认为该连接已经死亡。当在套接字上启用SO_KEEPALIVE时，协议以特定于协议的方式检查另一端是否仍然活跃。如果进程在中断的流上发送或接收，则引发SIGPIPE信号;这将导致不处理信号的naive进程退出。</p>
+<p><strong>2）SOCK_SEQPACKET</strong></p>
+<p>这个套接字使用与SOCK_STREAM套接字<strong>相同的系统调用</strong>。唯一的区别是read(2)调用将只返回所请求的数据量，而到达数据包中剩余的任何数据将被丢弃。此外，传入数据报中的所有消息边界都被保留。</p>
+<p><strong>3）SOCK_DGRAM和SOCK_RAW</strong></p>
+<p>这两个套接字允许向**sendto(2)<strong>调用中命名的通讯员发送数据报。数据报通常使用</strong>recvfrom(2)**接收，它返回下一个数据报及其发送者的地址。</p>
+<p>fcntl(2) F_SETOWN操作可用于指定进程或进程组在带外数据到达时接收SIGURG信号或在SOCK_STREAM连接意外中断时接收SIGPIPE信号。该操作还可用于设置通过SIGIO接收I/O和I/O事件异步通知的进程或进程组。使用F_SETOWN相当于使用FIOSETOWN或SIOCSPGRP参数进行ioctl(2)调用。</p>
+<p><strong>4）其他</strong></p>
+<p>套接字的操作由套接字级别的选项控制中定义了这些选项。函数**setsockopt(2)<strong>和</strong>getsockopt(2)**分别用于设置和获取选项。</p>
+<p>关于<strong>setsockopt</strong>，具体可以点击<a href="https://baike.baidu.com/item/setsockopt/10069288?fr=aladdin">这里</a>。</p>
+<blockquote>
+<p>setsockopt</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="cp">#include</span> <span class="cpf">&lt;sys/types.h&gt;</span><span class="cp">
+</span><span class="ln">2</span><span class="cp">#include</span> <span class="cpf">&lt;sys/socket.h&gt;</span><span class="cp">
+</span><span class="ln">3</span><span class="cp"></span><span class="kt">int</span> <span class="nf">setsockopt</span><span class="p">(</span><span class="kt">int</span> <span class="n">sockfd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">level</span><span class="p">,</span> <span class="kt">int</span> <span class="n">optname</span><span class="p">,</span><span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">optval</span><span class="p">,</span> <span class="n">socklen_t</span> <span class="n">optlen</span><span class="p">);</span>
+</code></pre></div><ol>
+<li><strong>sockfd</strong>：标识一个套接口的描述字。</li>
+<li><strong>level</strong>：选项定义的层次；支持<strong>SOL_SOCKET</strong>、IPPROTO_TCP、IPPROTO_IP和IPPROTO_IPV6。</li>
+<li><strong>optname</strong>：需设置的选项。</li>
+<li><strong>optval</strong>：指针，指向存放选项待设置的新值的缓冲区。</li>
+<li><strong>optlen：optval</strong>缓冲区长度。</li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="n">optname定义如下</span><span class="err">：</span>
+<span class="ln"> 2</span> 
+<span class="ln"> 3</span><span class="cp">#define SO_DEBUG 1            -- 打开或关闭调试信息（BOOL）
+</span><span class="ln"> 4</span><span class="cp">#define SO_REUSEADDR 2        -- 打开或关闭地址复用功能（BOOL）
+</span><span class="ln"> 5</span><span class="cp">#define SO_TYPE 3             -- 
+</span><span class="ln"> 6</span><span class="cp">#define SO_ERROR 4
+</span><span class="ln"> 7</span><span class="cp">#define SO_DONTROUTE 5		  -- 禁止选径；直接传送。（BOOL）
+</span><span class="ln"> 8</span><span class="cp">#define SO_BROADCAST 6		  -- 允许套接口传送广播信息（BOOL）
+</span><span class="ln"> 9</span><span class="cp">#define SO_SNDBUF 7           -- 设置发送缓冲区的大小（int）
+</span><span class="ln">10</span><span class="cp">#define SO_RCVBUF 8           -- 设置接收缓冲区的大小（int）
+</span><span class="ln">11</span><span class="cp">#define SO_KEEPALIVE 9        -- 套接字保活（BOOL）
+</span><span class="ln">12</span><span class="cp">#define SO_OOBINLINE 10		  -- 在常规数据流中接收带外数据（BOOL）
+</span><span class="ln">13</span><span class="cp">#define SO_NO_CHECK 11
+</span><span class="ln">14</span><span class="cp">#define SO_PRIORITY 12        -- 设置在套接字发送的所有包的协议定义优先权
+</span><span class="ln">15</span><span class="cp">#define SO_LINGER 13		  -- 如关闭时有未发送数据，则逗留（struct linger FAR*）
+</span><span class="ln">16</span><span class="cp">#define SO_BSDCOMPAT 14
+</span><span class="ln">17</span><span class="cp">#define SO_REUSEPORT 15
+</span><span class="ln">18</span><span class="cp">#define SO_PASSCRED 16
+</span><span class="ln">19</span><span class="cp">#define SO_PEERCRED 17
+</span><span class="ln">20</span><span class="cp">#define SO_RCVLOWAT 18
+</span><span class="ln">21</span><span class="cp">#define SO_SNDLOWAT 19
+</span><span class="ln">22</span><span class="cp">#define SO_RCVTIMEO 20       -- 设置接收超时时间
+</span><span class="ln">23</span><span class="cp">#define SO_SNDTIMEO 21       -- 设置发送超时时间
+</span><span class="ln">24</span><span class="cp">#define SO_ACCEPTCONN 30
+</span><span class="ln">25</span><span class="cp">#define SO_SNDBUFFORCE 32
+</span><span class="ln">26</span><span class="cp">#define SO_RCVBUFFORCE 33
+</span><span class="ln">27</span><span class="cp">#define SO_PROTOCOL 38
+</span><span class="ln">28</span><span class="cp">#define SO_DOMAIN 39
+</span></code></pre></div><p>举例说明</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="n">BOOL</span> <span class="n">bReuseaddr</span> <span class="o">=</span> <span class="n">TRUE</span><span class="p">;</span>
+<span class="ln">2</span><span class="n">setsockopt</span><span class="p">(</span> <span class="n">s</span><span class="p">,</span> <span class="n">SOL_SOCKET</span><span class="p">,</span> <span class="n">SO_REUSEADDR</span><span class="p">,</span> <span class="p">(</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="p">)</span><span class="o">&amp;</span><span class="n">bReuseaddr</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span> <span class="n">BOOL</span> <span class="p">)</span> <span class="p">);</span>
+</code></pre></div></blockquote>
+<h3 id="224sock协议族">2.2.4sock协议族</h3>
+<p>关于<strong>socketaddr</strong>，<strong>sockaddr_un</strong>和<strong>sockaddr_in</strong>的关系和区别</p>
+<p><strong>1）socketaddr</strong></p>
+<p>基本地址结构，本身没有意义，仅用于泛型化参数，结构体总共16个字节</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="k">typedef</span> <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">sa_family_t</span><span class="p">;</span>
+<span class="ln">2</span>
+<span class="ln">3</span><span class="k">struct</span> <span class="nc">sockaddr</span>
+<span class="ln">4</span><span class="p">{</span>
+<span class="ln">5</span>    <span class="n">sa_family_t</span>  <span class="n">sa_family</span><span class="p">;</span><span class="c1">//地址族
+</span><span class="ln">6</span><span class="c1"></span>    <span class="kt">char</span>   <span class="n">sa_data</span><span class="p">[</span><span class="mi">14</span><span class="p">];</span><span class="c1">//地址值
+</span><span class="ln">7</span><span class="c1"></span><span class="p">};</span>
+</code></pre></div><p><strong>2）sockaddr_un</strong></p>
+<p>本地地址结构，用于<strong>AF_LOCAL/AF_UNIX</strong>域的本地通信，，结构体总共110个字节</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="k">struct</span> <span class="nc">sockaddr_un</span>
+<span class="ln">2</span><span class="p">{</span>
+<span class="ln">3</span>    <span class="n">sa_family_t</span>  <span class="n">sun_family</span><span class="p">;</span><span class="c1">//地址族(AF_LOCAL/AF_UNIX)
+</span><span class="ln">4</span><span class="c1"></span>    <span class="kt">char</span>   <span class="n">sun_path</span><span class="p">[</span><span class="mi">108</span><span class="p">];</span><span class="c1">//本地套接字文件的路径，通常路径字符串不能超过108
+</span><span class="ln">5</span><span class="c1"></span><span class="p">};</span>
+</code></pre></div><p><strong>3）sockaddr_in</strong></p>
+<p>网络地址结构，用于<strong>AF_INET</strong>域的IPv4网络通信，结构体总共16个字节</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="k">typedef</span> <span class="kt">uint16_t</span> <span class="n">in_port_t</span><span class="p">;</span><span class="c1">//无符号16位整数
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">typedef</span> <span class="kt">uint32_t</span> <span class="n">in_addr_t</span><span class="p">;</span><span class="c1">//无符号32位整数
+</span><span class="ln"> 3</span><span class="c1"></span>
+<span class="ln"> 4</span><span class="k">struct</span>  <span class="nc">in_addr</span>
+<span class="ln"> 5</span><span class="p">{</span>
+<span class="ln"> 6</span>    <span class="n">in_addr_t</span>   <span class="n">s_addr</span><span class="p">;</span>
+<span class="ln"> 7</span><span class="p">};</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span><span class="k">struct</span> <span class="nc">sockaddr_in</span>
+<span class="ln">10</span><span class="p">{</span>
+<span class="ln">11</span>    <span class="n">sa_family_t</span> <span class="n">sin_family</span><span class="p">;</span><span class="c1">//地址族(AF_INET)
+</span><span class="ln">12</span><span class="c1"></span>    <span class="n">int_port_t</span>  <span class="n">sin_port</span><span class="p">;</span><span class="c1">//端口号（0~65535）
+</span><span class="ln">13</span><span class="c1"></span>    <span class="k">struct</span>   <span class="nc">in_addr</span>    <span class="n">sin_addr</span><span class="p">;</span><span class="c1">//IP地址
+</span><span class="ln">14</span><span class="c1"></span>    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">sin_zero</span><span class="p">[</span><span class="mi">8</span><span class="p">];</span><span class="c1">//在linux中会有填充字段，sin_zero[8],全部置为0
+</span><span class="ln">15</span><span class="c1"></span><span class="p">};</span>
+</code></pre></div><h3 id="225demo">2.2.5demo</h3>
+<h4 id="2251基于tcp协议的demo">2.2.5.1基于TCP协议的demo</h4>
+
 
  
   
@@ -328,12 +513,601 @@
   
 </div>
 
-<p>关于socket中的send和write的区别</p>
+<h5 id="22511服务端">2.2.5.1.1服务端</h5>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">  1</span><span class="c1">//基于tcp协议的服务器
+</span><span class="ln">  2</span><span class="c1"></span><span class="cp">#include</span><span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="ln">  3</span><span class="cp">#include</span><span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span><span class="ln">  4</span><span class="cp">#include</span><span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span><span class="ln">  5</span><span class="cp">#include</span><span class="cpf">&lt;string.h&gt;</span><span class="cp">
+</span><span class="ln">  6</span><span class="cp">#include</span><span class="cpf">&lt;sys/socket.h&gt;</span><span class="cp">
+</span><span class="ln">  7</span><span class="cp">#include</span><span class="cpf">&lt;sys/types.h&gt;</span><span class="cp">
+</span><span class="ln">  8</span><span class="cp">#include</span><span class="cpf">&lt;arpa/inet.h&gt;</span><span class="cp">
+</span><span class="ln">  9</span><span class="cp">#include</span><span class="cpf">&lt;ctype.h&gt;</span><span class="cp">
+</span><span class="ln"> 10</span><span class="cp">#include</span><span class="cpf">&lt;errno.h&gt;</span><span class="cp">
+</span><span class="ln"> 11</span><span class="cp">#include</span><span class="cpf">&lt;signal.h&gt;</span><span class="cp">
+</span><span class="ln"> 12</span><span class="cp">#include</span><span class="cpf">&lt;sys/wait.h&gt;</span><span class="cp">
+</span><span class="ln"> 13</span><span class="cp"></span><span class="c1">//信号处理函数
+</span><span class="ln"> 14</span><span class="c1"></span><span class="kt">void</span> <span class="nf">sigchild</span><span class="p">(</span><span class="kt">int</span> <span class="n">signum</span><span class="p">)</span>
+<span class="ln"> 15</span><span class="p">{</span>
+<span class="ln"> 16</span>    <span class="k">for</span><span class="p">(;;)</span>
+<span class="ln"> 17</span>    <span class="p">{</span>
+<span class="ln"> 18</span>        <span class="n">pid_t</span> <span class="n">pid</span> <span class="o">=</span> <span class="n">waitpid</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="nb">NULL</span><span class="p">,</span><span class="n">WNOHANG</span><span class="p">);</span><span class="c1">//非阻塞方式回收子进程
+</span><span class="ln"> 19</span><span class="c1"></span>        <span class="k">if</span><span class="p">(</span><span class="n">pid</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln"> 20</span>        <span class="p">{</span>
+<span class="ln"> 21</span>            <span class="k">if</span><span class="p">(</span><span class="n">errno</span> <span class="o">==</span> <span class="n">ECHILD</span><span class="p">)</span>
+<span class="ln"> 22</span>            <span class="p">{</span>
+<span class="ln"> 23</span>                <span class="n">printf</span><span class="p">(</span><span class="s">&#34;没有子进程可回收</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln"> 24</span>                <span class="k">break</span><span class="p">;</span>
+<span class="ln"> 25</span>            <span class="p">}</span>
+<span class="ln"> 26</span>            <span class="k">else</span>
+<span class="ln"> 27</span>            <span class="p">{</span>
+<span class="ln"> 28</span>                <span class="n">perror</span><span class="p">(</span><span class="s">&#34;waitpid&#34;</span><span class="p">);</span>
+<span class="ln"> 29</span>                <span class="n">exit</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln"> 30</span>            <span class="p">}</span>
+<span class="ln"> 31</span>        <span class="p">}</span>
+<span class="ln"> 32</span>        <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="n">pid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+<span class="ln"> 33</span>        <span class="p">{</span>
+<span class="ln"> 34</span>            <span class="n">printf</span><span class="p">(</span><span class="s">&#34;子进程在运行，没法收</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln"> 35</span>            <span class="k">break</span><span class="p">;</span>
+<span class="ln"> 36</span>        <span class="p">}</span>
+<span class="ln"> 37</span>        <span class="k">else</span>
+<span class="ln"> 38</span>        <span class="p">{</span>
+<span class="ln"> 39</span>            <span class="n">printf</span><span class="p">(</span><span class="s">&#34;回收%d进程僵尸</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span><span class="n">getpid</span><span class="p">());</span>
+<span class="ln"> 40</span>        <span class="p">}</span>
+<span class="ln"> 41</span>    <span class="p">}</span>
+<span class="ln"> 42</span><span class="p">}</span>
+<span class="ln"> 43</span> 
+<span class="ln"> 44</span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="ln"> 45</span><span class="p">{</span>
+<span class="ln"> 46</span>    <span class="c1">//捕获17号信号
+</span><span class="ln"> 47</span><span class="c1"></span>    <span class="k">if</span><span class="p">(</span><span class="n">signal</span><span class="p">(</span><span class="n">SIGCHLD</span><span class="p">,</span><span class="n">sigchild</span><span class="p">)</span> <span class="o">==</span> <span class="n">SIG_ERR</span><span class="p">)</span>
+<span class="ln"> 48</span>    <span class="p">{</span>
+<span class="ln"> 49</span>        <span class="n">perror</span><span class="p">(</span><span class="s">&#34;signal&#34;</span><span class="p">);</span>
+<span class="ln"> 50</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln"> 51</span>    <span class="p">}</span>
+<span class="ln"> 52</span>    <span class="c1">//创建侦听套接字
+</span><span class="ln"> 53</span><span class="c1"></span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;服务器：创建套接字</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln"> 54</span>    <span class="kt">int</span> <span class="n">sockfd</span> <span class="o">=</span> <span class="n">socket</span><span class="p">(</span><span class="n">AF_INET</span><span class="p">,</span><span class="n">SOCK_STREAM</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span><span class="c1">//返回侦听套接字
+</span><span class="ln"> 55</span><span class="c1"></span>    <span class="k">if</span><span class="p">(</span><span class="n">sockfd</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln"> 56</span>    <span class="p">{</span>
+<span class="ln"> 57</span>        <span class="n">perror</span><span class="p">(</span><span class="s">&#34;socket&#34;</span><span class="p">);</span>
+<span class="ln"> 58</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln"> 59</span>    <span class="p">}</span>
+<span class="ln"> 60</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;sockfd:%d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span><span class="n">sockfd</span><span class="p">);</span>
+<span class="ln"> 61</span>    <span class="c1">//组织地址结构，代表服务器
+</span><span class="ln"> 62</span><span class="c1"></span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;服务器：组织地址结构</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln"> 63</span>    <span class="k">struct</span> <span class="nc">sockaddr_in</span> <span class="n">ser</span><span class="p">;</span>
+<span class="ln"> 64</span>    <span class="n">ser</span><span class="p">.</span><span class="n">sin_family</span> <span class="o">=</span> <span class="n">AF_INET</span><span class="p">;</span>
+<span class="ln"> 65</span>    <span class="n">ser</span><span class="p">.</span><span class="n">sin_port</span> <span class="o">=</span> <span class="n">htons</span><span class="p">(</span><span class="mi">8888</span><span class="p">);</span><span class="c1">//注意大小端问题，存是小端，服务器大端方式拿。
+</span><span class="ln"> 66</span><span class="c1"></span>    <span class="c1">//ser.sin_addr.s_addr = inet_addr(&#34;127.0.0.1&#34;)
+</span><span class="ln"> 67</span><span class="c1"></span>    <span class="n">ser</span><span class="p">.</span><span class="n">sin_addr</span><span class="p">.</span><span class="n">s_addr</span> <span class="o">=</span> <span class="n">INADDR_ANY</span><span class="p">;</span><span class="c1">//表示接受任意IP下的地址
+</span><span class="ln"> 68</span><span class="c1"></span>    <span class="c1">//绑定套接字和地址结构
+</span><span class="ln"> 69</span><span class="c1"></span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;服务器：绑定套接字和地址结构</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln"> 70</span>    <span class="kt">int</span> <span class="n">sockbind</span> <span class="o">=</span> <span class="n">bind</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,(</span><span class="k">struct</span> <span class="nc">sockaddr</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">ser</span><span class="p">,</span><span class="k">sizeof</span><span class="p">(</span><span class="n">ser</span><span class="p">));</span>
+<span class="ln"> 71</span>    <span class="k">if</span><span class="p">(</span><span class="n">sockbind</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln"> 72</span>    <span class="p">{</span>
+<span class="ln"> 73</span>        <span class="n">perror</span><span class="p">(</span><span class="s">&#34;bind&#34;</span><span class="p">);</span>
+<span class="ln"> 74</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln"> 75</span>    <span class="p">}</span>
+<span class="ln"> 76</span>    <span class="c1">//开启侦听功能
+</span><span class="ln"> 77</span><span class="c1"></span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;服务器：开启侦听功能</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln"> 78</span>    <span class="kt">int</span> <span class="n">socklisten</span> <span class="o">=</span> <span class="n">listen</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span><span class="mi">1024</span><span class="p">);</span>
+<span class="ln"> 79</span>    <span class="k">if</span><span class="p">(</span><span class="n">socklisten</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln"> 80</span>    <span class="p">{</span>
+<span class="ln"> 81</span>        <span class="n">perror</span><span class="p">(</span><span class="s">&#34;listen&#34;</span><span class="p">);</span>
+<span class="ln"> 82</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln"> 83</span>    <span class="p">}</span>
+<span class="ln"> 84</span>    <span class="c1">//等待并接收客户端连接
+</span><span class="ln"> 85</span><span class="c1"></span>    <span class="k">for</span><span class="p">(;;)</span>
+<span class="ln"> 86</span>    <span class="p">{</span>   <span class="c1">//父进程负责和客户端建立通信
+</span><span class="ln"> 87</span><span class="c1"></span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;服务器：等待并接收客户端连接</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln"> 88</span>        <span class="k">struct</span> <span class="nc">sockaddr_in</span> <span class="n">cli</span><span class="p">;</span><span class="c1">//用来输出客户端的地址结构
+</span><span class="ln"> 89</span><span class="c1"></span>        <span class="n">socklen_t</span> <span class="n">len</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">cli</span><span class="p">);</span>
+<span class="ln"> 90</span>        <span class="kt">int</span> <span class="n">conn</span> <span class="o">=</span> <span class="n">accept</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,(</span><span class="k">struct</span> <span class="nc">sockaddr</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">cli</span><span class="p">,</span><span class="o">&amp;</span><span class="n">len</span><span class="p">);</span><span class="c1">//返回后续用来通信的通信套接字
+</span><span class="ln"> 91</span><span class="c1"></span>        <span class="k">if</span><span class="p">(</span><span class="n">conn</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln"> 92</span>        <span class="p">{</span>
+<span class="ln"> 93</span>            <span class="n">perror</span><span class="p">(</span><span class="s">&#34;accept&#34;</span><span class="p">);</span>
+<span class="ln"> 94</span>            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln"> 95</span>        <span class="p">}</span>
+<span class="ln"> 96</span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;服务器：接收到%s:%hu的客户端</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span><span class="n">inet_ntoa</span><span class="p">(</span><span class="n">cli</span><span class="p">.</span><span class="n">sin_addr</span><span class="p">),</span><span class="n">ntohs</span><span class="p">(</span><span class="n">cli</span><span class="p">.</span><span class="n">sin_port</span><span class="p">));</span>
+<span class="ln"> 97</span>        <span class="c1">//子进程负责和客户端通信
+</span><span class="ln"> 98</span><span class="c1"></span>        <span class="n">pid_t</span> <span class="n">pid</span> <span class="o">=</span> <span class="n">fork</span><span class="p">();</span>
+<span class="ln"> 99</span>        <span class="k">if</span><span class="p">(</span><span class="n">pid</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln">100</span>        <span class="p">{</span>
+<span class="ln">101</span>            <span class="n">perror</span><span class="p">(</span><span class="s">&#34;fork&#34;</span><span class="p">);</span>
+<span class="ln">102</span>            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">103</span>        <span class="p">}</span>
+<span class="ln">104</span>        <span class="k">if</span><span class="p">(</span><span class="n">pid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+<span class="ln">105</span>        <span class="p">{</span>
+<span class="ln">106</span>            <span class="n">close</span><span class="p">(</span><span class="n">sockfd</span><span class="p">);</span><span class="c1">//子进程不用侦听套接字，关闭
+</span><span class="ln">107</span><span class="c1"></span>            <span class="c1">//业务处里（接发数据）
+</span><span class="ln">108</span><span class="c1"></span>            <span class="n">printf</span><span class="p">(</span><span class="s">&#34;服务器：接发数据</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">109</span>            <span class="c1">//接收客户端发来的小写的串
+</span><span class="ln">110</span><span class="c1"></span>            <span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln">111</span>            <span class="p">{</span>
+<span class="ln">112</span>                <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">128</span><span class="p">]</span> <span class="o">=</span> <span class="p">{};</span>
+<span class="ln">113</span>                <span class="n">ssize_t</span> <span class="n">size</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span><span class="n">buf</span><span class="p">,</span><span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span> <span class="o">-</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">[</span><span class="mi">0</span><span class="p">]));</span>
+<span class="ln">114</span>                <span class="k">if</span><span class="p">(</span><span class="n">size</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln">115</span>                <span class="p">{</span>
+<span class="ln">116</span>                    <span class="n">perror</span><span class="p">(</span><span class="s">&#34;read&#34;</span><span class="p">);</span>
+<span class="ln">117</span>                    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">118</span>                <span class="p">}</span>
+<span class="ln">119</span>                <span class="k">if</span><span class="p">(</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+<span class="ln">120</span>                <span class="p">{</span>
+<span class="ln">121</span>                    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;服务端：客户端断开连接</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">122</span>                    <span class="k">break</span><span class="p">;</span>
+<span class="ln">123</span>                <span class="p">}</span>
+<span class="ln">124</span>                <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">size</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+<span class="ln">125</span>                <span class="p">{</span>
+<span class="ln">126</span>                    <span class="c1">//转换大写
+</span><span class="ln">127</span><span class="c1"></span>                    <span class="n">buf</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">toupper</span><span class="p">(</span><span class="n">buf</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+<span class="ln">128</span>                <span class="p">}</span>
+<span class="ln">129</span>                <span class="c1">//发送给客户端
+</span><span class="ln">130</span><span class="c1"></span>                <span class="k">if</span><span class="p">(</span><span class="n">write</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span><span class="n">buf</span><span class="p">,</span><span class="n">size</span><span class="p">)</span> <span class="o">==-</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln">131</span>                <span class="p">{</span>
+<span class="ln">132</span>                    <span class="n">perror</span><span class="p">(</span><span class="s">&#34;write&#34;</span><span class="p">);</span>
+<span class="ln">133</span>                    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">134</span>                <span class="p">}</span>
+<span class="ln">135</span>            <span class="p">}</span>
+<span class="ln">136</span>            <span class="c1">//关闭套接字
+</span><span class="ln">137</span><span class="c1"></span>            <span class="n">printf</span><span class="p">(</span><span class="s">&#34;服务器：关闭套接字</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">138</span>            <span class="n">close</span><span class="p">(</span><span class="n">conn</span><span class="p">);</span>
+<span class="ln">139</span>            <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">140</span>        <span class="p">}</span>
+<span class="ln">141</span>        <span class="n">close</span><span class="p">(</span><span class="n">conn</span><span class="p">);</span><span class="c1">//父进程关闭通信套接字
+</span><span class="ln">142</span><span class="c1"></span>    <span class="p">}</span>
+<span class="ln">143</span>    <span class="n">close</span><span class="p">(</span><span class="n">sockfd</span><span class="p">);</span>
+<span class="ln">144</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">145</span><span class="p">}</span>
+</code></pre></div><h5 id="22512客户端">2.2.5.1.2客户端</h5>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//基于TCP协议的客户端
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#include</span><span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp">#include</span><span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span><span class="ln"> 4</span><span class="cp">#include</span><span class="cpf">&lt;string.h&gt;</span><span class="cp">
+</span><span class="ln"> 5</span><span class="cp">#include</span><span class="cpf">&lt;sys/socket.h&gt;</span><span class="cp">
+</span><span class="ln"> 6</span><span class="cp">#include</span><span class="cpf">&lt;sys/types.h&gt;</span><span class="cp">
+</span><span class="ln"> 7</span><span class="cp">#include</span><span class="cpf">&lt;arpa/inet.h&gt;</span><span class="cp">
+</span><span class="ln"> 8</span><span class="cp"></span> 
+<span class="ln"> 9</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln">10</span><span class="p">{</span>
+<span class="ln">11</span>    <span class="c1">//创建服务器套接字
+</span><span class="ln">12</span><span class="c1"></span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;客户端：创建套接字</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">13</span>    <span class="kt">int</span> <span class="n">sockfd</span> <span class="o">=</span> <span class="n">socket</span><span class="p">(</span><span class="n">AF_INET</span><span class="p">,</span><span class="n">SOCK_STREAM</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span>
+<span class="ln">14</span>    <span class="k">if</span><span class="p">(</span><span class="n">sockfd</span> <span class="o">==-</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln">15</span>    <span class="p">{</span>
+<span class="ln">16</span>        <span class="n">perror</span><span class="p">(</span><span class="s">&#34;socket&#34;</span><span class="p">);</span>
+<span class="ln">17</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">18</span>    <span class="p">}</span>
+<span class="ln">19</span>    <span class="c1">//组织服务器的地址结构
+</span><span class="ln">20</span><span class="c1"></span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;客户端：组织服务器的地址结构</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">21</span>    <span class="k">struct</span> <span class="nc">sockaddr_in</span> <span class="n">ser</span><span class="p">;</span>
+<span class="ln">22</span>    <span class="n">ser</span><span class="p">.</span><span class="n">sin_family</span> <span class="o">=</span> <span class="n">AF_INET</span><span class="p">;</span>
+<span class="ln">23</span>    <span class="n">ser</span><span class="p">.</span><span class="n">sin_port</span> <span class="o">=</span> <span class="n">htons</span><span class="p">(</span><span class="mi">8888</span><span class="p">);</span>
+<span class="ln">24</span>    <span class="n">ser</span><span class="p">.</span><span class="n">sin_addr</span><span class="p">.</span><span class="n">s_addr</span> <span class="o">=</span> <span class="n">inet_addr</span><span class="p">(</span><span class="s">&#34;127.0.0.1&#34;</span><span class="p">);</span><span class="c1">//不能像服务器宏一样
+</span><span class="ln">25</span><span class="c1"></span>    <span class="c1">//发起连接
+</span><span class="ln">26</span><span class="c1"></span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;客户端：发起连接</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">27</span>    <span class="k">if</span><span class="p">(</span><span class="n">connect</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,(</span><span class="k">struct</span> <span class="nc">sockaddr</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">ser</span><span class="p">,</span><span class="k">sizeof</span><span class="p">(</span><span class="n">ser</span><span class="p">))</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="p">)</span>
+<span class="ln">28</span>    <span class="p">{</span>
+<span class="ln">29</span>        <span class="n">perror</span><span class="p">(</span><span class="s">&#34;connect&#34;</span><span class="p">);</span>
+<span class="ln">30</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">31</span>    <span class="p">}</span> 
+<span class="ln">32</span>    <span class="c1">//业务处理
+</span><span class="ln">33</span><span class="c1"></span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;客户端：业务处理</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">34</span>    <span class="k">for</span><span class="p">(;;)</span>
+<span class="ln">35</span>    <span class="p">{</span>
+<span class="ln">36</span>        <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">128</span><span class="p">]</span> <span class="o">=</span> <span class="p">{};</span>
+<span class="ln">37</span>        <span class="n">fgets</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span><span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">),</span><span class="n">stdin</span><span class="p">);</span>
+<span class="ln">38</span>        <span class="c1">//循环退出条件
+</span><span class="ln">39</span><span class="c1"></span>        <span class="k">if</span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span><span class="s">&#34;!</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+<span class="ln">40</span>        <span class="p">{</span>
+<span class="ln">41</span>            <span class="k">break</span><span class="p">;</span>
+<span class="ln">42</span>        <span class="p">}</span>
+<span class="ln">43</span>        <span class="c1">//将小写传发送给服务器
+</span><span class="ln">44</span><span class="c1"></span>        <span class="k">if</span><span class="p">(</span><span class="n">send</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span><span class="n">buf</span><span class="p">,</span><span class="n">strlen</span><span class="p">(</span><span class="n">buf</span><span class="p">),</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="p">)</span>
+<span class="ln">45</span>        <span class="p">{</span>
+<span class="ln">46</span>            <span class="n">perror</span><span class="p">(</span><span class="s">&#34;send&#34;</span><span class="p">);</span>
+<span class="ln">47</span>            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">48</span>        <span class="p">}</span>
+<span class="ln">49</span> 
+<span class="ln">50</span>        <span class="c1">//接收服务器回传的大写的串
+</span><span class="ln">51</span><span class="c1"></span>        <span class="k">if</span><span class="p">(</span><span class="n">recv</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span><span class="n">buf</span><span class="p">,</span><span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span> <span class="o">-</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln">52</span>        <span class="p">{</span>
+<span class="ln">53</span>            <span class="n">perror</span><span class="p">(</span><span class="s">&#34;recv&#34;</span><span class="p">);</span>
+<span class="ln">54</span>            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">55</span>        <span class="p">}</span>
+<span class="ln">56</span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;&gt;&gt;%s&#34;</span><span class="p">,</span><span class="n">buf</span><span class="p">);</span>
+<span class="ln">57</span>    <span class="p">}</span>
+<span class="ln">58</span>    <span class="c1">//关闭套接字
+</span><span class="ln">59</span><span class="c1"></span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;客户端：关闭套接字</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">60</span>    <span class="n">close</span><span class="p">(</span><span class="n">sockfd</span><span class="p">);</span>
+<span class="ln">61</span><span class="p">}</span>
+</code></pre></div><h4 id="2252基于udp协议的demo">2.2.5.2基于UDP协议的demo</h4>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_linux_9.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_linux_9.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h5 id="22521服务端">2.2.5.2.1服务端</h5>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//基于UDP的服务器
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#include</span><span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp">#include</span><span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span><span class="ln"> 4</span><span class="cp">#include</span><span class="cpf">&lt;ctype.h&gt;</span><span class="cp">
+</span><span class="ln"> 5</span><span class="cp">#include</span><span class="cpf">&lt;sys/socket.h&gt;</span><span class="cp">
+</span><span class="ln"> 6</span><span class="cp">#include</span><span class="cpf">&lt;arpa/inet.h&gt;</span><span class="cp">
+</span><span class="ln"> 7</span><span class="cp">#include</span><span class="cpf">&lt;sys/types.h&gt;</span><span class="cp">
+</span><span class="ln"> 8</span><span class="cp"></span> 
+<span class="ln"> 9</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln">10</span><span class="p">{</span>
+<span class="ln">11</span>    <span class="c1">//创建套接字
+</span><span class="ln">12</span><span class="c1"></span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;服务器：创建套接字</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">13</span>    <span class="kt">int</span> <span class="n">sockfd</span> <span class="o">=</span> <span class="n">socket</span><span class="p">(</span><span class="n">PF_INET</span><span class="p">,</span><span class="n">SOCK_DGRAM</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span>
+<span class="ln">14</span>    <span class="k">if</span><span class="p">(</span><span class="n">sockfd</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln">15</span>    <span class="p">{</span>
+<span class="ln">16</span>        <span class="n">perror</span><span class="p">(</span><span class="s">&#34;socket&#34;</span><span class="p">);</span>
+<span class="ln">17</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">18</span>    <span class="p">}</span>
+<span class="ln">19</span>    <span class="c1">//组织地址结构
+</span><span class="ln">20</span><span class="c1"></span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;服务器：组织地址结构</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">21</span>    <span class="k">struct</span> <span class="nc">sockaddr_in</span> <span class="n">ser</span><span class="p">;</span>
+<span class="ln">22</span>    <span class="n">ser</span><span class="p">.</span><span class="n">sin_family</span> <span class="o">=</span> <span class="n">AF_INET</span><span class="p">;</span>
+<span class="ln">23</span>    <span class="n">ser</span><span class="p">.</span><span class="n">sin_port</span> <span class="o">=</span> <span class="n">htons</span><span class="p">(</span><span class="mi">9999</span><span class="p">);</span>
+<span class="ln">24</span>    <span class="n">ser</span><span class="p">.</span><span class="n">sin_addr</span><span class="p">.</span><span class="n">s_addr</span> <span class="o">=</span> <span class="n">INADDR_ANY</span><span class="p">;</span><span class="c1">//接受任意IP地址数据
+</span><span class="ln">25</span><span class="c1"></span>    <span class="c1">//绑定套接字和地址结构
+</span><span class="ln">26</span><span class="c1"></span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;服务器：绑定套接字和地址结构</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">27</span>    <span class="k">if</span><span class="p">(</span><span class="n">bind</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,(</span><span class="k">struct</span> <span class="nc">sockaddr</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">ser</span><span class="p">,</span><span class="k">sizeof</span><span class="p">(</span><span class="n">ser</span><span class="p">))</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln">28</span>    <span class="p">{</span>
+<span class="ln">29</span>        <span class="n">perror</span><span class="p">(</span><span class="s">&#34;bind&#34;</span><span class="p">);</span>
+<span class="ln">30</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">31</span>    <span class="p">}</span>
+<span class="ln">32</span>    <span class="c1">//处理数据
+</span><span class="ln">33</span><span class="c1"></span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;服务器：处理数据</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">34</span>    <span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln">35</span>    <span class="p">{</span>
+<span class="ln">36</span>        <span class="c1">//接收客户端的串
+</span><span class="ln">37</span><span class="c1"></span>        <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">128</span><span class="p">]</span> <span class="o">=</span> <span class="p">{};</span>
+<span class="ln">38</span>        <span class="k">struct</span> <span class="nc">sockaddr_in</span> <span class="n">cli</span><span class="p">;</span><span class="c1">//用来输出客户端的地址结构
+</span><span class="ln">39</span><span class="c1"></span>        <span class="n">socklen_t</span> <span class="n">len</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">cli</span><span class="p">);</span>
+<span class="ln">40</span>        <span class="n">ssize_t</span> <span class="n">size</span> <span class="o">=</span> <span class="n">recvfrom</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span><span class="n">buf</span><span class="p">,</span><span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span><span class="o">-</span><span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="mi">0</span><span class="p">,(</span><span class="k">struct</span> <span class="nc">sockaddr</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">cli</span><span class="p">,</span><span class="o">&amp;</span><span class="n">len</span><span class="p">);</span>
+<span class="ln">41</span>        <span class="k">if</span><span class="p">(</span><span class="n">size</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln">42</span>        <span class="p">{</span>
+<span class="ln">43</span>            <span class="n">perror</span><span class="p">(</span><span class="s">&#34;recvfrom&#34;</span><span class="p">);</span>
+<span class="ln">44</span>            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">45</span>        <span class="p">}</span>
+<span class="ln">46</span>        <span class="c1">//转成大写
+</span><span class="ln">47</span><span class="c1"></span>        <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span><span class="n">i</span> <span class="o">&lt;</span> <span class="n">size</span><span class="p">;</span><span class="n">i</span><span class="o">++</span><span class="p">)</span>
+<span class="ln">48</span>        <span class="p">{</span>
+<span class="ln">49</span>            <span class="n">buf</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">toupper</span><span class="p">(</span><span class="n">buf</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+<span class="ln">50</span>        <span class="p">}</span>
+<span class="ln">51</span>        <span class="c1">//发送客户端
+</span><span class="ln">52</span><span class="c1"></span>        <span class="k">if</span><span class="p">(</span><span class="n">sendto</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span><span class="n">buf</span><span class="p">,</span><span class="n">size</span><span class="p">,</span><span class="mi">0</span><span class="p">,(</span><span class="k">struct</span> <span class="nc">sockaddr</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">cli</span><span class="p">,</span><span class="n">len</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln">53</span>        <span class="p">{</span>
+<span class="ln">54</span>            <span class="n">perror</span><span class="p">(</span><span class="s">&#34;sendto&#34;</span><span class="p">);</span>
+<span class="ln">55</span>            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">56</span>        <span class="p">}</span>
+<span class="ln">57</span>    <span class="p">}</span>
+<span class="ln">58</span>    <span class="c1">//关闭套接字
+</span><span class="ln">59</span><span class="c1"></span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;服务器：关闭套接字</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">60</span>    <span class="n">close</span><span class="p">(</span><span class="n">sockfd</span><span class="p">);</span>
+<span class="ln">61</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">62</span><span class="p">}</span>
+</code></pre></div><h5 id="22522客户端">2.2.5.2.2客户端</h5>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//客户端
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#include</span><span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp">#include</span><span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span><span class="ln"> 4</span><span class="cp">#include</span><span class="cpf">&lt;sys/socket.h&gt;</span><span class="cp">
+</span><span class="ln"> 5</span><span class="cp">#include</span><span class="cpf">&lt;string.h&gt;</span><span class="cp">
+</span><span class="ln"> 6</span><span class="cp">#include</span><span class="cpf">&lt;sys/types.h&gt;</span><span class="cp">
+</span><span class="ln"> 7</span><span class="cp">#include</span><span class="cpf">&lt;arpa/inet.h&gt;</span><span class="cp">
+</span><span class="ln"> 8</span><span class="cp"></span> 
+<span class="ln"> 9</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln">10</span><span class="p">{</span>
+<span class="ln">11</span>    <span class="c1">//创建套接字
+</span><span class="ln">12</span><span class="c1"></span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;客户端：创建套接字</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">13</span>    <span class="kt">int</span> <span class="n">sockfd</span> <span class="o">=</span> <span class="n">socket</span><span class="p">(</span><span class="n">PF_INET</span><span class="p">,</span><span class="n">SOCK_DGRAM</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span>
+<span class="ln">14</span>    <span class="k">if</span><span class="p">(</span><span class="n">sockfd</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln">15</span>    <span class="p">{</span>
+<span class="ln">16</span>        <span class="n">perror</span><span class="p">(</span><span class="s">&#34;socket&#34;</span><span class="p">);</span>
+<span class="ln">17</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">18</span>    <span class="p">}</span>
+<span class="ln">19</span>    <span class="c1">//组织服务器地址结构
+</span><span class="ln">20</span><span class="c1"></span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;客户端：组织地址结构</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">21</span>    <span class="k">struct</span> <span class="nc">sockaddr_in</span> <span class="n">ser</span><span class="p">;</span>
+<span class="ln">22</span>    <span class="n">ser</span><span class="p">.</span><span class="n">sin_family</span> <span class="o">=</span> <span class="n">PF_INET</span><span class="p">;</span>
+<span class="ln">23</span>    <span class="n">ser</span><span class="p">.</span><span class="n">sin_port</span> <span class="o">=</span> <span class="n">htons</span><span class="p">(</span><span class="mi">9999</span><span class="p">);</span>
+<span class="ln">24</span>    <span class="n">ser</span><span class="p">.</span><span class="n">sin_addr</span><span class="p">.</span><span class="n">s_addr</span> <span class="o">=</span> <span class="n">inet_addr</span><span class="p">(</span><span class="s">&#34;127.0.0.1&#34;</span><span class="p">);</span>
+<span class="ln">25</span>    <span class="c1">//数据处理
+</span><span class="ln">26</span><span class="c1"></span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;客户端：数据处理</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">27</span>    <span class="k">for</span><span class="p">(;;)</span>
+<span class="ln">28</span>    <span class="p">{</span>
+<span class="ln">29</span>        <span class="c1">//通过键盘获取小写的串
+</span><span class="ln">30</span><span class="c1"></span>        <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">128</span><span class="p">]</span> <span class="o">=</span> <span class="p">{};</span>
+<span class="ln">31</span>        <span class="n">fgets</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span><span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">),</span><span class="n">stdin</span><span class="p">);</span>
+<span class="ln">32</span>        <span class="c1">//循环退出条件
+</span><span class="ln">33</span><span class="c1"></span>        <span class="k">if</span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span><span class="s">&#34;!</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+<span class="ln">34</span>        <span class="p">{</span>
+<span class="ln">35</span>            <span class="k">break</span><span class="p">;</span>
+<span class="ln">36</span>        <span class="p">}</span>
+<span class="ln">37</span> 
+<span class="ln">38</span>        <span class="c1">//发送给服务器
+</span><span class="ln">39</span><span class="c1"></span>        <span class="k">if</span><span class="p">(</span><span class="n">sendto</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span><span class="n">buf</span><span class="p">,</span><span class="n">strlen</span><span class="p">(</span><span class="n">buf</span><span class="p">),</span><span class="mi">0</span><span class="p">,(</span><span class="k">struct</span> <span class="nc">sockaddr</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">ser</span><span class="p">,</span><span class="k">sizeof</span><span class="p">(</span><span class="n">ser</span><span class="p">))</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln">40</span>        <span class="p">{</span>
+<span class="ln">41</span>            <span class="n">perror</span><span class="p">(</span><span class="s">&#34;sendto&#34;</span><span class="p">);</span>
+<span class="ln">42</span>            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">43</span>        <span class="p">}</span>
+<span class="ln">44</span>        <span class="c1">//接收服务器发送回来的大写的串
+</span><span class="ln">45</span><span class="c1"></span>        <span class="k">if</span><span class="p">(</span><span class="n">recv</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span><span class="n">buf</span><span class="p">,</span><span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span><span class="o">-</span><span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="ln">46</span>        <span class="p">{</span>
+<span class="ln">47</span>            <span class="n">perror</span><span class="p">(</span><span class="s">&#34;recv&#34;</span><span class="p">);</span>
+<span class="ln">48</span>            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">49</span>        <span class="p">}</span>
+<span class="ln">50</span>        <span class="c1">//打印输出
+</span><span class="ln">51</span><span class="c1"></span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;%s</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span><span class="n">buf</span><span class="p">);</span>
+<span class="ln">52</span>    <span class="p">}</span>
+<span class="ln">53</span>    <span class="c1">//关闭套接字
+</span><span class="ln">54</span><span class="c1"></span>    <span class="n">close</span><span class="p">(</span><span class="n">sockfd</span><span class="p">);</span>
+<span class="ln">55</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">56</span><span class="p">}</span>
+</code></pre></div><h3 id="226socket一些补充">2.2.6socket一些补充</h3>
+<p>本文篇幅有限，主要做一个大致的介绍，具体内容还需要查看**《UNIX环境高级编程手册》**</p>
+<h4 id="2261关于socket中的write和send的区别">2.2.6.1关于socket中的write和send的区别</h4>
 <blockquote>
-<p>对于linux来说,每个socket会有自己的send/receive buffer。调用write,只是说将用户进程的数据,拷贝到了内核的socket buffer里面,拷贝完之后,就没有write什么事了。内核自己会用自己的进程,调用TCP/IP协议栈,把用户进程的数据发出去。可以把内核的TCP/IP协议想象成另外一个进程,调用write的时候,只是把数据发给这个进程,这个进程会处理剩下的事情。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="n">ssize_t</span> <span class="nf">write</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span><span class="o">*</span><span class="n">buf</span><span class="p">,</span><span class="n">size_t</span> <span class="n">nbytes</span><span class="p">);</span>
+<span class="ln">2</span>
+<span class="ln">3</span><span class="cp">#include</span> <span class="cpf">&lt;sys/types.h&gt;</span><span class="cp">
+</span><span class="ln">4</span><span class="cp">#include</span> <span class="cpf">&lt;sys/socket.h&gt;</span><span class="cp">
+</span><span class="ln">5</span><span class="cp"></span><span class="n">ssize_t</span> <span class="nf">send</span><span class="p">(</span><span class="kt">int</span> <span class="n">sockfd</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">len</span><span class="p">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="p">);</span>
+</code></pre></div><p>尽管可以通过read和write交换数据，但这就是这两个函数所能做的一切。如果想指定选项，从多个客户端接收数据包，或者发送带外数据，就需要使用6个为数据传递而设计的套接字函数中的一个。3个函数用来发送数据，3个用于接收数据。最简单的是<strong>send</strong>，它和write很像，但是可以指定标志来改变处理传输数据的方式。<strong>即send()和write之间的唯一区别是是否存在标志。使用零标志参数，send()等效于write</strong>。</p>
+<p>类似write，使用send时套接字必须已经连接。参数buf和nbytes的含义与write中的一致。
+然而，与write不同的是，send支持第4个参数args。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">flags</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"><code>MSG_CONFIRM </code></td>
+<td>告诉链接层:你从另一端得到了一个成功的回复。如果链路层没有得到这一点，它将定期重新探测邻居(例如，通过单播ARP)。仅对<code>SOCK_DGRAM</code>和<code>SOCK_RAW</code>套接字有效，目前仅对<code>IPv4</code>和<code>IPv6</code>实现。</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>MSG_DONTROUTE</code></td>
+<td>不要使用网关发送数据包，只发送到直连网络上的主机。这通常<strong>只被诊断程序或路由程序使用</strong>。</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>MSG_DONTWAIT</code></td>
+<td><strong>启用非阻塞操作</strong>;如果操作将阻塞，则返回<code>EAGAIN</code>或<code>EWOULDBLOCK</code>。这提供了**类似于设置<code>O_NONBLOCK</code>**标志的行为(通过<code>fcntl(2) F_SETFL</code>操作)，但不同之处在于<code>MSG_DONTWAIT</code>是每个调用的选项，而<code>O_NONBLOCK</code>是对打开的文件描述的设置(参见<code>open(2)</code>)，这将影响调用进程中的所有线程，以及其他持有引用相同打开文件描述的文件描述符的进程。</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>MSG_EOR</code></td>
+<td><strong>终止一条记录</strong>(当支持此概念时，例如<code>SOCK_SEQPACKET</code>类型的套接字)。</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>MSG_MORE </code></td>
+<td><strong>调用方有更多数据要发送</strong>。此标志用于<code>TCP</code>套接字以获得与<code>TCP_CORK</code>套接字选项相同的效果(参见<code>TCP(7)</code>)，不同的是此标志可以在每次调用的基础上设置。<!-- raw HTML omitted -->自Linux 2.6以来，这个标志也支持<code>UDP</code>套接字，并通知内核将所有在调用中发送的数据打包成一个单一的数据报，该数据报仅在执行不指定此标志的调用时传输。(请参见<code>udp(7)</code>中描述的<code>UDP_CORK</code>套接字选项。)</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>MSG_NOSIGNAL</code></td>
+<td>如果对等端在面向流的套接字上关闭了连接，则<strong>不要生成<code>SIGPIPE</code>信号</strong>。仍然返回<code>EPIPE</code>错误。这提供了<strong>类似于使用<code>sigaction(2)</code>忽略<code>SIGPIPE</code>的行为</strong>，但是，<code>MSG_NOSIGNAL</code>是每个调用的特性，忽略<code>SIGPIPE</code>会设置一个影响进程中所有线程的进程属性。</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>MSG_OOB</code></td>
+<td>在支持此概念的套接字(例如<code>SOCK_STREAM</code>类型)上<strong>发送带外数据</strong>;底层协议还必须支持带外数据。<strong>紧急消息，会优先处理</strong>。</td>
+</tr>
+</tbody>
+</table>
 </blockquote>
-<p>socket_write写到缓冲(本地<a href="https://so.csdn.net/so/search?q=%E5%A5%97%E6%8E%A5%E5%AD%97&amp;spm=1001.2101.3001.7020">套接字</a>缓冲) 实际有可能未发送出去</p>
-<p>socket_send 已经从套接字缓冲发出</p>
+<h4 id="2262关于socket中的write和writev的区别">2.2.6.2关于socket中的write和writev的区别</h4>
+<blockquote>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="cp">#include</span> <span class="cpf">&lt;sys/uio.h&gt;</span><span class="cp">
+</span><span class="ln">2</span><span class="cp"></span><span class="k">struct</span> <span class="n">iovec</span> <span class="p">{</span>
+<span class="ln">3</span>    <span class="kt">void</span>  <span class="o">*</span><span class="n">iov_base</span><span class="p">;</span>    <span class="cm">/* Starting address */</span>
+<span class="ln">4</span>    <span class="n">size_t</span> <span class="n">iov_len</span><span class="p">;</span>     <span class="cm">/* Number of bytes to transfer */</span>
+<span class="ln">5</span><span class="p">};</span>
+<span class="ln">6</span><span class="n">ssize_t</span> <span class="nf">writev</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="k">const</span> <span class="k">struct</span> <span class="n">iovec</span> <span class="o">*</span><span class="n">iov</span><span class="p">,</span> <span class="kt">int</span> <span class="n">iovcnt</span><span class="p">);</span>
+</code></pre></div><p>writev 函数的功能可概括为：对数据进行整合接收及发送的函数。也就是说，通过 writev 函数可以将分散保存在多个缓冲中的数据一并发送，通过 readv 函数可以由多个缓冲分别接收。writev()在继续到iov[1]之前写出iov[0]的全部内容，writev()执行的数据传输是<strong>原子</strong>的。因此，<strong>适当使用这两个函数可以减少 I/O 函数的调用次数</strong>。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_linux_10.png" title="writev函数结构图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_linux_10.png"  alt="writev函数结构图">
+  
+    </a>
+  
+   
+    <span class="caption">writev函数结构图</span>
+  
+</div>
+
+<p><strong>write和writev区别</strong></p>
+<p>对于socket IO而言，write经常不能够一次写完，好在它会返回已经写了多少字节，如果继续写，此时就会阻塞；对于非阻塞socket而言，write会在buf不可写时返回的EAGAIN，那么在下一次write时，便可通过之前返回的值重新确定基址和长度。</p>
+<p>manual中对于writev的相关描述为：和write类似。也就是说，它也会返回已经写入的长度或者EAGAIN(errno)。千万不可天真地认为，每次传同样的iovec就能解决问题，writev并不会为你做任何事情，重新处理iovec是调用者的任务。</p>
+<p>问题是，这个返回值“实用性”并不高，因为参数传入的是iovec数组，计量单位是iovcnt，而不是字节数，用户依旧需要通过遍历iovec来计算新的基址，另外写入数据的“结束点”可能位于一个iovec的中间某个位置，因此需要调整临界iovec的io_base和io_len。</p>
+<p>对于socket，尤其是<strong>非阻塞socket</strong>，还是<strong>尽可能避免writev</strong>的好，实现连续的内存块反而可以简化实现。</p>
+</blockquote>
+<h4 id="2263关于socket中recvmsg-和-sendmsg-函数">2.2.6.3关于socket中recvmsg 和 sendmsg 函数</h4>
+<p>具体内容可以点击<a href="https://www.cnblogs.com/jimodetiantang/p/9190958.html">这里</a></p>
+<blockquote>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="cp">#include</span> <span class="cpf">&lt;sys/types.h&gt;</span><span class="cp">
+</span><span class="ln">2</span><span class="cp">#include</span> <span class="cpf">&lt;sys/socket.h&gt;</span><span class="cp">
+</span><span class="ln">3</span><span class="cp"></span>
+<span class="ln">4</span><span class="n">ssize_t</span> <span class="nf">send</span><span class="p">(</span><span class="kt">int</span> <span class="n">sockfd</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">len</span><span class="p">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="p">);</span>
+<span class="ln">5</span>
+<span class="ln">6</span><span class="n">ssize_t</span> <span class="nf">sendto</span><span class="p">(</span><span class="kt">int</span> <span class="n">sockfd</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">len</span><span class="p">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="p">,</span>
+<span class="ln">7</span>              <span class="k">const</span> <span class="k">struct</span> <span class="nc">sockaddr</span> <span class="o">*</span><span class="n">dest_addr</span><span class="p">,</span> <span class="n">socklen_t</span> <span class="n">addrlen</span><span class="p">);</span>
+<span class="ln">8</span>
+<span class="ln">9</span><span class="n">ssize_t</span> <span class="nf">sendmsg</span><span class="p">(</span><span class="kt">int</span> <span class="n">sockfd</span><span class="p">,</span> <span class="k">const</span> <span class="k">struct</span> <span class="nc">msghdr</span> <span class="o">*</span><span class="n">msg</span><span class="p">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="p">);</span>
+</code></pre></div><p>主要是有两个结构体<strong>msghdr</strong>和<strong>cmsghdr</strong>。</p>
+<p>这两个函数的参数中都有一个指向msghdr结构的指针，该结构包含了所有关于要发送或要接收的消息的信息。该结构的定义大致如下：</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="k">struct</span> <span class="nc">msghdr</span> <span class="p">{</span>
+<span class="ln"> 2</span>    <span class="kt">void</span>          <span class="o">*</span><span class="n">msg_name</span><span class="p">;</span>        <span class="c1">// protocol address
+</span><span class="ln"> 3</span><span class="c1"></span>    <span class="n">socklen_t</span>      <span class="n">msg_namelen</span><span class="p">;</span>     <span class="c1">// size of protocol address
+</span><span class="ln"> 4</span><span class="c1"></span>    <span class="k">struct</span> <span class="nc">iovec</span>  <span class="o">*</span><span class="n">msg_iov</span><span class="p">;</span>         <span class="c1">// scatter/gather array
+</span><span class="ln"> 5</span><span class="c1"></span>    <span class="kt">int</span>            <span class="n">msg_iovlen</span><span class="p">;</span>      <span class="c1">// elements in msg_iov
+</span><span class="ln"> 6</span><span class="c1"></span>    <span class="kt">void</span>          <span class="o">*</span><span class="n">msg_control</span><span class="p">;</span>     <span class="c1">// ancillary data (cmsghdr struct)
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="n">socklen_t</span>      <span class="n">msg_controllen</span><span class="p">;</span>  <span class="c1">// length of ancillary data
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="kt">int</span>            <span class="n">msg_flags</span><span class="p">;</span>       <span class="c1">// flags returned by recvmsg()
+</span><span class="ln"> 9</span><span class="c1"></span><span class="p">};</span>
+<span class="ln">10</span>
+<span class="ln">11</span><span class="k">struct</span> <span class="nc">cmsghdr</span> <span class="p">{</span>
+<span class="ln">12</span>    <span class="n">size_t</span> <span class="n">cmsg_len</span><span class="p">;</span>
+<span class="ln">13</span>    <span class="kt">int</span> <span class="n">cmsg_level</span><span class="p">;</span>
+<span class="ln">14</span>    <span class="kt">int</span> <span class="n">cmsg_type</span><span class="p">;</span>
+<span class="ln">15</span><span class="p">};</span>
+</code></pre></div><p>另外还有几个宏定义用于上面结构体的计算</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="cp">#define CMSG_NXTHDR(mhdr, cmsg) __cmsg_nxthdr((mhdr), (cmsg))
+</span><span class="ln">2</span><span class="cp">#define CMSG_ALIGN(len) ( ((len)+sizeof(long)-1) &amp; ~(sizeof(long)-1) )
+</span><span class="ln">3</span><span class="cp">#define CMSG_DATA(cmsg) (((unsigned char*)(cmsg) + CMSG_ALIGN(sizeof(struct cmsghdr))))
+</span><span class="ln">4</span><span class="cp">#define CMSG_SPACE(len) (CMSG_ALIGN(sizeof(struct cmsghdr)) + CMSG_ALIGN(len))
+</span><span class="ln">5</span><span class="cp">#define CMSG_LEN(len) (CMSG_ALIGN(sizeof(struct cmsghdr)) + (len))
+</span><span class="ln">6</span><span class="cp">#define CMSG_FIRSTHDR(msg) \
+</span><span class="ln">7</span><span class="cp">       ((msg)-&gt;msg_controllen &gt;= sizeof(struct cmsghdr) \
+</span><span class="ln">8</span><span class="cp">       ? (struct cmsghdr*) (msg)-&gt;msg_control : (struct cmsghdr*) NULL)
+</span><span class="ln">9</span><span class="cp">#define CMSG_OK(mhdr, cmsg) ((cmsg)-&gt;cmsg_len &gt;= sizeof(struct cmsghdr) &amp;&amp;   (cmsg)-&gt;cmsg_len &lt;=   (unsigned long)   ((mhdr)-&gt;msg_controllen -   ((char*)(cmsg) - (char*)(mhdr)-&gt;msg_control)))
+</span></code></pre></div><p>关于结构体<strong>msghdr</strong></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_linux_7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_linux_7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>关于结构体<strong>msghdr</strong>和<strong>cmsghdr</strong>联系</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_linux_8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_linux_8.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><strong>send，sendto和sendmsg区别</strong></p>
+<p><strong>即使send成功返回，也并不表示连接的另一端的进程就一定接收了数据</strong>。我们所能保证的只是当send成功返回时，数据已经被无错误地发送到网络驱动程序上。当消息没有放入套接字的发送缓冲区时，<strong>send()通常会阻塞，除非套接字已被置于非阻塞I/O模式</strong>。在非阻塞模式下，它会失败，在这种情况下会出现EAGAIN或EWOULDBLOCK错误。</p>
+<p>对于支持报文边界的协议，如果尝试发送的单个报文的长度超过协议所支持的最大长度，那么send会失败，并将errno设为EMSGSIZE。对于字节流协议，send会阻塞直到整个数据传输完成。函数sendto和send很类似。区别在于sendto可以在无连接的套接字上指定一个目标地址。</p>
+<p>对于面向连接的套接字，目标地址是被忽略的，因为连接中隐含了目标地址。对于无连接的套接字，除非先调用connect设置了目标地址，否则不能使用send。sendto提供了发送报文的另一种方式。</p>
+<p>通过套接字发送数据时，还有一个选择。可以调用带有msghdr结构的sendmsg来指定多重缓冲区传输数据，这和writev函数很相似。sendmsg()调用还允许发送辅助数据(也称为控制信息)。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">//下面两种方式一致
+</span><span class="ln">2</span><span class="c1"></span><span class="n">send</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">len</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+<span class="ln">3</span><span class="n">sendto</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">len</span><span class="p">,</span> <span class="n">flags</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+</code></pre></div><p>如果sendto()用于<strong>连接模式套接字(SOCK_STREAM, SOCK_SEQPACKET)</strong>，则参数dest_addr和addrlen将被<strong>忽略</strong>(当它们不为NULL和0时可能返回EISCONN错误)，并且当套接字未实际连接时返回错误ENOTCONN。否则，目标的地址由dest_addr给出，addrlen指定其大小。对于sendmsg()，目标地址由msg给出。Msg_name，加上msg。msg_namelen指定它的大小。</p>
+</blockquote>
+<h4 id="2264socket发送函数总结">2.2.6.4socket发送函数总结</h4>
+<p>应用层的五个发送函数，实际上对应系统调用最终都回到sock_sendmsg，即把应用层的数据封装成msghdr，然后继续发送到协议栈。write可以看作是单个iovec的数据，且flags为0；writev可以看作是不定项数个iovec的数据，且flags为0；send可以看作是单个iovec的数据，且flags可以是send falgs表中任意值；sendto就是封装了send，多了flags值和sockaddr；sendmsg比较特殊，默认就构造了msghdr，直接发送到sock_sendmsg即可。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socket/socket_linux_11.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socket/socket_linux_11.png" >
+  
+    </a>
+  
+  
+</div>
+
 <h1 id="3-源码中的socket">3 源码中的socket</h1>
 <p>先介绍一下源码中封装的socket，由于Android系统中很多都是本地通信，回连127.0.0.1，所以单独封装了相对应的源码。</p>
 <h2 id="301客户端连接">3.0.1客户端连接</h2>
@@ -1967,6 +2741,8 @@
 <p><a href="https://blog.csdn.net/tkwxty/article/details/103064321">[17] IT先森, Android Java层和Native层通信实战大荟萃之原生socket实现通信, 2020.</a></p>
 <p><a href="https://www.dazhuanlan.com/a370352701/topics/1014749">[18] a370352701, 人工智能 图解linux netlink, 2019.</a></p>
 <p><a href="https://blog.csdn.net/qq_37964547/article/details/80697530">[19] Shining-LY, poll方法的基本概念, 2018.</a></p>
+<p><a href="https://blog.csdn.net/linuxheik/article/details/76125411">[20] linuxheik, writev, 2017.</a></p>
+<p><a href="https://blog.csdn.net/u010429831/article/details/122452030">[21] yunfan188, Linux网络编程 - 多种 I/O 函数(send、recv、readv、writev), 2022.</a></p>
               
             </div>
           </div>
