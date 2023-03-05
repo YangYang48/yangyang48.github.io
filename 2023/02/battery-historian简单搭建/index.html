@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="Battery Historain是谷歌开发的Android耗电量分析工具，其开发语言为go语言。使用这个工具可以将bugreport内容通过可视化界面更加直观的展示出来。">
+
+
+<meta property="og:description" content="Battery Historain是谷歌开发的Android耗电量分析工具，其开发语言为go语言。使用这个工具可以将bugreport内容通过可视化界面更加直观的展示出来。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Battery Historian简单搭建">
+<meta name="twitter:title" content="Battery Historian简单搭建">
+<meta property="og:url" content="https://yangyang48.github.io/2023/02/battery-historian%E7%AE%80%E5%8D%95%E6%90%AD%E5%BB%BA/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2023/02/battery-historian%E7%AE%80%E5%8D%95%E6%90%AD%E5%BB%BA/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="Battery Historain是谷歌开发的Android耗电量分析工具，其开发语言为go语言。使用这个工具可以将bugreport内容通过可视化界面更加直观的展示出来。">
+<meta name="twitter:description" content="Battery Historain是谷歌开发的Android耗电量分析工具，其开发语言为go语言。使用这个工具可以将bugreport内容通过可视化界面更加直观的展示出来。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2023-02-21T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2023-02-21T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="Battery Historian">
+    
+      <meta property="article:section" content="2023">
+    
+      <meta property="article:section" content="February">
+    
+  
+  
+    
+      <meta property="article:tag" content="go">
+    
+      <meta property="article:tag" content="Android">
+    
+      <meta property="article:tag" content="功耗优化">
+    
+      <meta property="article:tag" content="bugreport">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>Battery Historian简单搭建</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2023/02/battery-historian%E7%AE%80%E5%8D%95%E6%90%AD%E5%BB%BA/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/AndroidTools/BatteryHistorian/batteryhistorian_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      Battery Historian简单搭建
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2023-02-21T00:00:00Z">
+        
+  二月 21, 2023
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/battery-historian">Battery Historian</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2023">2023</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/february">February</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">400 Words|Read in about 2 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>Battery Historain是谷歌开发的Android耗电量分析工具，其开发语言为go语言。使用这个工具可以将bugreport内容通过可视化界面更加直观的展示出来。</p>
+<h1 id="1介绍">1介绍</h1>
+<p>battery historian是一款用于检测与电池有关的信息和事件的工具，运行在Android 5.0 Lollipop (API level 21)及其之后。它会生成一张具有时间坐标的图纸，用户可以查看各种事件耗电时间。本文使用的是win10操作，没有在Linux操作系统中依托docker搭建。</p>
+<h1 id="2自建battery-historain环境">2自建Battery Historain环境</h1>
+<h2 id="21配置环境">2.1配置环境</h2>
+<p>需要配置jdk（openjdk），go（golang），python，git（docker）环境</p>
+<ul>
+<li>openjdk下载地址，点击<a href="https://mirrors.huaweicloud.com/openjdk/">这里</a></li>
+<li>golang下载地址，点击<a href="https://golang.google.cn/dl/">这里</a></li>
+<li>python下载地址，点击<a href="https://www.python.org/ftp/python/">这里</a></li>
+<li>git下载地址，点击<a href="https://git-scm.com/">这里</a></li>
+<li>docker下载地址，点击<a href="https://docs.docker.com/desktop/windows/install/">这里</a></li>
+</ul>
+<p>go的环境变量配置如下：</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_2.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>环境配置完成之后，目前工程下是空的。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="22安装battery-historain">2.2安装Battery Historain</h2>
+<p>环境配置结束后，安装Android工具Battery Historain。</p>
+<h3 id="221开始安装">2.2.1开始安装</h3>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1"># 后面有三个点</span>
+<span class="ln">2</span>go get -d -u github.com/google/battery-historian/...
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>实际上不能完全下载下来，这个是因为不能够下载对应go的protobuf工程。</p>
+<h3 id="212下载依赖包">2.1.2下载依赖包</h3>
+<p>必须要到battery-historian工程目录下，执行命令</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>go get -u github.com/golang/protobuf/proto
+<span class="ln">2</span>go get -u github.com/golang/protobuf/protoc-gen-go
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="213执行-go-run-setupgo命令">2.1.3执行 go run setup.go命令</h3>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>// 进入battery-historian目录
+<span class="ln">2</span><span class="nb">cd</span> battery-historian
+<span class="ln">3</span>// 执行setup.go
+<span class="ln">4</span>go run setup.go
+</code></pre></div><p>这个过程，主要用于执行脚本，下载三方插件，包括flot-axislabels、closure-compiler和closure-library</p>
+<p>如果下载不下来，或者有类似问题，可以直接使用离线下载，然后再把三个包放入对应的目录下即可</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>如果其中有对应js下载不下来，可能需要科学上网。</p>
+<p>直到出现下面这张图，才是完成</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_8.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="214启动battery-historiango">2.1.4启动battery-historian.go</h3>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>// 启动battery-historian.go
+<span class="ln">2</span>go run cmd/battery-historian/battery-historian.go
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_10.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_10.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_9.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_9.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="3-使用battery-historain">3 使用Battery Historain</h1>
+<h2 id="31上传bugreport">3.1上传bugreport</h2>
+<p>生成bugreport格式</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>adb shell bugreport &gt; bugreport.zip
+</code></pre></div><p>将zip文件上传，等待工具分析，列出可视化界面</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_12.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_12.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>参数含义</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">Battery Historain参数</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">CPU runing</td>
+<td>cpu运行的状态</td>
+</tr>
+<tr>
+<td style="text-align:center">Kernel only uptime</td>
+<td>只有kernell运行</td>
+</tr>
+<tr>
+<td style="text-align:center">Userspace wakelock</td>
+<td>用户空间申请的锁</td>
+</tr>
+<tr>
+<td style="text-align:center">Screen</td>
+<td>屏幕是否点亮</td>
+</tr>
+<tr>
+<td style="text-align:center">Top app</td>
+<td>当前在内存中的应用，按内存占用率排序</td>
+</tr>
+<tr>
+<td style="text-align:center">Activity Manager Proc</td>
+<td>活跃的用户进程</td>
+</tr>
+<tr>
+<td style="text-align:center">Crashes(logcat)</td>
+<td>某个时间点出现crash的应用</td>
+</tr>
+<tr>
+<td style="text-align:center">Doze</td>
+<td>是否进入doze模式 Device</td>
+</tr>
+<tr>
+<td style="text-align:center">active</td>
+<td>和Doze相反</td>
+</tr>
+<tr>
+<td style="text-align:center">JobScheduler</td>
+<td>异步作业调度</td>
+</tr>
+<tr>
+<td style="text-align:center">SyncManager</td>
+<td>同步操作</td>
+</tr>
+<tr>
+<td style="text-align:center">Temp White List</td>
+<td>电量优化白名单</td>
+</tr>
+<tr>
+<td style="text-align:center">Phone call</td>
+<td>是否打电话</td>
+</tr>
+<tr>
+<td style="text-align:center">GPS</td>
+<td>是否使用GPS</td>
+</tr>
+<tr>
+<td style="text-align:center">Network connectivity</td>
+<td>网络连接状态（wifi、mobile是否连接）</td>
+</tr>
+<tr>
+<td style="text-align:center">Mobile signal strength</td>
+<td>移动信号强度（great\good\moderate\poor）</td>
+</tr>
+<tr>
+<td style="text-align:center">Wifi scan</td>
+<td>是否在扫描wifi信号</td>
+</tr>
+<tr>
+<td style="text-align:center">Wifi supplicant</td>
+<td>是否有wifi请求</td>
+</tr>
+<tr>
+<td style="text-align:center">Wifi radio</td>
+<td>是否正在通过wifi传输数据</td>
+</tr>
+<tr>
+<td style="text-align:center">Wifi signal strength</td>
+<td>wifi信号强度</td>
+</tr>
+<tr>
+<td style="text-align:center">Wifi running</td>
+<td>wifi组件是否在工作(未传输数据)</td>
+</tr>
+<tr>
+<td style="text-align:center">Wifi on</td>
+<td>同上</td>
+</tr>
+<tr>
+<td style="text-align:center">Audio</td>
+<td>音频子系统</td>
+</tr>
+<tr>
+<td style="text-align:center">Camera</td>
+<td>相机是否在工作</td>
+</tr>
+<tr>
+<td style="text-align:center">Video</td>
+<td>是否在播放视频</td>
+</tr>
+<tr>
+<td style="text-align:center">Foreground process</td>
+<td>前台进程</td>
+</tr>
+<tr>
+<td style="text-align:center">Package install</td>
+<td>是否在进行包安装</td>
+</tr>
+<tr>
+<td style="text-align:center">Package active</td>
+<td>包管理在工作</td>
+</tr>
+<tr>
+<td style="text-align:center">Battery level</td>
+<td>电池当前电量</td>
+</tr>
+<tr>
+<td style="text-align:center">Temperature</td>
+<td>电池温度</td>
+</tr>
+<tr>
+<td style="text-align:center">Plugged</td>
+<td>连接usb或者充电</td>
+</tr>
+<tr>
+<td style="text-align:center">Charging on</td>
+<td>在充电</td>
+</tr>
+<tr>
+<td style="text-align:center">Logcat misc</td>
+<td>是否在导出日志</td>
+</tr>
+</tbody>
+</table>
+<p>本文篇幅内容不对具体分析做介绍</p>
+<h2 id="32android性能优化之电量篇">3.2Android性能优化之电量篇</h2>
+<p>特效篇：Android性能优化之电量篇 - <a href="http://hukai.me/android-performance-battery/">http://hukai.me/android-performance-battery/</a></p>
+<div class="highlight"><pre class="chroma"><code class="language-text" data-lang="text"><span class="ln">1</span>// 得到整个设备的电量消耗信息
+<span class="ln">2</span>$ adb shell dumpsys batterystats &gt; xxx.txt
+<span class="ln">3</span>// 得到指定app相关的电量消耗信息
+<span class="ln">4</span>$ adb shell dumpsys batterystats &gt; com.package.name &gt; xxx.txt
+<span class="ln">5</span>
+<span class="ln">6</span>// 通过Google编写的python脚本把数据信息转换成可读性更好的html文件
+<span class="ln">7</span>// https://github.com/google/battery-historian/blob/master/scripts/historian.py
+<span class="ln">8</span>$ python historian.py xxx.txt &gt; xxx.html  
+</code></pre></div><h1 id="4目前遇到的问题">4目前遇到的问题</h1>
+<p>1.执行Android Historian脚本的时候，出现下面类似提示</p>
+<div class="highlight"><pre class="chroma"><code class="language-text" data-lang="text"><span class="ln">1</span>go: go.mod file not found in current directory or any parent directory; see &#39;go help modules&#39;
+</code></pre></div><p>go 的环境配置相关，设置GO111MODULE=auto</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="ln">1</span><span class="c1">//依次执行
+</span><span class="ln">2</span><span class="c1"></span><span class="k">go</span> <span class="nx">env</span> <span class="o">-</span><span class="nx">w</span> <span class="nx">GO111MODULE</span><span class="p">=</span><span class="nx">auto</span>
+<span class="ln">3</span><span class="k">go</span> <span class="nx">mod</span> <span class="nx">init</span>
+<span class="ln">4</span><span class="k">go</span> <span class="nx">mod</span> <span class="nx">verify</span>
+<span class="ln">5</span><span class="k">go</span> <span class="nx">mod</span> <span class="nx">vendor</span>
+</code></pre></div><p>1.导入bugreport之后，然后运行Android Historian脚本，启动的网页UI没有很好的适配</p>
+<p>需要科学上网，有部分js没有正确的下载下来</p>
+<p>2.导入bugreport之后，然后运行脚本，打开网页全是字符串，正常的UI界面都没有显示</p>
+<p>可能是导入的bugreport方式有误，例如android11部分机型，需要点击开发者模式中的错误报告，然后把对应手机侧的/bugreport目录下对应的bugreport重新导入，可以重新显示出来</p>
+<p>3.执行对应的Android Historian脚本有大量的语法错误，类似</p>
+<div class="highlight"><pre class="chroma"><code class="language-text" data-lang="text"><span class="ln">1</span>/work/src/github.com/google/battery-historian/third_party/closure-library/closure/goog/streams/full_test.js:492: ERROR - Parse error. &#39;(&#39; expected
+</code></pre></div><p>这个需要回退三方插件的版本号，将<strong>closure-library</strong>这个仓库回退到20170409稳定版本</p>
+<p>可以用下面两种方式回退</p>
+<p>第一种直接在官方下载对应版本，然后将版本对应替换到目标的三方插件目录下，官网地址是，点击<a href="https://github.com/google/closure-library/releases">这里</a>，并找到对应的v20170409的版本</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>第二种直接通过git版本控制回退当前插件代码</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="nb">cd</span> third_party/closure-library/
+<span class="ln">2</span>git reset --hard v20170409
+<span class="ln">3</span><span class="nb">cd</span> -
+<span class="ln">4</span>go run setup.go
+</code></pre></div><h1 id="3总结">3总结</h1>
+<p>总的来说，这是一种新的可视化方式，来解读Android的功耗相关。除了上述方式之外，如果还是不能够自建Android Historian工具，可以尝试其他的<code>Battery Historain</code>线上环境，效果也是一样的，点击<a href="https://bathist.ef.lc/">这里</a>。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_11.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidTools/BatteryHistorian/batteryhistorian_11.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="参考">参考</h1>
+<p><a href="https://blog.csdn.net/weixin_30871905/article/details/96898782">[1] weixin_30871905, Android Historian安装使用,2019.</a></p>
+<p><a href="https://blog.csdn.net/wswqiang/article/details/7197696">[2] 东名夜雨, closure-library 第三章 Closure基本库,2012.</a></p>
+<p><a href="https://blog.csdn.net/sinat_35162715/article/details/120828930">[3] ,AaronDDD go安装proto、grpc、protobuf等工具失败,2021.</a></p>
+<p><a href="https://blog.csdn.net/m0_67401417/article/details/126080567">[4] 普通网友, 【Go报错】go go.mod file not found in current directory or any parent directory 错误解决,2022.</a></p>
+<p><a href="https://mp.weixin.qq.com/s/4AcV0oi_xIad0SJTodTuLQ">[5] 小木箱, 功耗优化 · 入门篇 · 浅析Android耗电量优化,2023.</a></p>
+<p><a href="https://blog.csdn.net/zeqiao/article/details/77504477">[6] zeqiao, 电量分析工具 Battery Historian 的配置及使用 ,2017.</a></p>
+<p><a href="https://blog.csdn.net/xiaxl/article/details/117758299">[7] bjxiaxueliang, Mac 中 Battery Historain 安装与使用,2021.</a></p>
+<p><a href="https://blog.csdn.net/wei_ada/article/details/106127654">[8] 小米修修, Mac上安装Battery Historain遇到的问题,2020.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/go/">go</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/android/">Android</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E5%8A%9F%E8%80%97%E4%BC%98%E5%8C%96/">功耗优化</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/bugreport/">bugreport</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/02/iptables%E4%BD%BF%E7%94%A8/" data-tooltip="iptables使用">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2023 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/02/iptables%E4%BD%BF%E7%94%A8/" data-tooltip="iptables使用">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2023%2F02%2Fbattery-historian%25E7%25AE%2580%25E5%258D%2595%25E6%2590%25AD%25E5%25BB%25BA%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2023%2F02%2Fbattery-historian%25E7%25AE%2580%25E5%258D%2595%25E6%2590%25AD%25E5%25BB%25BA%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2023%2F02%2Fbattery-historian%25E7%25AE%2580%25E5%258D%2595%25E6%2590%25AD%25E5%25BB%25BA%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2023\/02\/battery-historian%E7%AE%80%E5%8D%95%E6%90%AD%E5%BB%BA\/';
+          
+            this.page.identifier = '\/2023\/02\/battery-historian%E7%AE%80%E5%8D%95%E6%90%AD%E5%BB%BA\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
