@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="Android中如果需要通过adb指令调用系统服务中的方法，可以通过service call的形式。">
+
+
+<meta property="og:description" content="Android中如果需要通过adb指令调用系统服务中的方法，可以通过service call的形式。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="service call源码分析(以蓝牙打开关闭为例)">
+<meta name="twitter:title" content="service call源码分析(以蓝牙打开关闭为例)">
+<meta property="og:url" content="https://yangyang48.github.io/2023/03/service-call%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%BB%A5%E8%93%9D%E7%89%99%E6%89%93%E5%BC%80%E5%85%B3%E9%97%AD%E4%B8%BA%E4%BE%8B/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2023/03/service-call%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%BB%A5%E8%93%9D%E7%89%99%E6%89%93%E5%BC%80%E5%85%B3%E9%97%AD%E4%B8%BA%E4%BE%8B/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="Android中如果需要通过adb指令调用系统服务中的方法，可以通过service call的形式。">
+<meta name="twitter:description" content="Android中如果需要通过adb指令调用系统服务中的方法，可以通过service call的形式。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2023-03-14T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2023-03-14T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="service call">
+    
+      <meta property="article:section" content="2023">
+    
+      <meta property="article:section" content="March">
+    
+  
+  
+    
+      <meta property="article:tag" content="Android">
+    
+      <meta property="article:tag" content="源码">
+    
+      <meta property="article:tag" content="调试工具">
+    
+      <meta property="article:tag" content="Binder">
+    
+      <meta property="article:tag" content="Bluetooth">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/AndroidTools/service_call/service_call_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/AndroidTools/service_call/service_call_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/AndroidTools/service_call/service_call_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/AndroidTools/service_call/service_call_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>service call源码分析(以蓝牙打开关闭为例)</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2023/03/service-call%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%BB%A5%E8%93%9D%E7%89%99%E6%89%93%E5%BC%80%E5%85%B3%E9%97%AD%E4%B8%BA%E4%BE%8B/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/AndroidTools/service_call/service_call_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      service call源码分析(以蓝牙打开关闭为例)
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2023-03-14T00:00:00Z">
+        
+  三月 14, 2023
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/service-call">service call</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2023">2023</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/march">March</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">900 Words|Read in about 4 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>Android中如果需要通过adb指令调用系统服务中的方法，可以通过service call的形式。</p>
+<h1 id="0简介">0简介</h1>
+<p>举例说明，service call的常见用法</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span><span class="c1"># 1.绑定port启动ViewServer</span>
+<span class="ln"> 2</span>adb shell service call window <span class="m">1</span> i32 <span class="nv">$port</span>
+<span class="ln"> 3</span>
+<span class="ln"> 4</span><span class="c1"># 2.停止ViewServer</span>
+<span class="ln"> 5</span>adb shell service call window <span class="m">2</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span><span class="c1"># 3.检查ViewServer是否正在运行</span>
+<span class="ln"> 8</span>adb shell service call window <span class="m">3</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span><span class="c1"># 关闭HW overlays，code为1008，一个参数为int的1 </span>
+<span class="ln">11</span>adb shell service call SurfaceFlinger <span class="m">1008</span> i32 <span class="m">1</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="c1"># 4.显示fps。来源见SurfaceFlinger.cpp中函数onTransact的switch片段，使用见surface_stats_collector.py</span>
+<span class="ln">14</span>adb shell service call SurfaceFlinger <span class="m">1013</span> 
+</code></pre></div><p>service call的形式本质也是使用service调试命令。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span>picasso:/ $ service -h
+<span class="ln"> 2</span>Usage: service <span class="o">[</span>-h<span class="p">|</span>-?<span class="o">]</span>
+<span class="ln"> 3</span>       service list
+<span class="ln"> 4</span>       service check SERVICE
+<span class="ln"> 5</span>       service call SERVICE CODE <span class="o">[</span>i32 N <span class="p">|</span> i64 N <span class="p">|</span> f N <span class="p">|</span> d N <span class="p">|</span> s16 STR <span class="o">]</span> ...
+<span class="ln"> 6</span>Options:
+<span class="ln"> 7</span>   i32: Write the 32-bit integer N into the send parcel.
+<span class="ln"> 8</span>   i64: Write the 64-bit integer N into the send parcel.
+<span class="ln"> 9</span>   f:   Write the 32-bit single-precision number N into the send parcel.
+<span class="ln">10</span>   d:   Write the 64-bit double-precision number N into the send parcel.
+<span class="ln">11</span>   s16: Write the UTF-16 string STR into the send parcel.
+</code></pre></div><blockquote>
+<p>service本身作为一个命令的bin文件</p>
+<p>可使用的参数为</p>
+<ol>
+<li>
+<p><strong>service list</strong></p>
+<p>显示系统当前所有在service manager注册的service，类似dumpsys -l</p>
+</li>
+<li>
+<p><strong>service check SERVICE</strong></p>
+<p>查询SERVICE是否存在</p>
+</li>
+<li>
+<p><strong>service call SERVICE CODE [i32 N | i64 N | f N | d N | s16 STR ] &hellip;</strong></p>
+<p>可以通过binder给service发送code，还可以向service发送intent等</p>
+</li>
+</ol>
+</blockquote>
+<p>本文结合蓝牙服务来分析，蓝牙的开关的源码(<strong>android13源码</strong>)</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1"># 打开蓝牙</span>
+<span class="ln">2</span>adb shell service call blutooth_manager <span class="m">5</span>
+<span class="ln">3</span><span class="c1"># 关闭蓝牙</span>
+<span class="ln">4</span>adb shell service call blutooth_manager <span class="m">7</span>
+<span class="ln">5</span><span class="c1"># 查看蓝牙状态,enable为true为打开，false为关闭</span>
+<span class="ln">6</span>adb shell dumpsys blutooth_manager <span class="p">|</span> grep <span class="nb">enable</span>
+</code></pre></div><h1 id="1-service-call">1 service call</h1>
+<p>这里的service位置手机目录的/system/bin下面，这里是一个二进制的进程</p>
+<p>对应的bp文件</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="ln"> 1</span><span class="c1">//frameworks/native/cmds/service/Android.bp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="nx">cc_binary</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="c1">//进程的名字是service
+</span><span class="ln"> 4</span><span class="c1"></span>    <span class="nx">name</span><span class="p">:</span> <span class="s">&#34;service&#34;</span><span class="p">,</span>
+<span class="ln"> 5</span>	<span class="c1">//生成进程的源文件service.cpp
+</span><span class="ln"> 6</span><span class="c1"></span>    <span class="nx">srcs</span><span class="p">:</span> <span class="p">[</span><span class="s">&#34;service.cpp&#34;</span><span class="p">],</span>
+<span class="ln"> 7</span>	<span class="c1">//依赖的系统动态库
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="nx">shared_libs</span><span class="p">:</span> <span class="p">[</span>
+<span class="ln"> 9</span>        <span class="s">&#34;libcutils&#34;</span><span class="p">,</span>
+<span class="ln">10</span>        <span class="s">&#34;libutils&#34;</span><span class="p">,</span>
+<span class="ln">11</span>        <span class="s">&#34;libbinder&#34;</span><span class="p">,</span>
+<span class="ln">12</span>    <span class="p">],</span>
+<span class="ln">13</span>	<span class="c1">//编译相关参数
+</span><span class="ln">14</span><span class="c1"></span>    <span class="nx">cflags</span><span class="p">:</span> <span class="p">[</span>
+<span class="ln">15</span>        <span class="s">&#34;-DXP_UNIX&#34;</span><span class="p">,</span>
+<span class="ln">16</span>        <span class="s">&#34;-Wall&#34;</span><span class="p">,</span>
+<span class="ln">17</span>        <span class="s">&#34;-Werror&#34;</span><span class="p">,</span>
+<span class="ln">18</span>    <span class="p">],</span>
+<span class="ln">19</span><span class="p">}</span>
+</code></pre></div><p>可以知道最终service会调用的service.cpp的main函数中</p>
+<h1 id="2service-call-bluetooth_manager-5">2service call bluetooth_manager 5</h1>
+<p>本文这里以蓝牙的打开为例，即对应的蓝牙服务为<strong>blutooth_manager</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/cmds/service/service.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="k">const</span> <span class="n">argv</span><span class="p">[])</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="kt">bool</span> <span class="n">wantsUsage</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln"> 5</span>    <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="c1">//这里的prog_name就是通过adb指令调用的service进程
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="kt">char</span><span class="o">*</span> <span class="n">prog_name</span> <span class="o">=</span> <span class="n">basename</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+<span class="ln"> 8</span>    <span class="c1">//启动ServiceManager大管家，后续在大管家中找对应服务
+</span><span class="ln"> 9</span><span class="c1"></span>    <span class="n">sp</span><span class="o">&lt;</span><span class="n">IServiceManager</span><span class="o">&gt;</span> <span class="n">sm</span> <span class="o">=</span> <span class="n">defaultServiceManager</span><span class="p">();</span>
+<span class="ln">10</span>    <span class="n">fflush</span><span class="p">(</span><span class="n">stdout</span><span class="p">);</span>
+<span class="ln">11</span>    <span class="p">...</span>
+<span class="ln">12</span>    <span class="k">if</span> <span class="p">(</span><span class="n">optind</span> <span class="o">&gt;=</span> <span class="n">argc</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">13</span>        <span class="n">wantsUsage</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">14</span>    <span class="c1">//兵分三路，分别对应service的三个参数，service check、service list、service call
+</span><span class="ln">15</span><span class="c1"></span>    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">wantsUsage</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">16</span>        <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="n">optind</span><span class="p">],</span> <span class="s">&#34;check&#34;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">17</span>            <span class="c1">//service check走这里
+</span><span class="ln">18</span><span class="c1"></span>            <span class="p">...</span>
+<span class="ln">19</span>        <span class="p">}</span>
+<span class="ln">20</span>        <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="n">optind</span><span class="p">],</span> <span class="s">&#34;list&#34;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">21</span>            <span class="c1">//service list走这里
+</span><span class="ln">22</span><span class="c1"></span>            <span class="p">...</span>
+<span class="ln">23</span>        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="n">optind</span><span class="p">],</span> <span class="s">&#34;call&#34;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">24</span>            <span class="c1">//这里optind参数后移一位，对应的是具体的服务
+</span><span class="ln">25</span><span class="c1"></span>            <span class="n">optind</span><span class="o">++</span><span class="p">;</span>
+<span class="ln">26</span>            <span class="k">if</span> <span class="p">(</span><span class="n">optind</span><span class="o">+</span><span class="mi">1</span> <span class="o">&lt;</span> <span class="n">argc</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">27</span>                <span class="kt">int</span> <span class="n">serviceArg</span> <span class="o">=</span> <span class="n">optind</span><span class="p">;</span>
+<span class="ln">28</span>                <span class="c1">//【1】binder服务查询，通过sm大管家查询是否存在对应服务，这里为blutooth_manager 
+</span><span class="ln">29</span><span class="c1"></span>                <span class="n">sp</span><span class="o">&lt;</span><span class="n">IBinder</span><span class="o">&gt;</span> <span class="n">service</span> <span class="o">=</span> <span class="n">sm</span><span class="o">-&gt;</span><span class="n">checkService</span><span class="p">(</span><span class="n">String16</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="n">optind</span><span class="o">++</span><span class="p">]));</span>
+<span class="ln">30</span>                <span class="c1">//这里的ifName为android.bluetooth.IBluetoothManager
+</span><span class="ln">31</span><span class="c1"></span>                <span class="n">String16</span> <span class="n">ifName</span> <span class="o">=</span> <span class="p">(</span><span class="n">service</span> <span class="o">?</span> <span class="n">service</span><span class="o">-&gt;</span><span class="n">getInterfaceDescriptor</span><span class="p">()</span> <span class="o">:</span> <span class="n">String16</span><span class="p">());</span>
+<span class="ln">32</span>                <span class="c1">//这里的code对应的是aidl方法中的对应的顺序，起始方法为1，按照次序往下
+</span><span class="ln">33</span><span class="c1"></span>                <span class="kt">int32_t</span> <span class="n">code</span> <span class="o">=</span> <span class="n">atoi</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="n">optind</span><span class="o">++</span><span class="p">]);</span>
+<span class="ln">34</span>                <span class="k">if</span> <span class="p">(</span><span class="n">service</span> <span class="o">!=</span> <span class="k">nullptr</span> <span class="o">&amp;&amp;</span> <span class="n">ifName</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">35</span>                    <span class="n">Parcel</span> <span class="n">data</span><span class="p">,</span> <span class="n">reply</span><span class="p">;</span>
+<span class="ln">36</span>                    <span class="n">data</span><span class="p">.</span><span class="n">markForBinder</span><span class="p">(</span><span class="n">service</span><span class="p">);</span>
+<span class="ln">37</span>
+<span class="ln">38</span>                    <span class="c1">// 【2】通过序列化的方式，将查询出来的服务对应的名称写到内存中去
+</span><span class="ln">39</span><span class="c1"></span>                    <span class="n">data</span><span class="p">.</span><span class="n">writeInterfaceToken</span><span class="p">(</span><span class="n">ifName</span><span class="p">);</span>
+<span class="ln">40</span>
+<span class="ln">41</span>                    <span class="c1">// 处理剩余的一些参数，主要是传递的数据，这里没有其他数据，暂时不处理
+</span><span class="ln">42</span><span class="c1"></span>                    <span class="c1">// 这里会涉及到数据传输
+</span><span class="ln">43</span><span class="c1"></span>                    <span class="c1">// 32位的int型，参数为i32
+</span><span class="ln">44</span><span class="c1"></span>                    <span class="c1">// 64位的int型，参数为i64
+</span><span class="ln">45</span><span class="c1"></span>                    <span class="c1">// 单精度的浮点数类型，参数为f
+</span><span class="ln">46</span><span class="c1"></span>                    <span class="c1">// 双精度的浮点数类型，参数为d
+</span><span class="ln">47</span><span class="c1"></span>                    <span class="c1">// string16字符串类型，参数为s16
+</span><span class="ln">48</span><span class="c1"></span>                    <span class="k">while</span> <span class="p">(</span><span class="n">optind</span> <span class="o">&lt;</span> <span class="n">argc</span><span class="p">)</span> <span class="p">{...}</span>
+<span class="ln">49</span>		            <span class="c1">//【3】真实的调用，这里用到了binder原理，通过客户端的代理调用真实的远端服务
+</span><span class="ln">50</span><span class="c1"></span>                    <span class="c1">// 这里会调用到BluetoothManagerService
+</span><span class="ln">51</span><span class="c1"></span>                    <span class="n">service</span><span class="o">-&gt;</span><span class="n">transact</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">reply</span><span class="p">);</span>
+<span class="ln">52</span>                    <span class="n">aout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Result: &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">reply</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">53</span>                <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">54</span>                    <span class="n">aerr</span> <span class="o">&lt;&lt;</span> <span class="n">prog_name</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;: Service &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">argv</span><span class="p">[</span><span class="n">serviceArg</span><span class="p">]</span>
+<span class="ln">55</span>                        <span class="o">&lt;&lt;</span> <span class="s">&#34; does not exist&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">56</span>                <span class="p">}</span>
+<span class="ln">57</span>            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">58</span>                <span class="n">aerr</span> <span class="o">&lt;&lt;</span> <span class="n">prog_name</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;: No service specified for call&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">59</span>            <span class="p">}</span>
+<span class="ln">60</span>        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">61</span>            <span class="n">aerr</span> <span class="o">&lt;&lt;</span> <span class="n">prog_name</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;: Unknown command &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">argv</span><span class="p">[</span><span class="n">optind</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">62</span>        <span class="p">}</span>
+<span class="ln">63</span>    <span class="p">}</span>
+<span class="ln">64</span>    <span class="p">...</span>
+<span class="ln">65</span>    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="ln">66</span><span class="p">}</span>
+</code></pre></div><p>这个main函数摘取部分内容，主要对上面标注的三处进行分析</p>
+<ol>
+<li>
+<p><strong>查询blutooth_manager服务是否存在</strong></p>
+<p>由于已经有sm（servicemanager）这个大管家了，直接通过输入的参数blutooth_manager 找到对应的服务，这里并不是真正的服务，而是相对于服务端的一个代理，实际上是BluetoothManager.Proxy（代理可以通过binder方式跨进程调用最终服务）。</p>
+</li>
+<li>
+<p><strong>蓝牙服务对应的ifName序列化</strong></p>
+<p>通过查询到的BluetoothManager.Proxy，获取对应的ifName，即为&quot;android.bluetooth.IBluetoothManager&quot;，通过Parcelable方式序列化这个字符串，类似下面的序列化</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>  0x000002c0: <span class="m">00000000</span> 006e0061 <span class="m">00720064</span> 0069006f <span class="s1">&#39; . .a.n.d.r.o.i.&#39;</span>
+<span class="ln">2</span>  0x000002d0: 002e0064 006c0062 <span class="m">00650075</span> 006f0074 <span class="s1">&#39;d...b.l.u.e.t.o.&#39;</span>
+<span class="ln">3</span>  0x000002e0: 0074006f 002e0068 <span class="m">00420049</span> 0075006c <span class="s1">&#39;o.t.h...I.B.l.u.&#39;</span>
+<span class="ln">4</span>  0x000002f0: <span class="m">00740065</span> 006f006f <span class="m">00680074</span> 0061004d <span class="s1">&#39;e.t.o.o.t.h.M.a.&#39;</span>
+<span class="ln">5</span>  0x00000300: 0061006e <span class="m">00650067</span> <span class="m">00240000</span> <span class="m">00000000</span> <span class="s1">&#39;n.a.g.e.r. . . .&#39;</span>
+</code></pre></div></li>
+<li>
+<p><strong>蓝牙的binder通信</strong></p>
+<p>通过code找到aidl中的序列号对应的方法，然后在对应BluetoothManagerService服务中也找到对应的方法（<strong>不同android版本对应不同的序列号</strong>，android11,6是打开，8是关闭）</p>
+</li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln"> 1</span>//packages/modules/Bluetooth/system/binder/android/bluetooth/IBluetoothManager.aidl
+<span class="ln"> 2</span>interface IBluetoothManager
+<span class="ln"> 3</span>{
+<span class="ln"> 4</span>    IBluetooth registerAdapter(in IBluetoothManagerCallback callback);
+<span class="ln"> 5</span>
+<span class="ln"> 6</span>    void unregisterAdapter(in IBluetoothManagerCallback callback);
+<span class="ln"> 7</span>    @UnsupportedAppUsage
+<span class="ln"> 8</span>    void registerStateChangeCallback(in IBluetoothStateChangeCallback callback);
+<span class="ln"> 9</span>    @UnsupportedAppUsage
+<span class="ln">10</span>    void unregisterStateChangeCallback(in IBluetoothStateChangeCallback callback);
+<span class="ln">11</span>    //这个是打开
+<span class="ln">12</span>    boolean enable(in AttributionSource attributionSource);    
+<span class="ln">13</span>    boolean enableNoAutoConnect(in AttributionSource attributionSource);
+<span class="ln">14</span>    //这个是关闭
+<span class="ln">15</span>    boolean disable(in AttributionSource attributionSource, boolean persist);    
+<span class="ln">16</span>    int getState();
+<span class="ln">17</span>    @UnsupportedAppUsage   
+<span class="ln">18</span>    IBluetoothGatt getBluetoothGatt();
+<span class="ln">19</span>    ...
+<span class="ln">20</span>}
+</code></pre></div><p>对应的BluetoothManagerService服务</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//packages/modules/Bluetooth/service/java/com/android/server/bluetooth/BluetoothManagerService.java
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">BluetoothManagerService</span> <span class="kd">extends</span> <span class="n">IBluetoothManager</span><span class="o">.</span><span class="na">Stub</span> <span class="o">{</span>
+<span class="ln"> 3</span>    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">TAG</span> <span class="o">=</span> <span class="s">&#34;BluetoothManagerService&#34;</span><span class="o">;</span>
+<span class="ln"> 4</span>    <span class="c1">//具体为打开蓝牙逻辑，不展开
+</span><span class="ln"> 5</span><span class="c1"></span>    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">enable</span><span class="o">(</span><span class="n">AttributionSource</span> <span class="n">attributionSource</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">RemoteException</span> <span class="o">{</span>
+<span class="ln"> 6</span>        <span class="o">...</span>
+<span class="ln"> 7</span>    <span class="o">}</span>
+<span class="ln"> 8</span>    <span class="c1">//具体为关闭蓝牙逻辑，不展开
+</span><span class="ln"> 9</span><span class="c1"></span>    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">disable</span><span class="o">(</span><span class="n">AttributionSource</span> <span class="n">attributionSource</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">persist</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">10</span>        <span class="o">...</span>
+<span class="ln">11</span>    <span class="o">}</span>
+<span class="ln">12</span>            
+<span class="ln">13</span><span class="o">}</span>    
+</code></pre></div><h1 id="3最终结果">3最终结果</h1>
+<p>如果显示如下没有权限，需要给这个命令root权限，蓝牙服务本身也会对执行命令进行权限校验</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span>vince:/ $ service call bluetooth_manager <span class="m">5</span>
+<span class="ln"> 2</span>Result: Parcel<span class="o">(</span>
+<span class="ln"> 3</span>  0x00000000: ffffffff 0000006e 0065004e <span class="m">00640065</span> <span class="s1">&#39;....n...N.e.e.d.&#39;</span>
+<span class="ln"> 4</span>  0x00000010: <span class="m">00420020</span> 0055004c <span class="m">00540045</span> 004f004f <span class="s1">&#39; .B.L.U.E.T.O.O.&#39;</span>
+<span class="ln"> 5</span>  0x00000020: <span class="m">00480054</span> <span class="m">00410020</span> 004d0044 004e0049 <span class="s1">&#39;T.H. .A.D.M.I.N.&#39;</span>
+<span class="ln"> 6</span>  0x00000030: <span class="m">00700020</span> <span class="m">00720065</span> 0069006d <span class="m">00730073</span> <span class="s1">&#39; .p.e.r.m.i.s.s.&#39;</span>
+<span class="ln"> 7</span>  0x00000040: 006f0069 003a006e 004e0020 <span class="m">00690065</span> <span class="s1">&#39;i.o.n.:. .N.e.i.&#39;</span>
+<span class="ln"> 8</span>  0x00000050: <span class="m">00680074</span> <span class="m">00720065</span> <span class="m">00750020</span> <span class="m">00650073</span> <span class="s1">&#39;t.h.e.r. .u.s.e.&#39;</span>
+<span class="ln"> 9</span>  0x00000060: <span class="m">00200072</span> <span class="m">00300032</span> <span class="m">00300030</span> 006e0020 <span class="s1">&#39;r. .2.0.0.0. .n.&#39;</span>
+<span class="ln">10</span>  0x00000070: 0072006f <span class="m">00630020</span> <span class="m">00720075</span> <span class="m">00650072</span> <span class="s1">&#39;o.r. .c.u.r.r.e.&#39;</span>
+<span class="ln">11</span>  0x00000080: 0074006e <span class="m">00700020</span> 006f0072 <span class="m">00650063</span> <span class="s1">&#39;n.t. .p.r.o.c.e.&#39;</span>
+<span class="ln">12</span>  0x00000090: <span class="m">00730073</span> <span class="m">00680020</span> <span class="m">00730061</span> <span class="m">00610020</span> <span class="s1">&#39;s.s. .h.a.s. .a.&#39;</span>
+<span class="ln">13</span>  0x000000a0: 0064006e 006f0072 <span class="m">00640069</span> 0070002e <span class="s1">&#39;n.d.r.o.i.d...p.&#39;</span>
+<span class="ln">14</span>  0x000000b0: <span class="m">00720065</span> 0069006d <span class="m">00730073</span> 006f0069 <span class="s1">&#39;e.r.m.i.s.s.i.o.&#39;</span>
+<span class="ln">15</span>  0x000000c0: 002e006e 004c0042 <span class="m">00450055</span> 004f0054 <span class="s1">&#39;n...B.L.U.E.T.O.&#39;</span>
+<span class="ln">16</span>  0x000000d0: 0054004f 005f0048 <span class="m">00440041</span> 0049004d <span class="s1">&#39;O.T.H._.A.D.M.I.&#39;</span>
+<span class="ln">17</span>  0x000000e0: 002e004e <span class="m">00000000</span>                   <span class="s1">&#39;N.......        &#39;</span><span class="o">)</span>
+</code></pre></div><p>如果有root权限，通常会返回一串序列化的二进制数字，<strong>这里的0x01，实际上返回的就是true</strong>，说明蓝牙打开成功。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>vince:/ <span class="c1"># service call bluetooth_manager 5</span>
+<span class="ln">2</span>service call bluetooth_manager <span class="m">5</span>
+<span class="ln">3</span>Result: Parcel<span class="o">(</span><span class="m">00000000</span> <span class="m">00000001</span>   <span class="s1">&#39;........&#39;</span><span class="o">)</span>
+</code></pre></div><h1 id="4总结">4总结</h1>
+<p>总的来说，这就是Android本身的一个cmds下面的命令，来用增加开发者对于Android系统开发调测功能，更加的便利。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/AndroidTools/service_call/service_call_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/AndroidTools/service_call/service_call_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="参考">参考</h1>
+<p><a href="https://blog.csdn.net/u014711665/article/details/91875959">[1] SevenUUp, 【翻译】adb命令之service call, 2019.</a></p>
+<p><a href="https://blog.csdn.net/lewif/article/details/50723236?spm=1001.2101.3001.6650.11&amp;utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ERate-11-50723236-blog-91875959.pc_relevant_3mothn_strategy_recovery&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ERate-11-50723236-blog-91875959.pc_relevant_3mothn_strategy_recovery&amp;utm_relevant_index=16">[2] lyf5231, android—调试命令service, 2016.</a></p>
+<p><a href="https://blog.csdn.net/mr_oldcold/article/details/53761759?spm=1001.2101.3001.6650.6&amp;utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-6-53761759-blog-91875959.pc_relevant_3mothn_strategy_recovery&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-6-53761759-blog-91875959.pc_relevant_3mothn_strategy_recovery&amp;utm_relevant_index=11">[3] Mr_老冷, adb shell命令整理之service, 2016.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/android/">Android</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%BA%90%E7%A0%81/">源码</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7/">调试工具</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/binder/">Binder</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/bluetooth/">Bluetooth</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/02/battery-historian%E7%AE%80%E5%8D%95%E6%90%AD%E5%BB%BA/" data-tooltip="Battery Historian简单搭建">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2023 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/02/battery-historian%E7%AE%80%E5%8D%95%E6%90%AD%E5%BB%BA/" data-tooltip="Battery Historian简单搭建">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2023%2F03%2Fservice-call%25E6%25BA%2590%25E7%25A0%2581%25E5%2588%2586%25E6%259E%2590%25E4%25BB%25A5%25E8%2593%259D%25E7%2589%2599%25E6%2589%2593%25E5%25BC%2580%25E5%2585%25B3%25E9%2597%25AD%25E4%25B8%25BA%25E4%25BE%258B%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2023%2F03%2Fservice-call%25E6%25BA%2590%25E7%25A0%2581%25E5%2588%2586%25E6%259E%2590%25E4%25BB%25A5%25E8%2593%259D%25E7%2589%2599%25E6%2589%2593%25E5%25BC%2580%25E5%2585%25B3%25E9%2597%25AD%25E4%25B8%25BA%25E4%25BE%258B%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2023%2F03%2Fservice-call%25E6%25BA%2590%25E7%25A0%2581%25E5%2588%2586%25E6%259E%2590%25E4%25BB%25A5%25E8%2593%259D%25E7%2589%2599%25E6%2589%2593%25E5%25BC%2580%25E5%2585%25B3%25E9%2597%25AD%25E4%25B8%25BA%25E4%25BE%258B%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2023\/03\/service-call%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%BB%A5%E8%93%9D%E7%89%99%E6%89%93%E5%BC%80%E5%85%B3%E9%97%AD%E4%B8%BA%E4%BE%8B\/';
+          
+            this.page.identifier = '\/2023\/03\/service-call%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%BB%A5%E8%93%9D%E7%89%99%E6%89%93%E5%BC%80%E5%85%B3%E9%97%AD%E4%B8%BA%E4%BE%8B\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
