@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="Android framework层离不开AMS、WMS、PMS等，其中WMS中Window这个概念比较抽象，本文尽可能通过通俗易懂的方式来描述（android11和13源码）。">
+
+
+<meta property="og:description" content="Android framework层离不开AMS、WMS、PMS等，其中WMS中Window这个概念比较抽象，本文尽可能通过通俗易懂的方式来描述（android11和13源码）。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="WMS-Window">
+<meta name="twitter:title" content="WMS-Window">
+<meta property="og:url" content="https://yangyang48.github.io/2023/04/wms-window/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2023/04/wms-window/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="Android framework层离不开AMS、WMS、PMS等，其中WMS中Window这个概念比较抽象，本文尽可能通过通俗易懂的方式来描述（android11和13源码）。">
+<meta name="twitter:description" content="Android framework层离不开AMS、WMS、PMS等，其中WMS中Window这个概念比较抽象，本文尽可能通过通俗易懂的方式来描述（android11和13源码）。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2023-04-02T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2023-04-02T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="service call">
+    
+      <meta property="article:section" content="2023">
+    
+      <meta property="article:section" content="April">
+    
+  
+  
+    
+      <meta property="article:tag" content="Android">
+    
+      <meta property="article:tag" content="源码">
+    
+      <meta property="article:tag" content="Binder">
+    
+      <meta property="article:tag" content="WMS">
+    
+      <meta property="article:tag" content="Window">
+    
+      <meta property="article:tag" content="WindowManager">
+    
+      <meta property="article:tag" content="ViewRootImpl">
+    
+      <meta property="article:tag" content="DecorView">
+    
+      <meta property="article:tag" content="WindowToken">
+    
+      <meta property="article:tag" content="WindowState">
+    
+      <meta property="article:tag" content="Window层级">
+    
+      <meta property="article:tag" content="Window容器">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/WMS/window/window_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/WMS/window/window_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/WMS/window/window_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/WMS/window/window_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://img-blog.csdnimg.cn/20210711204627625.jpg">
+
+
+    <title>WMS-Window</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2023/04/wms-window/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/WMS/window/window_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      WMS-Window
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2023-04-02T00:00:00Z">
+        
+  四月 2, 2023
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/service-call">service call</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2023">2023</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/april">April</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">900 Words|Read in about 4 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>Android framework层离不开AMS、WMS、PMS等，其中WMS中Window这个概念比较抽象，本文尽可能通过通俗易懂的方式来描述（android11和13源码）。</p>
+<h1 id="0快问快答">0快问快答</h1>
+<p>1）Window，WMS，Activity之间的联系（什么时候Window和Activity和WMS产生联系）</p>
+<p>2）Window和View区别和联系（什么时候Window和View产生联系）</p>
+<p>3）Window的类别和层次关系（为什么PopWindow会遮住App的显示，锁屏为什么看不到Launcher）</p>
+<p>4）activity与 PhoneWindow与DecorView关系 （如果我添加一个View，会添加到系统层面去吗）</p>
+<h1 id="1介绍">1介绍</h1>
+<p>Window 是一个窗口的概念，是所有视图的载体，不管是 Activity，Dialog，还是 Toast，他们的视图都是附加在 Window 上面的。例如在桌面显示一个悬浮窗，就需要用到 Window 来实现。</p>
+<h1 id="2源码跟踪分析问题">2源码跟踪分析问题</h1>
+<h2 id="21windowwmsactivity之间的联系">2.1Window，WMS，Activity之间的联系</h2>
+<ul>
+<li><strong>Window</strong>： 在Android视图体系中Window就是一个窗口的概念。 Android中所有的视图都是依赖于Window显示的。</li>
+<li><strong>WindowManager</strong>： 对Window的管理， 包括新增、更新和删除等。</li>
+<li><strong>WMS(WindowManagerService)</strong>： 窗口的最终管理者， 它负责窗口的启动、添加和删除， 另外窗口的大小和层级也是由WMS进行管理</li>
+</ul>
+<p><!-- raw HTML omitted --></p>
+<h2 id="22window和view区别和联系">2.2Window和View区别和联系</h2>
+<p>WindowManagerImpl  实际控制对应的PhoneWindow</p>
+<p>ViewRootImpl与View树进行关联，这样ViewRootImpl就可以指挥View树的具体工作</p>
+<p>Activity#onCreate()中调用setContentView()方法，这个方法内部创建一个DecorView实例作为PhoneWindow的内容。WindowManagerImpl决定管理DecorView， 并创建一个ViewRootImpl实例</p>
+<h2 id="23window的类别和层次关系">2.3Window的类别和层次关系</h2>
+<p><a href="https://m.ithome.com/html/647058.htm">https://m.ithome.com/html/647058.htm</a></p>
+<p>类别：</p>
+<p>Application Window： Activity就是一个典型的应用程序窗口。
+Sub Window： 子窗口， 顾名思义， 它不能独立存在， 需要附着在其他窗口才可以， PopupWindow就属于子窗口。
+System Window： 输入法窗口、 系统音量条窗口、系统错误窗口都属于系统窗口。</p>
+<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20230322231044490.png" alt="image-20230322231044490"></p>
+<p>Subwindow不能独立存在，需依附其他窗口的Window，也就是Subwindow可以依赖于Application Window或System Window，也可以依赖于Subwindow，可以存在嵌套的子窗口</p>
+<p>//todo补充图</p>
+<p>层次关系：</p>
+<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20230322231117014.png" alt="image-20230322231117014"></p>
+<h1 id="24windowcontainer">2.4WindowContainer</h1>
+<p>了解了Window层级之后，</p>
+<p>dumpsys activity containers</p>
+<p>dumpsys window windows</p>
+<p>android11 Window容器架构图</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/WMS/window/window3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/WMS/window/window3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>android13 Window容器架构图</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/WMS/window/window3_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/WMS/window/window3_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/WMS/window/window5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/WMS/window/window5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="25addviewupdateviewlayoutremoveview">2.5addView/updateViewLayout/removeView</h2>
+<p>4）activity与 PhoneWindow与DecorView关系</p>
+<p>DecorView是FrameLayout的子类， 它可以被认为是Android视图树的根节点视图</p>
+<p>5）WindowManagerGlobal  作用</p>
+<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20230322231812143.png" alt="image-20230322231812143"></p>
+<p>6）ViewRootImpl  作用</p>
+<p>- View树的树根并管理View树
+- 触发View的测量、 布局和绘制
+- 输入响应的中转站
+- 负责与WMS进行进程间通信</p>
+<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20230322231902141.png" alt="image-20230322231902141"></p>
+<p>ViewGroup</p>
+<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20230322231920448.png" alt="image-20230322231920448"></p>
+<p>绘制流程</p>
+<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20230322231953768.png" alt="image-20230322231953768"></p>
+<p>事件分发流程</p>
+<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20230322232027419.png" alt="image-20230322232027419"></p>
+<p>WMS通信</p>
+<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20230322232053077.png" alt="image-20230322232053077"></p>
+<p>屏幕刷新流程</p>
+<p><img src="C:%5CUsers%5CAdmin%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20230322232133180.png" alt="image-20230322232133180"></p>
+<p>ViewRootImpl会调用scheduleTraversals准备重绘， 但是，重绘一般不会立即执行， 而是往Choreographer的Choreographer.CALLBACK_TRAVERSAL队列中添加了一个mTraversalRunnable，同时申请VSYNC， 这个mTraversalRunnable要一直等到申请的VSYNC到来后才会被执行</p>
+<p>UI局部重绘</p>
+<p>某一个View重绘刷新， 并不会导致所有View都进行一次measure、 layout、 draw， 只是这个待刷新View链路需要调整， 剩余的View可能不需要浪费精力再来一遍</p>
+<h3 id="251addview">2.5.1addView</h3>
+<h3 id="252removeview">2.5.2removeView</h3>
+<h3 id="253removeview">2.5.3removeView</h3>
+<h2 id="26补充window相关问题">2.6补充Window相关问题</h2>
+<h3 id="261关于activity的xml怎么跟屏幕关联起来的">2.6.1关于activity的xml怎么跟屏幕关联起来的</h3>
+<p>界面的布局</p>
+<p>应用程序继承<strong>Activity</strong></p>
+<p>应用程序继承<strong>AppCompatActivity</strong></p>
+<p><a href="https://mp.weixin.qq.com/s/q_V6JI6Ng6Huj-EIG2o24w">https://mp.weixin.qq.com/s/q_V6JI6Ng6Huj-EIG2o24w</a></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/WMS/window/window4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/WMS/window/window4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="262关于锁屏之后为什么看不到launcher">2.6.2关于锁屏之后为什么看不到Launcher</h3>
+<p>锁屏理论上也只是一个window盖在最顶层，理论即使这个锁屏window透明，那么透看到的也是有桌面Activity的情况，但现实情况是我们只看到了壁纸，并没有看到桌面。</p>
+<p>首先我们知道壁纸属于系统中一个特殊窗口，一直处于系统最底层。这个窗口在系统中有专门类进行他的显示情况</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln">1</span><span class="c1">//frameworks/services/core/java/com/android/server/wm/WallpaperController.java
+</span><span class="ln">2</span><span class="c1"></span><span class="k">if</span> <span class="o">(</span><span class="n">DEBUG_WALLPAPER</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln">3</span>    <span class="n">Slog</span><span class="o">.</span><span class="na">v</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&#34;Wallpaper visibility: &#34;</span> <span class="o">+</span> <span class="n">visible</span> <span class="o">+</span> <span class="s">&#34; at display &#34;</span>
+<span class="ln">4</span>            <span class="o">+</span> <span class="n">mDisplayContent</span><span class="o">.</span><span class="na">getDisplayId</span><span class="o">());</span>
+<span class="ln">5</span><span class="o">}</span>
+</code></pre></div><p>这里我们把DEBUG_WALLPAPER就可以把log打开了</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span>WindowManager: Win Window<span class="o">{</span>60c77f1 u0 ScreenDecorOverlayBottom<span class="o">}</span>: <span class="nv">isOnScreen</span><span class="o">=</span><span class="nb">true</span> <span class="nv">mDrawState</span><span class="o">=</span><span class="m">4</span>
+<span class="ln"> 2</span>WindowManager: Win Window<span class="o">{</span>df0a78b u0 ScreenDecorOverlay<span class="o">}</span>: <span class="nv">isOnScreen</span><span class="o">=</span><span class="nb">true</span> <span class="nv">mDrawState</span><span class="o">=</span><span class="m">4</span>
+<span class="ln"> 3</span>WindowManager: Win Window<span class="o">{</span>b7a35a u0 NavigationBar0<span class="o">}</span>: <span class="nv">isOnScreen</span><span class="o">=</span><span class="nb">true</span> <span class="nv">mDrawState</span><span class="o">=</span><span class="m">4</span>
+<span class="ln"> 4</span>WindowManager: Win Window<span class="o">{</span>3cd76e8 u0 NotificationShade<span class="o">}</span>: <span class="nv">isOnScreen</span><span class="o">=</span><span class="nb">true</span> <span class="nv">mDrawState</span><span class="o">=</span><span class="m">4</span>
+<span class="ln"> 5</span>WindowManager: Found wallpaper target: Window<span class="o">{</span>3cd76e8 u0 NotificationShade<span class="o">}</span>
+<span class="ln"> 6</span>WindowManager: New wallpaper target: Window<span class="o">{</span>3cd76e8 u0 NotificationShade<span class="o">}</span> prevTarget: null
+<span class="ln"> 7</span>WindowManager: Report new wp offset Window<span class="o">{</span>803c2b8 u0 com.android.systemui.ImageWallpaper<span class="o">}</span> <span class="nv">x</span><span class="o">=</span>0.0 <span class="nv">y</span><span class="o">=</span>0.5 <span class="nv">zoom</span><span class="o">=</span>0.0
+<span class="ln"> 8</span>WindowManager: Wallpaper visibility: <span class="nb">true</span> at display <span class="m">0</span>
+<span class="ln"> 9</span>WindowManager: Wallpaper token android.os.Binder@3a6eda2 <span class="nv">visible</span><span class="o">=</span><span class="nb">true</span>
+<span class="ln">10</span>WindowManager: New wallpaper: <span class="nv">target</span><span class="o">=</span>Window<span class="o">{</span>3cd76e8 u0 NotificationShade<span class="o">}</span> <span class="nv">prev</span><span class="o">=</span>null
+<span class="ln">11</span>WindowManager: powerPress: <span class="nv">eventTime</span><span class="o">=</span><span class="m">118823847</span> <span class="nv">interactive</span><span class="o">=</span><span class="nb">true</span> <span class="nv">count</span><span class="o">=</span><span class="m">0</span> <span class="nv">beganFromNonInteractive</span><span class="o">=</span><span class="nb">true</span> <span class="nv">mShortPressOnPowerBehavior</span><span class="o">=</span><span class="m">1</span>
+</code></pre></div><p>打开后我们点亮锁屏和在桌面锁屏发现都有类似以下打印</p>
+<p>WindowManager: Found wallpaper target: Window{3cd76e8 u0 NotificationShade}</p>
+<p>看名字大家大概就知道这个log是在寻找一个wallpaper target:，而且找到的是NotificationShade即锁屏窗口</p>
+<p>前面疑惑中就写到正常应该是桌面</p>
+<p>WindowManager: Found wallpaper target: Window{8d79f3 u0 com.android.launcher3/com.android.launcher3.uioverrides.QuickstepLauncher}</p>
+<p>这日志其实就可以给我们非常重要线索，可以找出对应代码在哪</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/services/core/java/com/android/server/wm/WallpaperController.java
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">final</span> <span class="kt">boolean</span> <span class="n">hasWallpaper</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="na">hasWallpaper</span><span class="o">()</span> <span class="o">||</span> <span class="n">animationWallpaper</span><span class="o">;</span>
+<span class="ln"> 3</span><span class="kt">boolean</span> <span class="nf">hasWallpaper</span><span class="o">()</span> <span class="o">{</span>
+<span class="ln"> 4</span>    <span class="k">return</span> <span class="o">(</span><span class="n">mAttrs</span><span class="o">.</span><span class="na">flags</span> <span class="o">&amp;</span> <span class="n">FLAG_SHOW_WALLPAPER</span><span class="o">)</span> <span class="o">!=</span> <span class="n">0</span>
+<span class="ln"> 5</span>        <span class="o">||</span> <span class="o">(</span><span class="n">mActivityRecord</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">mActivityRecord</span><span class="o">.</span><span class="na">hasWallpaperBackgroudForLetterbox</span><span class="o">());</span>
+<span class="ln"> 6</span><span class="o">}</span>
+<span class="ln"> 7</span><span class="nl">https:</span><span class="c1">//blog.csdn.net/learnframework/article/details/127483545
+</span><span class="ln"> 8</span><span class="c1"></span><span class="kd">private</span> <span class="kd">final</span> <span class="n">ToBooleanFunction</span><span class="o">&lt;</span><span class="n">WindowState</span><span class="o">&gt;</span> <span class="n">mFindWallpaperTargetFunction</span> <span class="o">=</span> <span class="n">w</span> <span class="o">-&gt;</span> <span class="o">{</span>
+<span class="ln"> 9</span>    <span class="o">...</span>
+<span class="ln">10</span>    <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">hasWallpaper</span> <span class="o">&amp;&amp;</span> <span class="n">w</span><span class="o">.</span><span class="na">isOnScreen</span><span class="o">()</span>
+<span class="ln">11</span>    <span class="o">...</span>
+<span class="ln">12</span><span class="o">};</span>
+</code></pre></div><p>这里其实也就是判断window中是否有FLAG_SHOW_WALLPAPER属性，而且经过额外加log打印发现hasWallpaper值变化在锁屏window解锁前后</p>
+<p>那么其实我们可以猜测是不是锁屏window会去动态改变自己的FLAG_SHOW_WALLPAPER属性，在有桌面显示时候锁屏的window实际是没有这个属性，在锁屏状态下是有这个属性。根据猜想去systemui代码中grep相关FLAG_SHOW_WALLPAPER关键字</p>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="ln"> 1</span><span class="c1">//frameworks/packages/SystemUI/src/com/android/systemui/shade/NotificationShadeWindowControllerImpl.java
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kd">private</span> <span class="kt">void</span> <span class="nf">applyKeyguardFlags</span><span class="o">(</span><span class="n">State</span> <span class="n">state</span><span class="o">)</span> <span class="o">{</span>
+<span class="ln"> 3</span>    <span class="o">...</span>
+<span class="ln"> 4</span>    <span class="k">if</span> <span class="o">((</span><span class="n">keyguardOrAod</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">state</span><span class="o">.</span><span class="na">mBackdropShowing</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">scrimsOccludingWallpaper</span><span class="o">)</span>
+<span class="ln"> 5</span>        <span class="o">||</span> <span class="n">mKeyguardViewMediator</span><span class="o">.</span><span class="na">isAnimatingBetweenKeyguardAndSurfaceBehindOrWillBe</span><span class="o">())</span> <span class="o">{</span>
+<span class="ln"> 6</span>        <span class="n">mLpChanged</span><span class="o">.</span><span class="na">flags</span> <span class="o">|=</span> <span class="n">LayoutParams</span><span class="o">.</span><span class="na">FLAG_SHOW_WALLPAPER</span><span class="o">;</span>
+<span class="ln"> 7</span>    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="ln"> 8</span>        <span class="n">mLpChanged</span><span class="o">.</span><span class="na">flags</span> <span class="o">&amp;=</span> <span class="o">~</span><span class="n">LayoutParams</span><span class="o">.</span><span class="na">FLAG_SHOW_WALLPAPER</span><span class="o">;</span>
+<span class="ln"> 9</span>    <span class="o">}</span>
+<span class="ln">10</span><span class="o">}</span>
+</code></pre></div><p>这里其实就是代表有锁屏时候需要有 mLpChanged.flags |= LayoutParams.FLAG_SHOW_WALLPAPER;</p>
+<p>锁屏退出时清除锁屏的FLAG_SHOW_WALLPAPER</p>
+<p>mLpChanged.flags &amp;= ~LayoutParams.FLAG_SHOW_WALLPAPER;</p>
+<h3 id="263activity究竟对应几个window">2.6.3Activity究竟对应几个Window</h3>
+<p>上面提到一个Activity对应一个PhoneWindow，那么为什么图还存在一个Activity可以出现两个Window，似乎有所矛盾</p>
+<p>提到这个问题，我们必须要先复现当前问题</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>手机型号</td>
+<td>红米K30pro</td>
+</tr>
+<tr>
+<td>Android版本</td>
+<td>Android10</td>
+</tr>
+<tr>
+<td>测试场景</td>
+<td>屏幕点亮的Launcher界面</td>
+</tr>
+<tr>
+<td>后台应用</td>
+<td>Wechat</td>
+</tr>
+</tbody>
+</table>
+<p>如下图所示</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/WMS/window/window0.jpg" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/WMS/window/window0.jpg" >
+  
+    </a>
+  
+  
+</div>
+
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span><span class="c1"># 这里输出简化表示</span>
+<span class="ln"> 2</span>picasso:/ $ dumpsys window windows
+<span class="ln"> 3</span>WINDOW MANAGER WINDOWS <span class="o">(</span>dumpsys window windows<span class="o">)</span>
+<span class="ln"> 4</span>Window <span class="c1">#0 Window{54fd848 u0 InputMethod}:</span>
+<span class="ln"> 5</span>  <span class="nv">mBaseLayer</span><span class="o">=</span><span class="m">141000</span> <span class="nv">mSubLayer</span><span class="o">=</span><span class="m">0</span>    <span class="nv">mToken</span><span class="o">=</span>WindowToken<span class="o">{</span>226fcc5 android.os.Binder@3f373c<span class="o">}</span>
+<span class="ln"> 6</span>  <span class="nv">isVisible</span><span class="o">=</span><span class="nb">false</span>
+<span class="ln"> 7</span>Window <span class="c1">#1 Window{6474d57 u0 RoundCorner}:</span>
+<span class="ln"> 8</span>  <span class="nv">mBaseLayer</span><span class="o">=</span><span class="m">311000</span> <span class="nv">mSubLayer</span><span class="o">=</span><span class="m">0</span>    <span class="nv">mToken</span><span class="o">=</span>WindowToken<span class="o">{</span>7706d6 android.os.BinderProxy@359caf1<span class="o">}</span>
+<span class="ln"> 9</span>  <span class="nv">isVisible</span><span class="o">=</span><span class="nb">true</span>
+<span class="ln">10</span>Window <span class="c1">#2 Window{98435fe u0 RoundCorner}:</span>
+<span class="ln">11</span>  <span class="nv">mBaseLayer</span><span class="o">=</span><span class="m">311000</span> <span class="nv">mSubLayer</span><span class="o">=</span><span class="m">0</span>    <span class="nv">mToken</span><span class="o">=</span>WindowToken<span class="o">{</span>a6ec0b2 android.os.BinderProxy@1af12bd<span class="o">}</span>
+<span class="ln">12</span>  <span class="nv">isVisible</span><span class="o">=</span><span class="nb">true</span>
+<span class="ln">13</span>Window <span class="c1">#3 Window{987738d u0 NavigationBar}:</span>
+<span class="ln">14</span>  <span class="nv">mBaseLayer</span><span class="o">=</span><span class="m">231000</span> <span class="nv">mSubLayer</span><span class="o">=</span><span class="m">0</span>    <span class="nv">mToken</span><span class="o">=</span>WindowToken<span class="o">{</span>cdfac24 android.os.BinderProxy@1bf9cb7<span class="o">}</span>
+<span class="ln">15</span>  <span class="nv">isVisible</span><span class="o">=</span><span class="nb">true</span>
+<span class="ln">16</span>Window <span class="c1">#4 Window{85d4239 u0 StatusBar}:</span>
+<span class="ln">17</span>  <span class="nv">mBaseLayer</span><span class="o">=</span><span class="m">181000</span> <span class="nv">mSubLayer</span><span class="o">=</span><span class="m">0</span>    <span class="nv">mToken</span><span class="o">=</span>WindowToken<span class="o">{</span>e3e1a00 android.os.BinderProxy@bf7a332<span class="o">}</span>
+<span class="ln">18</span>  <span class="nv">isVisible</span><span class="o">=</span><span class="nb">true</span>
+<span class="ln">19</span>Window <span class="c1">#5 Window{5c8904f u0 RoundCorner}:</span>
+<span class="ln">20</span>  <span class="nv">mBaseLayer</span><span class="o">=</span><span class="m">171000</span> <span class="nv">mSubLayer</span><span class="o">=</span><span class="m">0</span>    <span class="nv">mToken</span><span class="o">=</span>WindowToken<span class="o">{</span>c281aae android.os.BinderProxy@485e729<span class="o">}</span>
+<span class="ln">21</span>  <span class="nv">isVisible</span><span class="o">=</span><span class="nb">false</span>
+<span class="ln">22</span>Window <span class="c1">#6 Window{e12503c u0 Aspect}:</span>
+<span class="ln">23</span>  <span class="nv">mBaseLayer</span><span class="o">=</span><span class="m">111000</span> <span class="nv">mSubLayer</span><span class="o">=</span><span class="m">0</span>    <span class="nv">mToken</span><span class="o">=</span>WindowToken<span class="o">{</span>cb4622f android.os.BinderProxy@bba880e<span class="o">}</span>
+<span class="ln">24</span>  <span class="nv">isVisible</span><span class="o">=</span><span class="nb">false</span>
+<span class="ln">25</span>Window <span class="c1">#7 Window{31fbd71 u0 AssistPreviewPanel}:</span>
+<span class="ln">26</span>  <span class="nv">mBaseLayer</span><span class="o">=</span><span class="m">41000</span> <span class="nv">mSubLayer</span><span class="o">=</span><span class="m">0</span>    <span class="nv">mToken</span><span class="o">=</span>WindowToken<span class="o">{</span>f8d1f18 android.os.BinderProxy@c09ec8a<span class="o">}</span>
+<span class="ln">27</span>  <span class="nv">isVisible</span><span class="o">=</span><span class="nb">false</span>
+<span class="ln">28</span>Window <span class="c1">#8 Window{67faf21 u0 DockedStackDivider}:</span>
+<span class="ln">29</span>  <span class="nv">mBaseLayer</span><span class="o">=</span><span class="m">21000</span> <span class="nv">mSubLayer</span><span class="o">=</span><span class="m">0</span>    <span class="nv">mToken</span><span class="o">=</span>WindowToken<span class="o">{</span>f740988 android.os.BinderProxy@d47412b<span class="o">}</span>
+<span class="ln">30</span>  <span class="nv">isVisible</span><span class="o">=</span><span class="nb">false</span>
+<span class="ln">31</span>Window <span class="c1">#9 Window{19af82e u0 LauncherOverlayWindow:com.miui.personalassistant}:</span>
+<span class="ln">32</span>  <span class="nv">mBaseLayer</span><span class="o">=</span><span class="m">21000</span> <span class="nv">mSubLayer</span><span class="o">=</span><span class="m">0</span>    <span class="nv">mToken</span><span class="o">=</span>AppWindowToken<span class="o">{</span>e921607 <span class="nv">token</span><span class="o">=</span>Token<span class="o">{</span>361c446 ActivityRecord<span class="o">{</span>6d5b688 u0 com.miui.home/.launcher.Launcher t1<span class="o">}}}</span>
+<span class="ln">33</span>  <span class="nv">isVisible</span><span class="o">=</span><span class="nb">false</span>
+<span class="ln">34</span>Window <span class="c1">#10 Window{6163c5a u0 com.miui.home/com.miui.home.launcher.Launcher}:</span>
+<span class="ln">35</span>  <span class="nv">mBaseLayer</span><span class="o">=</span><span class="m">21000</span> <span class="nv">mSubLayer</span><span class="o">=</span><span class="m">0</span>    <span class="nv">mToken</span><span class="o">=</span>AppWindowToken<span class="o">{</span>e921607 <span class="nv">token</span><span class="o">=</span>Token<span class="o">{</span>361c446 ActivityRecord<span class="o">{</span>6d5b688 u0 com.miui.home/.launcher.Launcher t1<span class="o">}}}</span>
+<span class="ln">36</span>  <span class="nv">isVisible</span><span class="o">=</span><span class="nb">true</span>
+<span class="ln">37</span>Window <span class="c1">#11 Window{d7d87d0 u0 com.tencent.mm/com.tencent.mm.ui.LauncherUI}:</span>
+<span class="ln">38</span>  <span class="nv">mBaseLayer</span><span class="o">=</span><span class="m">21000</span> <span class="nv">mSubLayer</span><span class="o">=</span><span class="m">0</span>    <span class="nv">mToken</span><span class="o">=</span>AppWindowToken<span class="o">{</span>e299b34 <span class="nv">token</span><span class="o">=</span>Token<span class="o">{</span>4ee9e07 ActivityRecord<span class="o">{</span>ebb6c46 u0 com.tencent.mm/.ui.LauncherUI t87<span class="o">}}}</span>
+<span class="ln">39</span>  <span class="nv">isVisible</span><span class="o">=</span><span class="nb">false</span>
+<span class="ln">40</span>Window <span class="c1">#12 Window{f63516 u0 com.android.keyguard.wallpaper.service.MiuiKeyguardLiveWallpaper}:</span>
+<span class="ln">41</span>  <span class="nv">mBaseLayer</span><span class="o">=</span><span class="m">11000</span> <span class="nv">mSubLayer</span><span class="o">=</span><span class="m">0</span>    <span class="nv">mToken</span><span class="o">=</span>WallpaperWindowToken<span class="o">{</span>f661030 <span class="nv">token</span><span class="o">=</span>android.os.BinderProxy@3481973<span class="o">}</span>
+<span class="ln">42</span>  <span class="nv">isVisible</span><span class="o">=</span><span class="nb">true</span>
+<span class="ln">43</span>Window <span class="c1">#13 Window{cf10cf2 u0 com.android.systemui.ImageWallpaper}:</span>
+<span class="ln">44</span>  <span class="nv">mBaseLayer</span><span class="o">=</span><span class="m">11000</span> <span class="nv">mSubLayer</span><span class="o">=</span><span class="m">0</span>    <span class="nv">mToken</span><span class="o">=</span>WallpaperWindowToken<span class="o">{</span>5182c91 <span class="nv">token</span><span class="o">=</span>android.os.Binder@2b356b8<span class="o">}</span>
+<span class="ln">45</span>  <span class="nv">isVisible</span><span class="o">=</span><span class="nb">true</span>
+</code></pre></div><p>可以看到有14个Window，但不是所有Window都显示的，只有7个Window才显示出来的，其中可以看到有9，10两个Window对应同一个WindowToken，并且mBaseLayer和mSubLayer都相同，根据上面的Window层级关系，实际上就是一个Activity会存在两个Window，似乎跟上文的一个一个Activity对应一个PhoneWindow矛盾了。</p>
+<p>实际上不然，9和10两个Window这个Activity相同，WindowToken相同，这个类似悬浮窗，虽然是同一个Activity，前者9属于一个最小化的图标，后者10才是真正意义上的一个Activity对应一个PhoneWindow，这是一种<strong>Overlay机制</strong>。并且9通常是隐藏的，10才是可以显示出来的。Window可以两者存在，并且可以同时显示。</p>
+<p>最终显示结果从上往下</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/WMS/window/window7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/WMS/window/window7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="3总结">3总结</h1>
+<p>关于专业名词的罗列</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">名称</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"><code>Window</code></td>
+<td>一个窗口，处理顶级窗口外观和行为策略的抽象类，这个窗口承载了需要绘制的<code>View</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>PhoneWindow</code></td>
+<td><code>Window</code>的具体实现类</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>WindowManager</code></td>
+<td>一个接口类，继承<code>ViewManager</code>，对<code>Window</code>进行管理</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>WindowManagerImpl</code></td>
+<td><code>WindowManager</code>的具体实现类，一个<code>app</code>层面的<code>WMS</code>和<code>Window</code>的中间人</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>WMS(WindowManagerService)</code></td>
+<td>真正对<code>Window</code>添加，负责管理窗口的启动、添加、删除、大小和层级、处理窗口的触摸事件、处理窗口之间切换动画等</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>WindowManagerGlobal</code></td>
+<td>一个单例，一个进程只有一个实例，这里属于桥接模式</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>ViewRootImpl</code></td>
+<td><code>Android</code> 视图层次结构的顶部，<code>View</code>树的树根并管理<code>View</code>树  ，但它<strong>不是View视图树</strong>的一部分。它是<code>DecorView </code> 和 <code>WindowManager</code> 之间的桥梁，是输入响应的中转站，并且触发View的测量、 布局和绘制</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>DecorView </code></td>
+<td><code>FrameLayout</code>的子类，是<code>Android View</code>视图树的<strong>根布局</strong></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>Session</code></td>
+<td>应用程序和<code>WMS</code>通信之间的通道，应用程序都会有一个<code>Session</code>，保存在<code>WMS</code>中的<code>mSessions</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>WindowContainer</code></td>
+<td><code>Window</code>容器抽象，定义了一组可以直接或通过其子类以层次结构形式保存 <code>Window</code> 的类的常用功能。</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>WindowState</code></td>
+<td><code>Window</code>容器，<code>WMS</code>管理的一个窗口，可以认为是<code>Window</code>容器在<code>WMS</code>中的一种<strong>事实窗口</strong>的表示</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>WindowToken</code></td>
+<td><code>Window</code>容器，<code>WMS</code> 中一组<code> Window</code> 的容器，主要作用向<code>WMS</code>提供令牌、将属于同一个应用组件的窗口组织在一起</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>RootWindowContainer</code></td>
+<td><code>Window</code>容器，根窗口容器。它的孩子是<code>DisplayContent</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>ActivityRecord</code></td>
+<td><code>Window</code>容器，<code>WindowToken</code>的子类，<code>WMS</code>中一个<code>ActivityRecord</code>对象就代表一个<code>Activity</code>对象</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>WallpaperWindowToken</code></td>
+<td><code>Window</code>容器，<code>WindowToken</code>的子类，用来存放和<code>Wallpaper</code>相关的窗口</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>DisplayContent.ImeContainer</code></td>
+<td><code>Window</code>容器，<code>DisplayArea.Tokens</code>的子类，用来存放输入法相关的窗口</td>
+</tr>
+</tbody>
+</table>
+<p>根据android11和android13Window容器不同，这里区分开来</p>
+<p>android11</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DisplayContent</code></td>
+<td><code>Window</code>容器，<code>Window</code>容器，管理一个逻辑屏上的所有窗口，有几个屏幕就会有几个<code>DisplayContent</code>，使用<code>displayId</code>来区分</td>
+</tr>
+<tr>
+<td><code>WindowContainers</code></td>
+<td><code>Window</code>容器，<code>DisplayContent</code>内部类，用于<code>App</code>中<code>Window</code>的管理集</td>
+</tr>
+<tr>
+<td><code>NonAppWindowContainers</code></td>
+<td><code>Window</code>容器，<code>DisplayContent</code>内部类，用于非<code>App</code>中<code>Window</code>的管理集</td>
+</tr>
+<tr>
+<td><code>DisplayArea</code></td>
+<td><code>Window</code>容器，<code>DisplayContent</code>之下的对<code>WindowContainer</code>进行分组的容器，受<code>DisplayAreaPolicy</code>管理</td>
+</tr>
+<tr>
+<td><code>DisplayArea.Root</code></td>
+<td><code>Window</code>容器，<code>App Window</code>的根容器</td>
+</tr>
+<tr>
+<td><code>TaskDisplayArea</code></td>
+<td><code>Window</code>容器，代表了屏幕上一块专门用来存放<code>App</code>窗口的区域</td>
+</tr>
+<tr>
+<td><code>DisplayArea.Tokens</code></td>
+<td><code>Window</code>容器，<code>DisplayArea</code>的内部类，一个只能包含<code>WindowToken</code>对象的<code>DisplayArea</code>类型的容器</td>
+</tr>
+<tr>
+<td><code>Task</code></td>
+<td><code>Window</code>容器，存放<code>ActivityRecord</code>的容器，用来管理<code>ActivityRecord</code></td>
+</tr>
+<tr>
+<td><code>ActivityStack</code></td>
+<td><code>Window</code>容器，<code>Task</code>的子类，用来记录<code>Activity</code>历史</td>
+</tr>
+</tbody>
+</table>
+<p>继承关系如下</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/WMS/window/window6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/WMS/window/window6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>android13</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">名称</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"><code>DisplayArea</code></td>
+<td><code>Window</code>容器，<code>DisplayContent</code>之下的对<code>WindowContainer</code>进行分组的容器，受<code>DisplayAreaPolicy</code>管理</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>TaskDisplayArea</code></td>
+<td><code>Window</code>容器，代表了屏幕上一块专门用来存放<code>App</code>窗口的区域</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>Task</code></td>
+<td><code>Window</code>容器，存放<code>ActivityRecord</code>的容器，用来管理<code>ActivityRecord</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>DisplayArea.Tokens</code></td>
+<td><code>Window</code>容器，<code>DisplayArea</code>的内部类，一个只能包含<code>WindowToken</code>对象的<code>DisplayArea</code>类型的容器</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>DisplayContent.ImeContainer</code></td>
+<td><code>Window</code>容器，一个只能包含<code>WindowToken</code>对象的<code>DisplayArea</code>类型的容器，存放输入法窗口的容器</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>DisplayArea.Dimmable</code></td>
+<td><code>Window</code>容器，<code>Dimmable</code>也是一个<code>DisplayArea</code>类型的<code>DisplayArea</code>容器，用于模糊效果。</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>RootDisplayArea</code></td>
+<td><code>Window</code>容器，<code>DisplayArea</code>层级结构的根节点</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>DisplayContent</code></td>
+<td><code>Window</code>容器，<code>Window</code>容器，管理一个逻辑屏上的所有窗口，有几个屏幕就会有几个<code>DisplayContent</code>，使用<code>displayId</code>来区分</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>DisplayAreaGroup</code></td>
+<td><code>Window</code>容器，屏幕上的部分区域对应的<code>DisplayArea</code>层级结构的根节点，用于<strong>车载</strong></td>
+</tr>
+</tbody>
+</table>
+<p>继承关系如下</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/WMS/window/window6_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/WMS/window/window6_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="源码">源码</h1>
+<p>查看方式可以直接访问下面的网站，点击<a href="http://aospxref.com/">这里</a></p>
+<p>直接搜索对应变量或者方法名</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/WMS/window/window1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/WMS/window/window1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>除了上述方式之外，如果大量的查找相关的方法，上面的方式反而比较笨拙，可以下载对应的源码，点击<a href="https://github1s.com/aosp-mirror/platform_frameworks_base">这里</a></p>
+<p>目前看来网页内置了VSCode，搜索还是联想确实会比直接在github上看快多了，不过有一个缺点就是直接打开文件功能比较弱</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/WMS/window/window2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/WMS/window/window2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="参考">参考</h1>
+<p>源码下载</p>
+<p><a href="https://www.bbsmax.com/A/D8548N7w5E/">[1] 星辰之力, 官网 Android framework源码git地址, 2022.</a></p>
+<p>AMS启动</p>
+<p><a href="https://mp.weixin.qq.com/s/8Fii9ofRpAJscXJC2bIwfQ">[1] Pingred, 手把手带你搞懂AMS启动原理, 2023.</a></p>
+<p><a href="https://juejin.cn/post/7125057980420063268">[1] Avengong, Android渲染(一)_系统服务WMS启动过程(基于Android10), 2022.</a></p>
+<p><a href="https://juejin.cn/post/7160870305051705352">[1] 345丶, Android | WMS 解析 (一), 2022.</a></p>
+<p>window and windowmanager</p>
+<p><a href="https://mp.weixin.qq.com/s?__biz=MzA5MzI3NjE2MA==&amp;mid=2650269748&amp;idx=1&amp;sn=33b385cc4ebc9a9b563d500aae3867e6&amp;chksm=8863195bbf14904d961e5ef578785424f37fc00103d9947d102f9588a1939fb51c084a5fde68&amp;scene=27">[1] Chunyu J, Android Window 机制, 2022.</a></p>
+<p><a href="https://mp.weixin.qq.com/s/iidzG_xV9RhWuCiNilGtMQ">[1] 小余的自习室, 源码学习时间，Window Manager in Android, 2023.</a></p>
+<p><a href="https://juejin.cn/post/7076274407416528909">[1] 345丶, Android | 理解 Window 和 WindowManager, 2022.</a></p>
+<p>addView/addWindow</p>
+<p><a href="https://mp.weixin.qq.com/s/q_V6JI6Ng6Huj-EIG2o24w">[1] a5right, Android View从绘制到上屏全过程解析, 2023.</a></p>
+<p><a href="https://www.jianshu.com/p/579e9cc8b83c">[1] Anderson大码渣, What is DecorView and android.R.id.content?, 2017.</a></p>
+<p><a href="https://juejin.cn/post/6844903506541805582">[1] 刘望舒, Android解析WindowManagerService（二）WMS的重要成员和Window的添加过程, 2017.</a></p>
+<p><a href="https://juejin.cn/post/6844903560262451213">[1] 刘望舒, Android解析WindowManagerService（三）Window的删除过程, 2018.</a></p>
+<p><a href="https://blog.csdn.net/learnframework/article/details/129051608?spm=1001.2014.3001.5502">[1] learnframework, android 13 WMS/AMS系统开发-SplashScreen的添加与移除分析, 2023.</a></p>
+<p>window层级/windowcontainer</p>
+<p><a href="https://m.ithome.com/html/647058.htm">[1] TechMerger, 你知道 Android 是如何管理复杂的 Window 层级的？, 2022.</a></p>
+<p><a href="https://juejin.cn/post/7172598258064162830#heading-4">[1] 小余的自习室, “一文读懂”系列：无处不在的WMS, 2022.</a></p>
+<p><a href="https://juejin.cn/post/6844903489366130701">[1] Looperjing, Android窗口系统第一篇&mdash;Window的抽象概念和WMS相关数据结构理解, 2017.</a></p>
+<p><a href="https://blog.csdn.net/aofan9566/article/details/101821620">[1] aofan9566, WindowState注意事项, 2015.</a></p>
+<p><a href="https://blog.csdn.net/weixin_41591109/article/details/128025338?spm=1001.2101.3001.6650.1&amp;utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1-128025338-blog-126748372.235%5Ev27%5Epc_relevant_recovery_v2&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1-128025338-blog-126748372.235%5Ev27%5Epc_relevant_recovery_v2&amp;utm_relevant_index=2">[1] weixin_41591109, android 11 的Window的屏幕的架构图, 2022.</a></p>
+<p><a href="https://blog.csdn.net/q1165328963/article/details/127746382">[1] qluka, Android 窗口结构(一) 窗口层级构造, 2022.</a></p>
+<p><a href="https://blog.csdn.net/q1165328963/article/details/127841486?spm=1001.2014.3001.5502">[1] qluka, Android 窗口结构(二) 添加Home Task, 2022.</a></p>
+<p><a href="https://blog.csdn.net/ukynho/article/details/126748176?spm=1001.2014.3001.5502">[1] Geralt_z_Rivii, 2【Android 12】WindowContainer类, 2022.</a></p>
+<p><a href="https://blog.csdn.net/ukynho/article/details/126748372">[1] Geralt_z_Rivii, 3【Android 12】DisplayArea层级结构, 2022.</a></p>
+<p><a href="https://blog.csdn.net/jieliaoyuan8279/article/details/123157937?spm=1001.2101.3001.6650.15&amp;utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ERate-15-123157937-blog-126748176.235%5Ev27%5Epc_relevant_recovery_v2&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ERate-15-123157937-blog-126748176.235%5Ev27%5Epc_relevant_recovery_v2&amp;utm_relevant_index=20">[1] TigherGuo, 安卓12窗口层次: DisplayArea树, 2022.</a></p>
+<p><a href="https://blog.csdn.net/shensky711/article/details/121530510?spm=1001.2101.3001.6650.9&amp;utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ERate-9-121530510-blog-126748176.235%5Ev27%5Epc_relevant_recovery_v2&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ERate-9-121530510-blog-126748176.235%5Ev27%5Epc_relevant_recovery_v2&amp;utm_relevant_index=14">[1] HansChen_, Android 12 - WMS 层级结构 &amp;&amp; DisplayAreaGroup 引入, 2021.</a></p>
+<p><a href="https://blog.csdn.net/learnframework/article/details/129101781?spm=1001.2014.3001.5502">[1] learnframework, android 13 WMS/AMS系统开发-窗口层级相关DisplayArea,WindowContainer, 2023.</a></p>
+<p><a href="https://blog.csdn.net/learnframework/article/details/129115725?spm=1001.2014.3001.5502">[1] learnframework, android 13 WMS/AMS系统开发-窗口层级相关DisplayArea,WindowContainer第二节, 2023.</a></p>
+<p><a href="https://blog.csdn.net/learnframework/article/details/129175890?spm=1001.2014.3001.5502">[1] learnframework, android 13 WMS/AMS系统开发-窗口层级相关Task/ActivityRecord/WindowState/WindowToken放置图层创建 第三节, 2023.</a></p>
+<p><a href="https://blog.csdn.net/learnframework/article/details/129132667?spm=1001.2014.3001.5502">[1] learnframework, android 13 WMS/AMS系统开发-窗口层级相关SurfaceFlinger图层创建 第三节, 2023.</a></p>
+<p>锁屏相关</p>
+<p><a href="https://blog.csdn.net/learnframework/article/details/127483545">[1] learnframework, Android 12中系统Wallpaper详解1&ndash;锁屏透看壁纸和桌面透看壁纸的切换, 2022.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/android/">Android</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%BA%90%E7%A0%81/">源码</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/binder/">Binder</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/wms/">WMS</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/window/">Window</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/windowmanager/">WindowManager</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/viewrootimpl/">ViewRootImpl</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/decorview/">DecorView</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/windowtoken/">WindowToken</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/windowstate/">WindowState</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/window%E5%B1%82%E7%BA%A7/">Window层级</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/window%E5%AE%B9%E5%99%A8/">Window容器</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/03/service-call%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%BB%A5%E8%93%9D%E7%89%99%E6%89%93%E5%BC%80%E5%85%B3%E9%97%AD%E4%B8%BA%E4%BE%8B/" data-tooltip="service call源码分析(以蓝牙打开关闭为例)">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2023 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/03/service-call%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%BB%A5%E8%93%9D%E7%89%99%E6%89%93%E5%BC%80%E5%85%B3%E9%97%AD%E4%B8%BA%E4%BE%8B/" data-tooltip="service call源码分析(以蓝牙打开关闭为例)">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2023%2F04%2Fwms-window%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2023%2F04%2Fwms-window%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2023%2F04%2Fwms-window%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://img-blog.csdnimg.cn/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2023\/04\/wms-window\/';
+          
+            this.page.identifier = '\/2023\/04\/wms-window\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
