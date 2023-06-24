@@ -1,0 +1,1788 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="Android中大量的用到了消息机制，而最终消息机制都离不开native Looper。">
+
+
+<meta property="og:description" content="Android中大量的用到了消息机制，而最终消息机制都离不开native Looper。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Native Looper使用和原理">
+<meta name="twitter:title" content="Native Looper使用和原理">
+<meta property="og:url" content="https://yangyang48.github.io/2023/06/native-looper%E4%BD%BF%E7%94%A8%E5%92%8C%E5%8E%9F%E7%90%86/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2023/06/native-looper%E4%BD%BF%E7%94%A8%E5%92%8C%E5%8E%9F%E7%90%86/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="Android中大量的用到了消息机制，而最终消息机制都离不开native Looper。">
+<meta name="twitter:description" content="Android中大量的用到了消息机制，而最终消息机制都离不开native Looper。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2023-06-24T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2023-06-24T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="Native Looper">
+    
+      <meta property="article:section" content="2023">
+    
+      <meta property="article:section" content="June">
+    
+  
+  
+    
+      <meta property="article:tag" content="Android">
+    
+      <meta property="article:tag" content="源码">
+    
+      <meta property="article:tag" content="Handler">
+    
+      <meta property="article:tag" content="epoll">
+    
+      <meta property="article:tag" content="Thread">
+    
+      <meta property="article:tag" content="pthread_once">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/handler/Looper/Looper_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/handler/Looper/Looper_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/handler/Looper/Looper_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/handler/Looper/Looper_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+
+
+    <title>Native Looper使用和原理</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2023/06/native-looper%E4%BD%BF%E7%94%A8%E5%92%8C%E5%8E%9F%E7%90%86/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/handler/Looper/Looper_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      Native Looper使用和原理
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2023-06-24T00:00:00Z">
+        
+  六月 24, 2023
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/native-looper">Native Looper</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2023">2023</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/june">June</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">3100 Words|Read in about 15 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>Android中大量的用到了消息机制，而最终消息机制都离不开native Looper。</p>
+<h1 id="0简介">0简介</h1>
+<p>实际上，除了本身Handler的消息机制外，很多进程也会用到这些消息机制，比如SurfaceFlinger进程。所以说Native的Looper机制就显得更加重要。下面以例子分析Looper原理。</p>
+<h1 id="1举例说明">1举例说明</h1>
+<p>选择源码编译或者NDK编译皆可，这里笔者选择源码编译，编译路径为/external/</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//external/native_looper_test/main.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#ifndef NATIVE_LOOPER_TEST_MAIN_H
+</span><span class="ln"> 3</span><span class="cp">#define NATIVE_LOOPER_TEST_MAIN_H
+</span><span class="ln"> 4</span><span class="cp">#include</span> <span class="cpf">&lt;utils/Looper.h&gt;</span><span class="cp">
+</span><span class="ln"> 5</span><span class="cp">#include</span> <span class="cpf">&lt;utils/Timers.h&gt;</span><span class="cp">
+</span><span class="ln"> 6</span><span class="cp">#include</span> <span class="cpf">&lt;utils/Log.h&gt;</span><span class="cp">
+</span><span class="ln"> 7</span><span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span><span class="ln"> 8</span><span class="cp">#include</span> <span class="cpf">&lt;time.h&gt;</span><span class="cp">
+</span><span class="ln"> 9</span><span class="cp">#include</span> <span class="cpf">&lt;utils/threads.h&gt;</span><span class="cp">
+</span><span class="ln">10</span><span class="cp"></span>
+<span class="ln">11</span><span class="c1">//使用Android智能指针或者日志需要使用这个命名空间
+</span><span class="ln">12</span><span class="c1"></span><span class="k">using</span> <span class="k">namespace</span> <span class="n">android</span><span class="p">;</span>
+<span class="ln">13</span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+<span class="ln">14</span>
+<span class="ln">15</span><span class="k">class</span> <span class="nc">MyMessageHandler</span> <span class="o">:</span> <span class="k">public</span> <span class="n">MessageHandler</span> <span class="p">{</span>
+<span class="ln">16</span><span class="k">public</span><span class="o">:</span>
+<span class="ln">17</span>    <span class="n">Vector</span><span class="o">&lt;</span><span class="n">Message</span><span class="o">&gt;</span> <span class="n">messages</span><span class="p">;</span>
+<span class="ln">18</span>
+<span class="ln">19</span>    <span class="k">virtual</span> <span class="kt">void</span> <span class="nf">handleMessage</span><span class="p">(</span><span class="k">const</span> <span class="n">Message</span><span class="o">&amp;</span> <span class="n">message</span><span class="p">);</span>
+<span class="ln">20</span>    <span class="k">virtual</span> <span class="o">~</span><span class="n">MyMessageHandler</span><span class="p">(){}</span>
+<span class="ln">21</span><span class="p">};</span>
+<span class="ln">22</span>
+<span class="ln">23</span><span class="k">struct</span> <span class="nc">MyLooperThread</span> <span class="o">:</span> <span class="k">public</span> <span class="n">Thread</span> <span class="p">{</span>
+<span class="ln">24</span><span class="k">public</span><span class="o">:</span>
+<span class="ln">25</span>    <span class="n">MyLooperThread</span><span class="p">(</span><span class="n">Looper</span> <span class="o">*</span><span class="n">looper</span><span class="p">)</span>
+<span class="ln">26</span>        <span class="o">:</span> <span class="n">mLooper</span><span class="p">(</span><span class="n">looper</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">27</span>    <span class="p">}</span>
+<span class="ln">28</span>	
+<span class="ln">29</span>    <span class="k">virtual</span> <span class="kt">bool</span> <span class="nf">threadLoop</span><span class="p">();</span>
+<span class="ln">30</span>
+<span class="ln">31</span><span class="k">protected</span><span class="o">:</span>
+<span class="ln">32</span>    <span class="k">virtual</span> <span class="o">~</span><span class="n">MyLooperThread</span><span class="p">()</span> <span class="p">{}</span>
+<span class="ln">33</span>
+<span class="ln">34</span><span class="k">private</span><span class="o">:</span>
+<span class="ln">35</span>    <span class="n">Looper</span> <span class="o">*</span><span class="n">mLooper</span><span class="p">;</span>
+<span class="ln">36</span><span class="p">};</span>
+<span class="ln">37</span>
+<span class="ln">38</span><span class="k">class</span> <span class="nc">MyPipe</span> <span class="p">{</span>
+<span class="ln">39</span><span class="k">public</span><span class="o">:</span>
+<span class="ln">40</span>    <span class="kt">int</span> <span class="n">sendFd</span><span class="p">;</span>
+<span class="ln">41</span>    <span class="kt">int</span> <span class="n">receiveFd</span><span class="p">;</span>
+<span class="ln">42</span>    
+<span class="ln">43</span>    <span class="n">MyPipe</span><span class="p">();</span>
+<span class="ln">44</span>    <span class="o">~</span><span class="n">MyPipe</span><span class="p">();</span>
+<span class="ln">45</span>    <span class="n">status_t</span> <span class="nf">writeSignal</span><span class="p">();</span>
+<span class="ln">46</span>    <span class="n">status_t</span> <span class="nf">readSignal</span><span class="p">();</span>
+<span class="ln">47</span><span class="p">};</span>
+<span class="ln">48</span>
+<span class="ln">49</span><span class="cp">#endif
+</span></code></pre></div><p>定义完成了头文件，还有源文件</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">  1</span><span class="c1">//external/native_looper_test/main.cpp
+</span><span class="ln">  2</span><span class="c1"></span><span class="cp">#ifdef LOG_TAG
+</span><span class="ln">  3</span><span class="cp">#undef LOG_TAG
+</span><span class="ln">  4</span><span class="cp">#define LOG_TAG &#34;native_looper_test&#34;
+</span><span class="ln">  5</span><span class="cp">#endif
+</span><span class="ln">  6</span><span class="cp"></span>
+<span class="ln">  7</span><span class="cp">#include</span> <span class="cpf">&#34;main.h&#34;</span><span class="cp">
+</span><span class="ln">  8</span><span class="cp"></span>
+<span class="ln">  9</span><span class="kt">void</span> <span class="n">MyMessageHandler</span><span class="o">::</span><span class="n">handleMessage</span><span class="p">(</span><span class="k">const</span> <span class="n">Message</span><span class="o">&amp;</span> <span class="n">message</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 10</span>    <span class="n">ALOGD</span><span class="p">(</span><span class="s">&#34;[Thread=%d] %s message.what=%d </span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">gettid</span><span class="p">(),</span> <span class="n">__func__</span><span class="p">,</span> <span class="n">message</span><span class="p">.</span><span class="n">what</span><span class="p">);</span>
+<span class="ln"> 11</span>    <span class="n">messages</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">message</span><span class="p">);</span>
+<span class="ln"> 12</span><span class="p">}</span>
+<span class="ln"> 13</span>
+<span class="ln"> 14</span><span class="c1">//使用Android源码中的Thread，run就会调用threadLoop，如果返回true不断循环调用threadLoop，直到返回false，不再调用
+</span><span class="ln"> 15</span><span class="c1"></span><span class="kt">bool</span> <span class="n">MyLooperThread</span><span class="o">::</span><span class="n">threadLoop</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 16</span>    <span class="k">if</span><span class="p">(</span><span class="n">mLooper</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+<span class="ln"> 17</span>        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln"> 18</span>    <span class="c1">//调用pollOnce里面也会循环处理，底层使用了epoll机制，-1的时候表示一直等下去，直到有事件返回
+</span><span class="ln"> 19</span><span class="c1"></span>    <span class="kt">int32_t</span> <span class="n">ret</span> <span class="o">=</span> <span class="n">mLooper</span><span class="o">-&gt;</span><span class="n">pollOnce</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln"> 20</span>    <span class="k">switch</span> <span class="p">(</span><span class="n">ret</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 21</span>        <span class="k">case</span> <span class="n">Looper</span><span class="o">::</span><span class="nl">POLL_WAKE</span><span class="p">:</span>
+<span class="ln"> 22</span>        <span class="k">case</span> <span class="n">Looper</span><span class="o">::</span><span class="nl">POLL_CALLBACK</span><span class="p">:</span>
+<span class="ln"> 23</span>            <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln"> 24</span>        <span class="k">case</span> <span class="n">Looper</span><span class="o">::</span><span class="nl">POLL_ERROR</span><span class="p">:</span>
+<span class="ln"> 25</span>            <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;Looper::POLL_ERROR&#34;</span><span class="p">);</span>
+<span class="ln"> 26</span>            <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln"> 27</span>        <span class="k">case</span> <span class="n">Looper</span><span class="o">::</span><span class="nl">POLL_TIMEOUT</span><span class="p">:</span>
+<span class="ln"> 28</span>            <span class="c1">// timeout (should not happen)
+</span><span class="ln"> 29</span><span class="c1"></span>            <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln"> 30</span>        <span class="k">default</span><span class="o">:</span>
+<span class="ln"> 31</span>            <span class="c1">// should not happen
+</span><span class="ln"> 32</span><span class="c1"></span>            <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;Looper::pollOnce() returned unknown status %d&#34;</span><span class="p">,</span> <span class="n">ret</span><span class="p">);</span>
+<span class="ln"> 33</span>            <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln"> 34</span>    <span class="p">}</span>
+<span class="ln"> 35</span><span class="p">}</span>
+<span class="ln"> 36</span>
+<span class="ln"> 37</span><span class="n">MyPipe</span><span class="o">::</span><span class="n">MyPipe</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 38</span>    <span class="kt">int</span> <span class="n">fds</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+<span class="ln"> 39</span>    <span class="c1">//这里调用真正的底层linux管道初始化
+</span><span class="ln"> 40</span><span class="c1"></span>    <span class="o">::</span><span class="n">pipe</span><span class="p">(</span><span class="n">fds</span><span class="p">);</span>
+<span class="ln"> 41</span>
+<span class="ln"> 42</span>    <span class="n">receiveFd</span> <span class="o">=</span> <span class="n">fds</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+<span class="ln"> 43</span>    <span class="n">sendFd</span> <span class="o">=</span> <span class="n">fds</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+<span class="ln"> 44</span><span class="p">}</span>
+<span class="ln"> 45</span>
+<span class="ln"> 46</span><span class="n">MyPipe</span><span class="o">::~</span><span class="n">MyPipe</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 47</span>    <span class="k">if</span> <span class="p">(</span><span class="n">sendFd</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 48</span>        <span class="o">::</span><span class="n">close</span><span class="p">(</span><span class="n">sendFd</span><span class="p">);</span>
+<span class="ln"> 49</span>    <span class="p">}</span>
+<span class="ln"> 50</span>
+<span class="ln"> 51</span>    <span class="k">if</span> <span class="p">(</span><span class="n">receiveFd</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 52</span>        <span class="o">::</span><span class="n">close</span><span class="p">(</span><span class="n">receiveFd</span><span class="p">);</span>
+<span class="ln"> 53</span>    <span class="p">}</span>
+<span class="ln"> 54</span><span class="p">}</span>
+<span class="ln"> 55</span>
+<span class="ln"> 56</span><span class="n">status_t</span> <span class="n">MyPipe</span><span class="o">::</span><span class="n">writeSignal</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 57</span>    <span class="n">ssize_t</span> <span class="n">nWritten</span> <span class="o">=</span> <span class="o">::</span><span class="n">write</span><span class="p">(</span><span class="n">sendFd</span><span class="p">,</span> <span class="s">&#34;1&#34;</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+<span class="ln"> 58</span>    <span class="k">return</span> <span class="n">nWritten</span> <span class="o">==</span> <span class="mi">1</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="o">-</span><span class="n">errno</span><span class="p">;</span>
+<span class="ln"> 59</span><span class="p">}</span>
+<span class="ln"> 60</span>
+<span class="ln"> 61</span><span class="n">status_t</span> <span class="n">MyPipe</span><span class="o">::</span><span class="n">readSignal</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 62</span>    <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+<span class="ln"> 63</span>    <span class="n">ssize_t</span> <span class="n">nRead</span> <span class="o">=</span> <span class="o">::</span><span class="n">read</span><span class="p">(</span><span class="n">receiveFd</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+<span class="ln"> 64</span>    <span class="k">return</span> <span class="n">nRead</span> <span class="o">==</span> <span class="mi">1</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="n">nRead</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">?</span> <span class="o">-</span><span class="nl">EPIPE</span> <span class="p">:</span> <span class="o">-</span><span class="n">errno</span><span class="p">;</span>
+<span class="ln"> 65</span><span class="p">}</span>
+<span class="ln"> 66</span>
+<span class="ln"> 67</span><span class="c1">//回调类
+</span><span class="ln"> 68</span><span class="c1"></span><span class="k">class</span> <span class="nc">MyCallbackHandler</span> <span class="p">{</span>
+<span class="ln"> 69</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 70</span>    <span class="n">MyCallbackHandler</span><span class="p">()</span> <span class="o">:</span> <span class="n">callbackCount</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="p">{}</span>
+<span class="ln"> 71</span>    <span class="kt">void</span> <span class="nf">setCallback</span><span class="p">(</span><span class="k">const</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">Looper</span><span class="o">&gt;&amp;</span> <span class="n">looper</span><span class="p">,</span> <span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">events</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 72</span>        <span class="c1">//往native looper注册fd，回调为staticHandler，参数为MyCallbackHandler.this
+</span><span class="ln"> 73</span><span class="c1"></span>        <span class="n">looper</span><span class="o">-&gt;</span><span class="n">addFd</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">staticHandler</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
+<span class="ln"> 74</span>    <span class="p">}</span>
+<span class="ln"> 75</span>
+<span class="ln"> 76</span><span class="k">protected</span><span class="o">:</span>
+<span class="ln"> 77</span>    <span class="kt">int</span> <span class="n">handler</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">events</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 78</span>        <span class="n">callbackCount</span><span class="o">++</span><span class="p">;</span>
+<span class="ln"> 79</span>        <span class="n">ALOGD</span><span class="p">(</span><span class="s">&#34;[Thread=%d] %s fd=%d, events=%d, callbackCount=%d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">gettid</span><span class="p">(),</span> <span class="n">__func__</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">callbackCount</span><span class="p">);</span>
+<span class="ln"> 80</span>        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 81</span>    <span class="p">}</span>
+<span class="ln"> 82</span>
+<span class="ln"> 83</span><span class="k">private</span><span class="o">:</span>
+<span class="ln"> 84</span>    <span class="k">static</span> <span class="kt">int</span> <span class="n">staticHandler</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">events</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">data</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 85</span>        <span class="k">return</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">MyCallbackHandler</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">handler</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">events</span><span class="p">);</span>
+<span class="ln"> 86</span>    <span class="p">}</span>
+<span class="ln"> 87</span>    <span class="kt">int</span> <span class="n">callbackCount</span><span class="p">;</span>
+<span class="ln"> 88</span><span class="p">};</span>
+<span class="ln"> 89</span>
+<span class="ln"> 90</span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span> <span class="n">argv</span><span class="p">)</span>
+<span class="ln"> 91</span><span class="p">{</span>
+<span class="ln"> 92</span>    <span class="c1">//测试消息机制
+</span><span class="ln"> 93</span><span class="c1"></span>    <span class="c1">// Looper的轮询处理工作在新线程中
+</span><span class="ln"> 94</span><span class="c1"></span>    <span class="n">sp</span><span class="o">&lt;</span><span class="n">Looper</span><span class="o">&gt;</span> <span class="n">mLooper</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Looper</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+<span class="ln"> 95</span>    <span class="n">sp</span><span class="o">&lt;</span><span class="n">MyLooperThread</span><span class="o">&gt;</span> <span class="n">mLooperThread</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MyLooperThread</span><span class="p">(</span><span class="n">mLooper</span><span class="p">.</span><span class="n">get</span><span class="p">());</span>
+<span class="ln"> 96</span>    <span class="n">mLooperThread</span><span class="o">-&gt;</span><span class="n">run</span><span class="p">(</span><span class="s">&#34;MyLooperThread&#34;</span><span class="p">);</span>
+<span class="ln"> 97</span>
+<span class="ln"> 98</span>    <span class="c1">// 测试消息的发送与处理
+</span><span class="ln"> 99</span><span class="c1"></span>    <span class="n">sp</span><span class="o">&lt;</span><span class="n">MyMessageHandler</span><span class="o">&gt;</span> <span class="n">handler</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MyMessageHandler</span><span class="p">();</span>
+<span class="ln">100</span>    <span class="n">ALOGD</span><span class="p">(</span><span class="s">&#34;[Thread=%d] sendMessage message.what=%d </span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">gettid</span><span class="p">(),</span> <span class="mi">1</span><span class="p">);</span>
+<span class="ln">101</span>    <span class="n">mLooper</span><span class="o">-&gt;</span><span class="n">sendMessage</span><span class="p">(</span><span class="n">handler</span><span class="p">,</span> <span class="n">Message</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span>
+<span class="ln">102</span>    <span class="n">ALOGD</span><span class="p">(</span><span class="s">&#34;[Thread=%d] sendMessage message.what=%d </span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">gettid</span><span class="p">(),</span> <span class="mi">2</span><span class="p">);</span>
+<span class="ln">103</span>    <span class="n">mLooper</span><span class="o">-&gt;</span><span class="n">sendMessage</span><span class="p">(</span><span class="n">handler</span><span class="p">,</span> <span class="n">Message</span><span class="p">(</span><span class="mi">2</span><span class="p">));</span>
+<span class="ln">104</span>    <span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln">105</span>    
+<span class="ln">106</span>    <span class="c1">// 测试监测fd与回调callback
+</span><span class="ln">107</span><span class="c1"></span>    <span class="n">MyPipe</span> <span class="n">pipe</span><span class="p">;</span>
+<span class="ln">108</span>    <span class="n">MyCallbackHandler</span> <span class="n">mCallbackHandler</span><span class="p">;</span>
+<span class="ln">109</span>    <span class="n">mCallbackHandler</span><span class="p">.</span><span class="n">setCallback</span><span class="p">(</span><span class="n">mLooper</span><span class="p">,</span> <span class="n">pipe</span><span class="p">.</span><span class="n">receiveFd</span><span class="p">,</span> <span class="n">Looper</span><span class="o">::</span><span class="n">EVENT_INPUT</span><span class="p">);</span>
+<span class="ln">110</span>    <span class="n">ALOGD</span><span class="p">(</span><span class="s">&#34;[Thread=%d] writeSignal 1</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">gettid</span><span class="p">());</span>
+<span class="ln">111</span>    <span class="n">pipe</span><span class="p">.</span><span class="n">writeSignal</span><span class="p">();</span> <span class="c1">// would cause FD to be considered signalled
+</span><span class="ln">112</span><span class="c1"></span>    <span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln">113</span>    <span class="n">mCallbackHandler</span><span class="p">.</span><span class="n">setCallback</span><span class="p">(</span><span class="n">mLooper</span><span class="p">,</span> <span class="n">pipe</span><span class="p">.</span><span class="n">receiveFd</span><span class="p">,</span> <span class="n">Looper</span><span class="o">::</span><span class="n">EVENT_INPUT</span><span class="p">);</span>
+<span class="ln">114</span>    <span class="n">ALOGD</span><span class="p">(</span><span class="s">&#34;[Thread=%d] writeSignal 2</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">gettid</span><span class="p">());</span>
+<span class="ln">115</span>    <span class="n">pipe</span><span class="p">.</span><span class="n">writeSignal</span><span class="p">();</span>
+<span class="ln">116</span>    
+<span class="ln">117</span>    <span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln">118</span>    <span class="n">mLooperThread</span><span class="o">-&gt;</span><span class="n">requestExit</span><span class="p">();</span>
+<span class="ln">119</span>    <span class="n">mLooper</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+<span class="ln">120</span><span class="p">}</span>
+</code></pre></div><p>这里出现了继承Thread，这个是system源码中的线程，系统中很多都会用到这个线程使用。</p>
+<blockquote>
+<p>源码所示中并没有实现run方法，说明使用的是Thread父类的run方法</p>
+<p>可以看到父类确实有run方法</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libutils/include/utils/Thread.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">class</span> <span class="nc">Thread</span> <span class="o">:</span> <span class="k">virtual</span> <span class="k">public</span> <span class="n">RefBase</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 5</span>    <span class="c1">//这里默认传入的参数是true
+</span><span class="ln"> 6</span><span class="c1"></span>    <span class="k">explicit</span>            <span class="n">Thread</span><span class="p">(</span><span class="kt">bool</span> <span class="n">canCallJava</span> <span class="o">=</span> <span class="nb">true</span><span class="p">);</span>
+<span class="ln"> 7</span>    <span class="k">virtual</span>             <span class="o">~</span><span class="n">Thread</span><span class="p">();</span>
+<span class="ln"> 8</span>    <span class="k">virtual</span> <span class="n">status_t</span>    <span class="nf">run</span><span class="p">(</span>    <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span><span class="p">,</span>
+<span class="ln"> 9</span>                                <span class="kt">int32_t</span> <span class="n">priority</span> <span class="o">=</span> <span class="n">PRIORITY_DEFAULT</span><span class="p">,</span>
+<span class="ln">10</span>                                <span class="n">size_t</span> <span class="n">stack</span> <span class="o">=</span> <span class="mi">0</span><span class="p">);</span>
+<span class="ln">11</span>    <span class="k">virtual</span> <span class="kt">void</span>        <span class="nf">requestExit</span><span class="p">();</span>
+<span class="ln">12</span>    <span class="k">virtual</span> <span class="n">status_t</span>    <span class="nf">readyToRun</span><span class="p">();</span>
+<span class="ln">13</span>            <span class="n">status_t</span>    <span class="nf">requestExitAndWait</span><span class="p">();</span>
+<span class="ln">14</span>            <span class="n">status_t</span>    <span class="nf">join</span><span class="p">();</span>
+<span class="ln">15</span>            <span class="kt">bool</span>        <span class="nf">isRunning</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+<span class="ln">16</span>            <span class="n">pid_t</span>       <span class="nf">getTid</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+<span class="ln">17</span>
+<span class="ln">18</span><span class="k">protected</span><span class="o">:</span>
+<span class="ln">19</span>            <span class="kt">bool</span>        <span class="n">exitPending</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+<span class="ln">20</span>    
+<span class="ln">21</span><span class="k">private</span><span class="o">:</span>
+<span class="ln">22</span>    <span class="c1">// 1)循环:如果threadLoop()返回true，如果requestExit()没有被调用，它将被再次调用。
+</span><span class="ln">23</span><span class="c1"></span>	<span class="c1">// 2)一次:如果threadLoop()返回false，线程返回后退出。
+</span><span class="ln">24</span><span class="c1"></span>    <span class="k">virtual</span> <span class="kt">bool</span>        <span class="n">threadLoop</span><span class="p">()</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">25</span>
+<span class="ln">26</span><span class="k">private</span><span class="o">:</span>
+<span class="ln">27</span>    <span class="n">Thread</span><span class="o">&amp;</span> <span class="k">operator</span><span class="o">=</span><span class="p">(</span><span class="k">const</span> <span class="n">Thread</span><span class="o">&amp;</span><span class="p">);</span>
+<span class="ln">28</span>    <span class="k">static</span>  <span class="kt">int</span>             <span class="nf">_threadLoop</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">user</span><span class="p">);</span>
+<span class="ln">29</span>    <span class="k">const</span>   <span class="kt">bool</span>            <span class="n">mCanCallJava</span><span class="p">;</span>
+<span class="ln">30</span>            <span class="n">thread_id_t</span>     <span class="n">mThread</span><span class="p">;</span>
+<span class="ln">31</span>    <span class="k">mutable</span> <span class="n">Mutex</span>           <span class="n">mLock</span><span class="p">;</span>
+<span class="ln">32</span>            <span class="n">Condition</span>       <span class="n">mThreadExitedCondition</span><span class="p">;</span>
+<span class="ln">33</span>            <span class="n">status_t</span>        <span class="n">mStatus</span><span class="p">;</span>
+<span class="ln">34</span>    <span class="k">volatile</span> <span class="kt">bool</span>           <span class="n">mExitPending</span><span class="p">;</span>
+<span class="ln">35</span>    <span class="k">volatile</span> <span class="kt">bool</span>           <span class="n">mRunning</span><span class="p">;</span>
+<span class="ln">36</span>            <span class="n">sp</span><span class="o">&lt;</span><span class="n">Thread</span><span class="o">&gt;</span>      <span class="n">mHoldSelf</span><span class="p">;</span>
+<span class="ln">37</span>            <span class="n">pid_t</span>           <span class="n">mTid</span><span class="p">;</span>
+<span class="ln">38</span>
+<span class="ln">39</span><span class="p">};</span>
+</code></pre></div><p>真实调用run方法</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libutils/Threads.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">status_t</span> <span class="n">Thread</span><span class="o">::</span><span class="n">run</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span><span class="p">,</span> <span class="kt">int32_t</span> <span class="n">priority</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">stack</span><span class="p">)</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="n">LOG_ALWAYS_FATAL_IF</span><span class="p">(</span><span class="n">name</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">,</span> <span class="s">&#34;thread name not provided to Thread::run&#34;</span><span class="p">);</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span>    <span class="n">Mutex</span><span class="o">::</span><span class="n">Autolock</span> <span class="n">_l</span><span class="p">(</span><span class="n">mLock</span><span class="p">);</span>
+<span class="ln"> 7</span>	<span class="p">...</span>
+<span class="ln"> 8</span>    <span class="kt">bool</span> <span class="n">res</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="k">if</span> <span class="p">(</span><span class="n">mCanCallJava</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">10</span>        <span class="c1">//这里传入的是_threadLoop为函数指针
+</span><span class="ln">11</span><span class="c1"></span>        <span class="c1">//this=MyLooperThread
+</span><span class="ln">12</span><span class="c1"></span>        <span class="c1">//name=&#34;MyLooperThread&#34;
+</span><span class="ln">13</span><span class="c1"></span>        <span class="c1">//priority=PRIORITY_DEFAULT=0
+</span><span class="ln">14</span><span class="c1"></span>        <span class="c1">//stack=0
+</span><span class="ln">15</span><span class="c1"></span>        <span class="c1">//mThread=thread_id_t(-1)
+</span><span class="ln">16</span><span class="c1"></span>        <span class="n">res</span> <span class="o">=</span> <span class="n">createThreadEtc</span><span class="p">(</span><span class="n">_threadLoop</span><span class="p">,</span>
+<span class="ln">17</span>                <span class="k">this</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">priority</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">mThread</span><span class="p">);</span>
+<span class="ln">18</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">19</span>        <span class="n">res</span> <span class="o">=</span> <span class="n">androidCreateRawThreadEtc</span><span class="p">(</span><span class="n">_threadLoop</span><span class="p">,</span>
+<span class="ln">20</span>                <span class="k">this</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">priority</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">mThread</span><span class="p">);</span>
+<span class="ln">21</span>    <span class="p">}</span>
+<span class="ln">22</span>    <span class="p">...</span>
+<span class="ln">23</span>    <span class="k">return</span> <span class="n">OK</span><span class="p">;</span>
+<span class="ln">24</span><span class="p">}</span>
+</code></pre></div><p>传入的参数mCanCallJava为true</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libutils/include/utils/AndroidThreads.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kr">inline</span> <span class="kt">bool</span> <span class="nf">createThreadEtc</span><span class="p">(</span><span class="n">thread_func_t</span> <span class="n">entryFunction</span><span class="p">,</span>
+<span class="ln"> 3</span>                            <span class="kt">void</span> <span class="o">*</span><span class="n">userData</span><span class="p">,</span>
+<span class="ln"> 4</span>                            <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">threadName</span> <span class="o">=</span> <span class="s">&#34;android:unnamed_thread&#34;</span><span class="p">,</span>
+<span class="ln"> 5</span>                            <span class="kt">int32_t</span> <span class="n">threadPriority</span> <span class="o">=</span> <span class="n">PRIORITY_DEFAULT</span><span class="p">,</span>
+<span class="ln"> 6</span>                            <span class="n">size_t</span> <span class="n">threadStackSize</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="ln"> 7</span>                            <span class="n">thread_id_t</span> <span class="o">*</span><span class="n">threadId</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">)</span>
+<span class="ln"> 8</span><span class="p">{</span>
+<span class="ln"> 9</span>    <span class="c1">//这里通过返回直来判断创建线程是否成功
+</span><span class="ln">10</span><span class="c1"></span>    <span class="k">return</span> <span class="n">androidCreateThreadEtc</span><span class="p">(</span><span class="n">entryFunction</span><span class="p">,</span> <span class="n">userData</span><span class="p">,</span> <span class="n">threadName</span><span class="p">,</span>
+<span class="ln">11</span>        <span class="n">threadPriority</span><span class="p">,</span> <span class="n">threadStackSize</span><span class="p">,</span> <span class="n">threadId</span><span class="p">)</span> <span class="o">?</span> <span class="nb">true</span> <span class="o">:</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">12</span><span class="p">}</span>
+</code></pre></div><p>调用到androidCreateThreadEtc</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libutils/Threads.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="n">android_create_thread_fn</span> <span class="n">gCreateThreadFn</span> <span class="o">=</span> <span class="n">androidCreateRawThreadEtc</span><span class="p">;</span>
+<span class="ln"> 3</span>
+<span class="ln"> 4</span><span class="kt">int</span> <span class="nf">androidCreateThreadEtc</span><span class="p">(</span><span class="n">android_thread_func_t</span> <span class="n">entryFunction</span><span class="p">,</span>
+<span class="ln"> 5</span>                            <span class="kt">void</span> <span class="o">*</span><span class="n">userData</span><span class="p">,</span>
+<span class="ln"> 6</span>                            <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">threadName</span><span class="p">,</span>
+<span class="ln"> 7</span>                            <span class="kt">int32_t</span> <span class="n">threadPriority</span><span class="p">,</span>
+<span class="ln"> 8</span>                            <span class="n">size_t</span> <span class="n">threadStackSize</span><span class="p">,</span>
+<span class="ln"> 9</span>                            <span class="n">android_thread_id_t</span> <span class="o">*</span><span class="n">threadId</span><span class="p">)</span>
+<span class="ln">10</span><span class="p">{</span>
+<span class="ln">11</span>    <span class="k">return</span> <span class="n">gCreateThreadFn</span><span class="p">(</span><span class="n">entryFunction</span><span class="p">,</span> <span class="n">userData</span><span class="p">,</span> <span class="n">threadName</span><span class="p">,</span>
+<span class="ln">12</span>        <span class="n">threadPriority</span><span class="p">,</span> <span class="n">threadStackSize</span><span class="p">,</span> <span class="n">threadId</span><span class="p">);</span>
+<span class="ln">13</span><span class="p">}</span>
+</code></pre></div><p>调用到androidCreateRawThreadEtc</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libutils/Threads.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="nf">androidCreateRawThreadEtc</span><span class="p">(</span><span class="n">android_thread_func_t</span> <span class="n">entryFunction</span><span class="p">,</span>
+<span class="ln"> 3</span>                               <span class="kt">void</span> <span class="o">*</span><span class="n">userData</span><span class="p">,</span>
+<span class="ln"> 4</span>                               <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">threadName</span> <span class="n">__android_unused</span><span class="p">,</span>
+<span class="ln"> 5</span>                               <span class="kt">int32_t</span> <span class="n">threadPriority</span><span class="p">,</span>
+<span class="ln"> 6</span>                               <span class="n">size_t</span> <span class="n">threadStackSize</span><span class="p">,</span>
+<span class="ln"> 7</span>                               <span class="n">android_thread_id_t</span> <span class="o">*</span><span class="n">threadId</span><span class="p">)</span>
+<span class="ln"> 8</span><span class="p">{</span>
+<span class="ln"> 9</span>    <span class="c1">//设置线程分离
+</span><span class="ln">10</span><span class="c1"></span>    <span class="n">pthread_attr_t</span> <span class="n">attr</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="n">pthread_attr_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">attr</span><span class="p">);</span>
+<span class="ln">12</span>    <span class="n">pthread_attr_setdetachstate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">attr</span><span class="p">,</span> <span class="n">PTHREAD_CREATE_DETACHED</span><span class="p">);</span>
+<span class="ln">13</span>
+<span class="ln">14</span>    <span class="n">errno</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">15</span>    <span class="n">pthread_t</span> <span class="kr">thread</span><span class="p">;</span>
+<span class="ln">16</span>    <span class="c1">//真是创建线程，linux方法
+</span><span class="ln">17</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="n">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="kr">thread</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">attr</span><span class="p">,</span>
+<span class="ln">18</span>                    <span class="p">(</span><span class="n">android_pthread_entry</span><span class="p">)</span><span class="n">entryFunction</span><span class="p">,</span> <span class="n">userData</span><span class="p">);</span>
+<span class="ln">19</span>    <span class="n">pthread_attr_destroy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">attr</span><span class="p">);</span>
+<span class="ln">20</span>    <span class="k">if</span> <span class="p">(</span><span class="n">result</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">21</span>        <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;androidCreateRawThreadEtc failed (entry=%p, res=%d, %s)</span><span class="se">\n</span><span class="s">&#34;</span>
+<span class="ln">22</span>             <span class="s">&#34;(android threadPriority=%d)&#34;</span><span class="p">,</span>
+<span class="ln">23</span>            <span class="n">entryFunction</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">),</span> <span class="n">threadPriority</span><span class="p">);</span>
+<span class="ln">24</span>        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">25</span>    <span class="p">}</span>
+<span class="ln">26</span>
+<span class="ln">27</span>    <span class="k">if</span> <span class="p">(</span><span class="n">threadId</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">28</span>        <span class="o">*</span><span class="n">threadId</span> <span class="o">=</span> <span class="p">(</span><span class="n">android_thread_id_t</span><span class="p">)</span><span class="kr">thread</span><span class="p">;</span> <span class="c1">// XXX: this is not portable
+</span><span class="ln">29</span><span class="c1"></span>    <span class="p">}</span>
+<span class="ln">30</span>    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">31</span><span class="p">}</span>
+</code></pre></div><p>最终线程开启，分离线程，会走到entryFunction对应的函数指针_threadLoop，传入的参数为userData，就是传入的MyLooperThread指针</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libutils/Threads.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="n">Thread</span><span class="o">::</span><span class="n">_threadLoop</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">user</span><span class="p">)</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="c1">//这里的self实际上指的是MyLooperThread
+</span><span class="ln"> 5</span><span class="c1"></span>    <span class="n">Thread</span><span class="o">*</span> <span class="k">const</span> <span class="n">self</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">Thread</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">user</span><span class="p">);</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span>    <span class="n">sp</span><span class="o">&lt;</span><span class="n">Thread</span><span class="o">&gt;</span> <span class="n">strong</span><span class="p">(</span><span class="n">self</span><span class="o">-&gt;</span><span class="n">mHoldSelf</span><span class="p">);</span>
+<span class="ln"> 8</span>    <span class="n">wp</span><span class="o">&lt;</span><span class="n">Thread</span><span class="o">&gt;</span> <span class="n">weak</span><span class="p">(</span><span class="n">strong</span><span class="p">);</span>
+<span class="ln"> 9</span>    <span class="n">self</span><span class="o">-&gt;</span><span class="n">mHoldSelf</span><span class="p">.</span><span class="n">clear</span><span class="p">()</span>
+<span class="ln">10</span>
+<span class="ln">11</span>    <span class="kt">bool</span> <span class="n">first</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">12</span>
+<span class="ln">13</span>    <span class="k">do</span> <span class="p">{</span>
+<span class="ln">14</span>        <span class="kt">bool</span> <span class="n">result</span><span class="p">;</span>
+<span class="ln">15</span>        <span class="k">if</span> <span class="p">(</span><span class="n">first</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">16</span>            <span class="n">first</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">17</span>            <span class="n">self</span><span class="o">-&gt;</span><span class="n">mStatus</span> <span class="o">=</span> <span class="n">self</span><span class="o">-&gt;</span><span class="n">readyToRun</span><span class="p">();</span>
+<span class="ln">18</span>            <span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="n">self</span><span class="o">-&gt;</span><span class="n">mStatus</span> <span class="o">==</span> <span class="n">OK</span><span class="p">);</span>
+<span class="ln">19</span>
+<span class="ln">20</span>            <span class="k">if</span> <span class="p">(</span><span class="n">result</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">self</span><span class="o">-&gt;</span><span class="n">exitPending</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln">21</span>                <span class="n">result</span> <span class="o">=</span> <span class="n">self</span><span class="o">-&gt;</span><span class="n">threadLoop</span><span class="p">();</span>
+<span class="ln">22</span>            <span class="p">}</span>
+<span class="ln">23</span>        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">24</span>            <span class="n">result</span> <span class="o">=</span> <span class="n">self</span><span class="o">-&gt;</span><span class="n">threadLoop</span><span class="p">();</span>
+<span class="ln">25</span>        <span class="p">}</span>
+<span class="ln">26</span>        <span class="p">...</span>
+<span class="ln">27</span>    <span class="p">}</span> <span class="k">while</span><span class="p">(</span><span class="n">strong</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">);</span>
+<span class="ln">28</span>
+<span class="ln">29</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">30</span><span class="p">}</span>
+</code></pre></div><ol>
+<li>_threadLoop()这个方法就是Thread的最大秘密，它是一个while循环。创建线程时，会sp和wp一次线程本身</li>
+<li>如果是第一次执行会运行线程的readyToRun()方法，再执行threadLoop()，否则，直接运行threadLoop()</li>
+<li>threadLoop()方法有返回值，如果threadLoop()返回false的时候，线程会做清理工作，然后退出while循环，结束运行</li>
+</ol>
+<p>因此线程Thread中的threadLoop()能够循环处理数据就到此做了说明。Thread被创 建，Thread中的run被调用，__threadLoop()被调用，readyToRun()被调用，然后循环调用threadLoop()。并且 在threadLoop()返回false时，可以退出循环</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/handler/Looper/Looper_5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/handler/Looper/Looper_5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>总结：<strong>threadLoop()方法有返回值，如果threadLoop()返回false的时候，线程会做清理工作，然后退出while循环，结束运行。</strong></p>
+</blockquote>
+<p>最终运行起来的部分日志</p>
+<div class="highlight"><pre class="chroma"><code class="language-txt" data-lang="txt"><span class="ln">1</span>06-23 17:00:44.250   1548   1548 D native_looper_test: [Thread=1548] sendMessage message.what=1
+<span class="ln">2</span>06-23 17:00:44.250   1548   1548 D native_looper_test: [Thread=1548] sendMessage message.what=2
+<span class="ln">3</span>06-23 17:00:44.250   1548   1548 D native_looper_test: [Thread=1548] handleMessage message.what=1
+<span class="ln">4</span>06-23 17:00:44.250   1548   1548 D native_looper_test: [Thread=1548] handleMessage message.what=2
+<span class="ln">5</span>06-23 17:00:45.250   1548   1548 D native_looper_test: [Thread=1548] writeSignal 1
+<span class="ln">6</span>06-23 17:00:45.250   1548   1548 D native_looper_test: [Thread=1548] handler fd=6, events=1, callbackCount=1
+<span class="ln">7</span>06-23 17:00:46.250   1548   1548 D native_looper_test: [Thread=1548] writeSignal 2
+<span class="ln">8</span>06-23 17:00:46.250   1548   1548 D native_looper_test: [Thread=1548] handler fd=6, events=2, callbackCount=1
+</code></pre></div><h1 id="2源码解析">2源码解析</h1>
+<h2 id="21关于looper的数据结构">2.1关于Looper的数据结构</h2>
+<p>直接查看下面的图</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/handler/Looper/Looper_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/handler/Looper/Looper_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Message </code></td>
+<td>消息的载体，代表了一个事件，通过一个<code>what</code>字段来标记是什么事件</td>
+</tr>
+<tr>
+<td><code>MessageHandler/WeakMessageHandler</code></td>
+<td>消息处理的接口(基类), 子类通过实现<code>handleMessage</code>来实现特定<code>Message</code>的处理逻辑。<code>WeakMessageHandler</code>包含了一个<code>MessageHandler</code>的弱指针</td>
+</tr>
+<tr>
+<td><code>LooperCallback/SimpleLooperCallback</code></td>
+<td>用于<code>Looper</code>回调，实际上就是保存一个<code>Looper_callbackFunc</code>指针的包装基类。在<code>Looper::addFd()</code>方法添加监测的<code>fd</code>时来设置回调</td>
+</tr>
+</tbody>
+</table>
+<h2 id="22创建looper">2.2创建Looper</h2>
+<h3 id="221直接构造">2.2.1直接构造</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libutils/Looper.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">Looper</span><span class="o">::</span><span class="n">Looper</span><span class="p">(</span><span class="kt">bool</span> <span class="n">allowNonCallbacks</span><span class="p">)</span>
+<span class="ln"> 3</span>    <span class="c1">//参数allowNonCallbacks表明是否可以在Looper_addFd时不提供callback
+</span><span class="ln"> 4</span><span class="c1"></span>    <span class="o">:</span> <span class="n">mAllowNonCallbacks</span><span class="p">(</span><span class="n">allowNonCallbacks</span><span class="p">),</span>
+<span class="ln"> 5</span>      <span class="n">mSendingMessage</span><span class="p">(</span><span class="nb">false</span><span class="p">),</span>
+<span class="ln"> 6</span>      <span class="n">mPolling</span><span class="p">(</span><span class="nb">false</span><span class="p">),</span>
+<span class="ln"> 7</span>      <span class="n">mEpollRebuildRequired</span><span class="p">(</span><span class="nb">false</span><span class="p">),</span>
+<span class="ln"> 8</span>      <span class="n">mNextRequestSeq</span><span class="p">(</span><span class="n">WAKE_EVENT_FD_SEQ</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+<span class="ln"> 9</span>      <span class="n">mResponseIndex</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="ln">10</span>      <span class="n">mNextMessageUptime</span><span class="p">(</span><span class="n">LLONG_MAX</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">11</span>    <span class="n">mWakeEventFd</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="n">eventfd</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">EFD_NONBLOCK</span> <span class="o">|</span> <span class="n">EFD_CLOEXEC</span><span class="p">));</span>
+<span class="ln">12</span>    <span class="n">LOG_ALWAYS_FATAL_IF</span><span class="p">(</span><span class="n">mWakeEventFd</span><span class="p">.</span><span class="n">get</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#34;Could not make wake event fd: %s&#34;</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">13</span>
+<span class="ln">14</span>    <span class="n">AutoMutex</span> <span class="nf">_l</span><span class="p">(</span><span class="n">mLock</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="n">rebuildEpollLocked</span><span class="p">();</span>
+<span class="ln">16</span><span class="p">}</span>
+</code></pre></div><p>Looper的构造函数里主要做两件事情</p>
+<ul>
+<li>调用eventfd(0, EFD_NONBLOCK)返回mWakeEventFd，用于唤醒epoll_wait()</li>
+<li>调用rebuildEpollLocked() 创建epoll 文件描述符，并将mWakeEventFd加入到epoll监听队列中</li>
+</ul>
+<blockquote>
+<p>这里出现了eventfd，简单介绍一下这个函数</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="cp">#include</span> <span class="cpf">&lt;sys/eventfd.h&gt;</span><span class="cp">
+</span><span class="ln">2</span><span class="cp"></span><span class="kt">int</span> <span class="nf">eventfd</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">initval</span><span class="p">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="p">);</span>
+</code></pre></div><ul>
+<li>
+<p>initval</p>
+<p>eventfd()创建了一个“eventfd对象”，它可以被用户空间应用程序用作事件等待/通知机制，也可以被内核用于将事件通知用户空间应用程序。该对象包含一个由内核维护的无符号64位整数(uint64_t)计数器。该计数器使用参数initval中指定的值初始化</p>
+<p><strong>eventfd 是一个计数相关的fd</strong>。计数不为零是有<strong>可读事件</strong>发生，<code>read</code> 之后计数会清零，<code>write</code> 则会递增计数器，因此通常初始化为0。</p>
+</li>
+<li>
+<p>flags</p>
+<p><strong>EFD_CLOEXEC</strong>
+在新的文件描述符上设置关闭执行(FD_CLOEXEC)标志。</p>
+<p><strong>EFD_NONBLOCK</strong>
+在新打开的文件描述上设置O_NONBLOCK文件状态标志。使用这个标志可以节省对fcntl(2)的额外调用来达到相同的结果。</p>
+<p><strong>EFD_SEMAPHORE</strong>
+为从新的文件描述符读取提供类似信号量的语义。</p>
+</li>
+<li>
+<p>返回值</p>
+<p>作为它的返回值，eventfd()返回一个新的文件描述符，可以用来引用eventfd对象。</p>
+</li>
+</ul>
+</blockquote>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libutils/Looper.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">constexpr</span> <span class="kt">uint64_t</span> <span class="n">WAKE_EVENT_FD_SEQ</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln"> 3</span>
+<span class="ln"> 4</span><span class="kt">void</span> <span class="n">Looper</span><span class="o">::</span><span class="n">rebuildEpollLocked</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 5</span>    <span class="c1">// Close old epoll instance if we have one.
+</span><span class="ln"> 6</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">mEpollFd</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 7</span>        <span class="n">mEpollFd</span><span class="p">.</span><span class="n">reset</span><span class="p">();</span>
+<span class="ln"> 8</span>    <span class="p">}</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span>    <span class="c1">// 分配新的epoll实例并注册WakeEventFd
+</span><span class="ln">11</span><span class="c1"></span>    <span class="n">mEpollFd</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="n">epoll_create1</span><span class="p">(</span><span class="n">EPOLL_CLOEXEC</span><span class="p">));</span>
+<span class="ln">12</span>    <span class="n">LOG_ALWAYS_FATAL_IF</span><span class="p">(</span><span class="n">mEpollFd</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#34;Could not create epoll instance: %s&#34;</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">13</span>	<span class="c1">//添加了第一个fd到mEpollFd中
+</span><span class="ln">14</span><span class="c1"></span>    <span class="n">epoll_event</span> <span class="n">wakeEvent</span> <span class="o">=</span> <span class="n">createEpollEvent</span><span class="p">(</span><span class="n">EPOLLIN</span><span class="p">,</span> <span class="n">WAKE_EVENT_FD_SEQ</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="n">epoll_ctl</span><span class="p">(</span><span class="n">mEpollFd</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">EPOLL_CTL_ADD</span><span class="p">,</span> <span class="n">mWakeEventFd</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="o">&amp;</span><span class="n">wakeEvent</span><span class="p">);</span>
+<span class="ln">16</span>    <span class="n">LOG_ALWAYS_FATAL_IF</span><span class="p">(</span><span class="n">result</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#34;Could not add wake event fd to epoll instance: %s&#34;</span><span class="p">,</span>
+<span class="ln">17</span>                        <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">18</span>	<span class="c1">//std::unordered_map&lt;SequenceNumber, Request&gt; mRequests;
+</span><span class="ln">19</span><span class="c1"></span>    <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="p">[</span><span class="n">seq</span><span class="p">,</span> <span class="n">request</span><span class="p">]</span> <span class="o">:</span> <span class="n">mRequests</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">20</span>        <span class="n">epoll_event</span> <span class="n">eventItem</span> <span class="o">=</span> <span class="n">createEpollEvent</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">getEpollEvents</span><span class="p">(),</span> <span class="n">seq</span><span class="p">);</span>
+<span class="ln">21</span>
+<span class="ln">22</span>        <span class="kt">int</span> <span class="n">epollResult</span> <span class="o">=</span> <span class="n">epoll_ctl</span><span class="p">(</span><span class="n">mEpollFd</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">EPOLL_CTL_ADD</span><span class="p">,</span> <span class="n">request</span><span class="p">.</span><span class="n">fd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">eventItem</span><span class="p">);</span>
+<span class="ln">23</span>        <span class="k">if</span> <span class="p">(</span><span class="n">epollResult</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">24</span>            <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;Error adding epoll events for fd %d while rebuilding epoll set: %s&#34;</span><span class="p">,</span>
+<span class="ln">25</span>                  <span class="n">request</span><span class="p">.</span><span class="n">fd</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">26</span>        <span class="p">}</span>
+<span class="ln">27</span>    <span class="p">}</span>
+<span class="ln">28</span><span class="p">}</span>
+<span class="ln">29</span>
+<span class="ln">30</span><span class="n">epoll_event</span> <span class="nf">createEpollEvent</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">events</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">seq</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">31</span>    <span class="k">return</span> <span class="p">{.</span><span class="n">events</span> <span class="o">=</span> <span class="n">events</span><span class="p">,</span> <span class="p">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">{.</span><span class="n">u64</span> <span class="o">=</span> <span class="n">seq</span><span class="p">}};</span>
+<span class="ln">32</span><span class="p">}</span>
+</code></pre></div><p>这里涉及到IO多路复用的epoll机制</p>
+<blockquote>
+<p><strong>关于epoll机制</strong></p>
+<p>关于具体epoll，请参考https://blog.csdn.net/bandaoyu/article/details/89531493</p>
+<ul>
+<li>
+<p>epoll高效的核心是：</p>
+<p>1、用户态和内核太共享内存mmap</p>
+<p>2、数据到来采用事件通知机制（而不需要轮询）</p>
+</li>
+<li>
+<p>epoll的接口</p>
+<p>epoll的接口非常简单，一共就三个函数：</p>
+</li>
+</ul>
+<ol>
+<li>
+<p><strong>epoll_create系统调用</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">int</span> <span class="nf">epoll_create</span><span class="p">(</span><span class="kt">int</span> <span class="n">size</span><span class="p">);</span>
+</code></pre></div><p>epoll_create返回一个句柄，之后 epoll的使用都将依靠这个句柄来标识。参数 size是告诉 epoll所要处理的大致事件数目。不再使用 epoll时，必须调用 close关闭这个句柄。</p>
+<p>注意：size参数只是告诉内核这个 epoll对象会处理的事件大致数目，而不是能够处理的事件的最大个数。在 Linux最新的一些内核版本的实现中，这个 size参数没有任何意义。</p>
+</li>
+<li>
+<p><strong>epoll_ctl系统调用</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">int</span> <span class="nf">epoll_ctl</span><span class="p">(</span><span class="kt">int</span> <span class="n">epfd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">op</span><span class="p">,</span> <span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="k">struct</span> <span class="n">epoll_event</span><span class="o">*</span> <span class="n">event</span><span class="p">);</span>
+</code></pre></div><p>epoll_ctl向 epoll对象中添加、修改或者删除感兴趣的事件，返回0表示成功，否则返回–1，此时需要根据errno错误码判断错误类型。epoll_wait方法返回的事件必然是通过 epoll_ctl添加到 epoll中的。</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>epfd</code></td>
+<td><code>epoll_create</code>返回的句柄</td>
+</tr>
+<tr>
+<td><code>op</code></td>
+<td><code>EPOLL_CTL_ADD</code>：注册新的<code>fd</code>到<code>epfd</code>中<!-- raw HTML omitted --><code>EPOLL_CTL_MOD</code>：修改已经注册的<code>fd</code>的监听事件<!-- raw HTML omitted --><code>EPOLL_CTL_DEL</code>：从<code>epfd</code>中删除一个<code>fd</code></td>
+</tr>
+<tr>
+<td><code>fd</code></td>
+<td>需要监听的<code>socket</code>句柄<code>fd</code></td>
+</tr>
+<tr>
+<td><code>event</code></td>
+<td>告诉内核需要监听什么事的结构体</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>struct epoll_event结构如下所示</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="n">epoll_data_t</span><span class="p">;</span>
+<span class="ln">2</span>
+<span class="ln">3</span><span class="k">struct</span> <span class="n">epoll_event</span> <span class="p">{</span>
+<span class="ln">4</span> <span class="n">__uint32_t</span> <span class="n">events</span><span class="p">;</span> <span class="cm">/* Epoll events */</span>
+<span class="ln">5</span> <span class="n">epoll_data_t</span> <span class="n">data</span><span class="p">;</span> <span class="cm">/* User data variable */</span>
+<span class="ln">6</span><span class="p">};</span>
+</code></pre></div><p>events表示时间，具体时间再定义的列表中选取</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>EPOLLIN </code></td>
+<td>表示对应的文件描述符可以读（包括对端SOCKET正常关闭）</td>
+</tr>
+<tr>
+<td><code>EPOLLOUT</code></td>
+<td>表示对应的文件描述符可以写</td>
+</tr>
+<tr>
+<td><code>EPOLLPRI</code></td>
+<td>表示对应的文件描述符有紧急的数据可读（这里应该表示有带外数据到来</td>
+</tr>
+<tr>
+<td><code>EPOLLERR</code></td>
+<td>表示对应的文件描述符发生错误</td>
+</tr>
+<tr>
+<td><code>EPOLLHUP</code></td>
+<td>表示对应的文件描述符被挂断</td>
+</tr>
+<tr>
+<td><code>EPOLLONESHOT</code></td>
+<td>只监听一次事件，当监听完这次事件之后，如果还需要继续监听这个<code>socket</code>的话，需要再次把这个<code>socket</code>加入到<code>EPOLL</code>队列里</td>
+</tr>
+<tr>
+<td><code>EPOLLET</code></td>
+<td>将<code>EPOLL</code>设为边缘触发<code>(Edge Triggered)</code>模式，这是相对于水平触发<code>(Level Triggered)</code>来说的</td>
+</tr>
+</tbody>
+</table>
+<p>data成员是一个epoll_data联合，其定义如下</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="k">typedef</span> <span class="k">union</span> <span class="n">epoll_data</span> <span class="p">{</span>
+<span class="ln">2</span> <span class="kt">void</span> <span class="o">*</span><span class="n">ptr</span><span class="p">;</span>
+<span class="ln">3</span> <span class="kt">int</span> <span class="n">fd</span><span class="p">;</span>
+<span class="ln">4</span> <span class="kt">uint32_t</span> <span class="n">u32</span><span class="p">;</span>
+<span class="ln">5</span> <span class="kt">uint64_t</span> <span class="n">u64</span><span class="p">;</span>
+<span class="ln">6</span><span class="p">}</span> <span class="n">epoll_data_t</span><span class="p">;</span>
+</code></pre></div></blockquote>
+</li>
+<li>
+<p><strong>int epoll_wait系统调用</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">int</span> <span class="nf">epoll_wait</span><span class="p">(</span><span class="kt">int</span> <span class="n">epfd</span><span class="p">,</span><span class="k">struct</span> <span class="n">epoll_event</span><span class="o">*</span> <span class="n">events</span><span class="p">,</span><span class="kt">int</span> <span class="n">maxevents</span><span class="p">,</span><span class="kt">int</span> <span class="n">timeout</span><span class="p">);</span>
+</code></pre></div><p>收集在 epoll监控的事件中已经发生的事件，如果 epoll中没有任何一个事件发生，则最多等待timeout毫秒后返回。epoll_wait的返回值表示当前发生的事件个数，如果返回0，则表示本次调用中没有事件发生，如果返回–1，则表示出现错误，需要检查 errno错误码判断错误类型。</p>
+<table>
+<thead>
+<tr>
+<th>解释</th>
+<th>名称</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>epoll</code>的描述符</td>
+<td><code>epfd</code></td>
+</tr>
+<tr>
+<td>分配好的 <code>epoll_event</code>结构体数组，<code>epoll</code>将会把发生的事件复制到 <code>events</code>数组中（<code>events</code>不可以是空指针，内核只负责把数据复制到这个<code> events</code>数组中，不会去帮助我们在用户态中分配内存。内核这种做法效率很高）</td>
+<td><code>events</code></td>
+</tr>
+<tr>
+<td>表示本次可以返回的最大事件数目，通常 <code>maxevents</code>参数与预分配的<code>events</code>数组的大小是相等的</td>
+<td><code>maxevents</code></td>
+</tr>
+<tr>
+<td>表示在没有检测到事件发生时最多等待的时间（单位为毫秒）。一般如果网络主循环是单独的线程的话，可以用-1来等，这样可以保证一些效率，如果是和主逻辑在同一个线程的话，则可以用0来保证主循环的效率<!-- raw HTML omitted -->0的时候表示马上返回<!-- raw HTML omitted -->-1的时候表示一直等下去，直到有事件返回<!-- raw HTML omitted -->为任意正整数的时候表示等这么长的时间，如果一直没有事件，则返回</td>
+<td><code>timeout</code></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ol>
+</blockquote>
+<h3 id="222通过prepare创建">2.2.2通过prepare创建</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libutils/Looper.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">sp</span><span class="o">&lt;</span><span class="n">Looper</span><span class="o">&gt;</span> <span class="n">Looper</span><span class="o">::</span><span class="n">prepare</span><span class="p">(</span><span class="kt">int</span> <span class="n">opts</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="c1">//PREPARE_ALLOW_NON_CALLBACKS = 1
+</span><span class="ln"> 4</span><span class="c1"></span>    <span class="kt">bool</span> <span class="n">allowNonCallbacks</span> <span class="o">=</span> <span class="n">opts</span> <span class="o">&amp;</span> <span class="n">PREPARE_ALLOW_NON_CALLBACKS</span><span class="p">;</span>
+<span class="ln"> 5</span>    <span class="n">sp</span><span class="o">&lt;</span><span class="n">Looper</span><span class="o">&gt;</span> <span class="n">looper</span> <span class="o">=</span> <span class="n">Looper</span><span class="o">::</span><span class="n">getForThread</span><span class="p">();</span>
+<span class="ln"> 6</span>    <span class="k">if</span> <span class="p">(</span><span class="n">looper</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 7</span>        <span class="n">looper</span> <span class="o">=</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">Looper</span><span class="o">&gt;::</span><span class="n">make</span><span class="p">(</span><span class="n">allowNonCallbacks</span><span class="p">);</span>
+<span class="ln"> 8</span>        <span class="n">Looper</span><span class="o">::</span><span class="n">setForThread</span><span class="p">(</span><span class="n">looper</span><span class="p">);</span>
+<span class="ln"> 9</span>    <span class="p">}</span>
+<span class="ln">10</span>    <span class="k">if</span> <span class="p">(</span><span class="n">looper</span><span class="o">-&gt;</span><span class="n">getAllowNonCallbacks</span><span class="p">()</span> <span class="o">!=</span> <span class="n">allowNonCallbacks</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">11</span>        <span class="n">ALOGW</span><span class="p">(</span><span class="s">&#34;Looper already prepared for this thread with a different value for the &#34;</span>
+<span class="ln">12</span>                <span class="s">&#34;LOOPER_PREPARE_ALLOW_NON_CALLBACKS option.&#34;</span><span class="p">);</span>
+<span class="ln">13</span>    <span class="p">}</span>
+<span class="ln">14</span>    <span class="k">return</span> <span class="n">looper</span><span class="p">;</span>
+<span class="ln">15</span><span class="p">}</span>
+</code></pre></div><p>这里的创建跟Java层的Handler类型，也是先判断当前线程是否存在Looper，没有Looper就和当前线程绑定一个Looper</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libutils/Looper.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="n">pthread_once_t</span> <span class="n">gTLSOnce</span> <span class="o">=</span> <span class="n">PTHREAD_ONCE_INIT</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="k">static</span> <span class="n">pthread_key_t</span> <span class="n">gTLSKey</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 4</span><span class="kt">void</span> <span class="n">Looper</span><span class="o">::</span><span class="n">initTLSKey</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 5</span>    <span class="kt">int</span> <span class="n">error</span> <span class="o">=</span> <span class="n">pthread_key_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">gTLSKey</span><span class="p">,</span> <span class="n">threadDestructor</span><span class="p">);</span>
+<span class="ln"> 6</span>    <span class="n">LOG_ALWAYS_FATAL_IF</span><span class="p">(</span><span class="n">error</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#34;Could not allocate TLS key: %s&#34;</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">error</span><span class="p">));</span>
+<span class="ln"> 7</span><span class="p">}</span>
+<span class="ln"> 8</span><span class="c1">//现成结束的时候，会调用到对应的threadDestructor，并释放其中对应的Looper指针
+</span><span class="ln"> 9</span><span class="c1"></span><span class="kt">void</span> <span class="n">Looper</span><span class="o">::</span><span class="n">threadDestructor</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">st</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">10</span>    <span class="n">Looper</span><span class="o">*</span> <span class="k">const</span> <span class="n">self</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">Looper</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">st</span><span class="p">);</span>
+<span class="ln">11</span>    <span class="k">if</span> <span class="p">(</span><span class="n">self</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">12</span>        <span class="n">self</span><span class="o">-&gt;</span><span class="n">decStrong</span><span class="p">((</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="n">threadDestructor</span><span class="p">);</span>
+<span class="ln">13</span>    <span class="p">}</span>
+<span class="ln">14</span><span class="p">}</span>
+<span class="ln">15</span>
+<span class="ln">16</span><span class="n">sp</span><span class="o">&lt;</span><span class="n">Looper</span><span class="o">&gt;</span> <span class="n">Looper</span><span class="o">::</span><span class="n">getForThread</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">17</span>    <span class="c1">//这个initTLSKey有且仅会执行一次
+</span><span class="ln">18</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="n">pthread_once</span><span class="p">(</span><span class="o">&amp;</span> <span class="n">gTLSOnce</span><span class="p">,</span> <span class="n">initTLSKey</span><span class="p">);</span>
+<span class="ln">19</span>    <span class="n">LOG_ALWAYS_FATAL_IF</span><span class="p">(</span><span class="n">result</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#34;pthread_once failed&#34;</span><span class="p">);</span>
+<span class="ln">20</span>	<span class="c1">//从这里可以得知pthread_key_create对应传入的函数指针的void*为Looper*
+</span><span class="ln">21</span><span class="c1"></span>    <span class="n">Looper</span><span class="o">*</span> <span class="n">looper</span> <span class="o">=</span> <span class="p">(</span><span class="n">Looper</span><span class="o">*</span><span class="p">)</span><span class="n">pthread_getspecific</span><span class="p">(</span><span class="n">gTLSKey</span><span class="p">);</span>
+<span class="ln">22</span>    <span class="k">return</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">Looper</span><span class="o">&gt;::</span><span class="n">fromExisting</span><span class="p">(</span><span class="n">looper</span><span class="p">);</span>
+<span class="ln">23</span><span class="p">}</span>
+</code></pre></div><blockquote>
+<p>1）关于pthread_once解析，<strong>第二个参数的函数指针会被执行有且仅有一次</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">int</span> <span class="nf">pthread_once</span><span class="p">(</span><span class="n">pthread_once_t</span> <span class="o">*</span><span class="n">once_control</span><span class="p">,</span> <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">init_routine</span><span class="p">)(</span><span class="kt">void</span><span class="p">));</span>
+</code></pre></div><p>pthread_once的作用为，在给定once_control的情况下，在整个程序中仅调用一次init_routine（在多线程中具体哪一个线程执行不一定）。如果再次调用，pthread_once将不会调用init_routine。</p>
+<p>该函数执行成功返回0，执行失败返回错误码。</p>
+<p>2）另外这里涉及到线程存储的用法，具体可以点击<a href="https://blog.csdn.net/qq_42956653/article/details/126129532">这里</a></p>
+<p>调用 pthread_key_create() 来创建一个类型为 pthread_key_t 类型的变量。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">int</span> <span class="nf">pthread_key_create</span><span class="p">(</span><span class="n">pthread_key_t</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">destr_function</span><span class="p">)</span> <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">));</span>
+</code></pre></div><p>该函数有两个参数，第一个参数就是上面声明的 pthread_key_t 变量，第二个参数是一个清理函数，用来在线程释放该线程存储的时候被调用。该函数指针可以设成 NULL ，这样系统将调用默认的清理函数。<strong>那么在线程执行完毕退出时，已key指向的内容为入参调用destr_function(),释放分配的缓冲区以及其他数据</strong>。</p>
+<p><strong>key是全局变量，这个全局变量可以认为是线程内部的私有空间。不论哪个线程调用了pthread_key_create，所创建的key都是所有的线程都可以访问，每个线程根据自己的需求往key中set不同的值，这就形成了同名而不同值，即同key不同value，一键多值。</strong></p>
+<p>当线程中需要存储特殊值的时候，可以调用 pthread_setspcific() 。该函数有两个参数，第一个为前面声明的 pthread_key_t 变量，第二个为 void* 变量，这样你可以存储任何类型的值。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">int</span> <span class="nf">pthread_setspecific</span><span class="p">(</span><span class="n">pthread_key_t</span> <span class="n">key</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">pointer</span><span class="p">);</span>
+</code></pre></div><p>该接口将指针pointer的值(指针值而非其指向的内容)与key相关联，用pthread_setspecific为一个键指定新的线程数据时，线程必须释放原有的数据用以回收空间。<strong>这个pointer参数会正好对应上面pthread_key_create函数中第二个函数指针参数的void</strong>*。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">void</span> <span class="o">*</span> <span class="nf">pthread_getspecific</span><span class="p">(</span><span class="n">pthread_key_t</span> <span class="n">key</span><span class="p">);</span>
+</code></pre></div><p>读函数就是将与key关联的数据val读出来，数据类型为void * ，所有可以指向任何类型的数据。通过上面我们得知，数据存在一个32 * 32的二维数组中，所以访问的时候，也是通过计算key值得到数据的位置再返回其内容的</p>
+</blockquote>
+<p>设置线程</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libutils/Looper.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span> <span class="n">Looper</span><span class="o">::</span><span class="n">setForThread</span><span class="p">(</span><span class="k">const</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">Looper</span><span class="o">&gt;&amp;</span> <span class="n">looper</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="n">sp</span><span class="o">&lt;</span><span class="n">Looper</span><span class="o">&gt;</span> <span class="n">old</span> <span class="o">=</span> <span class="n">getForThread</span><span class="p">();</span> <span class="c1">// also has side-effect of initializing TLS
+</span><span class="ln"> 4</span><span class="c1"></span>
+<span class="ln"> 5</span>    <span class="k">if</span> <span class="p">(</span><span class="n">looper</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 6</span>        <span class="n">looper</span><span class="o">-&gt;</span><span class="n">incStrong</span><span class="p">((</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="n">threadDestructor</span><span class="p">);</span>
+<span class="ln"> 7</span>    <span class="p">}</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span>    <span class="n">pthread_setspecific</span><span class="p">(</span><span class="n">gTLSKey</span><span class="p">,</span> <span class="n">looper</span><span class="p">.</span><span class="n">get</span><span class="p">());</span>
+<span class="ln">10</span>
+<span class="ln">11</span>    <span class="k">if</span> <span class="p">(</span><span class="n">old</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">12</span>        <span class="n">old</span><span class="o">-&gt;</span><span class="n">decStrong</span><span class="p">((</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="n">threadDestructor</span><span class="p">);</span>
+<span class="ln">13</span>    <span class="p">}</span>
+<span class="ln">14</span><span class="p">}</span>
+</code></pre></div><p>这个函数的意义，就是以gTLSKey为key，以传入的Looper的sp对象为value进行数据绑定，即完成<strong>当前线程和Looper对象的绑定</strong>，然后当线程执行完毕退出的时候，会调用对应的threadDestructor函数去释放对应绑定的Looper的sp对象。</p>
+<h2 id="23发送消息">2.3发送消息</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libutils/Looper.cpp
+</span><span class="ln"> 2</span><span class="c1">//1.直接发消息
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kt">void</span> <span class="n">Looper</span><span class="o">::</span><span class="n">sendMessage</span><span class="p">(</span><span class="k">const</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">MessageHandler</span><span class="o">&gt;&amp;</span> <span class="n">handler</span><span class="p">,</span> <span class="k">const</span> <span class="n">Message</span><span class="o">&amp;</span> <span class="n">message</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="n">nsecs_t</span> <span class="n">now</span> <span class="o">=</span> <span class="n">systemTime</span><span class="p">(</span><span class="n">SYSTEM_TIME_MONOTONIC</span><span class="p">);</span>
+<span class="ln"> 5</span>    <span class="n">sendMessageAtTime</span><span class="p">(</span><span class="n">now</span><span class="p">,</span> <span class="n">handler</span><span class="p">,</span> <span class="n">message</span><span class="p">);</span>
+<span class="ln"> 6</span><span class="p">}</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span><span class="c1">//2.延时发消息
+</span><span class="ln"> 9</span><span class="c1"></span><span class="kt">void</span> <span class="n">Looper</span><span class="o">::</span><span class="n">sendMessageDelayed</span><span class="p">(</span><span class="n">nsecs_t</span> <span class="n">uptimeDelay</span><span class="p">,</span> <span class="k">const</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">MessageHandler</span><span class="o">&gt;&amp;</span> <span class="n">handler</span><span class="p">,</span>
+<span class="ln">10</span>                                <span class="k">const</span> <span class="n">Message</span><span class="o">&amp;</span> <span class="n">message</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">11</span>    <span class="n">nsecs_t</span> <span class="n">now</span> <span class="o">=</span> <span class="n">systemTime</span><span class="p">(</span><span class="n">SYSTEM_TIME_MONOTONIC</span><span class="p">);</span>
+<span class="ln">12</span>    <span class="n">sendMessageAtTime</span><span class="p">(</span><span class="n">now</span> <span class="o">+</span> <span class="n">uptimeDelay</span><span class="p">,</span> <span class="n">handler</span><span class="p">,</span> <span class="n">message</span><span class="p">);</span>
+<span class="ln">13</span><span class="p">}</span>
+</code></pre></div><p>最终都会调用到sendMessageAtTime</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libutils/Looper.cpp
+</span><span class="ln"> 2</span><span class="c1">//这里的Vector不是stl中的vector，这个是Android自定义的数组，并且是排序好的
+</span><span class="ln"> 3</span><span class="c1"></span><span class="n">Vector</span><span class="o">&lt;</span><span class="n">MessageEnvelope</span><span class="o">&gt;</span> <span class="n">mMessageEnvelopes</span><span class="p">;</span>
+<span class="ln"> 4</span><span class="kt">void</span> <span class="n">Looper</span><span class="o">::</span><span class="n">sendMessageAtTime</span><span class="p">(</span><span class="n">nsecs_t</span> <span class="n">uptime</span><span class="p">,</span> <span class="k">const</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">MessageHandler</span><span class="o">&gt;&amp;</span> <span class="n">handler</span><span class="p">,</span>
+<span class="ln"> 5</span>        <span class="k">const</span> <span class="n">Message</span><span class="o">&amp;</span> <span class="n">message</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 6</span>    <span class="n">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="p">{</span> <span class="c1">// acquire lock
+</span><span class="ln"> 8</span><span class="c1"></span>        <span class="n">AutoMutex</span> <span class="nf">_l</span><span class="p">(</span><span class="n">mLock</span><span class="p">);</span>
+<span class="ln"> 9</span>		
+<span class="ln">10</span>        <span class="n">size_t</span> <span class="n">messageCount</span> <span class="o">=</span> <span class="n">mMessageEnvelopes</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
+<span class="ln">11</span>        <span class="k">while</span> <span class="p">(</span><span class="n">i</span> <span class="o">&lt;</span> <span class="n">messageCount</span> <span class="o">&amp;&amp;</span> <span class="n">uptime</span> <span class="o">&gt;=</span> <span class="n">mMessageEnvelopes</span><span class="p">.</span><span class="n">itemAt</span><span class="p">(</span><span class="n">i</span><span class="p">).</span><span class="n">uptime</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">12</span>            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">13</span>        <span class="p">}</span>
+<span class="ln">14</span>		<span class="c1">//实际上会把消息根据时间优先级去插入到对应的数组中去
+</span><span class="ln">15</span><span class="c1"></span>        <span class="n">MessageEnvelope</span> <span class="nf">messageEnvelope</span><span class="p">(</span><span class="n">uptime</span><span class="p">,</span> <span class="n">handler</span><span class="p">,</span> <span class="n">message</span><span class="p">);</span>
+<span class="ln">16</span>        <span class="n">mMessageEnvelopes</span><span class="p">.</span><span class="n">insertAt</span><span class="p">(</span><span class="n">messageEnvelope</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+<span class="ln">17</span>
+<span class="ln">18</span>		<span class="c1">//如果loop当前正在发送消息，那么我们可以跳过对wake()的调用
+</span><span class="ln">19</span><span class="c1"></span>        <span class="c1">//对应后面的轮询机制的操作，循环机制已经在处理消息的时候，不需要再次唤醒
+</span><span class="ln">20</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="n">mSendingMessage</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">21</span>            <span class="k">return</span><span class="p">;</span>
+<span class="ln">22</span>        <span class="p">}</span>
+<span class="ln">23</span>    <span class="p">}</span> <span class="c1">// release lock
+</span><span class="ln">24</span><span class="c1"></span>
+<span class="ln">25</span>    <span class="c1">//只有当我们在头部排队新消息时，才会唤醒投票循环
+</span><span class="ln">26</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">27</span>        <span class="n">wake</span><span class="p">();</span>
+<span class="ln">28</span>    <span class="p">}</span>
+<span class="ln">29</span><span class="p">}</span>
+</code></pre></div><p>根据uptime在mMessageEnvelopes遍历，找到合适的位置，并将message 封装成MessageEnvlope，插入找到的位置上。
+然后决定是否要唤醒Looper：</p>
+<ol>
+<li>如果Looper此时正在派发message，则不需要wakeup Looper。因为这一次looper处理完消息之后，会重新估算下一次epoll_wait() 的wakeup时间。</li>
+<li>如果是插在消息队列的头部，则需要立即wakeup Looper</li>
+</ol>
+<p>这里的wake的作用，暂时按下不表，在下面的轮询机制会得到解释</p>
+<h2 id="24注册监听fd的方法">2.4注册监听fd的方法</h2>
+<p>根据上面demo实际上调用的是int addFd(int fd, int ident, int events, Looper_callbackFunc callback, void* data);</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libutils/Looper.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">enum</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="n">POLL_WAKE</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+<span class="ln"> 4</span>    <span class="n">POLL_CALLBACK</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+<span class="ln"> 5</span>    <span class="n">POLL_TIMEOUT</span> <span class="o">=</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span>
+<span class="ln"> 6</span>    <span class="n">POLL_ERROR</span> <span class="o">=</span> <span class="o">-</span><span class="mi">4</span><span class="p">,</span>
+<span class="ln"> 7</span><span class="p">};</span>
+<span class="ln"> 8</span><span class="c1">//这个mRequests不做排序，可以认为是k-v的键值对
+</span><span class="ln"> 9</span><span class="c1"></span><span class="n">std</span><span class="o">::</span><span class="n">unordered_map</span><span class="o">&lt;</span><span class="n">SequenceNumber</span><span class="p">,</span> <span class="n">Request</span><span class="o">&gt;</span> <span class="n">mRequests</span><span class="p">;</span>
+<span class="ln">10</span><span class="c1">//这里将自定义的demo中的callback封装成SimpleLooperCallback的callback
+</span><span class="ln">11</span><span class="c1"></span><span class="kt">int</span> <span class="n">Looper</span><span class="o">::</span><span class="n">addFd</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">ident</span><span class="p">,</span> <span class="kt">int</span> <span class="n">events</span><span class="p">,</span> <span class="n">Looper_callbackFunc</span> <span class="n">callback</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">data</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">12</span>    <span class="n">sp</span><span class="o">&lt;</span><span class="n">SimpleLooperCallback</span><span class="o">&gt;</span> <span class="n">looperCallback</span><span class="p">;</span>
+<span class="ln">13</span>    <span class="k">if</span> <span class="p">(</span><span class="n">callback</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">14</span>        <span class="n">looperCallback</span> <span class="o">=</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">SimpleLooperCallback</span><span class="o">&gt;::</span><span class="n">make</span><span class="p">(</span><span class="n">callback</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="p">}</span>
+<span class="ln">16</span>    <span class="k">return</span> <span class="nf">addFd</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">ident</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">looperCallback</span><span class="p">,</span> <span class="n">data</span><span class="p">);</span>
+<span class="ln">17</span><span class="p">}</span>
+<span class="ln">18</span>
+<span class="ln">19</span><span class="kt">int</span> <span class="n">Looper</span><span class="o">::</span><span class="n">addFd</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">ident</span><span class="p">,</span> <span class="kt">int</span> <span class="n">events</span><span class="p">,</span> <span class="k">const</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">LooperCallback</span><span class="o">&gt;&amp;</span> <span class="n">callback</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">data</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">20</span>    <span class="c1">//可能传入的callback为nullptr
+</span><span class="ln">21</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">callback</span><span class="p">.</span><span class="n">get</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln">22</span>        <span class="k">if</span> <span class="p">(</span><span class="o">!</span> <span class="n">mAllowNonCallbacks</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">23</span>            <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;Invalid attempt to set NULL callback but not allowed for this looper.&#34;</span><span class="p">);</span>
+<span class="ln">24</span>            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">25</span>        <span class="p">}</span>
+<span class="ln">26</span>
+<span class="ln">27</span>        <span class="k">if</span> <span class="p">(</span><span class="n">ident</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">28</span>            <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;Invalid attempt to set NULL callback with ident &lt; 0.&#34;</span><span class="p">);</span>
+<span class="ln">29</span>            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">30</span>        <span class="p">}</span>
+<span class="ln">31</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">32</span>        <span class="c1">//从传入的0变成传入的-2
+</span><span class="ln">33</span><span class="c1"></span>        <span class="n">ident</span> <span class="o">=</span> <span class="n">POLL_CALLBACK</span><span class="p">;</span>
+<span class="ln">34</span>    <span class="p">}</span>
+<span class="ln">35</span>
+<span class="ln">36</span>    <span class="p">{</span> <span class="c1">// acquire lock
+</span><span class="ln">37</span><span class="c1"></span>        <span class="n">AutoMutex</span> <span class="nf">_l</span><span class="p">(</span><span class="n">mLock</span><span class="p">);</span>
+<span class="ln">38</span>        <span class="c1">// There is a sequence number reserved for the WakeEventFd.
+</span><span class="ln">39</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="n">mNextRequestSeq</span> <span class="o">==</span> <span class="n">WAKE_EVENT_FD_SEQ</span><span class="p">)</span> <span class="n">mNextRequestSeq</span><span class="o">++</span><span class="p">;</span>
+<span class="ln">40</span>        <span class="k">const</span> <span class="n">SequenceNumber</span> <span class="n">seq</span> <span class="o">=</span> <span class="n">mNextRequestSeq</span><span class="o">++</span><span class="p">;</span>
+<span class="ln">41</span>
+<span class="ln">42</span>        <span class="n">Request</span> <span class="n">request</span><span class="p">;</span>
+<span class="ln">43</span>        <span class="n">request</span><span class="p">.</span><span class="n">fd</span> <span class="o">=</span> <span class="n">fd</span><span class="p">;</span>
+<span class="ln">44</span>        <span class="n">request</span><span class="p">.</span><span class="n">ident</span> <span class="o">=</span> <span class="n">ident</span><span class="p">;</span>
+<span class="ln">45</span>        <span class="n">request</span><span class="p">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">events</span><span class="p">;</span>
+<span class="ln">46</span>        <span class="n">request</span><span class="p">.</span><span class="n">callback</span> <span class="o">=</span> <span class="n">callback</span><span class="p">;</span>
+<span class="ln">47</span>        <span class="n">request</span><span class="p">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">;</span>
+<span class="ln">48</span>		<span class="c1">//通过传入的events和序列号来获取fd相关的eventItem
+</span><span class="ln">49</span><span class="c1"></span>        <span class="n">epoll_event</span> <span class="n">eventItem</span> <span class="o">=</span> <span class="n">createEpollEvent</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">getEpollEvents</span><span class="p">(),</span> <span class="n">seq</span><span class="p">);</span>
+<span class="ln">50</span>        <span class="k">auto</span> <span class="n">seq_it</span> <span class="o">=</span> <span class="n">mSequenceNumberByFd</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
+<span class="ln">51</span>        <span class="k">if</span> <span class="p">(</span><span class="n">seq_it</span> <span class="o">==</span> <span class="n">mSequenceNumberByFd</span><span class="p">.</span><span class="n">end</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln">52</span>            <span class="c1">//在缓存中没有找到，就添加一个新的eventItem
+</span><span class="ln">53</span><span class="c1"></span>            <span class="kt">int</span> <span class="n">epollResult</span> <span class="o">=</span> <span class="n">epoll_ctl</span><span class="p">(</span><span class="n">mEpollFd</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">EPOLL_CTL_ADD</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">eventItem</span><span class="p">);</span>
+<span class="ln">54</span>            <span class="k">if</span> <span class="p">(</span><span class="n">epollResult</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">55</span>                <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;Error adding epoll events for fd %d: %s&#34;</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">56</span>                <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">57</span>            <span class="p">}</span>
+<span class="ln">58</span>            <span class="c1">//并且将封装好的request和序列号seq（第一个fd的seq为3）封装成新的mRequests
+</span><span class="ln">59</span><span class="c1"></span>            <span class="n">mRequests</span><span class="p">.</span><span class="n">emplace</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span> <span class="n">request</span><span class="p">);</span>
+<span class="ln">60</span>            <span class="n">mSequenceNumberByFd</span><span class="p">.</span><span class="n">emplace</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">seq</span><span class="p">);</span>
+<span class="ln">61</span>        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">62</span>            <span class="c1">//如果在缓存中找到对应的eventItem，则修改对应的value值
+</span><span class="ln">63</span><span class="c1"></span>            <span class="kt">int</span> <span class="n">epollResult</span> <span class="o">=</span> <span class="n">epoll_ctl</span><span class="p">(</span><span class="n">mEpollFd</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">EPOLL_CTL_MOD</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">eventItem</span><span class="p">);</span>
+<span class="ln">64</span>            <span class="p">...</span>
+<span class="ln">65</span>            <span class="c1">//并且更新对应的seq
+</span><span class="ln">66</span><span class="c1"></span>            <span class="k">const</span> <span class="n">SequenceNumber</span> <span class="n">oldSeq</span> <span class="o">=</span> <span class="n">seq_it</span><span class="o">-&gt;</span><span class="n">second</span><span class="p">;</span>
+<span class="ln">67</span>            <span class="n">mRequests</span><span class="p">.</span><span class="n">erase</span><span class="p">(</span><span class="n">oldSeq</span><span class="p">);</span>
+<span class="ln">68</span>            <span class="n">mRequests</span><span class="p">.</span><span class="n">emplace</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span> <span class="n">request</span><span class="p">);</span>
+<span class="ln">69</span>            <span class="n">seq_it</span><span class="o">-&gt;</span><span class="n">second</span> <span class="o">=</span> <span class="n">seq</span><span class="p">;</span>
+<span class="ln">70</span>        <span class="p">}</span>
+<span class="ln">71</span>    <span class="p">}</span> <span class="c1">// release lock
+</span><span class="ln">72</span><span class="c1"></span>    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">73</span><span class="p">}</span>
+</code></pre></div><h2 id="25轮询机制">2.5轮询机制</h2>
+<p>看到上面无论是发送消息还是注册监听fd，还没有和我们的demo产生关联，这个时候需要我们的轮询机制来让整个Looper动起来。</p>
+<p>demo中启动对应的MyLooperThread现成，根据前文可知threadLoop()返回值为true，说明本身就会一直调用threadLoop。</p>
+<p>其中threadLoop中</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//external/native_looper_test/main.cpp
+</span><span class="ln"> 2</span><span class="c1">//使用Android源码中的Thread，run就会调用threadLoop，如果返回true不断循环调用threadLoop，直到返回false，不再调用
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kt">bool</span> <span class="n">MyLooperThread</span><span class="o">::</span><span class="n">threadLoop</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="k">if</span><span class="p">(</span><span class="n">mLooper</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+<span class="ln"> 5</span>        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="c1">//调用pollOnce里面也会循环处理，底层使用了epoll机制，-1的时候表示一直等下去，直到有事件返回
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="kt">int32_t</span> <span class="n">ret</span> <span class="o">=</span> <span class="n">mLooper</span><span class="o">-&gt;</span><span class="n">pollOnce</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln"> 8</span>    <span class="k">switch</span> <span class="p">(</span><span class="n">ret</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 9</span>        <span class="k">case</span> <span class="n">Looper</span><span class="o">::</span><span class="nl">POLL_WAKE</span><span class="p">:</span>
+<span class="ln">10</span>        <span class="k">case</span> <span class="n">Looper</span><span class="o">::</span><span class="nl">POLL_CALLBACK</span><span class="p">:</span>
+<span class="ln">11</span>            <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">12</span>        <span class="k">case</span> <span class="n">Looper</span><span class="o">::</span><span class="nl">POLL_ERROR</span><span class="p">:</span>
+<span class="ln">13</span>            <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;Looper::POLL_ERROR&#34;</span><span class="p">);</span>
+<span class="ln">14</span>            <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">15</span>        <span class="k">case</span> <span class="n">Looper</span><span class="o">::</span><span class="nl">POLL_TIMEOUT</span><span class="p">:</span>
+<span class="ln">16</span>            <span class="c1">// timeout (should not happen)
+</span><span class="ln">17</span><span class="c1"></span>            <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">18</span>        <span class="k">default</span><span class="o">:</span>
+<span class="ln">19</span>            <span class="c1">// should not happen
+</span><span class="ln">20</span><span class="c1"></span>            <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;Looper::pollOnce() returned unknown status %d&#34;</span><span class="p">,</span> <span class="n">ret</span><span class="p">);</span>
+<span class="ln">21</span>            <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">22</span>    <span class="p">}</span>
+<span class="ln">23</span><span class="p">}</span>
+</code></pre></div><p>pollOnce(-1)</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libutils/Looper.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">enum</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="n">POLL_WAKE</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+<span class="ln"> 4</span>    <span class="n">POLL_CALLBACK</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+<span class="ln"> 5</span>    <span class="n">POLL_TIMEOUT</span> <span class="o">=</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span>
+<span class="ln"> 6</span>    <span class="n">POLL_ERROR</span> <span class="o">=</span> <span class="o">-</span><span class="mi">4</span><span class="p">,</span>
+<span class="ln"> 7</span><span class="p">};</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span><span class="kt">int</span> <span class="nf">pollOnce</span><span class="p">(</span><span class="kt">int</span> <span class="n">timeoutMillis</span><span class="p">,</span> <span class="kt">int</span><span class="o">*</span> <span class="n">outFd</span><span class="p">,</span> <span class="kt">int</span><span class="o">*</span> <span class="n">outEvents</span><span class="p">,</span> <span class="kt">void</span><span class="o">**</span> <span class="n">outData</span><span class="p">);</span>
+<span class="ln">10</span><span class="kr">inline</span> <span class="kt">int</span> <span class="nf">pollOnce</span><span class="p">(</span><span class="kt">int</span> <span class="n">timeoutMillis</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">11</span>    <span class="k">return</span> <span class="n">pollOnce</span><span class="p">(</span><span class="n">timeoutMillis</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">);</span>
+<span class="ln">12</span><span class="p">}</span>
+<span class="ln">13</span><span class="c1">//传入的只有timeoutMillis=-1，其余为nullptr
+</span><span class="ln">14</span><span class="c1"></span><span class="kt">int</span> <span class="n">Looper</span><span class="o">::</span><span class="n">pollOnce</span><span class="p">(</span><span class="kt">int</span> <span class="n">timeoutMillis</span><span class="p">,</span> <span class="kt">int</span><span class="o">*</span> <span class="n">outFd</span><span class="p">,</span> <span class="kt">int</span><span class="o">*</span> <span class="n">outEvents</span><span class="p">,</span> <span class="kt">void</span><span class="o">**</span> <span class="n">outData</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">15</span>    <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">16</span>    <span class="k">for</span> <span class="p">(;;)</span> <span class="p">{</span>
+<span class="ln">17</span>        <span class="c1">//这里开始判断mResponses，不过这里只看ident大于等于0，而上面有回调的会变成-2就不走这里
+</span><span class="ln">18</span><span class="c1"></span>        <span class="k">while</span> <span class="p">(</span><span class="n">mResponseIndex</span> <span class="o">&lt;</span> <span class="n">mResponses</span><span class="p">.</span><span class="n">size</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln">19</span>            <span class="k">const</span> <span class="n">Response</span><span class="o">&amp;</span> <span class="n">response</span> <span class="o">=</span> <span class="n">mResponses</span><span class="p">.</span><span class="n">itemAt</span><span class="p">(</span><span class="n">mResponseIndex</span><span class="o">++</span><span class="p">);</span>
+<span class="ln">20</span>            <span class="kt">int</span> <span class="n">ident</span> <span class="o">=</span> <span class="n">response</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">ident</span><span class="p">;</span>
+<span class="ln">21</span>            <span class="k">if</span> <span class="p">(</span><span class="n">ident</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">22</span>                <span class="kt">int</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">response</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">fd</span><span class="p">;</span>
+<span class="ln">23</span>                <span class="kt">int</span> <span class="n">events</span> <span class="o">=</span> <span class="n">response</span><span class="p">.</span><span class="n">events</span><span class="p">;</span>
+<span class="ln">24</span>                <span class="kt">void</span><span class="o">*</span> <span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">data</span><span class="p">;</span>
+<span class="ln">25</span>                <span class="k">if</span> <span class="p">(</span><span class="n">outFd</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="o">*</span><span class="n">outFd</span> <span class="o">=</span> <span class="n">fd</span><span class="p">;</span>
+<span class="ln">26</span>                <span class="k">if</span> <span class="p">(</span><span class="n">outEvents</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="o">*</span><span class="n">outEvents</span> <span class="o">=</span> <span class="n">events</span><span class="p">;</span>
+<span class="ln">27</span>                <span class="k">if</span> <span class="p">(</span><span class="n">outData</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="o">*</span><span class="n">outData</span> <span class="o">=</span> <span class="n">data</span><span class="p">;</span>
+<span class="ln">28</span>                <span class="k">return</span> <span class="n">ident</span><span class="p">;</span>
+<span class="ln">29</span>            <span class="p">}</span>
+<span class="ln">30</span>        <span class="p">}</span>
+<span class="ln">31</span>		<span class="c1">//每次的轮询会返回一个值，这个值通常为POLL_WAKE、POLL_CALLBACK、POLL_TIMEOUT、POLL_ERROR
+</span><span class="ln">32</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="n">result</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">33</span>            <span class="k">if</span> <span class="p">(</span><span class="n">outFd</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="o">*</span><span class="n">outFd</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">34</span>            <span class="k">if</span> <span class="p">(</span><span class="n">outEvents</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="o">*</span><span class="n">outEvents</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">35</span>            <span class="k">if</span> <span class="p">(</span><span class="n">outData</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="o">*</span><span class="n">outData</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln">36</span>            <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="ln">37</span>        <span class="p">}</span>
+<span class="ln">38</span>		<span class="c1">//开始轮询
+</span><span class="ln">39</span><span class="c1"></span>        <span class="n">result</span> <span class="o">=</span> <span class="n">pollInner</span><span class="p">(</span><span class="n">timeoutMillis</span><span class="p">);</span>
+<span class="ln">40</span>    <span class="p">}</span>
+<span class="ln">41</span><span class="p">}</span>
+</code></pre></div><p>真正开始轮询的地方为pollInner</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">  1</span><span class="c1">//system/core/libutils/Looper.cpp
+</span><span class="ln">  2</span><span class="c1"></span><span class="k">static</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">EPOLL_MAX_EVENTS</span> <span class="o">=</span> <span class="mi">16</span><span class="p">;</span>
+<span class="ln">  3</span><span class="n">Vector</span><span class="o">&lt;</span><span class="n">Response</span><span class="o">&gt;</span> <span class="n">mResponses</span><span class="p">;</span><span class="c1">//这个是排序的mResponses，根据mResponses中的seq排序
+</span><span class="ln">  4</span><span class="c1"></span>
+<span class="ln">  5</span><span class="kt">int</span> <span class="n">Looper</span><span class="o">::</span><span class="n">pollInner</span><span class="p">(</span><span class="kt">int</span> <span class="n">timeoutMillis</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">  6</span>    <span class="c1">//重新调整时间，这里传入的是消息队列等待才会调整，不然消息队列时间没到就会一直等待
+</span><span class="ln">  7</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">timeoutMillis</span> <span class="o">!=</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">mNextMessageUptime</span> <span class="o">!=</span> <span class="n">LLONG_MAX</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">  8</span>        <span class="n">nsecs_t</span> <span class="n">now</span> <span class="o">=</span> <span class="n">systemTime</span><span class="p">(</span><span class="n">SYSTEM_TIME_MONOTONIC</span><span class="p">);</span>
+<span class="ln">  9</span>        <span class="kt">int</span> <span class="n">messageTimeoutMillis</span> <span class="o">=</span> <span class="n">toMillisecondTimeoutDelay</span><span class="p">(</span><span class="n">now</span><span class="p">,</span> <span class="n">mNextMessageUptime</span><span class="p">);</span>
+<span class="ln"> 10</span>        <span class="k">if</span> <span class="p">(</span><span class="n">messageTimeoutMillis</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+<span class="ln"> 11</span>            <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">timeoutMillis</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">||</span> <span class="n">messageTimeoutMillis</span> <span class="o">&lt;</span> <span class="n">timeoutMillis</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln"> 12</span>            <span class="n">timeoutMillis</span> <span class="o">=</span> <span class="n">messageTimeoutMillis</span><span class="p">;</span>
+<span class="ln"> 13</span>        <span class="p">}</span>
+<span class="ln"> 14</span>    <span class="p">}</span>
+<span class="ln"> 15</span>    <span class="c1">// Poll.
+</span><span class="ln"> 16</span><span class="c1"></span>    <span class="c1">//默认为唤醒，唤醒的含义是消息队列过来，用于从子线程给主线程发送消息的
+</span><span class="ln"> 17</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="n">POLL_WAKE</span><span class="p">;</span>
+<span class="ln"> 18</span>    <span class="n">mResponses</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+<span class="ln"> 19</span>    <span class="n">mResponseIndex</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 20</span>
+<span class="ln"> 21</span>    <span class="c1">// We are about to idle.
+</span><span class="ln"> 22</span><span class="c1"></span>    <span class="n">mPolling</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln"> 23</span>	<span class="c1">//这里最大为16
+</span><span class="ln"> 24</span><span class="c1"></span>    <span class="k">struct</span> <span class="nc">epoll_event</span> <span class="n">eventItems</span><span class="p">[</span><span class="n">EPOLL_MAX_EVENTS</span><span class="p">];</span>
+<span class="ln"> 25</span>    <span class="c1">//出去唤醒句柄，实际上其他文件相关的fd注册，一次性不能超过15
+</span><span class="ln"> 26</span><span class="c1"></span>    <span class="c1">//1.根据之前的epoll机制了解到timeoutMillis=-1，一直阻塞直到有唤醒或者注册的fd发生变化（变化包括读写）
+</span><span class="ln"> 27</span><span class="c1"></span>    <span class="c1">//2.只有消息队列时间还没到会调整时间，所以这里timeoutMillis调整过后不会一直阻塞，会循环调用
+</span><span class="ln"> 28</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">eventCount</span> <span class="o">=</span> <span class="n">epoll_wait</span><span class="p">(</span><span class="n">mEpollFd</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">eventItems</span><span class="p">,</span> <span class="n">EPOLL_MAX_EVENTS</span><span class="p">,</span> <span class="n">timeoutMillis</span><span class="p">);</span>
+<span class="ln"> 29</span>
+<span class="ln"> 30</span>    <span class="c1">// No longer idling.
+</span><span class="ln"> 31</span><span class="c1"></span>    <span class="n">mPolling</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln"> 32</span>
+<span class="ln"> 33</span>    <span class="c1">// Acquire lock.
+</span><span class="ln"> 34</span><span class="c1"></span>    <span class="n">mLock</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
+<span class="ln"> 35</span>	
+<span class="ln"> 36</span>    <span class="c1">//如果epoll出现问题，本轮轮询结束
+</span><span class="ln"> 37</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">eventCount</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 38</span>        <span class="k">if</span> <span class="p">(</span><span class="n">errno</span> <span class="o">==</span> <span class="n">EINTR</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 39</span>            <span class="k">goto</span> <span class="n">Done</span><span class="p">;</span>
+<span class="ln"> 40</span>        <span class="p">}</span>
+<span class="ln"> 41</span>        <span class="n">ALOGW</span><span class="p">(</span><span class="s">&#34;Poll failed with an unexpected error: %s&#34;</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln"> 42</span>        <span class="n">result</span> <span class="o">=</span> <span class="n">POLL_ERROR</span><span class="p">;</span>
+<span class="ln"> 43</span>        <span class="k">goto</span> <span class="n">Done</span><span class="p">;</span>
+<span class="ln"> 44</span>    <span class="p">}</span>
+<span class="ln"> 45</span>
+<span class="ln"> 46</span>    <span class="c1">//如果返回0，说明传入的timeoutMillis时间到了，走到这里必须timeoutMillis&gt;0
+</span><span class="ln"> 47</span><span class="c1"></span>    <span class="c1">//由于不会一直阻塞，所以隔段时间就会返回一次超时
+</span><span class="ln"> 48</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">eventCount</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 49</span>        <span class="n">result</span> <span class="o">=</span> <span class="n">POLL_TIMEOUT</span><span class="p">;</span>
+<span class="ln"> 50</span>        <span class="k">goto</span> <span class="n">Done</span><span class="p">;</span>
+<span class="ln"> 51</span>    <span class="p">}</span>
+<span class="ln"> 52</span>
+<span class="ln"> 53</span>    <span class="c1">// 这里开始处理事件了
+</span><span class="ln"> 54</span><span class="c1"></span>    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">eventCount</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 55</span>        <span class="k">const</span> <span class="n">SequenceNumber</span> <span class="n">seq</span> <span class="o">=</span> <span class="n">eventItems</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">data</span><span class="p">.</span><span class="n">u64</span><span class="p">;</span>
+<span class="ln"> 56</span>        <span class="kt">uint32_t</span> <span class="n">epollEvents</span> <span class="o">=</span> <span class="n">eventItems</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">events</span><span class="p">;</span>
+<span class="ln"> 57</span>        <span class="c1">//如果是唤醒的事件响应了，那么执行awoken
+</span><span class="ln"> 58</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="n">seq</span> <span class="o">==</span> <span class="n">WAKE_EVENT_FD_SEQ</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 59</span>            <span class="k">if</span> <span class="p">(</span><span class="n">epollEvents</span> <span class="o">&amp;</span> <span class="n">EPOLLIN</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 60</span>                <span class="n">awoken</span><span class="p">();</span>
+<span class="ln"> 61</span>            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln"> 62</span>                <span class="n">ALOGW</span><span class="p">(</span><span class="s">&#34;Ignoring unexpected epoll events 0x%x on wake event fd.&#34;</span><span class="p">,</span> <span class="n">epollEvents</span><span class="p">);</span>
+<span class="ln"> 63</span>            <span class="p">}</span>
+<span class="ln"> 64</span>        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln"> 65</span>            <span class="c1">//如果不为唤醒事件，在demo中就是想Looper添加监听的fd
+</span><span class="ln"> 66</span><span class="c1"></span>            <span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="n">request_it</span> <span class="o">=</span> <span class="n">mRequests</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">seq</span><span class="p">);</span>
+<span class="ln"> 67</span>            <span class="k">if</span> <span class="p">(</span><span class="n">request_it</span> <span class="o">!=</span> <span class="n">mRequests</span><span class="p">.</span><span class="n">end</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln"> 68</span>                <span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="n">request</span> <span class="o">=</span> <span class="n">request_it</span><span class="o">-&gt;</span><span class="n">second</span><span class="p">;</span>
+<span class="ln"> 69</span>                <span class="kt">int</span> <span class="n">events</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 70</span>                <span class="k">if</span> <span class="p">(</span><span class="n">epollEvents</span> <span class="o">&amp;</span> <span class="n">EPOLLIN</span><span class="p">)</span> <span class="n">events</span> <span class="o">|=</span> <span class="n">EVENT_INPUT</span><span class="p">;</span>
+<span class="ln"> 71</span>                <span class="k">if</span> <span class="p">(</span><span class="n">epollEvents</span> <span class="o">&amp;</span> <span class="n">EPOLLOUT</span><span class="p">)</span> <span class="n">events</span> <span class="o">|=</span> <span class="n">EVENT_OUTPUT</span><span class="p">;</span>
+<span class="ln"> 72</span>                <span class="k">if</span> <span class="p">(</span><span class="n">epollEvents</span> <span class="o">&amp;</span> <span class="n">EPOLLERR</span><span class="p">)</span> <span class="n">events</span> <span class="o">|=</span> <span class="n">EVENT_ERROR</span><span class="p">;</span>
+<span class="ln"> 73</span>                <span class="k">if</span> <span class="p">(</span><span class="n">epollEvents</span> <span class="o">&amp;</span> <span class="n">EPOLLHUP</span><span class="p">)</span> <span class="n">events</span> <span class="o">|=</span> <span class="n">EVENT_HANGUP</span><span class="p">;</span>
+<span class="ln"> 74</span>                <span class="c1">//将对应的时间request取出放入到mResponses
+</span><span class="ln"> 75</span><span class="c1"></span>                <span class="n">mResponses</span><span class="p">.</span><span class="n">push</span><span class="p">({.</span><span class="n">seq</span> <span class="o">=</span> <span class="n">seq</span><span class="p">,</span> <span class="p">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">events</span><span class="p">,</span> <span class="p">.</span><span class="n">request</span> <span class="o">=</span> <span class="n">request</span><span class="p">});</span>
+<span class="ln"> 76</span>            <span class="p">}</span>
+<span class="ln"> 77</span>        <span class="p">}</span>
+<span class="ln"> 78</span>    <span class="p">}</span>
+<span class="ln"> 79</span><span class="nl">Done</span><span class="p">:</span> <span class="p">;</span>
+<span class="ln"> 80</span>    <span class="c1">//最终都会走到这里
+</span><span class="ln"> 81</span><span class="c1"></span>    <span class="n">mNextMessageUptime</span> <span class="o">=</span> <span class="n">LLONG_MAX</span><span class="p">;</span>
+<span class="ln"> 82</span>    <span class="c1">//这块属于消息机制发送处理
+</span><span class="ln"> 83</span><span class="c1"></span>    <span class="k">while</span> <span class="p">(</span><span class="n">mMessageEnvelopes</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 84</span>        <span class="n">nsecs_t</span> <span class="n">now</span> <span class="o">=</span> <span class="n">systemTime</span><span class="p">(</span><span class="n">SYSTEM_TIME_MONOTONIC</span><span class="p">);</span>
+<span class="ln"> 85</span>        <span class="k">const</span> <span class="n">MessageEnvelope</span><span class="o">&amp;</span> <span class="n">messageEnvelope</span> <span class="o">=</span> <span class="n">mMessageEnvelopes</span><span class="p">.</span><span class="n">itemAt</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="ln"> 86</span>        <span class="c1">//根据当前时间和排序的队列时间判断，如果队列中的时间更早那么处理发送的消息
+</span><span class="ln"> 87</span><span class="c1"></span>        <span class="c1">//如果时间没到等下轮消息轮询
+</span><span class="ln"> 88</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="n">messageEnvelope</span><span class="p">.</span><span class="n">uptime</span> <span class="o">&lt;=</span> <span class="n">now</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 89</span>            <span class="c1">// we reacquire our lock.
+</span><span class="ln"> 90</span><span class="c1"></span>            <span class="p">{</span> <span class="c1">// obtain handler
+</span><span class="ln"> 91</span><span class="c1"></span>                <span class="c1">//这里的handler就是传入的外部MessageHandler，即为MyMessageHandler
+</span><span class="ln"> 92</span><span class="c1"></span>                <span class="n">sp</span><span class="o">&lt;</span><span class="n">MessageHandler</span><span class="o">&gt;</span> <span class="n">handler</span> <span class="o">=</span> <span class="n">messageEnvelope</span><span class="p">.</span><span class="n">handler</span><span class="p">;</span>
+<span class="ln"> 93</span>                <span class="n">Message</span> <span class="n">message</span> <span class="o">=</span> <span class="n">messageEnvelope</span><span class="p">.</span><span class="n">message</span><span class="p">;</span>
+<span class="ln"> 94</span>                <span class="c1">//先移除队列中的消息，在处理消息
+</span><span class="ln"> 95</span><span class="c1"></span>                <span class="n">mMessageEnvelopes</span><span class="p">.</span><span class="n">removeAt</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="ln"> 96</span>                <span class="n">mSendingMessage</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln"> 97</span>                <span class="n">mLock</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
+<span class="ln"> 98</span>				<span class="c1">//处理消息，如果是刚加入的队列中的元素也会判断时间执行里面内容
+</span><span class="ln"> 99</span><span class="c1"></span>                <span class="n">handler</span><span class="o">-&gt;</span><span class="n">handleMessage</span><span class="p">(</span><span class="n">message</span><span class="p">);</span>
+<span class="ln">100</span>            <span class="p">}</span> <span class="c1">// release handler
+</span><span class="ln">101</span><span class="c1"></span>
+<span class="ln">102</span>            <span class="n">mLock</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
+<span class="ln">103</span>            <span class="n">mSendingMessage</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">104</span>            <span class="c1">//消息机制也是返回一个POLL_CALLBACK
+</span><span class="ln">105</span><span class="c1"></span>            <span class="n">result</span> <span class="o">=</span> <span class="n">POLL_CALLBACK</span><span class="p">;</span>
+<span class="ln">106</span>        <span class="p">}</span>
+<span class="ln">107</span>    <span class="p">}</span>
+<span class="ln">108</span>
+<span class="ln">109</span>    <span class="c1">// Release lock.
+</span><span class="ln">110</span><span class="c1"></span>    <span class="n">mLock</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
+<span class="ln">111</span>
+<span class="ln">112</span>    <span class="c1">// 回调对应的fd监听对应的函数
+</span><span class="ln">113</span><span class="c1"></span>    <span class="c1">//将刚刚的mResponses中的元素取出
+</span><span class="ln">114</span><span class="c1"></span>    <span class="k">for</span> <span class="p">(</span><span class="n">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">mResponses</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">115</span>        <span class="n">Response</span><span class="o">&amp;</span> <span class="n">response</span> <span class="o">=</span> <span class="n">mResponses</span><span class="p">.</span><span class="n">editItemAt</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+<span class="ln">116</span>        <span class="c1">//如果存在回调，那么处理这个response
+</span><span class="ln">117</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">ident</span> <span class="o">==</span> <span class="n">POLL_CALLBACK</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">118</span>            <span class="kt">int</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">response</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">fd</span><span class="p">;</span>
+<span class="ln">119</span>            <span class="kt">int</span> <span class="n">events</span> <span class="o">=</span> <span class="n">response</span><span class="p">.</span><span class="n">events</span><span class="p">;</span>
+<span class="ln">120</span>            <span class="kt">void</span><span class="o">*</span> <span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">data</span><span class="p">;</span>
+<span class="ln">121</span>            <span class="c1">//回调到对应的handleEvent，先处理再移除对应的response
+</span><span class="ln">122</span><span class="c1"></span>            <span class="kt">int</span> <span class="n">callbackResult</span> <span class="o">=</span> <span class="n">response</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">callback</span><span class="o">-&gt;</span><span class="n">handleEvent</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">data</span><span class="p">);</span>
+<span class="ln">123</span>            <span class="k">if</span> <span class="p">(</span><span class="n">callbackResult</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">124</span>                <span class="n">AutoMutex</span> <span class="nf">_l</span><span class="p">(</span><span class="n">mLock</span><span class="p">);</span>
+<span class="ln">125</span>                <span class="n">removeSequenceNumberLocked</span><span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="n">seq</span><span class="p">);</span>
+<span class="ln">126</span>            <span class="p">}</span>
+<span class="ln">127</span>            <span class="n">response</span><span class="p">.</span><span class="n">request</span><span class="p">.</span><span class="n">callback</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+<span class="ln">128</span>            <span class="n">result</span> <span class="o">=</span> <span class="n">POLL_CALLBACK</span><span class="p">;</span>
+<span class="ln">129</span>        <span class="p">}</span>
+<span class="ln">130</span>    <span class="p">}</span>
+<span class="ln">131</span>    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="ln">132</span><span class="p">}</span>
+</code></pre></div><p>这个方法特别长</p>
+<ol>
+<li>
+<p><strong>调整时间</strong></p>
+<p>mNextMessageUptime 是 消息队列 mMessageEnvelopes 中最近一个即将要被处理的message的时间点。所以需要根据mNextMessageUptime 与 调用者传下来的timeoutMillis 比较计算出一个最小的timeout。<strong>通常是只有消息队列时间还没到的情况</strong>。</p>
+</li>
+<li>
+<p>epoll_wait</p>
+<p>处理epoll_wait() 返回的epoll events.判断epoll event 是哪个fd上发生的事件。如果是mWakeEventFd，则执行awoken(). awoken() 只是将数据read出来，然后继续往下处理了。其目的也就是使epoll_wait() 从阻塞中返回。</p>
+</li>
+<li>
+<p><strong>监听队列的fd准备</strong></p>
+<p>如果是通过Looper.addFd() 接口加入到epoll监听队列的fd，并不是立马处理，而是先push到mResponses，后面再处理。</p>
+</li>
+<li>
+<p><strong>处理消息队列和监听队列的fd</strong></p>
+<p>处理消息队列 mMessageEnvelopes 中的Message.如果还没有到处理时间，就更新一下mNextMessageUptime</p>
+<p>处理刚才放入mResponses中的 事件.只处理ident 为POLL_CALLBACK的事件。其他事件在pollOnce中处理</p>
+</li>
+</ol>
+<p>其中handleEvent</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//system/core/libutils/Looper.cpp
+</span><span class="ln">2</span><span class="c1"></span><span class="kt">int</span> <span class="n">SimpleLooperCallback</span><span class="o">::</span><span class="n">handleEvent</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">events</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">data</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">3</span>    <span class="c1">//这里的mCallback就是竹签addFd中的回调
+</span><span class="ln">4</span><span class="c1"></span>    <span class="c1">//回调会返回fd，event事件还有传入的data，这个data就是demo中的this指针，指代MyCallbackHandler
+</span><span class="ln">5</span><span class="c1"></span>    <span class="k">return</span> <span class="nf">mCallback</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">data</span><span class="p">);</span>
+<span class="ln">6</span><span class="p">}</span>
+</code></pre></div><p>另外解释上面的还有一个问题wake</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/libutils/Looper.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span> <span class="n">Looper</span><span class="o">::</span><span class="n">wake</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="kt">uint64_t</span> <span class="n">inc</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln"> 4</span>    <span class="n">ssize_t</span> <span class="n">nWrite</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">write</span><span class="p">(</span><span class="n">mWakeEventFd</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="o">&amp;</span><span class="n">inc</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">uint64_t</span><span class="p">)));</span>
+<span class="ln"> 5</span>    <span class="k">if</span> <span class="p">(</span><span class="n">nWrite</span> <span class="o">!=</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">uint64_t</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln"> 6</span>        <span class="k">if</span> <span class="p">(</span><span class="n">errno</span> <span class="o">!=</span> <span class="n">EAGAIN</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 7</span>            <span class="n">LOG_ALWAYS_FATAL</span><span class="p">(</span><span class="s">&#34;Could not write wake signal to fd %d (returned %zd): %s&#34;</span><span class="p">,</span>
+<span class="ln"> 8</span>                             <span class="n">mWakeEventFd</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">nWrite</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln"> 9</span>        <span class="p">}</span>
+<span class="ln">10</span>    <span class="p">}</span>
+<span class="ln">11</span><span class="p">}</span>
+</code></pre></div><p>现在看就明白含义了，就是发生一个写操作，让注册到epoll中的mWakeEventFd发生变化，最终破除epoll_wait的阻塞，直接调用到后面的处理过程。</p>
+<p>对应唤醒的事件响应了，那么执行awoken</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//system/core/libutils/Looper.cpp
+</span><span class="ln">2</span><span class="c1"></span><span class="kt">void</span> <span class="n">Looper</span><span class="o">::</span><span class="n">awoken</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">3</span>    <span class="kt">uint64_t</span> <span class="n">counter</span><span class="p">;</span>
+<span class="ln">4</span>    <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">read</span><span class="p">(</span><span class="n">mWakeEventFd</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="o">&amp;</span><span class="n">counter</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">uint64_t</span><span class="p">)));</span>
+<span class="ln">5</span><span class="p">}</span>
+</code></pre></div><p>发生一个读操作，让之前的写操作清除。</p>
+<h2 id="26图解">2.6图解</h2>
+<h3 id="261发送消息">2.6.1发送消息</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/handler/Looper/Looper_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/handler/Looper/Looper_2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="262注册监听fd">2.6.2注册监听fd</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/handler/Looper/Looper_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/handler/Looper/Looper_3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="3补充">3补充</h1>
+<p>解释一下为什么上述demo的fd=6</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/handler/Looper/Looper_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/handler/Looper/Looper_4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="4总结">4总结</h1>
+<p>通过上述直到native Looper的机制之后，可以更加顺利的阅读其他类型的源码，或者可以在自己的demo中使用现成的消息机制。</p>
+<h1 id="下载">下载</h1>
+<p>点击<a href="https://github.com/YangYang48/project/tree/master/Looper">这里</a></p>
+<h1 id="参考文献">参考文献</h1>
+<p><a href="https://www.cnblogs.com/roger-yu/p/15100416.html">[1]  二的次方. Android Native &ndash; Message/Handler/Looper机制（应用篇）, 2021.</a></p>
+<p><a href="https://www.cnblogs.com/roger-yu/p/15099541.html">[2] 二的次方,Android Native &ndash; Message/Handler/Looper机制,2021</a>.</p>
+<p><a href="https://blog.csdn.net/bandaoyu/article/details/89531493">[3] bandaoyu, 【epoll】epoll使用详解（精髓）&ndash;研读和修正, 2019.</a></p>
+<p><a href="https://blog.csdn.net/ch853199769/article/details/79917188">[4] 安德路, Android Thread之threadLoop方法, 2018.</a></p>
+<p><a href="https://blog.csdn.net/EDDYCJY/article/details/118980819">[5] 煎鱼（EDDYCJY）, Linux fd 系列 — eventfd 是什么？, 2021.</a></p>
+<p><a href="https://blog.51cto.com/u_3826358/3832670">[6] donaldsy, pthread_once使用 &ndash; 仅初始化一次, 2021.</a></p>
+<p><a href="https://blog.csdn.net/qq_42956653/article/details/126129532">[7] cheems~, Linux线程私有数据Thread-specific Data(TSD) 详解, 2022.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/android/">Android</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%BA%90%E7%A0%81/">源码</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/handler/">Handler</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/epoll/">epoll</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/thread/">Thread</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/pthread_once/">pthread_once</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/06/android-rc%E6%96%87%E4%BB%B6%E5%92%8C%E8%A7%A3%E6%9E%90/" data-tooltip="Android rc文件和解析">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/04/wms-window/" data-tooltip="WMS-Window">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2023 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/06/android-rc%E6%96%87%E4%BB%B6%E5%92%8C%E8%A7%A3%E6%9E%90/" data-tooltip="Android rc文件和解析">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/04/wms-window/" data-tooltip="WMS-Window">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2023%2F06%2Fnative-looper%25E4%25BD%25BF%25E7%2594%25A8%25E5%2592%258C%25E5%258E%259F%25E7%2590%2586%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2023%2F06%2Fnative-looper%25E4%25BD%25BF%25E7%2594%25A8%25E5%2592%258C%25E5%258E%259F%25E7%2590%2586%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2023%2F06%2Fnative-looper%25E4%25BD%25BF%25E7%2594%25A8%25E5%2592%258C%25E5%258E%259F%25E7%2590%2586%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2023\/06\/native-looper%E4%BD%BF%E7%94%A8%E5%92%8C%E5%8E%9F%E7%90%86\/';
+          
+            this.page.identifier = '\/2023\/06\/native-looper%E4%BD%BF%E7%94%A8%E5%92%8C%E5%8E%9F%E7%90%86\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+

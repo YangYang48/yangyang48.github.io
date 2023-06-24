@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="Android进程对应的文件有后缀为rc文件的，那么rc文件是什么又是怎么加载启动的呢">
+
+
+<meta property="og:description" content="Android进程对应的文件有后缀为rc文件的，那么rc文件是什么又是怎么加载启动的呢">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android rc文件和解析">
+<meta name="twitter:title" content="Android rc文件和解析">
+<meta property="og:url" content="https://yangyang48.github.io/2023/06/android-rc%E6%96%87%E4%BB%B6%E5%92%8C%E8%A7%A3%E6%9E%90/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2023/06/android-rc%E6%96%87%E4%BB%B6%E5%92%8C%E8%A7%A3%E6%9E%90/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="Android进程对应的文件有后缀为rc文件的，那么rc文件是什么又是怎么加载启动的呢">
+<meta name="twitter:description" content="Android进程对应的文件有后缀为rc文件的，那么rc文件是什么又是怎么加载启动的呢">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2023-06-24T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2023-06-24T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="rc">
+    
+      <meta property="article:section" content="2023">
+    
+      <meta property="article:section" content="June">
+    
+  
+  
+    
+      <meta property="article:tag" content="Android">
+    
+      <meta property="article:tag" content="源码">
+    
+      <meta property="article:tag" content="AIL">
+    
+      <meta property="article:tag" content="parser">
+    
+      <meta property="article:tag" content="Actions">
+    
+      <meta property="article:tag" content="Commands">
+    
+      <meta property="article:tag" content="Services">
+    
+      <meta property="article:tag" content="Options">
+    
+      <meta property="article:tag" content="Imports">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/rc/rc_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/rc/rc_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/rc/rc_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/rc/rc_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+
+
+    <title>Android rc文件和解析</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2023/06/android-rc%E6%96%87%E4%BB%B6%E5%92%8C%E8%A7%A3%E6%9E%90/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/rc/rc_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      Android rc文件和解析
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2023-06-24T00:00:00Z">
+        
+  六月 24, 2023
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/rc">rc</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2023">2023</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/june">June</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">1500 Words|Read in about 7 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>Android进程对应的文件有后缀为rc文件的，那么rc文件是什么又是怎么加载启动的呢</p>
+<h1 id="0rc文件简介">0rc文件简介</h1>
+<p>init.rc由AIL语言编写而成。可以参考system/core/init/README.md来学习AIL语法相关知识。具体可以点击下面源码文件路径访问</p>
+<p>不同Android版本关于AIL的说明存在一些细微差异，但基本语法和总的思路是不变的。往往我们可以先查看对应的system/core/init/README.md来了解这些差异。</p>
+<p>Android Init Language由<strong>五大类语句</strong>组成：</p>
+<ul>
+<li><strong>Actions</strong></li>
+<li><strong>Commands</strong></li>
+<li><strong>Services</strong></li>
+<li><strong>Options</strong></li>
+<li><strong>Imports</strong></li>
+</ul>
+<p>换行为语句分隔符。空格为词分隔符。反斜杠转义符可用于插入不做分隔的空格符。双引号用于包括不需要空格分隔的词。行尾反斜杠用于多行衔接为一行。行首以 # 开始用于注释。使用${var}可进行变量扩展。
+一段内容往往以Actions 或者Services开头，并以Commands或者Options结尾。
+Commands 或者Options用于修饰Actions 或者Services。（阅读时注意）
+Service有唯一名称，如果已经定义过一个相同的Service，后定义的被忽略，且log中记录了此异常。</p>
+<h1 id="1initrc">1init.rc</h1>
+<p>平时最常见的就是开机需要用到的rc文件。</p>
+<p>一般设备系统中多个路径下都存在rc文件。一般规范的路径为：<strong>/{system,vendor,odm}/etc/init/*.rc</strong>。</p>
+<p>根目录/init.rc为主rc文件，它是rc文件被加载的入口。它通过Imports语句将其他各个路径下的rc文件都加载进来。</p>
+<h2 id="11rc文件目录规范">1.1rc文件目录规范</h2>
+<table>
+<thead>
+<tr>
+<th>路径</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/system/etc/init/</code></td>
+<td>用于核心系统功能，例如<code>SurfaceFlinger</code>、<code>MediaService</code>和<code>logd</code>等</td>
+</tr>
+<tr>
+<td><code>/vendor/etc/init/</code></td>
+<td>用于芯片供应商的一些核心操作或者守护进程功能</td>
+</tr>
+<tr>
+<td><code>/odm/etc/init/</code></td>
+<td>用于设备制造厂商的功能，比如传感器和其他外围设备所需的操作或者守护进程</td>
+</tr>
+</tbody>
+</table>
+<p>服务对应的二进制程序如果放在system|vendor|odm分区下，相应的定义服务的rc文件也需要在相同分区的etc/init/目录下。一般我们开发的时候rc和二进制程序是在相同的工程目录下，在Android.bp 是通过配置init_rc。</p>
+<blockquote>
+<p>更改分区的方法</p>
+<ul>
+<li>
+<p>默认安装到/system目录下</p>
+</li>
+<li>
+<p>安装到vendor</p>
+<p>vendor: true</p>
+</li>
+<li>
+<p>安装到product</p>
+<p>product_specific: true</p>
+</li>
+<li>
+<p>安装到odm</p>
+<p>device_specific: true</p>
+</li>
+</ul>
+</blockquote>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="ln"> 1</span><span class="c1">//logcatd开发的工程目录在system/core/logcat
+</span><span class="ln"> 2</span><span class="c1">//logcatd  logcatd.rc都在此工程目录下
+</span><span class="ln"> 3</span><span class="c1">//通过Android.bp指定init_rc 
+</span><span class="ln"> 4</span><span class="c1"></span>
+<span class="ln"> 5</span><span class="c1">//@system/core/logcat/Android.bp
+</span><span class="ln"> 6</span><span class="c1"></span><span class="nx">sh_binary</span> <span class="p">{</span>
+<span class="ln"> 7</span>    <span class="nx">name</span><span class="p">:</span> <span class="s">&#34;logpersist.start&#34;</span><span class="p">,</span>
+<span class="ln"> 8</span>    <span class="nx">src</span><span class="p">:</span> <span class="s">&#34;logpersist&#34;</span><span class="p">,</span>
+<span class="ln"> 9</span>    <span class="nx">init_rc</span><span class="p">:</span> <span class="p">[</span><span class="s">&#34;logcatd.rc&#34;</span><span class="p">],</span>
+<span class="ln">10</span>    <span class="nx">required</span><span class="p">:</span> <span class="p">[</span><span class="s">&#34;logcatd&#34;</span><span class="p">],</span>
+<span class="ln">11</span>    <span class="nx">symlinks</span><span class="p">:</span> <span class="p">[</span>
+<span class="ln">12</span>        <span class="s">&#34;logpersist.stop&#34;</span><span class="p">,</span>
+<span class="ln">13</span>        <span class="s">&#34;logpersist.cat&#34;</span><span class="p">,</span>
+<span class="ln">14</span>    <span class="p">],</span>
+<span class="ln">15</span><span class="c1">//最终编译出来的logcatd.rc就位于system/etc/init/logcatd.rc
+</span><span class="ln">16</span><span class="c1"></span><span class="err">$</span> <span class="nx">cd</span> <span class="nx">out</span><span class="o">/</span><span class="nx">target</span><span class="o">/</span><span class="nx">product</span><span class="o">/</span><span class="err">$</span><span class="p">{</span><span class="nx">TARGET_PRODUCT</span><span class="p">}</span>
+<span class="ln">17</span><span class="err">$</span> <span class="nx">find</span> <span class="o">-</span><span class="nx">name</span> <span class="nx">logcatd</span><span class="p">.</span><span class="nx">rc</span>
+<span class="ln">18</span><span class="p">.</span><span class="o">/</span><span class="nx">system</span><span class="o">/</span><span class="nx">etc</span><span class="o">/</span><span class="nx">init</span><span class="o">/</span><span class="nx">logcatd</span><span class="p">.</span><span class="nx">rc</span>
+</code></pre></div><h1 id="2语法详解">2语法详解</h1>
+<h2 id="21actions">2.1Actions</h2>
+<p>Actions 是一系列commands的集合，同时包含一个trigger来决定是否要执行这一系列的命令。当触发器被触发时，Action就被加入执行队列(已在队列中则忽略)。每个队列中的Action是按顺序执行和移除的，而Action中的命令也是按顺序执行的。而其他的一些操作包括设备创建销毁，property的设置以及进程的重启是穿插在各个命令执行之间的。格式如下：</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>on &lt;trigger&gt; [&amp;&amp; &lt;trigger&gt;]*
+<span class="ln">2</span>   &lt;command1&gt;
+<span class="ln">3</span>   &lt;command2&gt;
+<span class="ln">4</span>   &lt;command3&gt;
+</code></pre></div><p>同时被触发的Action将按照他们在rc文件中定义的先后顺序加入到执行队列中。例如：</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln"> 1</span>on boot
+<span class="ln"> 2</span>   setprop a 1
+<span class="ln"> 3</span>   setprop b 2
+<span class="ln"> 4</span>
+<span class="ln"> 5</span>on boot &amp;&amp; property:test=true
+<span class="ln"> 6</span>   setprop c 1
+<span class="ln"> 7</span>   setprop d 2
+<span class="ln"> 8</span>
+<span class="ln"> 9</span>on boot
+<span class="ln">10</span>   setprop e 1
+<span class="ln">11</span>   setprop f 2
+</code></pre></div><p>如果当前启机且test属性为true，则执行顺序如下：</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>setprop a 1
+<span class="ln">2</span>setprop b 2
+<span class="ln">3</span>setprop c 1
+<span class="ln">4</span>setprop d 2
+<span class="ln">5</span>setprop e 1
+<span class="ln">6</span>setprop f 2
+</code></pre></div><blockquote>
+<p>Triggers</p>
+<table>
+<thead>
+<tr>
+<th>Trigger</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bott</code></td>
+<td>这是<code>init</code>程序启动后出发的第一个事件</td>
+</tr>
+<tr>
+<td><code>&lt; name &gt; = &lt; value &gt;</code></td>
+<td>当属性<code>&lt; name &gt;</code>满足特定<code>&lt; value &gt;</code>时触发</td>
+</tr>
+<tr>
+<td><code>device-added-&lt; path&gt;</code></td>
+<td>当设备节点添加/删除时触发此事件</td>
+</tr>
+<tr>
+<td><code>service-exited-&lt; name &gt;</code></td>
+<td>当指定的服务<code>&lt; name &gt;</code>存在时触发</td>
+</tr>
+</tbody>
+</table>
+<p>一系列明确的事件，用于触发action操作。触发器分为<strong>事件触发器</strong>和<strong>属性触发器</strong></p>
+<ul>
+<li>
+<p>事件触发器</p>
+<p>由“trigger”命令或init程序中的QueueEventTrigger()函数触发的。它们一般采用简单字符串的形式，例如“boot”或“late init”</p>
+</li>
+<li>
+<p>属性触发器</p>
+<p>由指定的Property更改时触发的。Property变更为某个指定的value，格式为property:<!-- raw HTML omitted -->=<!-- raw HTML omitted -->. Property只要有变更就触发，格式为property:<!-- raw HTML omitted -->=*</p>
+</li>
+</ul>
+<p>一个Action可以有多个属性触发器，但只能有一个事件触发器。</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>#表示在开机并且 property:a=b时触发action。
+<span class="ln">2</span>on boot &amp;&amp; property:a=b
+</code></pre></div></blockquote>
+<h2 id="22commands">2.2Commands</h2>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>exec &lt; path &gt; [&lt; argument &gt;]*</code></td>
+<td><code>Fork</code>并执行一个程序，其路径为<code>&lt; path &gt;</code>,这条命令将阻塞直到该程序启动完成，因此他有可能造成<code>init</code>程序在某个点不停的等待。</td>
+</tr>
+<tr>
+<td><code>export &lt; name &gt;&lt; value &gt;</code></td>
+<td>设置某个环境变量<code>&lt; name &gt;</code>的值为<code>&lt; value &gt;</code>,这是对全局有效的，即其后的所有进程都将继承这个变量。</td>
+</tr>
+<tr>
+<td><code>ifup &lt; interface &gt;</code></td>
+<td>使网络接口<code>&lt; interface &gt;</code>成功连接</td>
+</tr>
+<tr>
+<td><code>hostname &lt; name &gt;</code></td>
+<td>设置主机名为<code>&lt; name &gt;</code></td>
+</tr>
+<tr>
+<td><code>chdir &lt; directory &gt;</code></td>
+<td>更改工作目录为<code>&lt; directory &gt;</code></td>
+</tr>
+<tr>
+<td><code>chmod &lt; octal-modc &gt;</code></td>
+<td>更改文件访问权限</td>
+</tr>
+<tr>
+<td><code>chown &lt; owner &gt;&lt; group &gt;&lt; path &gt;</code></td>
+<td>更改文件所有者和组群</td>
+</tr>
+<tr>
+<td><code>chroot &lt; directory &gt;</code></td>
+<td>更改根目录位置</td>
+</tr>
+<tr>
+<td><code>class_start &lt; serviceclass &gt;</code></td>
+<td>启动由<code>&lt; servicesclass &gt;</code>类名指定的所有相关服务，如果他们不存在运行状态的话</td>
+</tr>
+<tr>
+<td><code>class_stop &lt; serviceclass &gt;</code></td>
+<td>停止所有由<code>&lt; serviceclass &gt;</code>指定的服务，如果他们当前正在运行的话</td>
+</tr>
+<tr>
+<td><code>domainname &lt; name &gt;</code></td>
+<td>设置域名</td>
+</tr>
+<tr>
+<td><code>insmod &lt; path &gt;</code></td>
+<td>在<code>&lt; path &gt;</code>路径上安装一个模块</td>
+</tr>
+<tr>
+<td><code>mkdir &lt; path &gt;[mode][owner][group]</code></td>
+<td>在<code>&lt; path &gt;</code>上新建一个目录</td>
+</tr>
+<tr>
+<td><code>mount &lt; type &gt;&lt; device &gt;&lt; dir &gt;[mountoption]</code></td>
+<td>尝试在指定路径上挂载一个设备</td>
+</tr>
+<tr>
+<td><code>setprop&lt; name &gt;&lt; value &gt;</code></td>
+<td>设置系统属性<code>&lt; name &gt;</code>的值<code>&lt; value &gt;</code></td>
+</tr>
+<tr>
+<td><code>start &lt; service &gt;</code></td>
+<td>这个命令将启动一个服务，如果他没有处于运行状态的话</td>
+</tr>
+<tr>
+<td><code>stop &lt; service &gt;</code></td>
+<td>这个命令将停止一个服务，如果他没有处于运行状态的话</td>
+</tr>
+<tr>
+<td><code>exec [ &lt;seclabel&gt; [ &lt;user&gt; [ &lt;group&gt;\* ] ] ] -- &lt;command&gt; [ &lt;argument&gt;\* ]</code></td>
+<td>使用给定的参数<code>Fork</code>并执行命令。该命令在“——”之后开始，以便提供可选的安全上下文、用户和补充组。在此命令完成之前，不会运行其他命令。<code>Seclabel</code>可以是<code>a -</code>来表示默认。属性在参数内展开。Init停止执行命令，直到<code>fork</code>进程退出。<!-- raw HTML omitted -->exec &ndash; /system/bin/bootstrap/linkerconfig &ndash;target /linkerconfig/bootstrap<!-- raw HTML omitted -->exec - system system &ndash; /system/bin/vdc checkpoint markBootAttempt</td>
+</tr>
+<tr>
+<td><code>symlink &lt; target &gt;&lt; path &gt;</code></td>
+<td>创建一个<code>&lt; path &gt;</code>路径的连接，目标为<code>&lt; target &gt;</code></td>
+</tr>
+<tr>
+<td><code>sysclktz</code></td>
+<td>设置基准时间，如果当前时间是<code>GMT</code>,这个值为0</td>
+</tr>
+<tr>
+<td><code>trigger &lt; event &gt;</code></td>
+<td>触发一个事件</td>
+</tr>
+<tr>
+<td><code>write &lt; path &gt;&lt; string &gt;[ &lt; string &gt;]*</code></td>
+<td>打开一个文件，并写入一个或多个字符串</td>
+</tr>
+</tbody>
+</table>
+<p><code>mkdir &lt;path&gt; [&lt;mode&gt;] [&lt;owner&gt;] [&lt;group&gt;] [encryption=&lt;action&gt;] [key=&lt;key&gt;]</code></p>
+<p>创建目录，可以指定mode,owner和group. 如果不指定则按权限为755，root用户和root组创建。如果指定了，但目录已存在，则目录的权限和用户，组信息将被更新。</p>
+<blockquote>
+<p>action 可以指定为:</p>
+<ul>
+<li>None: 不需要进行加密操作，目录根据上层目录加密算法进行处理。</li>
+<li>Require: 需要加密，如果加密失败则终止开机进程。</li>
+<li>Attempt: 尝试加密，加密失败仍可继续。</li>
+<li>DeleteIfNecessary: 递归处理：如果存在子目录，但当前策略的加密算法不匹配，则删除子目录。</li>
+</ul>
+<p>key 可以指定为:</p>
+<ul>
+<li>ref: 使用systemwide DE key</li>
+<li>per_boot_ref: 使用每次开机都更新的key</li>
+</ul>
+</blockquote>
+<p><code>mount_all [ &lt;fstab&gt; ] [--&lt;option&gt;] </code></p>
+<p>对给出的 fstab 表调用 fs_mgr_mount_all 接口，option为“early” 或者 “late”. option如果是&ndash;early则init将会跳过“latemount”标识的的item,并触发fs encryption state 事件。option如果是&ndash;late则init就只mount “latemount”标识的的item. 如果不携带[–]则mount的是fstab 表中全部item。</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln"> 1</span>on fs
+<span class="ln"> 2</span>      mount_all /vendor/etc/fstab.${ro.hardware} --early
+<span class="ln"> 3</span>  
+<span class="ln"> 4</span>on late-fs
+<span class="ln"> 5</span>      # Start services for bootanim
+<span class="ln"> 6</span>      start servicemanager
+<span class="ln"> 7</span>      start hwcomposer-2-1
+<span class="ln"> 8</span>      start gralloc-2-0
+<span class="ln"> 9</span>      start surfaceflinger
+<span class="ln">10</span>      start bootanim
+<span class="ln">11</span>  
+<span class="ln">12</span>      exec_start wait_for_keymaster
+<span class="ln">13</span>      # Mount RW partitions which need run fsck
+<span class="ln">14</span>      mount_all /vendor/etc/fstab.${ro.hardware} --late
+</code></pre></div><p>调用到对应的fstab.${ro.hardware}</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span>$ cat /vendor/etc/fstab.rk30board                                                                           <span class="c1"># Android fstab file.</span>
+<span class="ln"> 2</span><span class="c1">#&lt;src&gt;  &lt;mnt_point&gt; &lt;type&gt; &lt;mnt_flags and options&gt; &lt;fs_mgr_flags&gt;</span>
+<span class="ln"> 3</span><span class="c1"># The filesystem that contains the filesystem checker binary (typically /system) cannot</span>
+<span class="ln"> 4</span><span class="c1"># specify MF_CHECK, and must come before any filesystems that do specify MF_CHECK</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span>/dev/block/by-name/system                          /                          ext4      ro,barrier<span class="o">=</span><span class="m">1</span>                                                      wait,avb,slotselect
+<span class="ln"> 7</span>/dev/block/by-name/cache                           /cache                    ext4       noatime,nodiratime,nosuid,nodev,noauto_da_alloc,discard                wait,check
+<span class="ln"> 8</span>/dev/block/by-name/metadata                        /mnt/vendor/metadata       ext4       noatime,nodiratime,nosuid,nodev,noauto_da_alloc,discard                <span class="nb">wait</span>
+<span class="ln"> 9</span>/dev/block/by-name/misc                            /misc                      emmc       defaults                                                           defaults
+<span class="ln">10</span>/dev/block/by-name/frp                             /frp                       emmc       defaults                                                           defaults
+<span class="ln">11</span>/dev/block/by-name/parameter                        /parameter                 emmc      defaults                                                            defaults
+<span class="ln">12</span>/dev/block/by-name/baseparamer                    /baseparamer                emmc        defaults                                                            defaults
+<span class="ln">13</span>/dev/block/by-name/resource	                     /resource	                  emmc	     defaults				                              defaults
+<span class="ln">14</span>/devices/platform/*usb*                               auto                     vfat       defaults                                                        <span class="nv">voldmanaged</span><span class="o">=</span>usb:auto
+<span class="ln">15</span>/dev/block/zram0                                     none                      swap       defaults                                                        <span class="nv">zramsize</span><span class="o">=</span>50%
+<span class="ln">16</span><span class="c1"># For sdmmc</span>
+<span class="ln">17</span>/devices/platform/fe320000.dwmmc/mmc_host*           auto                      auto           defaults                                                  <span class="nv">voldmanaged</span><span class="o">=</span>sdcard1:auto
+<span class="ln">18</span><span class="c1"># Full disk encryption has less effect on rk3399, so default to enable this.</span>
+<span class="ln">19</span>/dev/block/by-name/userdata                         /data                      f2fs      noatime,nodiratime,nosuid,nodev,discard,inline_xattr,fsync_mode<span class="o">=</span>strict     wait,check,notrim,forceencrypt<span class="o">=</span>/cache/key_file,quota,reservedsize<span class="o">=</span>128M
+</code></pre></div><h2 id="23services">2.3Services</h2>
+<p>Service指的是需要在初始化就启动的服务，通过定义还可以让他们在退出的时候自动重启。格式如下：</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>service &lt;name&gt; &lt;pathname&gt; [ &lt;argument&gt; ]*
+<span class="ln">2</span>   &lt;option&gt;
+<span class="ln">3</span>   &lt;option&gt;
+<span class="ln">4</span>   ...
+</code></pre></div><p>举例说明</p>
+<h3 id="231无参数">2.3.1无参数</h3>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>#init.rc
+<span class="ln">2</span>service ueventd /system/bin/ueventd
+<span class="ln">3</span>    class core
+<span class="ln">4</span>    critical
+<span class="ln">5</span>    seclabel u:r:ueventd:s0
+<span class="ln">6</span>    shutdown critical
+</code></pre></div><h3 id="232有参数">2.3.2有参数</h3>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span># logcatd service
+<span class="ln">2</span>service logcatd /system/bin/logcatd -L -b ${logd.logpersistd.buffer:-all} -v threadtime -v usec -v printable -D -f /data/misc/logd/logcat -r ${logd.logpersistd.rotate_kbytes:-2048} -n ${logd.logpersistd.size:-256} --id=${ro.build.id}
+<span class="ln">3</span>    class late_start
+<span class="ln">4</span>    disabled
+<span class="ln">5</span>    # logd for write to /data/misc/logd, log group for read from log daemon
+<span class="ln">6</span>    user logd
+<span class="ln">7</span>    group log
+<span class="ln">8</span>    task_profiles ServiceCapacityLow
+<span class="ln">9</span>    oom_score_adjust -600
+</code></pre></div><h2 id="24options">2.4Options</h2>
+<p>Option 是修饰service的属性，它用于定义service何时启动以及怎样启动。</p>
+<table>
+<thead>
+<tr>
+<th><strong>option</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>critical</code></td>
+<td>表明这个对设备至关重要的服务，如果他在四分钟内退出超过4次，则设备将重启进入<code>bootloader</code>模式</td>
+</tr>
+<tr>
+<td><code>capabilities [ &lt;capability&gt;\* ]</code></td>
+<td>表示执行该<code>service</code>的能力，如果没有增加<code>capabilities</code>修饰，则表示该服务没有任何<code>capabilities</code></td>
+</tr>
+<tr>
+<td><code>console [&lt;console&gt;]</code></td>
+<td>用于指定该服务输出 是否要打印到<code>dmesg</code>。 默认输出到<code>/dev/console</code>, 而<code>/dev/console</code>可以通过设置<code>androidboot.console</code>来指定</td>
+</tr>
+<tr>
+<td><code>timeout_period &lt;seconds&gt;</code></td>
+<td>超过这个时间kill掉<code>service</code>。<code>oneshot service</code>不会被重启，其他服务会自动重启。与<code>restart_period</code>配合使用可以创建周期运行的<code>service</code>。</td>
+</tr>
+<tr>
+<td><code>disable</code></td>
+<td>此服务不会自动启动，而是需要通过显示调用服务名来启动</td>
+</tr>
+<tr>
+<td><code>file &lt;path&gt; &lt;type&gt;</code></td>
+<td>打开文件，并将它的<code>fd</code>传递给进程，C 层可使用<code>android_get_control_file</code>获取到<code>fd</code>。 type类为：<code>“r”</code>,<code> “w”</code> ,<code>“rw”</code></td>
+</tr>
+<tr>
+<td><code>interface &lt;interface name&gt; &lt;instance name&gt;</code></td>
+<td>关联<code>HIDL</code>接口，名称必须是完整的，这样才能方便<code>hwservicemanager</code>快速启动这些<code>HIDL</code>服务。可关联多个<code>HIDL </code>接口</td>
+</tr>
+<tr>
+<td><code>keycodes &lt;keycode&gt; [ &lt;keycode&gt;\* ]</code></td>
+<td>设置<code>keycode</code>，当同时触发这些按键事件时，服务将启动。常用于<code>bugreport service</code></td>
+</tr>
+<tr>
+<td><code>setenv &lt; name &gt;&lt; value &gt;</code></td>
+<td>设置环境变量<code>&lt; name &gt;</code>为某个值<code>&lt; value &gt;</code></td>
+</tr>
+<tr>
+<td><code>socket &lt; name &gt;&lt; type &gt;&lt; perm &gt;[&lt; user &gt;[ &lt; group &gt;]]</code></td>
+<td>创建一个名为<code>/dev/socket/&lt; name &gt;</code>的<code>Unix domain socket</code>，然后将他的<code>fd</code>值传给启动它的进程，有效的<code>&lt; type &gt;</code>值包括<code>dgram</code>,<code>steam</code>和<code>seqpacket</code>.而<code>user</code>和<code>group</code>的默认值是0</td>
+</tr>
+<tr>
+<td><code>ioprio &lt;class&gt; &lt;priority&gt;</code></td>
+<td>通过<code>SYS_ioprio_set syscall</code>设置此<code>service</code>的IO优先级和IO优先级类。类为<code>“rt”</code>、<code>“be”</code>或<code>“idle”</code>。优先级为0-7</td>
+</tr>
+<tr>
+<td><code>user &lt; username &gt;</code></td>
+<td>在启动服务前将用户切换至<code>&lt; username &gt;</code>,默认情况下用户都是<code>root</code></td>
+</tr>
+<tr>
+<td><code>group &lt; groupname &gt;[&lt; groupname &gt;]</code></td>
+<td>在启动服务将用户组切换至<code>&lt; groupname &gt;</code></td>
+</tr>
+<tr>
+<td><code>oneshot</code></td>
+<td>当此服务退出时，不要主动去重启他</td>
+</tr>
+<tr>
+<td><code>class &lt; name &gt;</code></td>
+<td>为该服务指定一个<code>class</code>名，同一个<code>class</code>的所有服务必须同时自动或者停止，默认情况下服务的<code>class</code>名是<code>”default”</code></td>
+</tr>
+<tr>
+<td><code>onrestart</code></td>
+<td>当此服务重启时，执行某些命令</td>
+</tr>
+<tr>
+<td><code>enter_namespace &lt;type&gt; &lt;path&gt;</code></td>
+<td>输入路径的namespace。network type可以指定为&quot;net&quot;. 只能设置一个type</td>
+</tr>
+<tr>
+<td>`namespace &lt;pid</td>
+<td>mnt&gt;`</td>
+</tr>
+<tr>
+<td><code>oom_score_adjust &lt;value&gt;</code></td>
+<td>自定义<code>oom_score</code>，等同于优先级，优先级越高值越小（-1000 ~1000）。分值越小越不会被kill</td>
+</tr>
+<tr>
+<td><code>override</code></td>
+<td>一般是<code>odm service</code>使用，用于覆盖之前<code>system</code>或者<code>vendor</code>已经定义的服务配置。如果<code>rc</code>中存在多个<code>override</code>标识的相同类名服务，则最后一个被解析的服务才生效。可以通过<code>imports</code>分析，避免出错。</td>
+</tr>
+<tr>
+<td><code>priority &lt;priority&gt;</code></td>
+<td>设置<code>service</code>进程的优先级。范围为-20~19. 默认为0. 实际是通过<code>setpriority()</code>函数设置</td>
+</tr>
+<tr>
+<td><code>reboot_on_failure &lt;target&gt;</code></td>
+<td>当该服务启动失败或者运行中异常退出时,执行重启。 参数 其实就是设置<code>property sys.powerctl</code> 的值。格式一般为<code>&quot;reboot,reason&quot;</code>。</td>
+</tr>
+<tr>
+<td><code>restart_period &lt;seconds&gt;</code></td>
+<td>设置后<code>non-oneshot</code> 服务将以此周期重启服务。比如<code>restart_period 3600</code> 表示该服务将会每隔1小时启动</td>
+</tr>
+<tr>
+<td><code>rlimit &lt;resource&gt; &lt;cur&gt; &lt;max&gt;</code></td>
+<td>对当前服务以及子进程生效。等同于<code>setrlimit</code>命令。<code>rootfs</code>,<code>ueventd</code>, <code>adbd</code>等，默认为<code>init</code>.</td>
+</tr>
+<tr>
+<td><code>shutdown &lt;shutdown_behavior&gt;</code></td>
+<td>指定当关机时<code>service</code>进程行为。如果没有具体说明，关机时，使用<code>SIGTERM</code>和<code>SIGKILL</code>关闭<code>service</code>。关机期间，<code>“critical”</code> 标识的<code>service</code>不会被关闭直到关机超时。<code>“critical”</code> 标识的<code>service</code>在关机开始时，如果没处于运行状态，则它还会被启动</td>
+</tr>
+<tr>
+<td><code>socket &lt;name&gt; &lt;type&gt; &lt;perm&gt; [ &lt;user&gt; [ &lt;group&gt; [ &lt;seclabel&gt; ] ] ]</code></td>
+<td>创建一个名为<code>/dev/socket/name</code>的<code>UNIX</code>域<code>socket</code>，并将其<code>fd</code>传递给<code>service</code>程序。type必须为<code>“dgram”</code>、<code>“stream”</code>或<code>“seqpacket”</code>。type可以加后缀<code>“+passcred”</code>，启用<code>SO_PASSCRE</code>。用户和组默认值为0。<code>”seclabel’</code>指的是<code>selinux context</code>. 进程中C层可以使用 <code>libcutils ``android_get_control_socket()</code>来获取这个<code>fd</code></td>
+</tr>
+<tr>
+<td><code>user &lt;username&gt;</code></td>
+<td>指定<code>user</code>，默认为<code>root</code>。早期要获取<code>Linux capabilities</code>,进程需要以<code>root</code>运行并请求<code>capabilities</code>，之后再修改成它期望的运行<code>uid</code>。通过<code>fs_config</code>有一种新的机制来替换早期的那种实现，现在允许厂商将程序的<code>Linux capabilities</code>添加到文件系统中</td>
+</tr>
+<tr>
+<td><code>task_profiles &lt;profile&gt; [ &lt;profile&gt;\* ]</code></td>
+<td>设置任务<code>profiles</code>。这是为了取代<code>writepid</code>来设置当前<code>service</code>的<code>profiles</code></td>
+</tr>
+<tr>
+<td><code>writepid &lt;file&gt; [ &lt;file&gt;\* ]</code></td>
+<td>将子进程的<code>pid</code>写入文件中，以支持<code>cgroup/cpuset</code>的使用。如果指定的不是<code>/dev/cpuset/</code>，但是<code>property ‘ro.cpuset.default’</code> 中设置了非空的<code>cpuset</code>名称 (比如： <code>‘/foreground’</code>)，那么<code>pid会</code>被写入<code>/dev/cpuset/cpuset_name/tasks</code>。 此<code>option</code>仅适用于子进程，如果要设置当前<code>service</code>的<code>task profiles</code>, 就需要使用<code>task_profiles</code>.</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>
+<p><code>capabilities [ &lt;capability&gt;\* ]</code> 表示执行该service的能力，如果没有增加capabilities修饰，则表示该服务没有任何capabilities。</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln"> 1</span>  ###example1, BLOCK_SUSPEND：
+<span class="ln"> 2</span>  service vendor.audio-hal /vendor/bin/hw/android.hardware.audio.service.ranchu
+<span class="ln"> 3</span>      class hal
+<span class="ln"> 4</span>      user audioserver
+<span class="ln"> 5</span>      # media gid needed for /dev/fm (radio) and for /data/misc/media (tee)
+<span class="ln"> 6</span>      group audio camera drmrpc inet media mediadrm net_bt net_bt_admin net_bw_acct wakelock context_hub
+<span class="ln"> 7</span>      #有能力block系统休眠
+<span class="ln"> 8</span>      capabilities BLOCK_SUSPEND
+<span class="ln"> 9</span>      ioprio rt 4
+<span class="ln">10</span>      task_profiles ProcessCapacityHigh HighPerformance
+<span class="ln">11</span>      onrestart restart audioserver
+<span class="ln">12</span>
+<span class="ln">13</span>  ###example2,NET_ADMIN NET_RAW:
+<span class="ln">14</span>  service ril-daemon /vendor/bin/hw/libgoldfish-rild
+<span class="ln">15</span>      class main
+<span class="ln">16</span>      user radio
+<span class="ln">17</span>      group radio cache inet misc audio log readproc wakelock
+<span class="ln">18</span>      #NET_ADMIN：执行和网络相关的一系列操作，例如接口配置，防火墙配置等等
+<span class="ln">19</span>      #NET_RAW: 使用RAW and PACKET socket接字绑定到任何地址进行透明代理
+<span class="ln">20</span>      capabilities BLOCK_SUSPEND NET_ADMIN NET_RAW
+<span class="ln">21</span>
+<span class="ln">22</span>  ###example3,SYS_BOOT:
+<span class="ln">23</span>  service charger /system/bin/charger
+<span class="ln">24</span>      class charger
+<span class="ln">25</span>      seclabel u:r:charger:s0
+<span class="ln">26</span>      user system
+<span class="ln">27</span>      group system wakelock input
+<span class="ln">28</span>      #有能力进行reboot或者调用kexec_load
+<span class="ln">29</span>      capabilities SYS_BOOT
+<span class="ln">30</span>      file /dev/kmsg w
+<span class="ln">31</span>      file /sys/fs/pstore/console-ramoops-0 r
+<span class="ln">32</span>      file /sys/fs/pstore/console-ramoops r
+<span class="ln">33</span>      file /proc/last_kmsg r
+</code></pre></div></li>
+<li>
+<p><code>class &lt;name&gt; [ &lt;name&gt;\* ]</code> 用于指定service的类名，相同的类名可以在action中配置成一起启动或者一起停止。 一个service至少有一个class,如果没有指定 class name， 默认class 为&quot;default&quot;。当然也可以指定多个class name， 多个class name便于service分组管理。</p>
+<div class="highlight"><pre class="chroma"><code class="language-mysql" data-lang="mysql"><span class="ln"> 1</span><span class="w">  </span><span class="c1">###example1, animation 
+</span><span class="ln"> 2</span><span class="c1"></span><span class="w">  </span><span class="n">service</span><span class="w"> </span><span class="n">vendor</span><span class="p">.</span><span class="n">gralloc</span><span class="o">-</span><span class="mi">3</span><span class="o">-</span><span class="mi">0</span><span class="w"> </span><span class="o">/</span><span class="n">vendor</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">hw</span><span class="o">/</span><span class="n">android</span><span class="p">.</span><span class="n">hardware</span><span class="p">.</span><span class="n">graphics</span><span class="p">.</span><span class="n">allocator</span><span class="o">@</span><span class="mi">3</span><span class="p">.</span><span class="mi">0</span><span class="o">-</span><span class="n">service</span><span class="w">
+</span><span class="ln"> 3</span><span class="w">      </span><span class="n">interface</span><span class="w"> </span><span class="n">android</span><span class="p">.</span><span class="n">hardware</span><span class="p">.</span><span class="n">graphics</span><span class="p">.</span><span class="n">allocator</span><span class="o">@</span><span class="mi">3</span><span class="p">.</span><span class="mi">0</span><span class="p">::</span><span class="n">IAllocator</span><span class="w"> </span><span class="k">default</span><span class="w">
+</span><span class="ln"> 4</span><span class="w">      </span><span class="c1">#`animation` calss是指可以进行开机动画或者关机动画的服务组。
+</span><span class="ln"> 5</span><span class="c1"></span><span class="w">      </span><span class="c1">#这些服务往往很早就运行或者在关机的最后阶段运行的
+</span><span class="ln"> 6</span><span class="c1"></span><span class="w">      </span><span class="c1">#因此需要注意他们不能去打开/data下的文件，应该要保证/data分区即便卸载了也能正常运行。
+</span><span class="ln"> 7</span><span class="c1"></span><span class="w">      </span><span class="n">class</span><span class="w"> </span><span class="n">hal</span><span class="w"> </span><span class="n">animation</span><span class="w">
+</span><span class="ln"> 8</span><span class="w">      </span><span class="n">interface</span><span class="w"> </span><span class="n">android</span><span class="p">.</span><span class="n">hardware</span><span class="p">.</span><span class="n">graphics</span><span class="p">.</span><span class="n">allocator</span><span class="o">@</span><span class="mi">3</span><span class="p">.</span><span class="mi">0</span><span class="p">::</span><span class="n">IAllocator</span><span class="w"> </span><span class="k">default</span><span class="w">
+</span><span class="ln"> 9</span><span class="w">      </span><span class="k">user</span><span class="w"> </span><span class="n">system</span><span class="w">
+</span><span class="ln">10</span><span class="w">      </span><span class="k">group</span><span class="w"> </span><span class="n">graphics</span><span class="w"> </span><span class="n">drmrpc</span><span class="w">
+</span><span class="ln">11</span><span class="w">      </span><span class="n">capabilities</span><span class="w"> </span><span class="n">SYS_NICE</span><span class="w">
+</span><span class="ln">12</span><span class="w">      </span><span class="n">onrestart</span><span class="w"> </span><span class="n">restart</span><span class="w"> </span><span class="n">surfaceflinger</span><span class="w">
+</span><span class="ln">13</span><span class="w">
+</span><span class="ln">14</span><span class="w">  </span><span class="c1">###example2, core
+</span><span class="ln">15</span><span class="c1"></span><span class="w">  </span><span class="n">service</span><span class="w"> </span><span class="n">shutdownanim</span><span class="w"> </span><span class="o">/</span><span class="n">system</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">bootanimation</span><span class="w"> </span><span class="n">shutdown</span><span class="w">
+</span><span class="ln">16</span><span class="w">      </span><span class="c1">#core 一般是早启动，最晚结束的一些系统核心程序
+</span><span class="ln">17</span><span class="c1"></span><span class="w">      </span><span class="n">class</span><span class="w"> </span><span class="n">core</span><span class="w">
+</span><span class="ln">18</span><span class="w">      </span><span class="k">user</span><span class="w"> </span><span class="n">graphics</span><span class="w">
+</span><span class="ln">19</span><span class="w">      </span><span class="k">group</span><span class="w"> </span><span class="n">graphics</span><span class="w"> </span><span class="n">audio</span><span class="w">
+</span><span class="ln">20</span><span class="w">      </span><span class="n">disabled</span><span class="w">
+</span><span class="ln">21</span><span class="w">      </span><span class="n">oneshot</span><span class="w">
+</span><span class="ln">22</span><span class="w">
+</span><span class="ln">23</span><span class="w">
+</span><span class="ln">24</span><span class="w">  </span><span class="c1">###example3, main
+</span><span class="ln">25</span><span class="c1"></span><span class="w">  </span><span class="n">service</span><span class="w"> </span><span class="n">wpa_supplicant</span><span class="w"> </span><span class="o">/</span><span class="n">vendor</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">hw</span><span class="o">/</span><span class="n">wpa_supplicant</span><span class="w"> </span><span class="err">\</span><span class="w">
+</span><span class="ln">26</span><span class="w">      </span><span class="o">/</span><span class="n">vendor</span><span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">wifi</span><span class="o">/</span><span class="n">wpa_config</span><span class="p">.</span><span class="n">txt</span><span class="w">
+</span><span class="ln">27</span><span class="w">  </span><span class="c1">#   we will start as root and wpa_supplicant will switch to user wifi
+</span><span class="ln">28</span><span class="c1"></span><span class="w">  </span><span class="c1">#   after setting up the capabilities required for WEXT
+</span><span class="ln">29</span><span class="c1"></span><span class="w">  </span><span class="c1">#   user wifi
+</span><span class="ln">30</span><span class="c1"></span><span class="w">  </span><span class="c1">#   group wifi inet keystore
+</span><span class="ln">31</span><span class="c1"></span><span class="w">      </span><span class="n">interface</span><span class="w"> </span><span class="n">android</span><span class="p">.</span><span class="n">hardware</span><span class="p">.</span><span class="n">wifi</span><span class="p">.</span><span class="n">supplicant</span><span class="o">@</span><span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="p">::</span><span class="n">ISupplicant</span><span class="w"> </span><span class="k">default</span><span class="w">
+</span><span class="ln">32</span><span class="w">      </span><span class="n">interface</span><span class="w"> </span><span class="n">android</span><span class="p">.</span><span class="n">hardware</span><span class="p">.</span><span class="n">wifi</span><span class="p">.</span><span class="n">supplicant</span><span class="o">@</span><span class="mi">1</span><span class="p">.</span><span class="mi">1</span><span class="p">::</span><span class="n">ISupplicant</span><span class="w"> </span><span class="k">default</span><span class="w">
+</span><span class="ln">33</span><span class="w">      </span><span class="n">interface</span><span class="w"> </span><span class="n">android</span><span class="p">.</span><span class="n">hardware</span><span class="p">.</span><span class="n">wifi</span><span class="p">.</span><span class="n">supplicant</span><span class="o">@</span><span class="mi">1</span><span class="p">.</span><span class="mi">2</span><span class="p">::</span><span class="n">ISupplicant</span><span class="w"> </span><span class="k">default</span><span class="w">
+</span><span class="ln">34</span><span class="w">      </span><span class="n">interface</span><span class="w"> </span><span class="n">android</span><span class="p">.</span><span class="n">hardware</span><span class="p">.</span><span class="n">wifi</span><span class="p">.</span><span class="n">supplicant</span><span class="o">@</span><span class="mi">1</span><span class="p">.</span><span class="mi">3</span><span class="p">::</span><span class="n">ISupplicant</span><span class="w"> </span><span class="k">default</span><span class="w">
+</span><span class="ln">35</span><span class="w">      </span><span class="c1">#class main 一般为framework层进程
+</span><span class="ln">36</span><span class="c1"></span><span class="w">      </span><span class="n">class</span><span class="w"> </span><span class="n">main</span><span class="w">
+</span><span class="ln">37</span><span class="w">      </span><span class="n">socket</span><span class="w"> </span><span class="n">wpa_wlan0</span><span class="w"> </span><span class="n">dgram</span><span class="w"> </span><span class="mi">660</span><span class="w"> </span><span class="n">wifi</span><span class="w"> </span><span class="n">wifi</span><span class="w">
+</span><span class="ln">38</span><span class="w">      </span><span class="n">disabled</span><span class="w">
+</span><span class="ln">39</span><span class="w">      </span><span class="n">oneshot</span><span class="w">
+</span><span class="ln">40</span><span class="w">
+</span><span class="ln">41</span><span class="w">
+</span><span class="ln">42</span><span class="w">  </span><span class="c1">###example4, late_start
+</span><span class="ln">43</span><span class="c1"></span><span class="w">  </span><span class="n">service</span><span class="w"> </span><span class="n">bugreport</span><span class="w"> </span><span class="o">/</span><span class="n">system</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">dumpstate</span><span class="w"> </span><span class="o">-</span><span class="n">d</span><span class="w"> </span><span class="o">-</span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="n">B</span><span class="w"> </span><span class="o">-</span><span class="n">z</span><span class="w"> </span><span class="err">\</span><span class="w">
+</span><span class="ln">44</span><span class="w">          </span><span class="o">-</span><span class="n">o</span><span class="w"> </span><span class="o">/</span><span class="n">data</span><span class="o">/</span><span class="n">user_de</span><span class="o">/</span><span class="mi">0</span><span class="o">/</span><span class="n">com</span><span class="p">.</span><span class="n">android</span><span class="p">.</span><span class="n">shell</span><span class="o">/</span><span class="n">files</span><span class="o">/</span><span class="n">bugreports</span><span class="o">/</span><span class="n">bugreport</span><span class="w">
+</span><span class="ln">45</span><span class="w">      </span><span class="c1">#late_start: 一般在初始化最后阶段才需要启动的程序
+</span><span class="ln">46</span><span class="c1"></span><span class="w">      </span><span class="n">class</span><span class="w"> </span><span class="n">late_start</span><span class="w">
+</span><span class="ln">47</span><span class="w">      </span><span class="n">disabled</span><span class="w">
+</span><span class="ln">48</span><span class="w">      </span><span class="n">oneshot</span><span class="w">
+</span><span class="ln">49</span><span class="w">      </span><span class="n">keycodes</span><span class="w"> </span><span class="mi">114</span><span class="w"> </span><span class="mi">115</span><span class="w"> </span><span class="mi">116</span><span class="w">
+</span></code></pre></div></li>
+<li>
+<p><code>console [&lt;console&gt;]</code> 用于指定该服务输出 是否要打印到<strong>dmesg</strong>。 默认输出到/dev/console, 而/dev/console可以通过设置androidboot.console来指定。</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln"> 1</span>#@*.rc
+<span class="ln"> 2</span>service recovery /sbin/recovery
+<span class="ln"> 3</span>    console
+<span class="ln"> 4</span>    seclabel u:r:recovery:s0
+<span class="ln"> 5</span>#@BoardConfig_*.mk
+<span class="ln"> 6</span> BOARD_KERNEL_CMDLINE := androidboot.wificountrycode=CN androidboot.hardware=rk30board androidboot.console=ttyFIQ0 firmware_class.path=/vendor/etc/firmware init=/init rootwait ro init=/init
+<span class="ln"> 7</span>
+<span class="ln"> 8</span>#@device 可以查看console相关属性：
+<span class="ln"> 9</span>$ getprop |grep conso                                                                                                                                                               
+<span class="ln">10</span>[init.svc.console]: [running]
+<span class="ln">11</span>[ro.boot.console]: [ttyFIQ0]
+<span class="ln">12</span>[ro.boottime.console]: [3672952642]
+<span class="ln">13</span>[ro.consoleable]: [1]
+</code></pre></div></li>
+<li>
+<p><code>critical</code>用于说明关键服务，当该服务4分钟内或者在开机完成前退出超过4次，将会导致设备进入bootloader模式。</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>service ueventd /sbin/ueventd
+<span class="ln">2</span>      #指明是关键服务
+<span class="ln">3</span>      critical
+<span class="ln">4</span>      seclabel u:r:ueventd:s0
+</code></pre></div></li>
+<li>
+<p><code>file &lt;path&gt; &lt;type&gt;</code> 打开文件，并将它的fd传递给进程，C 层可使用android_get_control_file获取到fd。 type类为：“r”, “w” ,“rw”。</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln"> 1</span>service charger /system/bin/charger
+<span class="ln"> 2</span>      class charger
+<span class="ln"> 3</span>      seclabel u:r:charger:s0
+<span class="ln"> 4</span>      user system
+<span class="ln"> 5</span>      group system wakelock input
+<span class="ln"> 6</span>      capabilities SYS_BOOT
+<span class="ln"> 7</span>      file /dev/kmsg w
+<span class="ln"> 8</span>      file /sys/fs/pstore/console-ramoops-0 r
+<span class="ln"> 9</span>      file /sys/fs/pstore/console-ramoops r
+<span class="ln">10</span>      file /proc/last_kmsg r
+</code></pre></div></li>
+<li>
+<p><code>interface &lt;interface name&gt; &lt;instance name&gt;</code>关联<strong>HIDL</strong>接口，名称必须是完整的，这样才能方便hwservicemanager快速启动这些HIDL服务。可关联多个HIDL 接口。</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>service wpa_supplicant /vendor/bin/hw/wpa_supplicant -Dnl80211 -iwlan0 -c/vendor/etc/wifi/wpa_supplicant.conf -g@android:wpa_wlan0
+<span class="ln">2</span>      interface android.hardware.wifi.supplicant@1.0::ISupplicant default
+<span class="ln">3</span>      interface android.hardware.wifi.supplicant@1.1::ISupplicant default
+<span class="ln">4</span>      interface android.hardware.wifi.supplicant@1.2::ISupplicant default
+<span class="ln">5</span>      interface android.hardware.wifi.supplicant@1.3::ISupplicant default
+<span class="ln">6</span>      socket wpa_wlan0 dgram 660 wifi wifi
+<span class="ln">7</span>      group system wifi inet
+<span class="ln">8</span>      oneshot
+<span class="ln">9</span>      disabled
+</code></pre></div></li>
+<li>
+<p><code>keycodes &lt;keycode&gt; [ &lt;keycode&gt;\* ]</code> 设置keycode，当同时触发这些按键事件时，服务将启动。常用于bugreport service。</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>service vendor.audio-hal /vendor/bin/hw/android.hardware.audio.service.ranchu
+<span class="ln">2</span>      class hal
+<span class="ln">3</span>      user audioserver
+<span class="ln">4</span>      # media gid needed for /dev/fm (radio) and for /data/misc/media (tee)
+<span class="ln">5</span>      group audio camera drmrpc inet media mediadrm net_bt net_bt_admin net_bw_acct wakelock context_hub
+<span class="ln">6</span>      capabilities BLOCK_SUSPEND
+<span class="ln">7</span>      ioprio rt 4
+<span class="ln">8</span>      task_profiles ProcessCapacityHigh HighPerformance
+<span class="ln">9</span>      onrestart restart audioserver
+</code></pre></div></li>
+<li>
+<p><code>onrestart</code> 当该service重启时，运行命令</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span># bugreport is triggered by holding down volume down, volume up and power
+<span class="ln">2</span>service bugreport /system/bin/dumpstate -d -p -B -z \
+<span class="ln">3</span>          -o /data/user_de/0/com.android.shell/files/bugreports/bugreport
+<span class="ln">4</span>      class late_start
+<span class="ln">5</span>      disabled
+<span class="ln">6</span>      oneshot
+<span class="ln">7</span>      keycodes 114 115 116
+</code></pre></div></li>
+</ul>
+<h2 id="25imports">2.5Imports</h2>
+<p><code>import &lt;path&gt;</code>导入一个新的rc文件内容，如果path是个目录，则会导入该目录下所有rc文件内容，仅导入当前目录，不支持递归，不能导入子目录下的rc文件。</p>
+<p>import关键字并不是一个命令，它遵循以下规则</p>
+<pre><code>1. 开机时，加载根目录下的/init.rc 或者加载 `ro.boot.init_rc` 中指定的脚本。
+2. 在加载/init.rc之后mount {system,vendor,odm}的时候就加载对应的 /{system,vendor,odm}/etc/init/ 下的rc文件。
+</code></pre>
+<p>关于加载顺序</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln"> 1</span>fn Import(file)
+<span class="ln"> 2</span>  Parse(file)
+<span class="ln"> 3</span>  for (import : file.imports)
+<span class="ln"> 4</span>    Import(import)
+<span class="ln"> 5</span>
+<span class="ln"> 6</span>Import(/init.rc)
+<span class="ln"> 7</span>Directories = [/system/etc/init, /vendor/etc/init, /odm/etc/init]
+<span class="ln"> 8</span>for (directory : Directories)
+<span class="ln"> 9</span>  files = &lt;Alphabetical order of directory&#39;s contents&gt;
+<span class="ln">10</span>  for (file : files)
+<span class="ln">11</span>    Import(file)
+</code></pre></div><ol>
+<li>/init.rc 先被解析加载，同时在它内部import的rc文件会被递归加载。</li>
+<li>/system/etc/init/下的rc文件按名字的字母排序排序后加载进来，加载一个的同时递归加载import进来的rc文件。</li>
+<li>再重复2继续处理r /vendor/etc/init 之后  /odm/etc/init 的rc文件。</li>
+</ol>
+<h2 id="26一点点补充关于属性">2.6一点点补充关于属性</h2>
+<p><code>ctl.[&lt;target&gt;_]&lt;command&gt;</code> 以ctl打头的这个格式的属性能够触发init的响应，且该属性是只用于set而不用于read的。<code>&lt;target&gt;</code>是可选的，一般为一个service的option，只能指定一个option。<code>&lt;commands&gt;</code>只能为start restart stop 中的一个。这个属性的value就是对应的service名称。</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln"> 1</span>##就会运行logd的start option。
+<span class="ln"> 2</span>SetProperty(&#34;ctl.start&#34;, &#34;logd&#34;)
+<span class="ln"> 3</span>#就会启动一个提供了 `aidl aidl_lazy_test_1`接口 的service 的start option. 		
+<span class="ln"> 4</span>SetProperty(&#34;ctl.interface_start&#34;, &#34;aidl/aidl_lazy_test_1&#34;)
+<span class="ln"> 5</span>#按oneshort启动，如果进程挂掉不再重启。
+<span class="ln"> 6</span>SetProperty(&#34;ctl.oneshot_one_start&#34;, &#34;logd&#34;) 
+<span class="ln"> 7</span># 进程挂掉后还要重新启动。
+<span class="ln"> 8</span>SetProperty(&#34;ctl.oneshot_off_start&#34;, &#34;logd&#34;)
+<span class="ln"> 9</span>#发送SIGSTO给该服务。用于调试。
+<span class="ln">10</span>SetProperty(&#34;ctl.sigstop_on_start&#34;, &#34;logd&#34;)
+<span class="ln">11</span>SetProperty(&#34;ctl.sigstop_off_start&#34;, &#34;logd&#34;)
+</code></pre></div><h1 id="源码文件">源码文件</h1>
+<p><a href="https://github.com/YangYang48/project/tree/master/rc">https://github.com/YangYang48/project/tree/master/rc</a></p>
+<h1 id="参考">参考</h1>
+<p><a href="https://blog.csdn.net/weixin_49274713/article/details/130533998?spm=1001.2014.3001.5502">[1] 一切皆是定数, Android启动流程（四）——rc文件解析, 2023.</a></p>
+<p><a href="https://blog.csdn.net/feigebangni/article/details/50300063">[2] astro-yang, init.rc语法详解, 2015.</a></p>
+<p><a href="https://blog.csdn.net/panbinxian/article/details/123660864">[3] 面包派, Android init.rc整理, 2022.</a></p>
+<p><a href="https://blog.csdn.net/marshal_zsx/article/details/80272760">[4] 时光如刀, Android 8.0 系统启动流程之init.rc语法规则(六), 2018.</a></p>
+<p><a href="https://blog.csdn.net/ch853199769/article/details/78427362">[5] 安德路, init.rc深入学习, 2017.</a></p>
+<p><a href="https://blog.csdn.net/eliot_shao/article/details/53163522">[6] Eliot_shao, Init.rc妙用及语法说明, 2016.</a></p>
+<p><a href="https://zhonglunshun.blog.csdn.net/article/details/78615980">[7] 疯人院的院长大人, Android系统init进程启动及init.rc全解析, 2022.</a></p>
+<p><a href="https://zhonglunshun.blog.csdn.net/article/details/78625375">[8] 疯人院的院长大人, recovery下的init.rc语法解析, 2017.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/android/">Android</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%BA%90%E7%A0%81/">源码</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/ail/">AIL</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/parser/">parser</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/actions/">Actions</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/commands/">Commands</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/services/">Services</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/options/">Options</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/imports/">Imports</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/06/native-looper%E4%BD%BF%E7%94%A8%E5%92%8C%E5%8E%9F%E7%90%86/" data-tooltip="Native Looper使用和原理">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2023 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/06/native-looper%E4%BD%BF%E7%94%A8%E5%92%8C%E5%8E%9F%E7%90%86/" data-tooltip="Native Looper使用和原理">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2023%2F06%2Fandroid-rc%25E6%2596%2587%25E4%25BB%25B6%25E5%2592%258C%25E8%25A7%25A3%25E6%259E%2590%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2023%2F06%2Fandroid-rc%25E6%2596%2587%25E4%25BB%25B6%25E5%2592%258C%25E8%25A7%25A3%25E6%259E%2590%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2023%2F06%2Fandroid-rc%25E6%2596%2587%25E4%25BB%25B6%25E5%2592%258C%25E8%25A7%25A3%25E6%259E%2590%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2023\/06\/android-rc%E6%96%87%E4%BB%B6%E5%92%8C%E8%A7%A3%E6%9E%90\/';
+          
+            this.page.identifier = '\/2023\/06\/android-rc%E6%96%87%E4%BB%B6%E5%92%8C%E8%A7%A3%E6%9E%90\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
