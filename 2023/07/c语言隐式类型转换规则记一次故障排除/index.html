@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="隐式类型转换造成的危害程度与数组和指针有的一拼。如果你混合使用不同类型，C使用一个规则集合来自动完成类型转换。这可能很方便，但也很危险。">
+
+
+<meta property="og:description" content="隐式类型转换造成的危害程度与数组和指针有的一拼。如果你混合使用不同类型，C使用一个规则集合来自动完成类型转换。这可能很方便，但也很危险。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C语言隐式类型转换规则【记一次故障排除】">
+<meta name="twitter:title" content="C语言隐式类型转换规则【记一次故障排除】">
+<meta property="og:url" content="https://yangyang48.github.io/2023/07/c%E8%AF%AD%E8%A8%80%E9%9A%90%E5%BC%8F%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2%E8%A7%84%E5%88%99%E8%AE%B0%E4%B8%80%E6%AC%A1%E6%95%85%E9%9A%9C%E6%8E%92%E9%99%A4/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2023/07/c%E8%AF%AD%E8%A8%80%E9%9A%90%E5%BC%8F%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2%E8%A7%84%E5%88%99%E8%AE%B0%E4%B8%80%E6%AC%A1%E6%95%85%E9%9A%9C%E6%8E%92%E9%99%A4/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="隐式类型转换造成的危害程度与数组和指针有的一拼。如果你混合使用不同类型，C使用一个规则集合来自动完成类型转换。这可能很方便，但也很危险。">
+<meta name="twitter:description" content="隐式类型转换造成的危害程度与数组和指针有的一拼。如果你混合使用不同类型，C使用一个规则集合来自动完成类型转换。这可能很方便，但也很危险。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2023-07-01T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2023-07-01T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="c">
+    
+      <meta property="article:section" content="2023">
+    
+      <meta property="article:section" content="July">
+    
+  
+  
+    
+      <meta property="article:tag" content="基础">
+    
+      <meta property="article:tag" content="隐式转换">
+    
+      <meta property="article:tag" content="基本类型">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/c&#43;&#43;/base/Implicit_conversion/ic_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/c&#43;&#43;/base/Implicit_conversion/ic_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/c&#43;&#43;/base/Implicit_conversion/ic_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/c&#43;&#43;/base/Implicit_conversion/ic_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+
+
+    <title>C语言隐式类型转换规则【记一次故障排除】</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2023/07/c%E8%AF%AD%E8%A8%80%E9%9A%90%E5%BC%8F%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2%E8%A7%84%E5%88%99%E8%AE%B0%E4%B8%80%E6%AC%A1%E6%95%85%E9%9A%9C%E6%8E%92%E9%99%A4/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/c&#43;&#43;/base/Implicit_conversion/ic_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      C语言隐式类型转换规则【记一次故障排除】
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2023-07-01T00:00:00Z">
+        
+  七月 1, 2023
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/c">c</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2023">2023</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/july">July</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">900 Words|Read in about 4 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>隐式类型转换造成的危害程度与数组和指针有的一拼。如果你混合使用不同类型，C使用一个规则集合来自动完成类型转换。这可能很方便，但也很危险。</p>
+<h1 id="0-提问">0 提问</h1>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="ln">2</span><span class="cp"></span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln">3</span><span class="p">{</span>
+<span class="ln">4</span>    <span class="kt">char</span> <span class="n">a</span><span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">5</span>    <span class="kt">signed</span> <span class="kt">char</span> <span class="n">b</span><span class="o">=-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">6</span>    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">c</span><span class="o">=-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">7</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;a=%d,b=%d,c=%d&#34;</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">c</span><span class="p">);</span>
+<span class="ln">8</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">9</span><span class="p">}</span>
+</code></pre></div><p>这个输出是什么，先说答案</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="n">a</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span><span class="n">b</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span><span class="n">c</span><span class="o">=</span><span class="mi">255</span>
+</code></pre></div><p>至于为什么先按下不表，先往下看下去。</p>
+<h1 id="1基本规则">1基本规则</h1>
+<blockquote>
+<p>基本的规则</p>
+<ol>
+<li>
+<p>当<strong>出现在表达式中时</strong>（包括大小比较，位运算，输出等等），有符号和无符号的char类型和short类型都将自动被转换为int（<strong>在需要的情况下</strong>将自动被转换为unsigned int）；在K&amp;R C下，float将被自动转换为double；因为这种自动转换都是将原来的类型转换为较大的类型，所以被称为提升</p>
+</li>
+<li>
+<p>在包含两种数据类型的任何运算中，两个值都被转换为两种数据类型中较高的级别</p>
+</li>
+<li>
+<p>类型级别从高到低：long double &gt; double &gt; float &gt; unsigned long long &gt; long long &gt; unsigned long &gt; long &gt; unsigned int &gt; int；当long和int具有相同大小时，unsigned int &gt; long；short和char会被自动提升为int或unsigned int</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/c&#43;&#43;/base/Implicit_conversion/ic_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/c&#43;&#43;/base/Implicit_conversion/ic_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+</li>
+<li>
+<p>在赋值语句中，计算的最后结果被转换为将要被赋值的那个变量的类型；该过程可能导致提升，也可能导致降级（demotion，将一个值转换成一个更低级的类型）</p>
+</li>
+<li>
+<p>当作为函数的参数进行传递时，char和short会被转换为int，float会被转换为double</p>
+</li>
+</ol>
+</blockquote>
+<p>另外，还有一张表格</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">符号属性</th>
+<th style="text-align:center">长度属性</th>
+<th style="text-align:center">基本型</th>
+<th style="text-align:center">所占位数<!-- raw HTML omitted -->(32位)</th>
+<th style="text-align:center">取值范围<!-- raw HTML omitted -->（32位）</th>
+<th style="text-align:center">所占位数<!-- raw HTML omitted -->(64位)</th>
+<th style="text-align:center">取值范围<!-- raw HTML omitted -->（64位）</th>
+<th style="text-align:center">输入字符</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"><code>指针</code></td>
+<td style="text-align:center"><code>32</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"><code>64</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>signed</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"><code>char</code></td>
+<td style="text-align:center"><code>8</code></td>
+<td style="text-align:center"><code>-2^7~2^7-1</code></td>
+<td style="text-align:center"><code>8</code></td>
+<td style="text-align:center"><code>-2^7~2^7-1</code></td>
+<td style="text-align:center"><code>%c</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>unsigned</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"><code>char</code></td>
+<td style="text-align:center"><code>8</code></td>
+<td style="text-align:center"><code>0~2^8-1</code></td>
+<td style="text-align:center"><code>8</code></td>
+<td style="text-align:center"><code>0~2^8-1</code></td>
+<td style="text-align:center"><code>%c</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>[signed]</code></td>
+<td style="text-align:center"><code>short</code></td>
+<td style="text-align:center"><code>[int]</code></td>
+<td style="text-align:center"><code>16</code></td>
+<td style="text-align:center"><code>-2^15~2^15-1</code></td>
+<td style="text-align:center"><code>16</code></td>
+<td style="text-align:center"><code>-2^15~2^15-1</code></td>
+<td style="text-align:center"><code>%hd</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>unsigned</code></td>
+<td style="text-align:center"><code>short</code></td>
+<td style="text-align:center"><code>[int]</code></td>
+<td style="text-align:center"><code>16</code></td>
+<td style="text-align:center"><code>0~2^16-1</code></td>
+<td style="text-align:center"><code>16</code></td>
+<td style="text-align:center"><code>0~2^16-1</code></td>
+<td style="text-align:center"><code>%hu,%ho,%hx</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>[signed]</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"><code>[int]</code></td>
+<td style="text-align:center"><code>32</code></td>
+<td style="text-align:center"><code>-2^31~2^31-1</code></td>
+<td style="text-align:center"><code>32</code></td>
+<td style="text-align:center"><code>-2^31~2^31-1</code></td>
+<td style="text-align:center"><code>%d</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>unsigned</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"><code>[int]</code></td>
+<td style="text-align:center"><code>32</code></td>
+<td style="text-align:center"><code>0~2^32-1</code></td>
+<td style="text-align:center"><code>32</code></td>
+<td style="text-align:center"><code>0~2^32-1</code></td>
+<td style="text-align:center"><code>%u,%o,%x</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>[signed]</code></td>
+<td style="text-align:center"><code>long</code></td>
+<td style="text-align:center"><code>[int]</code></td>
+<td style="text-align:center"><code>32</code></td>
+<td style="text-align:center"><code>-2^31~2^31-1</code></td>
+<td style="text-align:center"><code>64</code></td>
+<td style="text-align:center"><code>-2^63~2^63-1</code></td>
+<td style="text-align:center"><code>%ld</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>unsigned</code></td>
+<td style="text-align:center"><code>long</code></td>
+<td style="text-align:center"><code>[int]</code></td>
+<td style="text-align:center"><code>32</code></td>
+<td style="text-align:center"><code>0~2^32-1</code></td>
+<td style="text-align:center"><code>64</code></td>
+<td style="text-align:center"><code>0~2^64-1</code></td>
+<td style="text-align:center"><code>%lu,%lo,%lx</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>[signed]</code></td>
+<td style="text-align:center"><code>long long</code></td>
+<td style="text-align:center"><code>[int]</code></td>
+<td style="text-align:center"><code>64</code></td>
+<td style="text-align:center"><code>-2^63~2^63-1</code></td>
+<td style="text-align:center"><code>64</code></td>
+<td style="text-align:center"><code>-2^63~2^63-1</code></td>
+<td style="text-align:center"><code>%l64d</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>unsigned</code></td>
+<td style="text-align:center"><code>long long</code></td>
+<td style="text-align:center"><code>[int]</code></td>
+<td style="text-align:center"><code>64</code></td>
+<td style="text-align:center"><code>0~2^64-1</code></td>
+<td style="text-align:center"><code>64</code></td>
+<td style="text-align:center"><code>0~2^64-1</code></td>
+<td style="text-align:center"><code>%l64u,%l64o,%l64x</code></td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"><code>float</code></td>
+<td style="text-align:center"><code>32</code></td>
+<td style="text-align:center"><code>+/-3.40282e+038</code></td>
+<td style="text-align:center"><code>32</code></td>
+<td style="text-align:center"><code>+/-3.40282e+038</code></td>
+<td style="text-align:center"><code>%f,%e,%g</code></td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"><code>double</code></td>
+<td style="text-align:center"><code>64</code></td>
+<td style="text-align:center"><code>+/-1.79769+308</code></td>
+<td style="text-align:center"><code>64</code></td>
+<td style="text-align:center"><code>+/-1.79769+308</code></td>
+<td style="text-align:center"><code>%lf,%le,%lg,%f,%e,%g</code></td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:center"><code>long</code></td>
+<td style="text-align:center"><code>double</code></td>
+<td style="text-align:center"><code>96</code></td>
+<td style="text-align:center"><code>+/-1.79769+308</code></td>
+<td style="text-align:center"><code>96</code></td>
+<td style="text-align:center"><code>+/-1.79769+308</code></td>
+<td style="text-align:center"><code>%Lf,%Le,%Lg</code></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>这里可能会有人好奇，为什么float占用4字节，确比long long取值更大。</p>
+<p>C语言中的float类型一般是占用32位，其中8位用于指数（阶符和阶码）表示，剩余32位用于尾数（包括尾符和尾码）</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/c&#43;&#43;/base/Implicit_conversion/ic_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/c&#43;&#43;/base/Implicit_conversion/ic_3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>因为阶码占用7位，所以范围是-128～127</p>
+<p>尾码占用23位，所以有2^23=8388608种组合，<strong>8388608有7位，但是不到9999999种组合，所以至少能保证6位有效数字，最多可表示7位。</strong></p>
+<p>假设尾码全是1，那么这时为码的数值最大，接下来我们算一下最大值是多少：</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp">#include</span> <span class="cpf">&lt;math.h&gt;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp"></span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span>    <span class="kt">int</span> <span class="n">count</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="kt">double</span> <span class="n">base</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="kt">double</span> <span class="n">Pow</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="kt">double</span> <span class="n">sum</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="k">while</span> <span class="p">(</span><span class="n">count</span> <span class="o">&lt;</span> <span class="mi">24</span><span class="p">)</span>
+<span class="ln">10</span>    <span class="p">{</span>
+<span class="ln">11</span>        <span class="n">sum</span> <span class="o">+=</span> <span class="n">pow</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">Pow</span><span class="p">);</span>
+<span class="ln">12</span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;%2d times sum is (%2e)</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">sum</span><span class="p">);</span>
+<span class="ln">13</span>        <span class="n">Pow</span><span class="o">--</span><span class="p">;</span>
+<span class="ln">14</span>        <span class="n">count</span><span class="o">++</span><span class="p">;</span>
+<span class="ln">15</span>    <span class="p">}</span>
+<span class="ln">16</span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/c&#43;&#43;/base/Implicit_conversion/ic_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/c&#43;&#43;/base/Implicit_conversion/ic_4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>根据计算可知，23位全是1的时候，数值为0.999999999，我们学过极限的同学都知道0.999999就是等于1。</p>
+<p>前面说过阶码的补码范围是-128～127。最大指数就是2^128=3.4E+38</p>
+<p><strong>所以float最大能表示数字为1*3.4E+38</strong></p>
+<p>那么符号变一下，最小数字为1*-3.4E-38</p>
+<p>综合一下float范围不就是<code>-3.4E-38～3.4E+38</code></p>
+</blockquote>
+<h1 id="2解答">2解答</h1>
+<p>理清楚基本概念之后，回答开头的问题</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">char</span> <span class="n">a</span><span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>  <span class="c1">//第一次隐式类型转换，-1是int型，要被隐式转换为有符号char型
+</span></code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">signed</span> <span class="kt">char</span> <span class="n">b</span><span class="o">=-</span><span class="mi">1</span><span class="p">;</span>  <span class="c1">// 跟上面一样，-1是int型，要被隐式转换为有符号char型
+</span></code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">c</span><span class="o">=-</span><span class="mi">1</span><span class="p">;</span>   <span class="c1">//-1是int型，要被转换成无符号的char型
+</span></code></pre></div><p>因为在计算机中，数据都是<strong>以补码的形式存储的</strong>，所以-1在表示的时候需要转换成它的补码。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/c&#43;&#43;/base/Implicit_conversion/ic_5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/c&#43;&#43;/base/Implicit_conversion/ic_5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>所以0xff对于无符号char类型就为255。</p>
+<h2 id="21关于char和int隐式转换">2.1关于char和int隐式转换</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="ln">2</span><span class="cp"></span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln">3</span><span class="p">{</span>
+<span class="ln">4</span>    <span class="kt">char</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">128</span><span class="p">;</span> 
+<span class="ln">5</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;0x%x,(%u)</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span><span class="n">a</span><span class="p">,</span> <span class="n">a</span><span class="p">);</span>
+<span class="ln">6</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">7</span><span class="p">}</span>
+</code></pre></div><p>输出是</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="mh">0xffffff80</span><span class="p">,(</span><span class="mi">4294967168</span><span class="p">)</span>
+</code></pre></div><p>解释</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">char</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">128</span><span class="p">;</span> <span class="c1">//有符号的char类型数据范围为-128~+127，而128超出了它的表示范围，所以会发生溢出。0x80，结果为-128
+</span></code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="n">printf</span><span class="p">(</span><span class="s">&#34;0x%x,(%u)</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span><span class="n">a</span><span class="p">,</span> <span class="n">a</span><span class="p">);</span><span class="c1">//根据表达式，会转换为int型，所以原本0x80会高位补符号位1，为0xffffff80
+</span></code></pre></div><p>128可以转换成127+1，结果会发现是-128。然后在高位补符号位1，就变成了0xffffff80，这是一个有符号的int类型。</p>
+<p>由于输出需要转换为unsigned int型（这个就是上面基本规则中的<strong>在需要的情况下</strong>），然后在转换成unsigned int类型。对应0xffffff80转换为10进制为4294967168。</p>
+<h2 id="22int和unsigned-int转换">2.2int和unsigned int转换</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp">#include</span> <span class="cpf">&lt;string.h&gt; </span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp"></span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span>    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">str</span> <span class="o">=</span> <span class="s">&#34;abcdef&#34;</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span>    <span class="k">if</span><span class="p">(</span><span class="n">strlen</span><span class="p">(</span><span class="n">str</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">i</span><span class="p">){</span>
+<span class="ln"> 9</span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;Yes</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">10</span>    <span class="p">}</span>
+<span class="ln">11</span>    <span class="k">else</span><span class="p">{</span>
+<span class="ln">12</span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;No</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">13</span>    <span class="p">}</span>
+<span class="ln">14</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;-1的无符号类型：%u</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">);</span> 
+<span class="ln">15</span>
+<span class="ln">16</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">17</span><span class="p">}</span>
+</code></pre></div><p>输出是</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="n">No</span>
+<span class="ln">2</span><span class="o">-</span><span class="mi">1</span><span class="err">的无符号类型：</span><span class="mi">4294967295</span>
+</code></pre></div><p>解释</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="k">if</span><span class="p">(</span><span class="n">strlen</span><span class="p">(</span><span class="n">str</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">i</span><span class="p">)</span><span class="c1">//这个strlen返回的size_t,实际上是unsigned int类型，那么比较的后面也转换为unsigned int
+</span></code></pre></div><p>str的长度是6，必然大于-1。</p>
+<p>这里的i是-1，对应的是0xffffffff，转化成unsigned int，<strong>即有符号数变成了无符号数</strong>。那么它就是最大值，即4,294,967,295。</p>
+<p>从表达式看前者永远不可能比后者大，所以返回的是no。</p>
+<blockquote>
+<p><strong>关于隐式转换</strong></p>
+<p>char提升为int，高位应该填0还是填1？</p>
+<ul>
+<li>如果是unsigned char的类型转换成int类型，高位补0.</li>
+<li>如果是signed char的类型转换成int类型，<strong>如果原来最高位是1则补1，如果是0则补0</strong>。</li>
+</ul>
+<p>如果<strong>int和unsigned int一起运算，会将int转为unsigned int</strong>，这种操作如果放在条件判断中，会有想不到的结果，所以要小心小心。</p>
+</blockquote>
+<h2 id="23经典隐式转换问题">2.3经典隐式转换问题</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp">#define CHECK_DEAD_LOOP(c, r)               \
+</span><span class="ln"> 3</span><span class="cp">do                                          \
+</span><span class="ln"> 4</span><span class="cp">{                                           \
+</span><span class="ln"> 5</span><span class="cp">    int i = 0;                              \
+</span><span class="ln"> 6</span><span class="cp">    for (c = 0; c &lt;= r; c++)                \
+</span><span class="ln"> 7</span><span class="cp">    {                                       \
+</span><span class="ln"> 8</span><span class="cp">        i++;                                \
+</span><span class="ln"> 9</span><span class="cp">        if(i &gt; 5000)                        \
+</span><span class="ln">10</span><span class="cp">        {                                   \
+</span><span class="ln">11</span><span class="cp">            printf(&#34;dead Loop&#34;#r&#34;\n\n&#34;);    \
+</span><span class="ln">12</span><span class="cp">            break;                          \
+</span><span class="ln">13</span><span class="cp">        }                                   \
+</span><span class="ln">14</span><span class="cp">    }                                       \
+</span><span class="ln">15</span><span class="cp">}while(0)
+</span><span class="ln">16</span><span class="cp"></span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln">17</span><span class="p">{</span>
+<span class="ln">18</span>    <span class="kt">signed</span> <span class="kt">char</span> <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">19</span>
+<span class="ln">20</span>    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">uc</span> <span class="o">=</span> <span class="mi">255</span><span class="p">;</span>
+<span class="ln">21</span>    <span class="kt">signed</span> <span class="kt">char</span> <span class="n">sc</span> <span class="o">=</span> <span class="mi">255</span><span class="p">;</span>
+<span class="ln">22</span>    <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">us</span> <span class="o">=</span> <span class="mi">255</span><span class="p">;</span>
+<span class="ln">23</span>    <span class="kt">signed</span> <span class="kt">short</span> <span class="n">ss</span> <span class="o">=</span> <span class="mi">255</span><span class="p">;</span>
+<span class="ln">24</span>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">ui</span> <span class="o">=</span> <span class="mi">255</span><span class="p">;</span>
+<span class="ln">25</span>    <span class="kt">signed</span> <span class="kt">int</span> <span class="n">si</span> <span class="o">=</span> <span class="mi">255</span><span class="p">;</span>
+<span class="ln">26</span>
+<span class="ln">27</span>    <span class="n">CHECK_DEAD_LOOP</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">uc</span><span class="p">);</span>
+<span class="ln">28</span>    <span class="n">CHECK_DEAD_LOOP</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">sc</span><span class="p">);</span>
+<span class="ln">29</span>    <span class="n">CHECK_DEAD_LOOP</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">us</span><span class="p">);</span>
+<span class="ln">30</span>    <span class="n">CHECK_DEAD_LOOP</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">ss</span><span class="p">);</span>
+<span class="ln">31</span>    <span class="n">CHECK_DEAD_LOOP</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">ui</span><span class="p">);</span>
+<span class="ln">32</span>    <span class="n">CHECK_DEAD_LOOP</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">si</span><span class="p">);</span>
+<span class="ln">33</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">34</span><span class="p">}</span>
+</code></pre></div><p>输出是</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="n">dead</span> <span class="n">Loopuc</span>
+<span class="ln">2</span>
+<span class="ln">3</span><span class="n">dead</span> <span class="n">Loopus</span>
+<span class="ln">4</span>
+<span class="ln">5</span><span class="n">dead</span> <span class="n">Loopss</span>
+<span class="ln">6</span>
+<span class="ln">7</span><span class="n">dead</span> <span class="n">Loopsi</span>
+</code></pre></div><p>解释</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">signed</span> <span class="kt">char</span> <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span><span class="c1">//这个c的默认取值范围为-128~127
+</span></code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">uc</span> <span class="o">=</span> <span class="mi">255</span><span class="p">;</span><span class="c1">//255为int型为0xff，这里uc为unsigned char型，将255转化为unsigned char
+</span></code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">signed</span> <span class="kt">char</span> <span class="n">sc</span> <span class="o">=</span> <span class="mi">255</span><span class="p">;</span><span class="c1">//255为int型为0xff，这里sc为unsigned char型，将255转化为char，对应为-1
+</span></code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">us</span> <span class="o">=</span> <span class="mi">255</span><span class="p">;</span><span class="c1">//255为int型为0xff，这里us为unsigned short型，将255转化为unsigned short
+</span></code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">signed</span> <span class="kt">short</span> <span class="n">ss</span> <span class="o">=</span> <span class="mi">255</span><span class="p">;</span><span class="c1">//255为int型为0xff，这里ss为short型，将255转化为short
+</span></code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">ui</span> <span class="o">=</span> <span class="mi">255</span><span class="p">;</span><span class="c1">//255为int型为0xff，这里ui为unsigned int型，将255转化为unsigned int
+</span></code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">signed</span> <span class="kt">int</span> <span class="n">si</span> <span class="o">=</span> <span class="mi">255</span><span class="p">;</span><span class="c1">//这里无需转换，为0xff
+</span></code></pre></div><p>搞清楚这些变量之后，开始用替换这些变量</p>
+<h3 id="231check_dead_loopc-uc">2.3.1CHECK_DEAD_LOOP(c, uc)</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="n">CHECK_DEAD_LOOP</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">uc</span><span class="p">);</span>
+<span class="ln"> 2</span><span class="c1">//对应的宏定义如下
+</span><span class="ln"> 3</span><span class="c1"></span><span class="k">do</span>                                          
+<span class="ln"> 4</span><span class="p">{</span>                                           
+<span class="ln"> 5</span>    <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>                              
+<span class="ln"> 6</span>    <span class="k">for</span> <span class="p">(</span><span class="n">c</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">c</span> <span class="o">&lt;=</span> <span class="n">uc</span><span class="p">;</span> <span class="n">c</span><span class="o">++</span><span class="p">)</span><span class="c1">//这个表达式根据基本规则，有符号和无符号的char类型和short类型都将自动被转换为int           
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="p">{</span>                                       
+<span class="ln"> 8</span>        <span class="n">i</span><span class="o">++</span><span class="p">;</span>                                
+<span class="ln"> 9</span>        <span class="k">if</span><span class="p">(</span><span class="n">i</span> <span class="o">&gt;</span> <span class="mi">5000</span><span class="p">)</span>                        
+<span class="ln">10</span>        <span class="p">{</span>                                   
+<span class="ln">11</span>            <span class="n">printf</span><span class="p">(</span><span class="s">&#34;dead Loop uc</span><span class="se">\n\n</span><span class="s">&#34;</span><span class="p">);</span>     
+<span class="ln">12</span>            <span class="k">break</span><span class="p">;</span>                          
+<span class="ln">13</span>        <span class="p">}</span>                                   
+<span class="ln">14</span>    <span class="p">}</span>                                       
+<span class="ln">15</span><span class="p">}</span><span class="k">while</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</code></pre></div><p>对于</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="n">c</span> <span class="o">&lt;=</span> <span class="n">uc</span><span class="p">;</span><span class="c1">//c和uc都被转为int,这里会将0x80的c转化成int对其补齐为0xffffff80
+</span><span class="ln">2</span><span class="c1"></span><span class="n">c</span><span class="o">++</span><span class="p">;</span><span class="c1">//其实把c又带回char型，当c为0x7f之后，达到char类型最大值为127，c++之后就为-128(0x80)
+</span></code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="n">c</span><span class="p">(</span><span class="mh">0x0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xa</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xc</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xd</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xe</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xf</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x10</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x11</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x12</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x13</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x14</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x15</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x16</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x17</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x18</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x19</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x20</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x21</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x22</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x23</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x24</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x25</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x26</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x27</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x28</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x29</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x30</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x31</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x32</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x33</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x34</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x35</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x36</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x37</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x38</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x39</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x40</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x41</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x42</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x43</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x44</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x45</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x46</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x47</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x48</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x49</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x50</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x51</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x52</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x53</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x54</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x55</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x56</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x57</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x58</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x59</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x60</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x61</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x62</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x63</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x64</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x65</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x66</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x67</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x68</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x69</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x70</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x71</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x72</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x73</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x74</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x75</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x76</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x77</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x78</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x79</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff80</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff81</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff82</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff83</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff84</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff85</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff86</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff87</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff88</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff89</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff90</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff91</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff92</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff93</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff94</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff95</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff96</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff97</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff98</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff99</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffaa</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffab</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffac</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffad</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffae</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffaf</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffba</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffbb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffbc</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffbd</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffbe</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffbf</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffca</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffcb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffcc</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffcd</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffce</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffcf</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffda</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffdb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffdc</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffdd</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffde</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffdf</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffea</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffeb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffec</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffed</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffee</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffef</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffffa</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffffb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffffc</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffffd</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffffe</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffff</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4</span><span class="p">)...</span>
+</code></pre></div><p>尝试打印发现是一个死循环。</p>
+<p>自增+1。当c为0x7f之后，达到char类型最大值为127，c++之后就为-128(0x80)</p>
+<p>比较。c和uc都被转为int,这里会将0x80转化成int对其补齐为0xffffff80</p>
+<p>自增+1。这里0xffffff80加1之后为0xffffff81，在转化成char，为0x81，即为-127</p>
+<p>重复上述过程，一直死循环。</p>
+<h3 id="232check_dead_loopc-sc">2.3.2CHECK_DEAD_LOOP(c, sc)</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="n">CHECK_DEAD_LOOP</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">sc</span><span class="p">);</span>
+<span class="ln"> 2</span><span class="c1">//对应的宏定义如下
+</span><span class="ln"> 3</span><span class="c1"></span><span class="k">do</span>                                          
+<span class="ln"> 4</span><span class="p">{</span>                                           
+<span class="ln"> 5</span>    <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>                              
+<span class="ln"> 6</span>    <span class="k">for</span> <span class="p">(</span><span class="n">c</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">c</span> <span class="o">&lt;=</span> <span class="n">sc</span><span class="p">;</span> <span class="n">c</span><span class="o">++</span><span class="p">)</span><span class="c1">//这个表达式根据基本规则，有符号和无符号的char类型和short类型都将自动被转换为int           
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="p">{</span>                                       
+<span class="ln"> 8</span>        <span class="n">i</span><span class="o">++</span><span class="p">;</span>                                
+<span class="ln"> 9</span>        <span class="k">if</span><span class="p">(</span><span class="n">i</span> <span class="o">&gt;</span> <span class="mi">5000</span><span class="p">)</span>                        
+<span class="ln">10</span>        <span class="p">{</span>                                   
+<span class="ln">11</span>            <span class="n">printf</span><span class="p">(</span><span class="s">&#34;dead Loop sc</span><span class="se">\n\n</span><span class="s">&#34;</span><span class="p">);</span>     
+<span class="ln">12</span>            <span class="k">break</span><span class="p">;</span>                          
+<span class="ln">13</span>        <span class="p">}</span>                                   
+<span class="ln">14</span>    <span class="p">}</span>                                       
+<span class="ln">15</span><span class="p">}</span><span class="k">while</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</code></pre></div><p>对于本身sc就是-1，c是0，即便是将char类型转换成int型，这个大小依然无法改变，所以，直接判断不成立就退出了</p>
+<h3 id="233check_dead_loopc-us">2.3.3CHECK_DEAD_LOOP(c, us)</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="n">CHECK_DEAD_LOOP</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">sc</span><span class="p">);</span>
+<span class="ln"> 2</span><span class="c1">//对应的宏定义如下
+</span><span class="ln"> 3</span><span class="c1"></span><span class="k">do</span>                                          
+<span class="ln"> 4</span><span class="p">{</span>                                           
+<span class="ln"> 5</span>    <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>                              
+<span class="ln"> 6</span>    <span class="k">for</span> <span class="p">(</span><span class="n">c</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">c</span> <span class="o">&lt;=</span> <span class="n">us</span><span class="p">;</span> <span class="n">c</span><span class="o">++</span><span class="p">)</span><span class="c1">//这个表达式根据基本规则，有符号和无符号的char类型和short类型都将自动被转换为int           
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="p">{</span>                                       
+<span class="ln"> 8</span>        <span class="n">i</span><span class="o">++</span><span class="p">;</span>                                
+<span class="ln"> 9</span>        <span class="k">if</span><span class="p">(</span><span class="n">i</span> <span class="o">&gt;</span> <span class="mi">5000</span><span class="p">)</span>                        
+<span class="ln">10</span>        <span class="p">{</span>                                   
+<span class="ln">11</span>            <span class="n">printf</span><span class="p">(</span><span class="s">&#34;dead Loop us</span><span class="se">\n\n</span><span class="s">&#34;</span><span class="p">);</span>     
+<span class="ln">12</span>            <span class="k">break</span><span class="p">;</span>                          
+<span class="ln">13</span>        <span class="p">}</span>                                   
+<span class="ln">14</span>    <span class="p">}</span>                                       
+<span class="ln">15</span><span class="p">}</span><span class="k">while</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</code></pre></div><p>对于</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="n">c</span> <span class="o">&lt;=</span> <span class="n">us</span><span class="p">;</span><span class="c1">//c和us都被转为int,这里会将0x80的c转化成int对其补齐为0xffffff80
+</span><span class="ln">2</span><span class="c1"></span><span class="n">c</span><span class="o">++</span><span class="p">;</span><span class="c1">//其实把c又带回char型，当c为0x7f之后，达到char类型最大值为127，c++之后就为-128(0x80)
+</span></code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="n">c</span><span class="p">(</span><span class="mh">0x0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xa</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xc</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xd</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xe</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xf</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x10</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x11</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x12</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x13</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x14</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x15</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x16</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x17</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x18</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x19</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x20</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x21</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x22</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x23</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x24</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x25</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x26</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x27</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x28</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x29</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x30</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x31</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x32</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x33</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x34</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x35</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x36</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x37</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x38</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x39</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x40</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x41</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x42</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x43</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x44</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x45</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x46</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x47</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x48</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x49</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x50</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x51</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x52</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x53</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x54</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x55</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x56</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x57</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x58</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x59</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x60</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x61</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x62</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x63</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x64</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x65</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x66</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x67</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x68</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x69</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x70</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x71</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x72</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x73</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x74</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x75</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x76</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x77</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x78</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x79</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff80</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff81</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff82</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff83</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff84</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff85</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff86</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff87</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff88</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff89</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff90</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff91</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff92</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff93</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff94</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff95</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff96</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff97</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff98</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff99</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffaa</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffab</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffac</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffad</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffae</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffaf</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffba</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffbb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffbc</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffbd</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffbe</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffbf</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffca</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffcb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffcc</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffcd</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffce</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffcf</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffda</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffdb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffdc</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffdd</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffde</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffdf</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffea</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffeb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffec</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffed</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffee</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffef</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffffa</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffffb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffffc</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffffd</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffffe</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffff</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4</span><span class="p">)...</span>
+</code></pre></div><p>尝试打印发现是一个死循环，原理同2.3.1类似，这里不再展开。</p>
+<h3 id="234check_dead_loopc-ss">2.3.4CHECK_DEAD_LOOP(c, ss)</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="n">CHECK_DEAD_LOOP</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">ss</span><span class="p">);</span>
+<span class="ln"> 2</span><span class="c1">//对应的宏定义如下
+</span><span class="ln"> 3</span><span class="c1"></span><span class="k">do</span>                                          
+<span class="ln"> 4</span><span class="p">{</span>                                           
+<span class="ln"> 5</span>    <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>                              
+<span class="ln"> 6</span>    <span class="k">for</span> <span class="p">(</span><span class="n">c</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">c</span> <span class="o">&lt;=</span> <span class="n">ss</span><span class="p">;</span> <span class="n">c</span><span class="o">++</span><span class="p">)</span><span class="c1">//这个表达式根据基本规则，有符号和无符号的char类型和short类型都将自动被转换为int           
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="p">{</span>                                       
+<span class="ln"> 8</span>        <span class="n">i</span><span class="o">++</span><span class="p">;</span>                                
+<span class="ln"> 9</span>        <span class="k">if</span><span class="p">(</span><span class="n">i</span> <span class="o">&gt;</span> <span class="mi">5000</span><span class="p">)</span>                        
+<span class="ln">10</span>        <span class="p">{</span>                                   
+<span class="ln">11</span>            <span class="n">printf</span><span class="p">(</span><span class="s">&#34;dead Loop ss</span><span class="se">\n\n</span><span class="s">&#34;</span><span class="p">);</span>     
+<span class="ln">12</span>            <span class="k">break</span><span class="p">;</span>                          
+<span class="ln">13</span>        <span class="p">}</span>                                   
+<span class="ln">14</span>    <span class="p">}</span>                                       
+<span class="ln">15</span><span class="p">}</span><span class="k">while</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</code></pre></div><p>对于</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="n">c</span> <span class="o">&lt;=</span> <span class="n">ss</span><span class="p">;</span><span class="c1">//c和ss都被转为int,这里会将0x80的c转化成int对其补齐为0xffffff80
+</span><span class="ln">2</span><span class="c1"></span><span class="n">c</span><span class="o">++</span><span class="p">;</span><span class="c1">//其实把c又带回char型，当c为0x7f之后，达到char类型最大值为127，c++之后就为-128(0x80)
+</span></code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="n">c</span><span class="p">(</span><span class="mh">0x0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xa</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xc</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xd</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xe</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xf</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x10</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x11</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x12</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x13</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x14</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x15</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x16</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x17</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x18</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x19</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x20</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x21</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x22</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x23</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x24</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x25</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x26</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x27</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x28</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x29</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x30</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x31</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x32</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x33</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x34</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x35</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x36</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x37</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x38</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x39</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x40</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x41</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x42</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x43</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x44</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x45</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x46</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x47</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x48</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x49</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x50</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x51</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x52</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x53</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x54</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x55</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x56</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x57</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x58</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x59</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x60</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x61</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x62</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x63</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x64</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x65</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x66</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x67</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x68</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x69</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x70</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x71</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x72</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x73</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x74</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x75</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x76</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x77</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x78</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x79</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff80</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff81</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff82</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff83</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff84</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff85</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff86</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff87</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff88</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff89</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff90</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff91</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff92</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff93</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff94</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff95</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff96</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff97</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff98</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff99</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffaa</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffab</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffac</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffad</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffae</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffaf</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffba</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffbb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffbc</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffbd</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffbe</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffbf</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffca</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffcb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffcc</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffcd</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffce</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffcf</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffda</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffdb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffdc</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffdd</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffde</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffdf</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffea</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffeb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffec</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffed</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffee</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffef</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffffa</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffffb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffffc</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffffd</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffffe</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffff</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4</span><span class="p">)...</span>
+</code></pre></div><p>尝试打印发现是一个死循环，原理同2.3.1类似，这里不再展开。</p>
+<h3 id="235check_dead_loopc-ui">2.3.5CHECK_DEAD_LOOP(c, ui)</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="n">CHECK_DEAD_LOOP</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">ui</span><span class="p">);</span>
+<span class="ln"> 2</span><span class="c1">//对应的宏定义如下
+</span><span class="ln"> 3</span><span class="c1"></span><span class="k">do</span>                                          
+<span class="ln"> 4</span><span class="p">{</span>                                           
+<span class="ln"> 5</span>    <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>                              
+<span class="ln"> 6</span>    <span class="k">for</span> <span class="p">(</span><span class="n">c</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">c</span> <span class="o">&lt;=</span> <span class="n">ui</span><span class="p">;</span> <span class="n">c</span><span class="o">++</span><span class="p">)</span><span class="c1">//这个表达式根据基本规则，有符号和无符号的char类型和short类型都将自动被转换为int           
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="p">{</span>                                       
+<span class="ln"> 8</span>        <span class="n">i</span><span class="o">++</span><span class="p">;</span>                                
+<span class="ln"> 9</span>        <span class="k">if</span><span class="p">(</span><span class="n">i</span> <span class="o">&gt;</span> <span class="mi">5000</span><span class="p">)</span>                        
+<span class="ln">10</span>        <span class="p">{</span>                                   
+<span class="ln">11</span>            <span class="n">printf</span><span class="p">(</span><span class="s">&#34;dead Loop ui</span><span class="se">\n\n</span><span class="s">&#34;</span><span class="p">);</span>     
+<span class="ln">12</span>            <span class="k">break</span><span class="p">;</span>                          
+<span class="ln">13</span>        <span class="p">}</span>                                   
+<span class="ln">14</span>    <span class="p">}</span>                                       
+<span class="ln">15</span><span class="p">}</span><span class="k">while</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</code></pre></div><p>这里处理会转换为int型，但是ui是unsigned int型，所以，c直接转化成unsigned int型。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="n">c</span> <span class="o">&lt;=</span> <span class="n">ui</span><span class="p">;</span><span class="c1">//c被转为unsigned int,这里会将0x80的c转化成unsigned int对其补齐为0x00000080
+</span><span class="ln">2</span><span class="c1"></span><span class="n">c</span><span class="o">++</span><span class="p">;</span><span class="c1">//其实把c又带回char型，当c为0x7f之后，达到char类型最大值为127，c++之后就为-128(0x80)
+</span></code></pre></div><p>尝试打印发现是<strong>不是一个死循环</strong>。</p>
+<p>自增+1。当c为0x7f之后，达到char类型最大值为127，c++之后就为-128(0x80)</p>
+<p>比较。c被转化成unsigned int,这里会将0x80转化成unsigned int对其补齐为0x00000080，<strong>虽然在char中已经是-1了，但是比较过程中依然可以判断，且0x00000080 &gt; 0x0000007f(128&gt;127等式不成立退出循环)</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="n">start</span> <span class="n">c</span><span class="p">(</span><span class="mh">0x0</span><span class="p">)</span><span class="n">r</span><span class="p">(</span><span class="mh">0xff</span><span class="p">)</span>
+<span class="ln">2</span><span class="n">c</span><span class="p">(</span><span class="mh">0x0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xa</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xc</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xd</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xe</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xf</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x10</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x11</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x12</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x13</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x14</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x15</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x16</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x17</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x18</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x19</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x20</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x21</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x22</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x23</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x24</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x25</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x26</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x27</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x28</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x29</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x30</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x31</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x32</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x33</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x34</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x35</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x36</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x37</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x38</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x39</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x40</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x41</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x42</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x43</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x44</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x45</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x46</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x47</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x48</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x49</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x50</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x51</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x52</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x53</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x54</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x55</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x56</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x57</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x58</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x59</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x60</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x61</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x62</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x63</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x64</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x65</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x66</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x67</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x68</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x69</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x70</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x71</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x72</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x73</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x74</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x75</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x76</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x77</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x78</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x79</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7f</span><span class="p">)</span>
+</code></pre></div><h3 id="236check_dead_loopc-si">2.3.6CHECK_DEAD_LOOP(c, si)</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="n">CHECK_DEAD_LOOP</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">si</span><span class="p">);</span>
+<span class="ln"> 2</span><span class="c1">//对应的宏定义如下
+</span><span class="ln"> 3</span><span class="c1"></span><span class="k">do</span>                                          
+<span class="ln"> 4</span><span class="p">{</span>                                           
+<span class="ln"> 5</span>    <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>                              
+<span class="ln"> 6</span>    <span class="k">for</span> <span class="p">(</span><span class="n">c</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">c</span> <span class="o">&lt;=</span> <span class="n">si</span><span class="p">;</span> <span class="n">c</span><span class="o">++</span><span class="p">)</span><span class="c1">//这个表达式根据基本规则，有符号和无符号的char类型和short类型都将自动被转换为int           
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="p">{</span>                                       
+<span class="ln"> 8</span>        <span class="n">i</span><span class="o">++</span><span class="p">;</span>                                
+<span class="ln"> 9</span>        <span class="k">if</span><span class="p">(</span><span class="n">i</span> <span class="o">&gt;</span> <span class="mi">5000</span><span class="p">)</span>                        
+<span class="ln">10</span>        <span class="p">{</span>                                   
+<span class="ln">11</span>            <span class="n">printf</span><span class="p">(</span><span class="s">&#34;dead Loop si</span><span class="se">\n\n</span><span class="s">&#34;</span><span class="p">);</span>     
+<span class="ln">12</span>            <span class="k">break</span><span class="p">;</span>                          
+<span class="ln">13</span>        <span class="p">}</span>                                   
+<span class="ln">14</span>    <span class="p">}</span>                                       
+<span class="ln">15</span><span class="p">}</span><span class="k">while</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</code></pre></div><p>对于</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="n">c</span> <span class="o">&lt;=</span> <span class="n">si</span><span class="p">;</span><span class="c1">//c被转为int,这里会将0x80的c转化成int对其补齐为0xffffff80
+</span><span class="ln">2</span><span class="c1"></span><span class="n">c</span><span class="o">++</span><span class="p">;</span><span class="c1">//其实把c又带回char型，当c为0x7f之后，达到char类型最大值为127，c++之后就为-128(0x80)
+</span></code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="n">c</span><span class="p">(</span><span class="mh">0x0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xa</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xc</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xd</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xe</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xf</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x10</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x11</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x12</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x13</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x14</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x15</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x16</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x17</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x18</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x19</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x20</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x21</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x22</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x23</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x24</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x25</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x26</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x27</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x28</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x29</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x30</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x31</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x32</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x33</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x34</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x35</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x36</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x37</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x38</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x39</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x40</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x41</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x42</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x43</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x44</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x45</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x46</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x47</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x48</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x49</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x50</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x51</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x52</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x53</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x54</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x55</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x56</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x57</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x58</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x59</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x5f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x60</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x61</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x62</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x63</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x64</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x65</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x66</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x67</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x68</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x69</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x6f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x70</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x71</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x72</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x73</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x74</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x75</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x76</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x77</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x78</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x79</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x7f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff80</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff81</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff82</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff83</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff84</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff85</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff86</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff87</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff88</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff89</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff8f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff90</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff91</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff92</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff93</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff94</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff95</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff96</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff97</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff98</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff99</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9a</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9b</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9c</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9d</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9e</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffff9f</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffa9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffaa</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffab</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffac</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffad</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffae</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffaf</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffb9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffba</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffbb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffbc</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffbd</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffbe</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffbf</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffc9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffca</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffcb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffcc</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffcd</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffce</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffcf</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffd9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffda</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffdb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffdc</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffdd</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffde</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffdf</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffe9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffea</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffeb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffec</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffed</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffee</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffef</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff4</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff5</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff6</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff7</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff8</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffff9</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffffa</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffffb</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffffc</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffffd</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xfffffffe</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0xffffffff</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x0</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x1</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x2</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x3</span><span class="p">)</span><span class="n">c</span><span class="p">(</span><span class="mh">0x4</span><span class="p">)...</span>
+</code></pre></div><p>尝试打印发现是一个死循环，原理同2.3.1类似，这里不再展开。</p>
+<h1 id="总结">总结</h1>
+<p>以后写代码的时候请重视，无形之中的类型转换。所以，养成一个好的习惯比较重要，不然到时候根本连错误都很难排查出来。</p>
+<h1 id="验证">验证</h1>
+<p>如何快速验证结果，笔者除了使用CLion工具编译，Linux gcc编译，还有在线编译网站的编译。</p>
+<p>其中一个在线编译网站，操作更加简单，有网就能使用，点击<a href="https://www.tutorialspoint.com/compile_c_online.php">这里</a>。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/c&#43;&#43;/base/Implicit_conversion/ic_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/c&#43;&#43;/base/Implicit_conversion/ic_2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="参考">参考</h1>
+<p><a href="https://blog.csdn.net/Jmilk/article/details/105263837">[1] 范桂飓, C 语言编程 — 基本数据类型, 2023.</a></p>
+<p><a href="https://blog.csdn.net/qq_51627033/article/details/124371622">[2] 今年没有雪, 关于C语言float类型范围的理解, 2022.</a></p>
+<p><a href="https://blog.csdn.net/changxiaoyong8/article/details/128324952">[3] Forster-C, 再学C语言17：类型转换, 2022.</a></p>
+<p><a href="https://www.modb.pro/db/227657">[4] 二进制人生, C语言进阶修炼之&ndash;隐式类型转换的陷阱, 2020.</a></p>
+<p><a href="https://blog.csdn.net/qq_43514458/article/details/89946117/">[5] Solieaor, 隐式类型转换的陷阱, 2019.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E5%9F%BA%E7%A1%80/">基础</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E9%9A%90%E5%BC%8F%E8%BD%AC%E6%8D%A2/">隐式转换</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E5%9F%BA%E6%9C%AC%E7%B1%BB%E5%9E%8B/">基本类型</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/06/android-rc%E6%96%87%E4%BB%B6%E5%92%8C%E8%A7%A3%E6%9E%90/" data-tooltip="Android rc文件和解析">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2023 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/06/android-rc%E6%96%87%E4%BB%B6%E5%92%8C%E8%A7%A3%E6%9E%90/" data-tooltip="Android rc文件和解析">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2023%2F07%2Fc%25E8%25AF%25AD%25E8%25A8%2580%25E9%259A%2590%25E5%25BC%258F%25E7%25B1%25BB%25E5%259E%258B%25E8%25BD%25AC%25E6%258D%25A2%25E8%25A7%2584%25E5%2588%2599%25E8%25AE%25B0%25E4%25B8%2580%25E6%25AC%25A1%25E6%2595%2585%25E9%259A%259C%25E6%258E%2592%25E9%2599%25A4%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2023%2F07%2Fc%25E8%25AF%25AD%25E8%25A8%2580%25E9%259A%2590%25E5%25BC%258F%25E7%25B1%25BB%25E5%259E%258B%25E8%25BD%25AC%25E6%258D%25A2%25E8%25A7%2584%25E5%2588%2599%25E8%25AE%25B0%25E4%25B8%2580%25E6%25AC%25A1%25E6%2595%2585%25E9%259A%259C%25E6%258E%2592%25E9%2599%25A4%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2023%2F07%2Fc%25E8%25AF%25AD%25E8%25A8%2580%25E9%259A%2590%25E5%25BC%258F%25E7%25B1%25BB%25E5%259E%258B%25E8%25BD%25AC%25E6%258D%25A2%25E8%25A7%2584%25E5%2588%2599%25E8%25AE%25B0%25E4%25B8%2580%25E6%25AC%25A1%25E6%2595%2585%25E9%259A%259C%25E6%258E%2592%25E9%2599%25A4%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2023\/07\/c%E8%AF%AD%E8%A8%80%E9%9A%90%E5%BC%8F%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2%E8%A7%84%E5%88%99%E8%AE%B0%E4%B8%80%E6%AC%A1%E6%95%85%E9%9A%9C%E6%8E%92%E9%99%A4\/';
+          
+            this.page.identifier = '\/2023\/07\/c%E8%AF%AD%E8%A8%80%E9%9A%90%E5%BC%8F%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2%E8%A7%84%E5%88%99%E8%AE%B0%E4%B8%80%E6%AC%A1%E6%95%85%E9%9A%9C%E6%8E%92%E9%99%A4\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
