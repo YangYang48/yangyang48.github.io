@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="学习一下关于C&#43;&#43;基础知识大括号。">
+
+
+<meta property="og:description" content="学习一下关于C&#43;&#43;基础知识大括号。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C&#43;&#43;大括号">
+<meta name="twitter:title" content="C&#43;&#43;大括号">
+<meta property="og:url" content="https://yangyang48.github.io/2023/07/c-%E5%A4%A7%E6%8B%AC%E5%8F%B7/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2023/07/c-%E5%A4%A7%E6%8B%AC%E5%8F%B7/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="学习一下关于C&#43;&#43;基础知识大括号。">
+<meta name="twitter:description" content="学习一下关于C&#43;&#43;基础知识大括号。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2023-07-19T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2023-07-19T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="brace">
+    
+      <meta property="article:section" content="2023">
+    
+      <meta property="article:section" content="July">
+    
+  
+  
+    
+      <meta property="article:tag" content="大括号">
+    
+      <meta property="article:tag" content="圆括号">
+    
+      <meta property="article:tag" content="等号">
+    
+      <meta property="article:tag" content="initializer_list">
+    
+      <meta property="article:tag" content="类型转化">
+    
+      <meta property="article:tag" content="仿函数">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/c&#43;&#43;/base/brace/brace_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/c&#43;&#43;/base/brace/brace_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/c&#43;&#43;/base/brace/brace_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/c&#43;&#43;/base/brace/brace_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+
+
+    <title>C&#43;&#43;大括号</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2023/07/c-%E5%A4%A7%E6%8B%AC%E5%8F%B7/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/c&#43;&#43;/base/brace/brace_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      C&#43;&#43;大括号
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2023-07-19T00:00:00Z">
+        
+  七月 19, 2023
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/brace">brace</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2023">2023</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/july">July</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">1700 Words|Read in about 8 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>学习一下关于C++基础知识大括号。</p>
+<h1 id="0一个例子">0一个例子</h1>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp"></span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="k">struct</span> <span class="nc">A</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span>    <span class="n">A</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">);</span>
+<span class="ln"> 6</span><span class="p">};</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span><span class="n">A</span><span class="o">::</span><span class="n">A</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">)</span>
+<span class="ln"> 9</span><span class="p">{</span>
+<span class="ln">10</span>    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;A::A x = &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">x</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">11</span><span class="p">}</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">14</span>    <span class="n">A</span> <span class="n">a</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="n">A</span> <span class="n">b</span><span class="p">{</span><span class="mi">2</span><span class="p">};</span>
+<span class="ln">16</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">17</span><span class="p">}</span>
+</code></pre></div><p>输出结果</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="n">A</span><span class="o">::</span><span class="n">A</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="ln">2</span><span class="n">A</span><span class="o">::</span><span class="n">A</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">2</span>
+</code></pre></div><p>很显然，在本文的演示demo中，<strong>构造函数使用大括号和小括号两种方式是相同的作用</strong>。那么，是不是所有的情况大括号都可以使用呢？</p>
+<p>再进一步研究</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp"></span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="k">struct</span> <span class="nc">A</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span>    <span class="o">~</span><span class="n">A</span><span class="p">(){</span> <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;~A()&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln"> 6</span>    <span class="n">A</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">)</span>
+<span class="ln"> 7</span>    <span class="p">{</span>
+<span class="ln"> 8</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;A::A x = &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">x</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="p">}</span>
+<span class="ln">10</span><span class="p">};</span>
+<span class="ln">11</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="k">struct</span> <span class="nc">B</span>
+<span class="ln">14</span><span class="p">{</span>
+<span class="ln">15</span>    <span class="n">A</span> <span class="n">a</span><span class="p">;</span>
+<span class="ln">16</span>    <span class="c1">//B(){ cout &lt;&lt; &#34;B::B()&#34; &lt;&lt; endl;}
+</span><span class="ln">17</span><span class="c1"></span>    <span class="o">~</span><span class="n">B</span><span class="p">(){</span> <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;~B()&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln">18</span><span class="p">};</span>
+<span class="ln">19</span>
+<span class="ln">20</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">21</span>    <span class="n">B</span> <span class="n">b1</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span><span class="c1">//报错
+</span><span class="ln">22</span><span class="c1"></span>    <span class="n">B</span> <span class="n">b2</span><span class="p">{</span><span class="mi">1</span><span class="p">};</span><span class="c1">//没问题
+</span><span class="ln">23</span><span class="c1"></span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">24</span><span class="p">}</span>
+</code></pre></div><p>可以发现括号和大括号是有区别的，如果去掉报错输出</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="n">A</span><span class="o">::</span><span class="n">A</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="ln">2</span><span class="o">~</span><span class="n">B</span><span class="p">()</span>
+<span class="ln">3</span><span class="o">~</span><span class="n">A</span><span class="p">()</span>
+</code></pre></div><p>这里发现大括号有初始化类内的元素的作用，属于聚合初始化，相当于B b2={1}等价成b2.a = 1，然后隐式的对1进行构造为b2.a = A(1)。这里的A(1)是一种c++的匿名构造。关于匿名构造可以点击<a href="">这里</a>。 因此可以调用单参数构造函数A::A(int)对b2.a进行初始化。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//1.会进行一次A的匿名构造，a=1会隐式转化成A(1)
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">A</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">)</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>	<span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;A::A x = &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">x</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln"> 5</span><span class="p">}</span>
+<span class="ln"> 6</span><span class="c1">//2.然后在进行右值运算,调用默认拷贝构造函数
+</span><span class="ln"> 7</span><span class="c1">//B(const B &amp;)(B)或者是B(B &amp;&amp;)(B)
+</span><span class="ln"> 8</span><span class="c1"></span><span class="n">B</span><span class="p">(</span><span class="k">const</span> <span class="n">B</span><span class="o">&amp;</span> <span class="n">b1</span><span class="p">)</span>
+<span class="ln"> 9</span><span class="p">{</span>
+<span class="ln">10</span>	<span class="k">this</span><span class="o">-&gt;</span><span class="n">a</span> <span class="o">=</span> <span class="n">b1</span><span class="o">-&gt;</span><span class="n">a</span><span class="p">;</span>
+<span class="ln">11</span><span class="p">}</span>
+<span class="ln">12</span><span class="c1">//相当于是b2.a=A(1)只会调用一次A的构造，然后会对B进行默认拷贝构造
+</span></code></pre></div><p>本文所有demo，笔者在Clion中演示结果。</p>
+<h1 id="1大括号">1大括号</h1>
+<p>自<strong>C++11标准</strong>开始就引入了列表初始化的概念，即<strong>支持使用{}对变量或对象进行初始化</strong>，且与传统的变量初始化的规则一样，也分为拷贝初始化和直接初始化两种方式。大括号的本质实际上是<code>std::initializer_list</code>，直接讲解感觉会感觉云里雾里。</p>
+<p>Q:首先看一下下面的初始化，哪一种是正确的?</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>int x(0);    // 初始值在圆括号内
+<span class="ln">2</span>
+<span class="ln">3</span>int y = 0;   // 初始值在等号后面
+<span class="ln">4</span>
+<span class="ln">5</span>int z{0};    // 初始值在大括号内
+</code></pre></div><p>A:实际上，三种初始化都是正确的。只是三种初始化的含义不同的，需要区别对待。</p>
+<ol>
+<li>第一种，<strong>使用括号的方式</strong>，对变量或对象使用括号初始化的方式被称为<strong>直接初始化</strong>，其<strong>本质是调用了相应的构造函数</strong></li>
+<li>第二种，<strong>使用等号的方式</strong>，用等号初始化的方式则被称为<strong>拷贝初始化</strong>。</li>
+<li>第三种，<strong>使用大括号的方式</strong>，除非存在接受<code>std::initializer_list</code>的构造函数，否则使用大括号构造对象等效于使用括号。</li>
+</ol>
+<p>初始化和赋值操作的<strong>差别是模糊的。<strong>但是对于用户定义的类，区分初始化和赋值操作是很重要的，因为这会导致</strong>不同</strong>的函数调用。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//以下面的demo为例
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp"></span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+<span class="ln"> 4</span><span class="k">struct</span> <span class="nc">A</span>
+<span class="ln"> 5</span><span class="p">{</span>
+<span class="ln"> 6</span>    <span class="o">~</span><span class="n">A</span><span class="p">(){</span> <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;~A()&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln"> 7</span>    <span class="n">A</span><span class="p">()</span>
+<span class="ln"> 8</span>    <span class="p">{</span>
+<span class="ln"> 9</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;A::A &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">10</span>    <span class="p">}</span>
+<span class="ln">11</span>
+<span class="ln">12</span>    <span class="n">A</span><span class="p">(</span><span class="n">A</span><span class="o">&amp;</span> <span class="n">a</span><span class="p">)</span>
+<span class="ln">13</span>    <span class="p">{</span>
+<span class="ln">14</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;A::A copy constructor&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">15</span>    <span class="p">}</span>
+<span class="ln">16</span>
+<span class="ln">17</span>    <span class="n">A</span><span class="o">&amp;</span> <span class="k">operator</span><span class="o">=</span><span class="p">(</span><span class="n">A</span> <span class="o">&amp;</span><span class="n">a</span><span class="p">)</span>
+<span class="ln">18</span>    <span class="p">{</span>
+<span class="ln">19</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;A::A operator=&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">20</span>        <span class="k">return</span> <span class="o">*</span><span class="k">this</span><span class="p">;</span>
+<span class="ln">21</span>    <span class="p">}</span>
+<span class="ln">22</span><span class="p">};</span>
+<span class="ln">23</span>
+<span class="ln">24</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">25</span>    <span class="n">A</span> <span class="n">a1</span><span class="p">;</span>			<span class="c1">//初始化，对应无参构造
+</span><span class="ln">26</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a2</span> <span class="o">=</span> <span class="n">a1</span><span class="p">;</span>		<span class="c1">//初始化，对应拷贝构造
+</span><span class="ln">27</span><span class="c1"></span>    <span class="n">a1</span> <span class="o">=</span> <span class="n">a2</span><span class="p">;</span>		<span class="c1">//赋值重载运算，对应operator=操作
+</span><span class="ln">28</span><span class="c1"></span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">29</span><span class="p">}</span>
+</code></pre></div><h2 id="11大括号类内初始化">1.1大括号类内初始化</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="k">class</span> <span class="nc">A</span> <span class="p">{</span>
+<span class="ln">2</span>  <span class="p">...</span>
+<span class="ln">3</span><span class="k">private</span><span class="o">:</span>
+<span class="ln">4</span>  <span class="kt">int</span> <span class="n">x</span><span class="p">{</span> <span class="mi">0</span> <span class="p">};</span>   <span class="c1">// x的默认初始值为0
+</span><span class="ln">5</span><span class="c1"></span>  <span class="kt">int</span> <span class="n">y</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>    <span class="c1">// 同上
+</span><span class="ln">6</span><span class="c1"></span>  <span class="kt">int</span> <span class="nf">z</span><span class="p">(</span> <span class="mi">0</span> <span class="p">);</span>   <span class="c1">// 报错
+</span><span class="ln">7</span><span class="c1"></span><span class="p">}</span>
+</code></pre></div><p>大括号也可以用于类内成员的默认初始值，在C++11中，等号”=”也可以实现，但是圆括号 &lsquo;( )&rsquo; 则不可以</p>
+<h2 id="12大括号初始化不可拷贝对象">1.2大括号初始化不可拷贝对象</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">ai1</span><span class="p">{</span> <span class="mi">0</span> <span class="p">};</span>  <span class="c1">// 可以
+</span><span class="ln">2</span><span class="c1"></span>
+<span class="ln">3</span><span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">ai2</span><span class="p">(</span> <span class="mi">0</span> <span class="p">);</span>  <span class="c1">// 可以
+</span><span class="ln">4</span><span class="c1"></span>
+<span class="ln">5</span><span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">ai3</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>   <span class="c1">// 报错
+</span></code></pre></div><p><strong>不可拷贝对象</strong>(例如，<code>std::atomic</code>)可以用<strong>大括号</strong>和<strong>圆括号</strong>初始化，但不能用等号</p>
+<h2 id="13免疫c中的最让人头痛的歧义">1.3免疫C++中的最让人头痛的歧义</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp"></span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="k">struct</span> <span class="nc">A</span>
+<span class="ln"> 4</span><span class="p">{</span>
+<span class="ln"> 5</span>    <span class="o">~</span><span class="n">A</span><span class="p">(){</span> <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;~A()&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln"> 6</span>    <span class="n">A</span><span class="p">()</span>
+<span class="ln"> 7</span>    <span class="p">{</span>
+<span class="ln"> 8</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;A::A &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="p">}</span>
+<span class="ln">10</span>    
+<span class="ln">11</span>    <span class="n">A</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">)</span>
+<span class="ln">12</span>    <span class="p">{</span>
+<span class="ln">13</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;A::A x = &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">x</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">14</span>    <span class="p">}</span>
+<span class="ln">15</span>
+<span class="ln">16</span>    <span class="n">A</span><span class="p">(</span><span class="n">A</span><span class="o">&amp;</span> <span class="n">a</span><span class="p">)</span>
+<span class="ln">17</span>    <span class="p">{</span>
+<span class="ln">18</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;A::A copy constructor&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">19</span>    <span class="p">}</span>
+<span class="ln">20</span>
+<span class="ln">21</span>    <span class="n">A</span><span class="o">&amp;</span> <span class="k">operator</span><span class="o">=</span><span class="p">(</span><span class="n">A</span> <span class="o">&amp;</span><span class="n">a</span><span class="p">)</span>
+<span class="ln">22</span>    <span class="p">{</span>
+<span class="ln">23</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;A::A operator=&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">24</span>        <span class="k">return</span> <span class="o">*</span><span class="k">this</span><span class="p">;</span>
+<span class="ln">25</span>    <span class="p">}</span>
+<span class="ln">26</span><span class="p">};</span>
+<span class="ln">27</span>
+<span class="ln">28</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">29</span>    <span class="n">A</span> <span class="n">a1</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>  <span class="c1">// 调用的A带参构造函数，这个没有歧义
+</span><span class="ln">30</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a2</span><span class="p">();</span>   <span class="c1">// 最让人头痛的歧义，声明了一个名为a2，不接受任何参数，返回A类型的函数！
+</span><span class="ln">31</span><span class="c1"></span>	<span class="n">A</span> <span class="n">a3</span><span class="p">;</span>     <span class="c1">// 正确：a3是个默认初始化的对象
+</span><span class="ln">32</span><span class="c1"></span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">33</span><span class="p">}</span>
+</code></pre></div><p>这里产生歧义的点，不知道a2为无参数返回为A类型的函数名，还是为A的默认初始化对象实例。</p>
+<p>使用下面大括号的方式，可以避免歧义产生，<strong>使用大括号包含参数是无法声明为函数的</strong>。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="n">A</span> <span class="n">a4</span><span class="p">{};</span>   <span class="c1">// 无歧义
+</span></code></pre></div><h2 id="14迭代器的使用">1.4迭代器的使用</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="cp">#include</span><span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp">#include</span><span class="cpf">&lt;vector&gt;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp">#include</span><span class="cpf">&lt;map&gt;</span><span class="cp">
+</span><span class="ln"> 4</span><span class="cp"></span> 
+<span class="ln"> 5</span><span class="k">class</span> <span class="nc">Test</span>
+<span class="ln"> 6</span><span class="p">{</span>
+<span class="ln"> 7</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 8</span>    <span class="n">Test</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">s</span><span class="p">,</span> <span class="kt">int</span> <span class="n">val</span><span class="p">)</span> <span class="p">{}</span>
+<span class="ln"> 9</span><span class="p">};</span>
+<span class="ln">10</span> 
+<span class="ln">11</span> 
+<span class="ln">12</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln">13</span><span class="p">{</span>
+<span class="ln">14</span>    <span class="kt">int</span> <span class="n">arr</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">};</span>  <span class="c1">//拷贝初始化
+</span><span class="ln">15</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">brr</span><span class="p">[]{</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">};</span>    <span class="c1">//直接初始化
+</span><span class="ln">16</span><span class="c1"></span> 
+<span class="ln">17</span>    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">vc1</span> <span class="o">=</span> <span class="p">{</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span> <span class="p">,</span><span class="mi">40</span><span class="p">};</span>
+<span class="ln">18</span>    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">vc2</span><span class="p">{</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">};</span>
+<span class="ln">19</span>    <span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">m1</span> <span class="o">=</span> <span class="p">{</span> <span class="p">{</span><span class="s">&#34;a&#34;</span><span class="p">,</span> <span class="mi">1</span><span class="p">},</span> <span class="p">{</span><span class="s">&#34;b&#34;</span><span class="p">,</span> <span class="mi">2</span><span class="p">},</span> <span class="p">{</span><span class="s">&#34;c&#34;</span><span class="p">,</span> <span class="mi">3</span><span class="p">}</span> <span class="p">};</span>
+<span class="ln">20</span> 
+<span class="ln">21</span>    <span class="n">Test</span> <span class="o">*</span><span class="n">pt</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Test</span><span class="p">{</span><span class="s">&#34;test&#34;</span><span class="p">,</span> <span class="mi">100</span><span class="p">};</span>
+<span class="ln">22</span>    <span class="k">delete</span> <span class="n">pt</span><span class="p">;</span>
+<span class="ln">23</span> 
+<span class="ln">24</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">25</span><span class="p">}</span>
+</code></pre></div><p>上面所举的例子中用到了{}对标准库容器进行初始化，而<strong>标准库容器之所以能够支持初始化列表</strong>，除了有编译器的支持外，<strong>更直接的是这些容器存在以std::initializer_list为形参的构造函数</strong>。</p>
+<p>vector容器初始化</p>
+<p><img src="D:%5Chugo%5CMyBlog%5Cstatic%5Cc++%5Cbase%5Cinitializer_list%5Cil_1.png" alt="il_1"></p>
+<p>map容器初始化</p>
+<p><img src="D:%5Chugo%5CMyBlog%5Cstatic%5Cc++%5Cbase%5Cinitializer_list%5Cil_2.png" alt="il_2"></p>
+<h2 id="15与stdinitializer_list混淆">1.5与std::initializer_list混淆</h2>
+<h3 id="151构造中没有添加initializer_list">1.5.1构造中没有添加initializer_list</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="cp">#include</span><span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp"></span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+<span class="ln"> 3</span>
+<span class="ln"> 4</span><span class="k">class</span> <span class="nc">A</span> <span class="p">{</span>
+<span class="ln"> 5</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 6</span>  <span class="n">A</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">b</span><span class="p">){</span>
+<span class="ln"> 7</span>      <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;constructor int/bool&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln"> 8</span>  <span class="p">}</span>
+<span class="ln"> 9</span>  <span class="n">A</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="kt">double</span> <span class="n">d</span><span class="p">){</span>
+<span class="ln">10</span>      <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;constructor int/double&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">11</span>  <span class="p">}</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="p">};</span>
+<span class="ln">14</span>
+<span class="ln">15</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln">16</span><span class="p">{</span>
+<span class="ln">17</span>    <span class="c1">// 调用第一个构造函数
+</span><span class="ln">18</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a1</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="nb">true</span><span class="p">);</span>
+<span class="ln">19</span>    <span class="c1">// 调用第一个构造函数，使用大括号构造对象等效于使用括号
+</span><span class="ln">20</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a2</span><span class="p">{</span><span class="mi">10</span><span class="p">,</span> <span class="nb">true</span><span class="p">};</span>
+<span class="ln">21</span>    <span class="c1">// 调用第二个构造函数
+</span><span class="ln">22</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a3</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">);</span>
+<span class="ln">23</span>    <span class="c1">// 调用第二个构造函数，使用大括号构造对象等效于使用括号
+</span><span class="ln">24</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a4</span><span class="p">{</span><span class="mi">10</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">};</span>
+<span class="ln">25</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">26</span><span class="p">}</span>
+</code></pre></div><p>输出</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="n">constructor</span> <span class="kt">int</span><span class="o">/</span><span class="kt">bool</span>
+<span class="ln">2</span><span class="n">constructor</span> <span class="kt">int</span><span class="o">/</span><span class="kt">bool</span>
+<span class="ln">3</span><span class="n">constructor</span> <span class="kt">int</span><span class="o">/</span><span class="kt">double</span>
+<span class="ln">4</span><span class="n">constructor</span> <span class="kt">int</span><span class="o">/</span><span class="kt">double</span>
+</code></pre></div><h3 id="152构造中添加initializer_list">1.5.2构造中添加initializer_list</h3>
+<p>如果<strong>构造函数的形参带有</strong><code>std::initializer_list</code>，调用构造函数时<strong>大括号</strong>初始化语法会<strong>强制使用</strong>带<code>std::initializer_list</code>参数的重载构造函</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="cp">#include</span><span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp"></span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+<span class="ln"> 3</span>
+<span class="ln"> 4</span><span class="k">class</span> <span class="nc">A</span> <span class="p">{</span>
+<span class="ln"> 5</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 6</span>  <span class="n">A</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">b</span><span class="p">){</span>
+<span class="ln"> 7</span>      <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;constructor int/bool&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln"> 8</span>  <span class="p">}</span>
+<span class="ln"> 9</span>  <span class="n">A</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="kt">double</span> <span class="n">d</span><span class="p">){</span>
+<span class="ln">10</span>      <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;constructor int/double&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">11</span>  <span class="p">}</span>
+<span class="ln">12</span>
+<span class="ln">13</span>  <span class="n">A</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">initializer_list</span><span class="o">&lt;</span><span class="kt">long</span> <span class="kt">double</span><span class="o">&gt;</span> <span class="n">il</span><span class="p">){</span>
+<span class="ln">14</span>      <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;constructor initializer_list size = &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">il</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">15</span>      <span class="c1">//使用迭代器输出
+</span><span class="ln">16</span><span class="c1"></span>      <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="kt">long</span> <span class="kt">double</span><span class="o">*</span> <span class="n">i</span> <span class="o">=</span> <span class="n">il</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span>  <span class="n">i</span> <span class="o">!=</span> <span class="n">il</span><span class="p">.</span><span class="n">end</span><span class="p">();</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+<span class="ln">17</span>      <span class="p">{</span>
+<span class="ln">18</span>            <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="o">*</span><span class="n">i</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">19</span>      <span class="p">}</span>
+<span class="ln">20</span>  <span class="p">}</span>
+<span class="ln">21</span><span class="p">};</span>
+<span class="ln">22</span>
+<span class="ln">23</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln">24</span><span class="p">{</span>
+<span class="ln">25</span>    <span class="c1">// 调用第一个构造函数
+</span><span class="ln">26</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a1</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="nb">true</span><span class="p">);</span>
+<span class="ln">27</span>    <span class="c1">// 调用第三个构造函数，里面参数强制转化为long double类型
+</span><span class="ln">28</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a2</span><span class="p">{</span><span class="mi">10</span><span class="p">,</span> <span class="nb">true</span><span class="p">};</span>
+<span class="ln">29</span>    <span class="c1">// 调用第二个构造函数
+</span><span class="ln">30</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a3</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">);</span>
+<span class="ln">31</span>    <span class="c1">// 调用第三个构造函数，里面参数强制转化为long double类型
+</span><span class="ln">32</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a4</span><span class="p">{</span><span class="mi">10</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">};</span>
+<span class="ln">33</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">34</span><span class="p">}</span>
+</code></pre></div><p>输出</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="n">constructor</span> <span class="kt">int</span><span class="o">/</span><span class="kt">bool</span>
+<span class="ln">2</span><span class="n">constructor</span> <span class="n">initializer_list</span> <span class="n">size</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="ln">3</span><span class="mi">10</span>
+<span class="ln">4</span><span class="mi">1</span>
+<span class="ln">5</span><span class="n">constructor</span> <span class="kt">int</span><span class="o">/</span><span class="kt">double</span>
+<span class="ln">6</span><span class="n">constructor</span> <span class="n">initializer_list</span> <span class="n">size</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="ln">7</span><span class="mi">10</span>
+<span class="ln">8</span><span class="mi">5</span>
+</code></pre></div><h3 id="153initializer_list类的类型转化">1.5.3initializer_list类的类型转化</h3>
+<p>更进一步的，编译器用带有<code>std::initializer_list</code>构造函数匹配大括号初始值，即使这个构造函数是无法调用的且另一个构造函数还是<strong>参数精确匹配</strong>的，编译器也会忽略精准匹配的构造函数。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="cp">#include</span><span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp"></span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+<span class="ln"> 3</span>
+<span class="ln"> 4</span><span class="k">class</span> <span class="nc">A</span> <span class="p">{</span>
+<span class="ln"> 5</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 6</span>    <span class="n">A</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">b</span><span class="p">){</span>
+<span class="ln"> 7</span>      <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;constructor int/bool&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="p">}</span>
+<span class="ln"> 9</span>    <span class="n">A</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="kt">double</span> <span class="n">d</span><span class="p">){</span>
+<span class="ln">10</span>      <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;constructor int/double&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="p">}</span>
+<span class="ln">12</span>
+<span class="ln">13</span>    <span class="n">A</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">initializer_list</span><span class="o">&lt;</span><span class="kt">long</span> <span class="kt">double</span><span class="o">&gt;</span> <span class="n">il</span><span class="p">){</span>
+<span class="ln">14</span>      <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;constructor initializer_list size = &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">il</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">15</span>      <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="kt">long</span> <span class="kt">double</span><span class="o">*</span> <span class="n">i</span> <span class="o">=</span> <span class="n">il</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span>  <span class="n">i</span> <span class="o">!=</span> <span class="n">il</span><span class="p">.</span><span class="n">end</span><span class="p">();</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+<span class="ln">16</span>      <span class="p">{</span>
+<span class="ln">17</span>            <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="o">*</span><span class="n">i</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">18</span>      <span class="p">}</span>
+<span class="ln">19</span>    <span class="p">}</span>
+<span class="ln">20</span>
+<span class="ln">21</span>    <span class="k">operator</span> <span class="nf">float</span><span class="p">()</span> <span class="k">const</span>   <span class="c1">// 支持隐式转换为float类型
+</span><span class="ln">22</span><span class="c1"></span>    <span class="p">{</span>
+<span class="ln">23</span>      <span class="kt">float</span> <span class="n">f</span> <span class="o">=</span> <span class="mf">1.0f</span><span class="p">;</span>
+<span class="ln">24</span>      <span class="k">return</span> <span class="n">f</span><span class="p">;</span>
+<span class="ln">25</span>    <span class="p">}</span>
+<span class="ln">26</span>
+<span class="ln">27</span>    <span class="n">A</span><span class="p">(</span><span class="k">const</span> <span class="n">A</span><span class="o">&amp;</span> <span class="n">a</span><span class="p">)</span>
+<span class="ln">28</span>    <span class="p">{</span>
+<span class="ln">29</span>      <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;A::A copy constructor&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">30</span>
+<span class="ln">31</span>    <span class="p">}</span>
+<span class="ln">32</span><span class="p">};</span>
+<span class="ln">33</span>
+<span class="ln">34</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln">35</span><span class="p">{</span>
+<span class="ln">36</span>    <span class="c1">// 调用第一个构造函数
+</span><span class="ln">37</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a1</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="nb">true</span><span class="p">);</span>
+<span class="ln">38</span>    <span class="c1">// 不使用拷贝构造，将a1隐式转化为float类型，在使用第三个构造
+</span><span class="ln">39</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a2</span><span class="p">{</span><span class="n">a1</span><span class="p">};</span>
+<span class="ln">40</span>    <span class="c1">// 调用拷贝构造
+</span><span class="ln">41</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a3</span><span class="p">(</span><span class="n">a1</span><span class="p">);</span>
+<span class="ln">42</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">43</span><span class="p">}</span>
+</code></pre></div><p>输出</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="n">constructor</span> <span class="kt">int</span><span class="o">/</span><span class="kt">bool</span>
+<span class="ln">2</span><span class="n">constructor</span> <span class="n">initializer_list</span> <span class="n">size</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="ln">3</span><span class="mi">1</span>
+<span class="ln">4</span><span class="n">A</span><span class="o">::</span><span class="n">A</span> <span class="n">copy</span> <span class="n">constructor</span>
+</code></pre></div><h3 id="154initializer_list窄化转换">1.5.4initializer_list窄化转换</h3>
+<p>根据1.5.2的内容，稍作修改把构造参数initializer_list中的类型long double变成bool类型</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="cp">#include</span><span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp"></span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+<span class="ln"> 3</span>
+<span class="ln"> 4</span><span class="k">class</span> <span class="nc">A</span> <span class="p">{</span>
+<span class="ln"> 5</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 6</span>    <span class="n">A</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">b</span><span class="p">){</span>
+<span class="ln"> 7</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;constructor int/bool&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="p">}</span>
+<span class="ln"> 9</span>    <span class="n">A</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="kt">double</span> <span class="n">d</span><span class="p">){</span>
+<span class="ln">10</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;constructor int/double&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="p">}</span>
+<span class="ln">12</span>
+<span class="ln">13</span>    <span class="n">A</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">initializer_list</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span> <span class="n">il</span><span class="p">){</span>
+<span class="ln">14</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;constructor initializer_list size = &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">il</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">15</span>        <span class="c1">//使用迭代器输出
+</span><span class="ln">16</span><span class="c1"></span>        <span class="k">for</span> <span class="p">(</span><span class="k">auto</span><span class="o">*</span> <span class="n">i</span> <span class="o">=</span> <span class="n">il</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span>  <span class="n">i</span> <span class="o">!=</span> <span class="n">il</span><span class="p">.</span><span class="n">end</span><span class="p">();</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+<span class="ln">17</span>        <span class="p">{</span>
+<span class="ln">18</span>            <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="o">*</span><span class="n">i</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">19</span>        <span class="p">}</span>
+<span class="ln">20</span>    <span class="p">}</span>
+<span class="ln">21</span><span class="p">};</span>
+<span class="ln">22</span>
+<span class="ln">23</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln">24</span><span class="p">{</span>
+<span class="ln">25</span>    <span class="c1">// 调用第一个构造函数
+</span><span class="ln">26</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a1</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="nb">true</span><span class="p">);</span>
+<span class="ln">27</span>    <span class="c1">// 调用第三个构造函数，里面参数强制转化为bool类型，但是int类型转化bool会错误
+</span><span class="ln">28</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a2</span><span class="p">{</span><span class="mi">10</span><span class="p">,</span> <span class="nb">true</span><span class="p">};</span><span class="c1">//无法编译通过
+</span><span class="ln">29</span><span class="c1"></span>    <span class="c1">// 调用第二个构造函数
+</span><span class="ln">30</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a3</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">);</span>
+<span class="ln">31</span>    <span class="c1">// 调用第三个构造函数，里面参数强制转化为bool类型，但是int、double类型转化bool会错误
+</span><span class="ln">32</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a4</span><span class="p">{</span><span class="mi">10</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">};</span><span class="c1">//无法编译通过
+</span><span class="ln">33</span><span class="c1"></span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">34</span><span class="p">}</span>
+</code></pre></div><p>输出</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="nl">D</span><span class="p">:</span><span class="o">/</span><span class="n">project</span><span class="o">/</span><span class="n">CPPProject0710</span><span class="o">/</span><span class="n">main</span><span class="p">.</span><span class="nl">cpp</span><span class="p">:</span><span class="mi">28</span><span class="o">:</span><span class="mi">18</span><span class="o">:</span> <span class="nl">error</span><span class="p">:</span> <span class="n">narrowing</span> <span class="n">conversion</span> <span class="n">of</span> <span class="err">&#39;</span><span class="mi">10</span><span class="err">&#39;</span> <span class="n">from</span> <span class="err">&#39;</span><span class="kt">int</span><span class="err">&#39;</span> <span class="n">to</span> <span class="err">&#39;</span><span class="kt">bool</span><span class="err">&#39;</span> <span class="p">[</span><span class="o">-</span><span class="n">Wnarrowing</span><span class="p">]</span>
+<span class="ln">2</span>   <span class="mi">28</span> <span class="o">|</span>     <span class="n">A</span> <span class="n">a2</span><span class="p">{</span><span class="mi">10</span><span class="p">,</span> <span class="nb">true</span><span class="p">};</span>
+<span class="ln">3</span>      <span class="o">|</span>                  <span class="o">^</span>
+<span class="ln">4</span><span class="nl">D</span><span class="p">:</span><span class="o">/</span><span class="n">project</span><span class="o">/</span><span class="n">CPPProject0710</span><span class="o">/</span><span class="n">main</span><span class="p">.</span><span class="nl">cpp</span><span class="p">:</span><span class="mi">32</span><span class="o">:</span><span class="mi">17</span><span class="o">:</span> <span class="nl">error</span><span class="p">:</span> <span class="n">narrowing</span> <span class="n">conversion</span> <span class="n">of</span> <span class="err">&#39;</span><span class="mi">10</span><span class="err">&#39;</span> <span class="n">from</span> <span class="err">&#39;</span><span class="kt">int</span><span class="err">&#39;</span> <span class="n">to</span> <span class="err">&#39;</span><span class="kt">bool</span><span class="err">&#39;</span> <span class="p">[</span><span class="o">-</span><span class="n">Wnarrowing</span><span class="p">]</span>
+<span class="ln">5</span>   <span class="mi">32</span> <span class="o">|</span>     <span class="n">A</span> <span class="n">a4</span><span class="p">{</span><span class="mi">10</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">};</span>
+<span class="ln">6</span>      <span class="o">|</span>                 <span class="o">^</span>
+<span class="ln">7</span><span class="nl">ninja</span><span class="p">:</span> <span class="n">build</span> <span class="nl">stopped</span><span class="p">:</span> <span class="n">subcommand</span> <span class="n">failed</span><span class="p">.</span>
+</code></pre></div><h3 id="155-无法转化为initializer_list">1.5.5 无法转化为initializer_list</h3>
+<p>只有当大括号内的值<strong>无法转换</strong>为<code>std::initializer_list</code>元素的类型时，编译器才会使用正常的重载选择方法</p>
+<p>根据1.5.2的内容，稍作修改把构造参数initializer_list中的类型long double变成string类型</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="cp">#include</span><span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp"></span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+<span class="ln"> 3</span>
+<span class="ln"> 4</span><span class="k">class</span> <span class="nc">A</span> <span class="p">{</span>
+<span class="ln"> 5</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 6</span>    <span class="n">A</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">b</span><span class="p">){</span>
+<span class="ln"> 7</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;constructor int/bool&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="p">}</span>
+<span class="ln"> 9</span>    <span class="n">A</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="kt">double</span> <span class="n">d</span><span class="p">){</span>
+<span class="ln">10</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;constructor int/double&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="p">}</span>
+<span class="ln">12</span>
+<span class="ln">13</span>    <span class="n">A</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">initializer_list</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">il</span><span class="p">){</span>
+<span class="ln">14</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;constructor initializer_list size = &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">il</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">15</span>        <span class="c1">//使用迭代器输出
+</span><span class="ln">16</span><span class="c1"></span>        <span class="k">for</span> <span class="p">(</span><span class="k">auto</span><span class="o">*</span> <span class="n">i</span> <span class="o">=</span> <span class="n">il</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span>  <span class="n">i</span> <span class="o">!=</span> <span class="n">il</span><span class="p">.</span><span class="n">end</span><span class="p">();</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+<span class="ln">17</span>        <span class="p">{</span>
+<span class="ln">18</span>            <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="o">*</span><span class="n">i</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">19</span>        <span class="p">}</span>
+<span class="ln">20</span>    <span class="p">}</span>
+<span class="ln">21</span><span class="p">};</span>
+<span class="ln">22</span>
+<span class="ln">23</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln">24</span><span class="p">{</span>
+<span class="ln">25</span>    <span class="c1">// 调用第一个构造函数
+</span><span class="ln">26</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a1</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="nb">true</span><span class="p">);</span>
+<span class="ln">27</span>    <span class="c1">// 调用第三个构造函数，里面参数强制转化为string类型，类型无法转化匹配，调用第一个构造函数
+</span><span class="ln">28</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a2</span><span class="p">{</span><span class="mi">10</span><span class="p">,</span> <span class="nb">true</span><span class="p">};</span>
+<span class="ln">29</span>    <span class="c1">// 调用第二个构造函数
+</span><span class="ln">30</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a3</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">);</span>
+<span class="ln">31</span>    <span class="c1">// 调用第三个构造函数，里面参数强制转化为string类型，类型无法转化匹配，调用第一个构造函数
+</span><span class="ln">32</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a4</span><span class="p">{</span><span class="mi">10</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">};</span>
+<span class="ln">33</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">34</span><span class="p">}</span>
+</code></pre></div><p>输出</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="n">constructor</span> <span class="kt">int</span><span class="o">/</span><span class="kt">bool</span>
+<span class="ln">2</span><span class="n">constructor</span> <span class="kt">int</span><span class="o">/</span><span class="kt">bool</span>
+<span class="ln">3</span><span class="n">constructor</span> <span class="kt">int</span><span class="o">/</span><span class="kt">double</span>
+<span class="ln">4</span><span class="n">constructor</span> <span class="kt">int</span><span class="o">/</span><span class="kt">double</span>
+</code></pre></div><h3 id="156关于混淆点补充">1.5.6关于混淆点补充</h3>
+<p>在STL中，许多容器都会使用到<code>std::initializer_list</code>构造函数来初始化，比如vector和map等。<code>std::vector</code>就是一个<strong>被它们直接影响的类</strong>。<code>std::vector</code>中有一个可以<strong>指定</strong>容器的<strong>大小</strong>和容器内<strong>元素的初始值</strong>的不带<code>std::initializer_list</code>构造函数，但它也有一个可以指定容器中元素值的<strong>带<code>std::initializer_list</code>函数</strong>。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">v1</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">);</span>   <span class="c1">// 使用不带std::initializer_list的构造函数
+</span><span class="ln">2</span><span class="c1"></span>                               <span class="c1">// 创建10个元素的vector，每个元素的初始值为20
+</span><span class="ln">3</span><span class="c1"></span>
+<span class="ln">4</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">v2</span><span class="p">{</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">};</span>   <span class="c1">// 使用带std::initializer_list的构造函数
+</span><span class="ln">5</span><span class="c1"></span>                               <span class="c1">// 创建2个元素的vector，元素值为10和20
+</span></code></pre></div><p>上述调用走的不是同一个构造函数，即含义完全不同</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//第一个小括号构造吗，创建10个元素的vector，每个元素的初始值为20
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">_InputIterator</span><span class="p">,</span>
+<span class="ln"> 3</span><span class="k">typename</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">_RequireInputIter</span><span class="o">&lt;</span><span class="n">_InputIterator</span><span class="o">&gt;&gt;</span>
+<span class="ln"> 4</span>    <span class="n">vector</span><span class="p">(</span><span class="n">_InputIterator</span> <span class="n">__first</span><span class="p">,</span> <span class="n">_InputIterator</span> <span class="n">__last</span><span class="p">,</span>
+<span class="ln"> 5</span>           <span class="k">const</span> <span class="n">allocator_type</span><span class="o">&amp;</span> <span class="n">__a</span> <span class="o">=</span> <span class="n">allocator_type</span><span class="p">())</span>
+<span class="ln"> 6</span>    <span class="o">:</span> <span class="n">_Base</span><span class="p">(</span><span class="n">__a</span><span class="p">)</span>
+<span class="ln"> 7</span>    <span class="p">{</span>
+<span class="ln"> 8</span>        <span class="n">_M_range_initialize</span><span class="p">(</span><span class="n">__first</span><span class="p">,</span> <span class="n">__last</span><span class="p">,</span>
+<span class="ln"> 9</span>                            <span class="n">std</span><span class="o">::</span><span class="n">__iterator_category</span><span class="p">(</span><span class="n">__first</span><span class="p">));</span>
+<span class="ln">10</span>    <span class="p">}</span>
+<span class="ln">11</span><span class="c1">//第二个大括号构造，创建2个元素的vector，元素值为10和20
+</span><span class="ln">12</span><span class="c1"></span><span class="n">vector</span><span class="p">(</span><span class="n">initializer_list</span><span class="o">&lt;</span><span class="n">value_type</span><span class="o">&gt;</span> <span class="n">__l</span><span class="p">,</span>
+<span class="ln">13</span>       <span class="k">const</span> <span class="n">allocator_type</span><span class="o">&amp;</span> <span class="n">__a</span> <span class="o">=</span> <span class="n">allocator_type</span><span class="p">())</span>
+<span class="ln">14</span>    <span class="o">:</span> <span class="n">_Base</span><span class="p">(</span><span class="n">__a</span><span class="p">)</span>
+<span class="ln">15</span>    <span class="p">{</span>
+<span class="ln">16</span>        <span class="n">_M_range_initialize</span><span class="p">(</span><span class="n">__l</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">__l</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span>
+<span class="ln">17</span>                            <span class="n">random_access_iterator_tag</span><span class="p">());</span>
+<span class="ln">18</span>    <span class="p">}</span>
+</code></pre></div><p>另外使用一个大括号调用initializer_list无参构造的方式</p>
+<blockquote>
+<p>默认使用大括号的无参构造</p>
+<p>如果你想要用一个空的<code>std::initializer_list</code>参数来调用带<code>std::initializer_list</code>构造函数，那么你需要<strong>把大括号作为参数</strong>，即把空的大括号放在圆括号内或者大括号内，即initializer_list参数列表可以为空。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="cp">#include</span><span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp"></span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+<span class="ln"> 3</span>
+<span class="ln"> 4</span><span class="k">class</span> <span class="nc">A</span> <span class="p">{</span>
+<span class="ln"> 5</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 6</span>    <span class="n">A</span><span class="p">(){</span>
+<span class="ln"> 7</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;constructor&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="p">}</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span>
+<span class="ln">11</span>    <span class="n">A</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">initializer_list</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">il</span><span class="p">){</span>
+<span class="ln">12</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;constructor initializer_list size = &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">il</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">13</span>        <span class="c1">//使用迭代器输出
+</span><span class="ln">14</span><span class="c1"></span>        <span class="k">for</span> <span class="p">(</span><span class="k">auto</span><span class="o">*</span> <span class="n">i</span> <span class="o">=</span> <span class="n">il</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span>  <span class="n">i</span> <span class="o">!=</span> <span class="n">il</span><span class="p">.</span><span class="n">end</span><span class="p">();</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+<span class="ln">15</span>        <span class="p">{</span>
+<span class="ln">16</span>            <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="o">*</span><span class="n">i</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">17</span>        <span class="p">}</span>
+<span class="ln">18</span>    <span class="p">}</span>
+<span class="ln">19</span><span class="p">};</span>
+<span class="ln">20</span>
+<span class="ln">21</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln">22</span><span class="p">{</span>
+<span class="ln">23</span>    <span class="c1">//调用默认构造
+</span><span class="ln">24</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a1</span><span class="p">;</span>
+<span class="ln">25</span>    <span class="c1">//调用默认构造
+</span><span class="ln">26</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a2</span><span class="p">{};</span>
+<span class="ln">27</span>    <span class="c1">//调用initializer_list构造
+</span><span class="ln">28</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a3</span><span class="p">({});</span>
+<span class="ln">29</span>    <span class="c1">//调用initializer_list构造,里面又是一个参数，为0
+</span><span class="ln">30</span><span class="c1"></span>    <span class="n">A</span> <span class="n">a4</span><span class="p">{{}};</span>
+<span class="ln">31</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">32</span><span class="p">}</span>
+</code></pre></div><p>输出结果</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="n">constructor</span>
+<span class="ln">2</span><span class="n">constructor</span>
+<span class="ln">3</span><span class="n">constructor</span> <span class="n">initializer_list</span> <span class="n">size</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="ln">4</span><span class="n">constructor</span> <span class="n">initializer_list</span> <span class="n">size</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="ln">5</span><span class="mi">0</span>
+</code></pre></div><p>可以发现有时候{}和()可以是同样的效果（上述a1和a2），又可以是不一样的效果（上述a3和a4）。</p>
+</blockquote>
+<h1 id="2最后来一个demo">2最后来一个demo</h1>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="cp">#include</span><span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp">#include</span><span class="cpf">&lt;thread&gt;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp"></span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+<span class="ln"> 4</span>
+<span class="ln"> 5</span><span class="k">struct</span> <span class="nc">A</span>
+<span class="ln"> 6</span><span class="p">{</span>
+<span class="ln"> 7</span>    <span class="o">~</span><span class="n">A</span><span class="p">(){</span> <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;~A()&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln"> 8</span>    <span class="n">A</span><span class="p">()</span>
+<span class="ln"> 9</span>    <span class="p">{</span>
+<span class="ln">10</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;A::A &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="p">}</span>
+<span class="ln">12</span>	<span class="c1">//这里必须写成右值引用的形式，std::thread构造传入的值为右值，会进行一次拷贝构造
+</span><span class="ln">13</span><span class="c1"></span>    <span class="n">A</span><span class="p">(</span><span class="k">const</span> <span class="n">A</span><span class="o">&amp;</span> <span class="n">a</span><span class="p">)</span>
+<span class="ln">14</span>    <span class="p">{</span>
+<span class="ln">15</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;A::A copy constructor&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">16</span>
+<span class="ln">17</span>    <span class="p">}</span>
+<span class="ln">18</span>
+<span class="ln">19</span>    <span class="n">A</span><span class="o">&amp;</span> <span class="k">operator</span><span class="o">=</span><span class="p">(</span><span class="n">A</span> <span class="o">&amp;</span><span class="n">a</span><span class="p">)</span>
+<span class="ln">20</span>    <span class="p">{</span>
+<span class="ln">21</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;A::A operator=&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">22</span>        <span class="k">return</span> <span class="o">*</span><span class="k">this</span><span class="p">;</span>
+<span class="ln">23</span>    <span class="p">}</span>
+<span class="ln">24</span>    <span class="c1">//仿函数
+</span><span class="ln">25</span><span class="c1"></span>    <span class="kt">void</span> <span class="nf">operator</span><span class="p">()()</span>
+<span class="ln">26</span>    <span class="p">{</span>
+<span class="ln">27</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;A::operator() &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">28</span>        <span class="c1">//return true;
+</span><span class="ln">29</span><span class="c1"></span>    <span class="p">}</span>
+<span class="ln">30</span><span class="p">};</span>
+<span class="ln">31</span>
+<span class="ln">32</span><span class="kt">void</span> <span class="nf">f1</span><span class="p">(</span><span class="kt">int</span> <span class="n">n</span><span class="p">)</span>
+<span class="ln">33</span><span class="p">{</span>
+<span class="ln">34</span>    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Thread f1 &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">n</span> <span class="o">&lt;&lt;</span> <span class="s">&#34; executing</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">;</span>
+<span class="ln">35</span><span class="p">}</span>
+<span class="ln">36</span>
+<span class="ln">37</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln">38</span><span class="p">{</span>
+<span class="ln">39</span>    <span class="kr">thread</span> <span class="n">t1</span><span class="p">{};</span>		<span class="c1">//空的默认构造
+</span><span class="ln">40</span><span class="c1"></span>    <span class="kr">thread</span> <span class="n">t2</span><span class="p">;</span>			<span class="c1">//空的默认构造，不能写成thread t2();会被认为是函数定义
+</span><span class="ln">41</span><span class="c1"></span>    <span class="kr">thread</span> <span class="n">t3</span><span class="p">{</span><span class="n">f1</span><span class="p">,</span> <span class="mi">1</span><span class="p">};</span>	<span class="c1">//使用函数指针，最终调用函数指针f1()回调到对应函数
+</span><span class="ln">42</span><span class="c1"></span>    <span class="n">t3</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
+<span class="ln">43</span>    <span class="kr">thread</span> <span class="n">t4</span><span class="p">(</span><span class="n">f1</span><span class="p">,</span> <span class="mi">2</span><span class="p">);</span>	<span class="c1">//使用函数指针，最终调用函数指针f1()回调到对应函数
+</span><span class="ln">44</span><span class="c1"></span>    <span class="n">t4</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
+<span class="ln">45</span>    
+<span class="ln">46</span>   	<span class="kr">thread</span> <span class="n">t5</span><span class="p">{</span><span class="n">A</span><span class="p">()};</span>		<span class="c1">//使用仿函数，A()是匿名对象，传入thread中会调用拷贝构造
+</span><span class="ln">47</span><span class="c1"></span>    <span class="n">t5</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>			<span class="c1">//这里会释放上面的匿名对象，然后在传入的拷贝对象调用 &#34;对象()&#34;，这就是仿函数
+</span><span class="ln">48</span><span class="c1"></span>    <span class="kr">thread</span> <span class="n">t6</span><span class="p">{</span><span class="n">A</span><span class="p">{}};</span>		<span class="c1">//同t5一致
+</span><span class="ln">49</span><span class="c1"></span>    <span class="n">t6</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
+<span class="ln">50</span>    <span class="n">A</span> <span class="n">a</span><span class="p">;</span>				<span class="c1">//与上述不一致的是，这里调用的a是直接的对象
+</span><span class="ln">51</span><span class="c1"></span>    <span class="kr">thread</span> <span class="n">t7</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>		<span class="c1">//将直接对象传入t7中，传入thread中会调用拷贝构造
+</span><span class="ln">52</span><span class="c1"></span>    <span class="n">t7</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>			<span class="c1">//然后在传入的拷贝对象调用 &#34;对象()&#34;，这就是仿函数，因为a是局部变量，所以不会马上退出
+</span><span class="ln">53</span><span class="c1"></span>    <span class="kr">thread</span> <span class="n">t8</span><span class="p">((</span><span class="n">A</span><span class="p">()));</span>	<span class="c1">//这里跟t5一致
+</span><span class="ln">54</span><span class="c1"></span>    <span class="n">t8</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
+<span class="ln">55</span>    <span class="kr">thread</span> <span class="n">t9</span><span class="p">(</span><span class="n">A</span><span class="p">{});</span>		<span class="c1">//这里跟t5一致
+</span><span class="ln">56</span><span class="c1"></span>    <span class="n">t9</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
+<span class="ln">57</span>    <span class="c1">//parentheses were disambiguated as a function declaration [-Wvexing-parse]
+</span><span class="ln">58</span><span class="c1"></span>    <span class="cm">/*thread t10(A());	//t9会出错，需要变成t8那样才行，这里最外层使用括号，会有歧义
+</span><span class="ln">59</span><span class="cm">    t10.join();*/</span>		<span class="c1">//thread t9(A());会被认为是函数定义
+</span><span class="ln">60</span><span class="c1"></span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">61</span><span class="p">}</span>
+</code></pre></div><blockquote>
+<p>关于std::thread</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="kr">thread</span><span class="p">(</span><span class="n">_Callable</span><span class="o">&amp;&amp;</span> <span class="n">__f</span><span class="p">,</span> <span class="n">_Args</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">__args</span><span class="p">);</span>
+</code></pre></div><p>当我们做并发工作时，需要使用std::thread()来用于创建、管理和同步线程。首先，我们要知道std::thread()的参数列表构成</p>
+<p>第一个参数：可作为线程函数的三种形式</p>
+<ol>
+<li>
+<p>函数指针</p>
+</li>
+<li>
+<p>函数对象（operator()()重载函数，也叫仿函数）</p>
+</li>
+<li>
+<p>Lambda匿名表达式</p>
+</li>
+</ol>
+<p>其他参数：相当于可变参数列表，根据调用函数的参数列表来传入实参</p>
+</blockquote>
+<p>输出结果，这里一个一个输出</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//t3输出
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">Thread</span> <span class="n">f1</span> <span class="mi">1</span> <span class="n">executing</span>
+<span class="ln"> 3</span><span class="c1">//t4输出
+</span><span class="ln"> 4</span><span class="c1"></span><span class="n">Thread</span> <span class="n">f1</span> <span class="mi">2</span> <span class="n">executing</span>
+<span class="ln"> 5</span><span class="c1">//t5输出
+</span><span class="ln"> 6</span><span class="c1"></span><span class="n">A</span><span class="o">::</span><span class="n">A</span>
+<span class="ln"> 7</span><span class="n">A</span><span class="o">::</span><span class="n">A</span> <span class="n">copy</span> <span class="n">constructor</span>
+<span class="ln"> 8</span><span class="o">~</span><span class="n">A</span><span class="p">()</span>
+<span class="ln"> 9</span><span class="n">A</span><span class="o">::</span><span class="k">operator</span><span class="p">()</span>
+<span class="ln">10</span><span class="o">~</span><span class="n">A</span><span class="p">()</span>
+<span class="ln">11</span><span class="c1">//t6输出
+</span><span class="ln">12</span><span class="c1"></span><span class="n">A</span><span class="o">::</span><span class="n">A</span>
+<span class="ln">13</span><span class="n">A</span><span class="o">::</span><span class="n">A</span> <span class="n">copy</span> <span class="n">constructor</span>
+<span class="ln">14</span><span class="o">~</span><span class="n">A</span><span class="p">()</span>
+<span class="ln">15</span><span class="n">A</span><span class="o">::</span><span class="k">operator</span><span class="p">()</span>
+<span class="ln">16</span><span class="o">~</span><span class="n">A</span><span class="p">()</span>
+<span class="ln">17</span><span class="c1">//t7输出
+</span><span class="ln">18</span><span class="c1"></span><span class="n">A</span><span class="o">::</span><span class="n">A</span>
+<span class="ln">19</span><span class="n">A</span><span class="o">::</span><span class="n">A</span> <span class="n">copy</span> <span class="n">constructor</span>
+<span class="ln">20</span><span class="n">A</span><span class="o">::</span><span class="k">operator</span><span class="p">()</span>
+<span class="ln">21</span><span class="o">~</span><span class="n">A</span><span class="p">()</span>
+<span class="ln">22</span><span class="o">~</span><span class="n">A</span><span class="p">()</span>
+<span class="ln">23</span><span class="c1">//t8输出
+</span><span class="ln">24</span><span class="c1"></span><span class="n">A</span><span class="o">::</span><span class="n">A</span>
+<span class="ln">25</span><span class="n">A</span><span class="o">::</span><span class="n">A</span> <span class="n">copy</span> <span class="n">constructor</span>
+<span class="ln">26</span><span class="o">~</span><span class="n">A</span><span class="p">()</span>
+<span class="ln">27</span><span class="n">A</span><span class="o">::</span><span class="k">operator</span><span class="p">()</span>
+<span class="ln">28</span><span class="o">~</span><span class="n">A</span><span class="p">()</span>
+<span class="ln">29</span><span class="c1">//t9输出
+</span><span class="ln">30</span><span class="c1"></span><span class="n">A</span><span class="o">::</span><span class="n">A</span>
+<span class="ln">31</span><span class="n">A</span><span class="o">::</span><span class="n">A</span> <span class="n">copy</span> <span class="n">constructor</span>
+<span class="ln">32</span><span class="o">~</span><span class="n">A</span><span class="p">()</span>
+<span class="ln">33</span><span class="n">A</span><span class="o">::</span><span class="k">operator</span><span class="p">()</span>
+<span class="ln">34</span><span class="o">~</span><span class="n">A</span><span class="p">()</span>
+</code></pre></div><h1 id="参考文献">参考文献</h1>
+<p><a href="https://zhuanlan.zhihu.com/p/268894227">[1]  emin. C++创建对象时区分圆括号( )和大括号{ }, 2020.</a></p>
+<p><a href="https://blog.csdn.net/a574780196/article/details/122493579">[2] 留恋单行路,现代C++之std::initializer_list的特性分析,2022</a>.</p>
+<p><a href="https://www.zhihu.com/question/497428726/answer/2213203090">[3] zhihu,c++11小括号和大括号初始化有什么区别？,2021</a>.</p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E5%A4%A7%E6%8B%AC%E5%8F%B7/">大括号</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E5%9C%86%E6%8B%AC%E5%8F%B7/">圆括号</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E7%AD%89%E5%8F%B7/">等号</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/initializer_list/">initializer_list</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E7%B1%BB%E5%9E%8B%E8%BD%AC%E5%8C%96/">类型转化</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E4%BB%BF%E5%87%BD%E6%95%B0/">仿函数</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/07/c-stdbind/" data-tooltip="C&#43;&#43; std::bind">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2023 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/07/c-stdbind/" data-tooltip="C&#43;&#43; std::bind">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2023%2F07%2Fc-%25E5%25A4%25A7%25E6%258B%25AC%25E5%258F%25B7%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2023%2F07%2Fc-%25E5%25A4%25A7%25E6%258B%25AC%25E5%258F%25B7%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2023%2F07%2Fc-%25E5%25A4%25A7%25E6%258B%25AC%25E5%258F%25B7%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2023\/07\/c-%E5%A4%A7%E6%8B%AC%E5%8F%B7\/';
+          
+            this.page.identifier = '\/2023\/07\/c-%E5%A4%A7%E6%8B%AC%E5%8F%B7\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+

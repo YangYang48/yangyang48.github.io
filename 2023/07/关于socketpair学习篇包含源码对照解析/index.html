@@ -1,0 +1,2146 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="之前介绍了关于socket的用法，这里在此基础上再来看看跟socket类似的socketpair。">
+
+
+<meta property="og:description" content="之前介绍了关于socket的用法，这里在此基础上再来看看跟socket类似的socketpair。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="关于socketpair学习篇（包含源码对照解析）">
+<meta name="twitter:title" content="关于socketpair学习篇（包含源码对照解析）">
+<meta property="og:url" content="https://yangyang48.github.io/2023/07/%E5%85%B3%E4%BA%8Esocketpair%E5%AD%A6%E4%B9%A0%E7%AF%87%E5%8C%85%E5%90%AB%E6%BA%90%E7%A0%81%E5%AF%B9%E7%85%A7%E8%A7%A3%E6%9E%90/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2023/07/%E5%85%B3%E4%BA%8Esocketpair%E5%AD%A6%E4%B9%A0%E7%AF%87%E5%8C%85%E5%90%AB%E6%BA%90%E7%A0%81%E5%AF%B9%E7%85%A7%E8%A7%A3%E6%9E%90/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="之前介绍了关于socket的用法，这里在此基础上再来看看跟socket类似的socketpair。">
+<meta name="twitter:description" content="之前介绍了关于socket的用法，这里在此基础上再来看看跟socket类似的socketpair。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2023-07-10T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2023-07-10T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="socketpair">
+    
+      <meta property="article:section" content="2023">
+    
+      <meta property="article:section" content="July">
+    
+  
+  
+    
+      <meta property="article:tag" content="socket">
+    
+      <meta property="article:tag" content="pipe">
+    
+      <meta property="article:tag" content="BitTube">
+    
+      <meta property="article:tag" content="epoll">
+    
+      <meta property="article:tag" content="poll">
+    
+      <meta property="article:tag" content="proto">
+    
+      <meta property="article:tag" content="property_service">
+    
+      <meta property="article:tag" content="CameraMetadata">
+    
+      <meta property="article:tag" content="AudioGroup">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/socketpair/sp_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/socketpair/sp_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/socketpair/sp_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/socketpair/sp_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+
+
+    <title>关于socketpair学习篇（包含源码对照解析）</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2023/07/%E5%85%B3%E4%BA%8Esocketpair%E5%AD%A6%E4%B9%A0%E7%AF%87%E5%8C%85%E5%90%AB%E6%BA%90%E7%A0%81%E5%AF%B9%E7%85%A7%E8%A7%A3%E6%9E%90/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/socketpair/sp_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      关于socketpair学习篇（包含源码对照解析）
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2023-07-10T00:00:00Z">
+        
+  七月 10, 2023
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/socketpair">socketpair</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2023">2023</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/july">July</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">3400 Words|Read in about 16 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>之前介绍了关于socket的用法，这里在此基础上再来看看跟socket类似的socketpair。</p>
+<h1 id="0一个demo">0一个demo</h1>
+<p>这里以一个例子来说明socketpair的广泛性，这里先介绍一下BitTube类。这里只是简单介绍，具体关于BitTube的使用的原理可以点击<a href="https://www.cnblogs.com/roger-yu/p/16158539.html">这里</a>。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socketpair/sp_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socketpair/sp_2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="01本进程多线程通信">0.1本进程多线程通信</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socketpair/sp_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socketpair/sp_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="02跨进程通信">0.2跨进程通信</h2>
+<h3 id="021发送句柄到其他进程">0.2.1发送句柄到其他进程</h3>
+<p>发送句柄的过程中，使用了fcntl的函数，是用来修改已经打开文件的属性的函数，这里起到了一个dup复制句柄的作用。</p>
+<blockquote>
+<p>fcntl介绍，具体可以点击<a href="https://blog.csdn.net/rikeyone/article/details/88828154">这里</a></p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="cp">#include</span> <span class="cpf">&lt;fcntl.h&gt;</span><span class="cp">
+</span><span class="ln">2</span><span class="cp"></span><span class="kt">int</span> <span class="nf">fcntl</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">cmd</span><span class="p">,</span> <span class="p">...);</span>
+</code></pre></div><p>fcntl是用来修改<strong>已经打开文件的属性</strong>的函数，包含5个功能：</p>
+<ol>
+<li>
+<p><strong>复制一个已有文件描述符</strong></p>
+<p>功能和dup和dup2相同，对应的cmd：<code>F_DUPFD</code>、<code>F_DUPFD_CLOEXEC</code>。当使用这两个cmd时，需要传入第三个参数，fcntl返回复制后的文件描述符，此返回值是之前未被占用的描述符，并且必须一个大于等于第三个参数值。F_DUPFD命令要求返回的文件描述符会清除对应的FD_CLOEXEC标志；F_DUPFD_CLOEXEC要求设置新描述符的FD_CLOEXEC标志。</p>
+</li>
+<li>
+<p><strong>获取、设置文件描述符标志</strong></p>
+<p>对应的cmd：<code>F_GETFD</code>、<code>F_SETFD</code>。用于设置FD_CLOEXEC标志，此标志的含义是：当进程执行exec系统调用后此文件描述符会被自动关闭。</p>
+</li>
+<li>
+<p><strong>获取、设置文件访问状态标志</strong></p>
+<p>对应的cmd：<code>F_GETFL</code>、<code>F_SETFL</code>。获取当前打开文件的访问标志，设置对应的访问标志，一般常用来设置做非阻塞读写操作。</p>
+</li>
+<li>
+<p><strong>获取、设置记录锁功能</strong></p>
+<p>对应的cmd：<code>F_GETLK</code>、<code>F_SETLK</code>、<code>F_SETLKW</code>。</p>
+</li>
+<li>
+<p><strong>获取、设置异步I/O所有权</strong></p>
+<p>对应的cmd：<code>F_GETOWN</code>、<code>F_SETOWN</code>。
+获取和设置用来接收SIGIO/SIGURG信号的进程id或者进程组id。返回对应的进程id或者进程组id取负值。</p>
+</li>
+</ol>
+</blockquote>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socketpair/sp_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socketpair/sp_3.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socketpair/sp_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socketpair/sp_4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="022从其他进程接收句柄">0.2.2从其他进程接收句柄</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socketpair/sp_5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socketpair/sp_5.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socketpair/sp_6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socketpair/sp_6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="03总结">0.3总结</h2>
+<p>socketpair利用socket为双方建立了全双工的通信管道(communication pipe)。通过文件描述符的复用(dup/dup2)，可以传递socket handle到另一个进程，复用它并开启通信。</p>
+<p>BitTube使用了Linux/Unix socket中的顺序数据包(sequenced packets，SOCK_SEQPACKET)，像SOCK_DGRAM，它只传送整包数据；又像SOCK_STREAM，面向连接且提供有序的数据报传送。</p>
+<h1 id="1socketpair">1socketpair</h1>
+<p>socketpair，跟socket类似，都为<strong>套接字</strong>。可以用于网络通信，也可以用于本机内的进程通信。</p>
+<p>区别于管道pipe是半双工的，pipe两次才能实现全双工，使得代码复杂。socketpair直接就可以实现全双工，socketpair对两个文件描述符中的任何一个都可读和可写，而pipe是一个读，一个写。</p>
+<h1 id="2linux-socketpair">2Linux socketpair</h1>
+<p>创建一对连接的套接字</p>
+<h2 id="21函数原型">2.1函数原型</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="cp">#include</span> <span class="cpf">&lt;sys/types.h&gt;          </span><span class="cp">
+</span><span class="ln">2</span><span class="cp">#include</span> <span class="cpf">&lt;sys/socket.h&gt;</span><span class="cp">
+</span><span class="ln">3</span><span class="cp"></span><span class="kt">int</span> <span class="nf">socketpair</span><span class="p">(</span><span class="kt">int</span> <span class="n">domain</span><span class="p">,</span> <span class="kt">int</span> <span class="n">type</span><span class="p">,</span> <span class="kt">int</span> <span class="n">protocol</span><span class="p">,</span> <span class="kt">int</span> <span class="n">sv</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
+</code></pre></div><ul>
+<li><strong>domain</strong>：协议族，可以是AF_UNIX或AF_LOCAL。</li>
+<li><strong>type</strong>：套接字类型，可以是SOCK_STREAM或SOCK_DGRAM。</li>
+<li><strong>protocol</strong>：协议类型，可以是0或IPPROTO_TCP。</li>
+<li><strong>sv</strong>：用于存储返回的套接字描述符的数组，其中sv[0]表示第一个套接字描述符，sv[1]表示第二个套接字描述符。</li>
+</ul>
+<h2 id="22描述">2.2描述</h2>
+<p>socketpair调用使用可选指定的套接字类型，在指定的域中以指定的类型创建一对未命名的已连接套接字。有关这些参数的更多详细信息，请参见socket，点击<a href="https://yangyang48.github.io/2023/01/socket%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0linux%E9%99%84android%E6%BA%90%E7%A0%81/">这里</a>。</p>
+<h2 id="23返回值">2.3返回值</h2>
+<p>返回值如果成功，则返回0。如果出现错误，则返回-1，并适当地设置errno。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">ERRORNO</th>
+<th style="text-align:center">解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"><code>EAFNOSUPPORT</code></td>
+<td style="text-align:center">在这台计算机上不支持指定的地址族</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>EFAULT</code></td>
+<td style="text-align:center">地址sv没有指定进程地址空间的有效部分</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>EMFILE</code></td>
+<td style="text-align:center">已达到每个进程打开的文件描述符数量限制</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>ENFILE</code></td>
+<td style="text-align:center">已达到打开文件总数的全系统限制</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>EOPNOTSUPP</code></td>
+<td style="text-align:center">指定的协议不支持创建套接字对</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>EPROTONOSUPPORT</code></td>
+<td style="text-align:center">这台机器不支持指定的协议</td>
+</tr>
+</tbody>
+</table>
+<h1 id="3源码中的socketpair">3源码中的socketpair</h1>
+<p>本文主要介绍三种套接字类型，<strong>SOCK_STREAM, SOCK_SEQPACKET,SOCK_DGRAM</strong>。但不代表socketpair只支持这三种，其余的套接字类型可以根据兴趣爱好自我探索。</p>
+<h2 id="31属性系统源码">3.1属性系统源码</h2>
+<p>属性系统中用到了epoll加上<strong>SOCK_SEQPACKET</strong>套接字类型的socketpair。这个源码更详细的可以点击<a href="https://yangyang48.github.io/2022/08/android-property%E8%AF%A6%E8%A7%A3/">这里</a>。</p>
+<h3 id="311创建socketpair">3.1.1创建socketpair</h3>
+<p>创建socketpair，其中套接字类型是<code>SOCK_SEQPACKET</code>，另外sockets[0]为接收端，sockets[1]为发送端</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/init/property_service.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span> <span class="nf">StartPropertyService</span><span class="p">(</span><span class="kt">int</span><span class="o">*</span> <span class="n">epoll_socket</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="n">InitPropertySet</span><span class="p">(</span><span class="s">&#34;ro.property_service.version&#34;</span><span class="p">,</span> <span class="s">&#34;2&#34;</span><span class="p">);</span>
+<span class="ln"> 4</span>
+<span class="ln"> 5</span>    <span class="kt">int</span> <span class="n">sockets</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+<span class="ln"> 6</span>    <span class="k">if</span> <span class="p">(</span><span class="n">socketpair</span><span class="p">(</span><span class="n">AF_UNIX</span><span class="p">,</span> <span class="n">SOCK_SEQPACKET</span> <span class="o">|</span> <span class="n">SOCK_CLOEXEC</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sockets</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 7</span>        <span class="n">PLOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Failed to socketpair() between property_service and init&#34;</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="p">}</span>
+<span class="ln"> 9</span>    <span class="c1">//epoll_socket和from_init_socket都为接收端,会返回到init.cpp中的StartPropertyService
+</span><span class="ln">10</span><span class="c1"></span>    <span class="o">*</span><span class="n">epoll_socket</span> <span class="o">=</span> <span class="n">from_init_socket</span> <span class="o">=</span> <span class="n">sockets</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+<span class="ln">11</span>    <span class="c1">//init_socket为发送端
+</span><span class="ln">12</span><span class="c1"></span>    <span class="n">init_socket</span> <span class="o">=</span> <span class="n">sockets</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+<span class="ln">13</span>    <span class="n">StartSendingMessages</span><span class="p">();</span>
+<span class="ln">14</span>    <span class="c1">//这里创建了套接字类型为SOCK_STREAM的TCP流的socket，句柄为property_set_fd
+</span><span class="ln">15</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="k">auto</span> <span class="n">result</span> <span class="o">=</span> <span class="n">CreateSocket</span><span class="p">(</span><span class="n">PROP_SERVICE_NAME</span><span class="p">,</span> <span class="n">SOCK_STREAM</span> <span class="o">|</span> <span class="n">SOCK_CLOEXEC</span> <span class="o">|</span> <span class="n">SOCK_NONBLOCK</span><span class="p">,</span>
+<span class="ln">16</span>                                   <span class="cm">/*passcred=*/</span><span class="nb">false</span><span class="p">,</span> <span class="cm">/*should_listen=*/</span><span class="nb">false</span><span class="p">,</span> <span class="mo">0666</span><span class="p">,</span> <span class="cm">/*uid=*/</span><span class="mi">0</span><span class="p">,</span>
+<span class="ln">17</span>                                   <span class="cm">/*gid=*/</span><span class="mi">0</span><span class="p">,</span> <span class="cm">/*socketcon=*/</span><span class="p">{});</span>
+<span class="ln">18</span>        <span class="n">result</span><span class="p">.</span><span class="n">ok</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln">19</span>        <span class="n">property_set_fd</span> <span class="o">=</span> <span class="o">*</span><span class="n">result</span><span class="p">;</span>
+<span class="ln">20</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">21</span>        <span class="n">LOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;start_property_service socket creation failed: &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">result</span><span class="p">.</span><span class="n">error</span><span class="p">();</span>
+<span class="ln">22</span>    <span class="p">}</span>
+<span class="ln">23</span>
+<span class="ln">24</span>    <span class="n">listen</span><span class="p">(</span><span class="n">property_set_fd</span><span class="p">,</span> <span class="mi">8</span><span class="p">);</span>
+<span class="ln">25</span>
+<span class="ln">26</span>    <span class="k">auto</span> <span class="n">new_thread</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="kr">thread</span><span class="p">{</span><span class="n">PropertyServiceThread</span><span class="p">};</span>
+<span class="ln">27</span>    <span class="n">property_service_thread</span><span class="p">.</span><span class="n">swap</span><span class="p">(</span><span class="n">new_thread</span><span class="p">);</span>
+<span class="ln">28</span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socketpair/sp_7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socketpair/sp_7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="311属性系统客户端">3.1.1属性系统客户端</h3>
+<p>属性的服务端是在启动流程中开启的，调用StartPropertyService，并传入一个句柄property_fd，很显然这个句柄获取得到是socketpait对应的socket[0]</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//system/core/init/init.cpp
+</span><span class="ln">2</span><span class="c1"></span><span class="kt">int</span> <span class="nf">SecondStageMain</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">**</span> <span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">3</span>    <span class="p">...</span>
+<span class="ln">4</span>    <span class="n">StartPropertyService</span><span class="p">(</span><span class="o">&amp;</span><span class="n">property_fd</span><span class="p">);</span>   
+<span class="ln">5</span><span class="p">}</span>
+</code></pre></div><p>但是这里获取到了property_fd，承载着客户端的操作。</p>
+<p>这里调用SendLoadPersistentPropertiesMessage，可以发现关于property_fd从客户端发送到socketpair另外一端</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//system/core/init/init.cpp
+</span><span class="ln">2</span><span class="c1"></span><span class="kt">void</span> <span class="nf">SendLoadPersistentPropertiesMessage</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">3</span>    <span class="c1">//这里使用的跨平台的protobuf，会被解析成c++类型
+</span><span class="ln">4</span><span class="c1"></span>    <span class="k">auto</span> <span class="n">init_message</span> <span class="o">=</span> <span class="n">InitMessage</span><span class="p">{};</span>
+<span class="ln">5</span>    <span class="n">init_message</span><span class="p">.</span><span class="n">set_load_persistent_properties</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+<span class="ln">6</span>    <span class="k">if</span> <span class="p">(</span><span class="k">auto</span> <span class="n">result</span> <span class="o">=</span> <span class="n">SendMessage</span><span class="p">(</span><span class="n">property_fd</span><span class="p">,</span> <span class="n">init_message</span><span class="p">);</span> <span class="o">!</span><span class="n">result</span><span class="p">.</span><span class="n">ok</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln">7</span>        <span class="n">LOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Failed to send load persistent properties message: &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">result</span><span class="p">.</span><span class="n">error</span><span class="p">();</span>
+<span class="ln">8</span>    <span class="p">}</span>
+<span class="ln">9</span><span class="p">}</span>
+</code></pre></div><blockquote>
+<p>对应的protobuf文件</p>
+<div class="highlight"><pre class="chroma"><code class="language-protobuf" data-lang="protobuf"><span class="ln">1</span><span class="c1">//system/core/init/property_service.proto
+</span><span class="ln">2</span><span class="c1"></span><span class="kd">message</span> <span class="nc">InitMessage</span> <span class="p">{</span><span class="err">
+</span><span class="ln">3</span><span class="err"></span>    <span class="k">oneof</span> <span class="n">msg</span> <span class="p">{</span><span class="err">
+</span><span class="ln">4</span><span class="err"></span>        <span class="kt">bool</span> <span class="n">load_persistent_properties</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span><span class="err">
+</span><span class="ln">5</span><span class="err"></span>        <span class="kt">bool</span> <span class="n">stop_sending_messages</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span><span class="err">
+</span><span class="ln">6</span><span class="err"></span>        <span class="kt">bool</span> <span class="n">start_sending_messages</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span><span class="err">
+</span><span class="ln">7</span><span class="err"></span>    <span class="p">};</span><span class="err">
+</span><span class="ln">8</span><span class="err"></span><span class="p">}</span><span class="err">
+</span></code></pre></div></blockquote>
+<p>其中SendLoadPersistentPropertiesMessage并不是直接启动的，是通过rc文件解析之后Action类型执行的</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/init/builtins.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">const</span> <span class="n">BuiltinFunctionMap</span><span class="o">&amp;</span> <span class="n">GetBuiltinFunctionMap</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="k">constexpr</span> <span class="n">std</span><span class="o">::</span><span class="n">size_t</span> <span class="n">kMax</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">numeric_limits</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">size_t</span><span class="o">&gt;::</span><span class="n">max</span><span class="p">();</span>
+<span class="ln"> 4</span>    <span class="c1">// clang-format off
+</span><span class="ln"> 5</span><span class="c1"></span>    <span class="k">static</span> <span class="k">const</span> <span class="n">BuiltinFunctionMap</span> <span class="n">builtin_functions</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln"> 6</span>		<span class="p">...</span>
+<span class="ln"> 7</span>        <span class="p">{</span><span class="s">&#34;load_persist_props&#34;</span><span class="p">,</span>      <span class="p">{</span><span class="mi">0</span><span class="p">,</span>     <span class="mi">0</span><span class="p">,</span>    <span class="p">{</span><span class="nb">false</span><span class="p">,</span>  <span class="n">do_load_persist_props</span><span class="p">}}},</span>
+<span class="ln"> 8</span>		<span class="p">...</span>
+<span class="ln"> 9</span>    <span class="p">};</span>
+<span class="ln">10</span>    <span class="c1">// clang-format on
+</span><span class="ln">11</span><span class="c1"></span>    <span class="k">return</span> <span class="n">builtin_functions</span><span class="p">;</span>
+<span class="ln">12</span><span class="p">}</span>
+</code></pre></div><p>Action类型执行对应的函数do_load_persist_props</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//system/core/init/builtins.cpp
+</span><span class="ln">2</span><span class="c1"></span><span class="k">static</span> <span class="n">Result</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span> <span class="n">do_load_persist_props</span><span class="p">(</span><span class="k">const</span> <span class="n">BuiltinArguments</span><span class="o">&amp;</span> <span class="n">args</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">3</span>    <span class="n">SendLoadPersistentPropertiesMessage</span><span class="p">();</span>
+<span class="ln">4</span>	<span class="c1">//从这里可以看出实际上常量属性加载完成之后才算完成这一步
+</span><span class="ln">5</span><span class="c1"></span>    <span class="n">start_waiting_for_property</span><span class="p">(</span><span class="s">&#34;ro.persistent_properties.ready&#34;</span><span class="p">,</span> <span class="s">&#34;true&#34;</span><span class="p">);</span>
+<span class="ln">6</span>    <span class="k">return</span> <span class="p">{};</span>
+<span class="ln">7</span><span class="p">}</span>
+</code></pre></div><blockquote>
+<p><code>proto</code>说明</p>
+<p>关于<code>proto</code>之前的Android属性系统中文章中提到过，但没有具体深入，当然本文也不会特别深入。如果需要进一步了解语法规则，可以点击<a href="http://t.zoukankan.com/GarfieldEr007-p-10113328.html">这里</a>。</p>
+<p><code>Protobuf</code> 是一种与平台无关、语言无关、可扩展且轻便高效的<strong>序列化数据结构</strong>的协议，可以用于网络通信和<strong>数据存储</strong>。而且由于和语言无关，<code>proto</code>文件既可以转化成<code>c++</code>文件，也可以转化成<code>java</code>，<code>python</code>这类的文件。当然在源码中，可以直接理解为定义了一种数据类，专门用于序列化存储。</p>
+<p>目前我们定义的<code>proto</code>文件，比如上面的<code>property_service.proto</code>，可以在下面的源码路径中找到</p>
+<div class="highlight"><pre class="chroma"><code class="language-text" data-lang="text"><span class="ln">1</span>1//其中xxx为具体的架构，有arm架构，arm架构等
+<span class="ln">2</span>2/out/soong/.intermediates/system/core/init/libinit/android_xxx_static/gen/proto/system/core/init/property_service.pb.h
+<span class="ln">3</span>3/out/soong/.intermediates/system/core/init/libinit/android_xxx_static/gen/proto/system/core/init/property_service.pb.cc
+</code></pre></div><p>具体的规则如下，所指定的消息字段修饰符必须是如下之一：</p>
+<ul>
+<li>required：一个格式良好的消息一定要含有1个这种字段。表示该值是必须要设置的；</li>
+<li>optional：消息格式中该字段可以有0个或1个值（不超过1个）。</li>
+<li>repeated：在一个格式良好的消息中，这种字段可以重复任意多次（包括0次）。重复的值的顺序会被保留。表示该值可以重复，相当于java中的List。</li>
+</ul>
+<p>关于<code>Oneof</code></p>
+<p>如果你的消息中有很多可选字段， 并且同时至多一个字段会被设置， 你可以加强这个行为，使用<code>oneof</code>特性节省内存.</p>
+<p><code>Oneof</code>字段就像可选字段， 除了它们会共享内存， 至多一个字段会被设置。 设置其中一个字段会清除其它<code>oneof</code>字段。 你可以使用<code>case()</code>或者<code>WhichOneof()</code> 方法检查哪个<code>oneof</code>字段被设置， 看你使用什么语言了.</p>
+<p>在产生的代码中, <code>oneof</code>字段拥有同样的 <code>getters</code> 和<code>setters</code>， 就像正常的可选字段一样. 也有一个特殊的方法来检查到底那个字段被设置. 你可以在相应的语言API中找到<code>oneof API</code>介绍.</p>
+<div class="highlight"><pre class="chroma"><code class="language-protobuf" data-lang="protobuf"><span class="ln">1</span><span class="kd">message</span> <span class="nc">SampleMessage</span> <span class="p">{</span><span class="err">
+</span><span class="ln">2</span><span class="err"></span>	<span class="k">oneof</span> <span class="n">test_oneof</span> <span class="p">{</span><span class="err">
+</span><span class="ln">3</span><span class="err"></span>		<span class="kt">string</span> <span class="n">name</span> <span class="o">=</span> <span class="mi">4</span><span class="p">;</span><span class="err">
+</span><span class="ln">4</span><span class="err"></span>		<span class="n">SubMessage</span> <span class="n">sub_message</span> <span class="o">=</span> <span class="mi">9</span><span class="p">;</span><span class="err">
+</span><span class="ln">5</span><span class="err"></span>	<span class="p">}</span><span class="err">
+</span><span class="ln">6</span><span class="err"></span><span class="p">}</span><span class="err">
+</span></code></pre></div><p>设置<code>oneof</code>会自动清楚其它<code>oneof</code>字段的值. 所以设置多次后，只有最后一次设置的字段有值.</p>
+<div class="highlight"><pre class="chroma"><code class="language-protobuf" data-lang="protobuf"><span class="ln">1</span><span class="n">SampleMessage</span> <span class="n">message</span><span class="p">;</span><span class="err">
+</span><span class="ln">2</span><span class="err"></span><span class="n">message.set_name</span><span class="p">(</span><span class="s">&#34;name&#34;</span><span class="p">);</span><span class="err">
+</span><span class="ln">3</span><span class="err"></span><span class="n">CHECK</span><span class="p">(</span><span class="n">message.has_name</span><span class="p">());</span><span class="err">
+</span><span class="ln">4</span><span class="err"></span><span class="n">message.mutable_sub_message</span><span class="p">();</span> <span class="c1">// Will clear name field.
+</span><span class="ln">5</span><span class="c1"></span><span class="n">CHECK</span><span class="p">(</span><span class="err">!</span><span class="n">message.has_name</span><span class="p">());</span><span class="err">
+</span></code></pre></div></blockquote>
+<p>根据上面可以看到protobuf文件，实际上我们获取了序列化的内容，即load_persistent_properties为true。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socketpair/sp_8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socketpair/sp_8.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="312属性系统服务端">3.1.2属性系统服务端</h3>
+<p>服务端的话就是上述的线程，property_service_thread，对应的线程函数为PropertyServiceThread</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/init/property_service.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">PropertyServiceThread</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="c1">//源码封装的epoll
+</span><span class="ln"> 4</span><span class="c1"></span>    <span class="n">Epoll</span> <span class="n">epoll</span><span class="p">;</span>
+<span class="ln"> 5</span>    <span class="c1">//就是创造epoll_fd句柄
+</span><span class="ln"> 6</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="k">auto</span> <span class="n">result</span> <span class="o">=</span> <span class="n">epoll</span><span class="p">.</span><span class="n">Open</span><span class="p">();</span> <span class="o">!</span><span class="n">result</span><span class="p">.</span><span class="n">ok</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln"> 7</span>        <span class="n">LOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">result</span><span class="p">.</span><span class="n">error</span><span class="p">();</span>
+<span class="ln"> 8</span>    <span class="p">}</span>
+<span class="ln"> 9</span>	<span class="c1">//将property_set_fd注册到epoll中，回调函数为handle_property_set_fd
+</span><span class="ln">10</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="k">auto</span> <span class="n">result</span> <span class="o">=</span> <span class="n">epoll</span><span class="p">.</span><span class="n">RegisterHandler</span><span class="p">(</span><span class="n">property_set_fd</span><span class="p">,</span> <span class="n">handle_property_set_fd</span><span class="p">);</span>
+<span class="ln">11</span>        <span class="o">!</span><span class="n">result</span><span class="p">.</span><span class="n">ok</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln">12</span>        <span class="n">LOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">result</span><span class="p">.</span><span class="n">error</span><span class="p">();</span>
+<span class="ln">13</span>    <span class="p">}</span>
+<span class="ln">14</span>	<span class="c1">//将init_socket注册到epoll中，回调函数为HandleInitSocket
+</span><span class="ln">15</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="k">auto</span> <span class="n">result</span> <span class="o">=</span> <span class="n">epoll</span><span class="p">.</span><span class="n">RegisterHandler</span><span class="p">(</span><span class="n">init_socket</span><span class="p">,</span> <span class="n">HandleInitSocket</span><span class="p">);</span> <span class="o">!</span><span class="n">result</span><span class="p">.</span><span class="n">ok</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln">16</span>        <span class="n">LOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">result</span><span class="p">.</span><span class="n">error</span><span class="p">();</span>
+<span class="ln">17</span>    <span class="p">}</span>
+<span class="ln">18</span>	<span class="c1">//循环等待结果
+</span><span class="ln">19</span><span class="c1"></span>    <span class="k">while</span> <span class="p">(</span><span class="nb">true</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">20</span>        <span class="c1">//这里默认是无限等待，一直阻塞，直到有事件来的时候返回，并执行对应的回调函数
+</span><span class="ln">21</span><span class="c1"></span>        <span class="k">auto</span> <span class="n">pending_functions</span> <span class="o">=</span> <span class="n">epoll</span><span class="p">.</span><span class="n">Wait</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">nullopt</span><span class="p">);</span>
+<span class="ln">22</span>        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">pending_functions</span><span class="p">.</span><span class="n">ok</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln">23</span>            <span class="n">LOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">pending_functions</span><span class="p">.</span><span class="n">error</span><span class="p">();</span>
+<span class="ln">24</span>        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">25</span>            <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="nl">function</span> <span class="p">:</span> <span class="o">*</span><span class="n">pending_functions</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">26</span>                <span class="p">(</span><span class="o">*</span><span class="n">function</span><span class="p">)();</span>
+<span class="ln">27</span>            <span class="p">}</span>
+<span class="ln">28</span>        <span class="p">}</span>
+<span class="ln">29</span>    <span class="p">}</span>
+<span class="ln">30</span><span class="p">}</span>
+</code></pre></div><p>可以看到这里面又涉及到了epoll，不过这个epoll在源码中重新封装成了Epoll</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/init/epoll.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">class</span> <span class="nc">Epoll</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="k">public</span><span class="o">:</span>
+<span class="ln"> 4</span>    <span class="n">Epoll</span><span class="p">();</span>
+<span class="ln"> 5</span>	<span class="c1">//回调函数Handler
+</span><span class="ln"> 6</span><span class="c1"></span>    <span class="k">typedef</span> <span class="n">std</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="kt">void</span><span class="p">()</span><span class="o">&gt;</span> <span class="n">Handler</span><span class="p">;</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span>    <span class="n">Result</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span> <span class="n">Open</span><span class="p">();</span>
+<span class="ln"> 9</span>    <span class="c1">//注册的默认事件为EPOLLIN
+</span><span class="ln">10</span><span class="c1"></span>    <span class="n">Result</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span> <span class="n">RegisterHandler</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="n">Handler</span> <span class="n">handler</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">events</span> <span class="o">=</span> <span class="n">EPOLLIN</span><span class="p">);</span>
+<span class="ln">11</span>    <span class="n">Result</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span> <span class="n">UnregisterHandler</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">);</span>
+<span class="ln">12</span>    <span class="n">Result</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Handler</span><span class="o">&gt;&gt;&gt;</span> <span class="n">Wait</span><span class="p">(</span>
+<span class="ln">13</span>            <span class="n">std</span><span class="o">::</span><span class="n">optional</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">milliseconds</span><span class="o">&gt;</span> <span class="n">timeout</span><span class="p">);</span>
+<span class="ln">14</span>
+<span class="ln">15</span>  <span class="k">private</span><span class="o">:</span>
+<span class="ln">16</span>    <span class="c1">//将回调函数的事件封装到一起
+</span><span class="ln">17</span><span class="c1"></span>    <span class="k">struct</span> <span class="nc">Info</span> <span class="p">{</span>
+<span class="ln">18</span>        <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Handler</span><span class="o">&gt;</span> <span class="n">handler</span><span class="p">;</span>
+<span class="ln">19</span>        <span class="kt">uint32_t</span> <span class="n">events</span><span class="p">;</span>
+<span class="ln">20</span>    <span class="p">};</span>
+<span class="ln">21</span>
+<span class="ln">22</span>    <span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">unique_fd</span> <span class="n">epoll_fd_</span><span class="p">;</span>
+<span class="ln">23</span>    <span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">Info</span><span class="o">&gt;</span> <span class="n">epoll_handlers_</span><span class="p">;</span>
+<span class="ln">24</span><span class="p">};</span>
+</code></pre></div><div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/init/epoll.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">Result</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span> <span class="n">Epoll</span><span class="o">::</span><span class="n">Open</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="n">epoll_fd_</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="n">epoll_create1</span><span class="p">(</span><span class="n">EPOLL_CLOEXEC</span><span class="p">));</span>
+<span class="ln"> 4</span>    <span class="p">...</span>
+<span class="ln"> 5</span><span class="p">}</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span><span class="n">Result</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span> <span class="n">Epoll</span><span class="o">::</span><span class="n">RegisterHandler</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="n">Handler</span> <span class="n">handler</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">events</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 8</span>    <span class="n">Info</span> <span class="n">info</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="n">info</span><span class="p">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">events</span><span class="p">;</span>
+<span class="ln">10</span>    <span class="n">info</span><span class="p">.</span><span class="n">handler</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="k">decltype</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">handler</span><span class="p">));</span>
+<span class="ln">11</span>    
+<span class="ln">12</span>    <span class="k">auto</span> <span class="p">[</span><span class="n">it</span><span class="p">,</span> <span class="n">inserted</span><span class="p">]</span> <span class="o">=</span> <span class="n">epoll_handlers_</span><span class="p">.</span><span class="n">emplace</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">info</span><span class="p">));</span>
+<span class="ln">13</span>    <span class="n">epoll_event</span> <span class="n">ev</span><span class="p">;</span>
+<span class="ln">14</span>    <span class="n">ev</span><span class="p">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">events</span><span class="p">;</span>
+<span class="ln">15</span>    <span class="n">ev</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">*&gt;</span><span class="p">(</span><span class="o">&amp;</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">second</span><span class="p">);</span>
+<span class="ln">16</span>	<span class="n">epoll_ctl</span><span class="p">(</span><span class="n">epoll_fd_</span><span class="p">,</span> <span class="n">EPOLL_CTL_ADD</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ev</span><span class="p">);</span>
+<span class="ln">17</span><span class="p">}</span>
+<span class="ln">18</span>
+<span class="ln">19</span><span class="n">Result</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Epoll</span><span class="o">::</span><span class="n">Handler</span><span class="o">&gt;&gt;&gt;</span> <span class="n">Epoll</span><span class="o">::</span><span class="n">Wait</span><span class="p">(</span>
+<span class="ln">20</span>        <span class="n">std</span><span class="o">::</span><span class="n">optional</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">milliseconds</span><span class="o">&gt;</span> <span class="n">timeout</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">21</span>    <span class="kt">int</span> <span class="n">timeout_ms</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">22</span>    
+<span class="ln">23</span>    <span class="k">const</span> <span class="k">auto</span> <span class="n">max_events</span> <span class="o">=</span> <span class="n">epoll_handlers_</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
+<span class="ln">24</span>    <span class="n">epoll_event</span> <span class="n">ev</span><span class="p">[</span><span class="n">max_events</span><span class="p">];</span>
+<span class="ln">25</span>    <span class="c1">//默认无限阻塞，直到有EPOLLIN事件过来
+</span><span class="ln">26</span><span class="c1"></span>    <span class="k">auto</span> <span class="n">num_events</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">epoll_wait</span><span class="p">(</span><span class="n">epoll_fd_</span><span class="p">,</span> <span class="n">ev</span><span class="p">,</span> <span class="n">max_events</span><span class="p">,</span> <span class="n">timeout_ms</span><span class="p">));</span>
+<span class="ln">27</span>    
+<span class="ln">28</span>    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Handler</span><span class="o">&gt;&gt;</span> <span class="n">pending_functions</span><span class="p">;</span>
+<span class="ln">29</span>    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">num_events</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">30</span>        <span class="c1">//取出事件中的ptr，即对应的info指针
+</span><span class="ln">31</span><span class="c1"></span>        <span class="k">auto</span><span class="o">&amp;</span> <span class="n">info</span> <span class="o">=</span> <span class="o">*</span><span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">Info</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">ev</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">data</span><span class="p">.</span><span class="n">ptr</span><span class="p">);</span>
+<span class="ln">32</span>        <span class="c1">//将对应事件放入到数组中，通过数组来依次排队输出
+</span><span class="ln">33</span><span class="c1"></span>        <span class="n">pending_functions</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">(</span><span class="n">info</span><span class="p">.</span><span class="n">handler</span><span class="p">);</span>
+<span class="ln">34</span>    <span class="p">}</span>
+<span class="ln">35</span>
+<span class="ln">36</span>    <span class="k">return</span> <span class="n">pending_functions</span><span class="p">;</span>
+<span class="ln">37</span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socketpair/sp_9.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socketpair/sp_9.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>最终会回调到两个函数，这两个函数的先后顺序是由于哪个事件先触发先调用的原则，会被放在<strong>pending_functions</strong>队列中。</p>
+<h4 id="3121handle_property_set_fd">3.1.2.1handle_property_set_fd</h4>
+<p>这里回调实际上是对应socket，而不是socketpair，这里更多的是IO多路复用的经典场景，监听socket句柄，有新的连接进来了就会回调到这个函数。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/init/property_service.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">handle_property_set_fd</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="k">static</span> <span class="k">constexpr</span> <span class="kt">uint32_t</span> <span class="n">kDefaultSocketTimeout</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">;</span> <span class="cm">/* ms */</span>
+<span class="ln"> 4</span>	<span class="c1">//接收客户端的句柄，服务端这里与之连接的句柄为s，
+</span><span class="ln"> 5</span><span class="c1"></span>    <span class="c1">//其实这里可以把s也添加到epoll中，但是源码中并没有这么操作，原因是更高的处理效率,而是用了poll机制
+</span><span class="ln"> 6</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">s</span> <span class="o">=</span> <span class="n">accept4</span><span class="p">(</span><span class="n">property_set_fd</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">,</span> <span class="n">SOCK_CLOEXEC</span><span class="p">);</span>
+<span class="ln"> 7</span>    <span class="k">if</span> <span class="p">(</span><span class="n">s</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 8</span>        <span class="k">return</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="p">}</span>
+<span class="ln">10</span>	<span class="c1">//这里包含权限问题，pid，uid，gid，
+</span><span class="ln">11</span><span class="c1"></span>    <span class="n">ucred</span> <span class="n">cr</span><span class="p">;</span>
+<span class="ln">12</span>    <span class="n">socklen_t</span> <span class="n">cr_size</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">cr</span><span class="p">);</span>
+<span class="ln">13</span>    <span class="k">if</span> <span class="p">(</span><span class="n">getsockopt</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">SOL_SOCKET</span><span class="p">,</span> <span class="n">SO_PEERCRED</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">cr</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">cr_size</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">14</span>        <span class="p">...</span>
+<span class="ln">15</span>    <span class="p">}</span>
+<span class="ln">16</span>
+<span class="ln">17</span>    <span class="n">SocketConnection</span> <span class="n">socket</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">cr</span><span class="p">);</span>
+<span class="ln">18</span>    <span class="kt">uint32_t</span> <span class="n">timeout_ms</span> <span class="o">=</span> <span class="n">kDefaultSocketTimeout</span><span class="p">;</span>
+<span class="ln">19</span>
+<span class="ln">20</span>    <span class="kt">uint32_t</span> <span class="n">cmd</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">21</span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">socket</span><span class="p">.</span><span class="n">RecvUint32</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cmd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">timeout_ms</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">22</span>        <span class="p">...</span>
+<span class="ln">23</span>        <span class="k">return</span><span class="p">;</span>
+<span class="ln">24</span>    <span class="p">}</span>
+<span class="ln">25</span>
+<span class="ln">26</span>    <span class="k">switch</span> <span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">27</span>    <span class="p">...</span>
+<span class="ln">28</span>    <span class="c1">//这里默认使用PROP_MSG_SETPROP2 0x00020001
+</span><span class="ln">29</span><span class="c1"></span>    <span class="k">case</span> <span class="nl">PROP_MSG_SETPROP2</span><span class="p">:</span> <span class="p">{</span>
+<span class="ln">30</span>        <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">name</span><span class="p">;</span>
+<span class="ln">31</span>        <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">value</span><span class="p">;</span>
+<span class="ln">32</span>        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">socket</span><span class="p">.</span><span class="n">RecvString</span><span class="p">(</span><span class="o">&amp;</span><span class="n">name</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">timeout_ms</span><span class="p">)</span> <span class="o">||</span>
+<span class="ln">33</span>            <span class="o">!</span><span class="n">socket</span><span class="p">.</span><span class="n">RecvString</span><span class="p">(</span><span class="o">&amp;</span><span class="n">value</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">timeout_ms</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">34</span>          <span class="p">...</span>
+<span class="ln">35</span>        <span class="p">}</span>
+<span class="ln">36</span>
+<span class="ln">37</span>        <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">source_context</span><span class="p">;</span>
+<span class="ln">38</span>        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">socket</span><span class="p">.</span><span class="n">GetSourceContext</span><span class="p">(</span><span class="o">&amp;</span><span class="n">source_context</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">39</span>            <span class="p">...</span>
+<span class="ln">40</span>        <span class="p">}</span>
+<span class="ln">41</span>
+<span class="ln">42</span>        <span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="n">cr</span> <span class="o">=</span> <span class="n">socket</span><span class="p">.</span><span class="n">cred</span><span class="p">();</span>
+<span class="ln">43</span>        <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">error</span><span class="p">;</span>
+<span class="ln">44</span>        <span class="kt">uint32_t</span> <span class="n">result</span> <span class="o">=</span> <span class="n">HandlePropertySet</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">source_context</span><span class="p">,</span> <span class="n">cr</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">socket</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">error</span><span class="p">);</span>
+<span class="ln">45</span>        <span class="p">...</span>
+<span class="ln">46</span>        <span class="n">socket</span><span class="p">.</span><span class="n">SendUint32</span><span class="p">(</span><span class="n">result</span><span class="p">);</span>
+<span class="ln">47</span>        <span class="k">break</span><span class="p">;</span>
+<span class="ln">48</span>      <span class="p">}</span>
+<span class="ln">49</span>
+<span class="ln">50</span>    <span class="k">default</span><span class="o">:</span>
+<span class="ln">51</span>        <span class="p">...</span>
+<span class="ln">52</span>    <span class="p">}</span>
+<span class="ln">53</span><span class="p">}</span>
+</code></pre></div><p>这里还涉及到了系统管理的id问题</p>
+<blockquote>
+<p>这里只是简单的介绍一下UID，PID和GID的关系，具体内容可以点击<a href="https://blog.csdn.net/xk7298/article/details/102291785">这里</a>。</p>
+<ol>
+<li>
+<p><strong>UID</strong></p>
+<p>在Linux中用户的概念分为：<strong>普通用户、根用户和系统用户</strong>。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">Linux用户</th>
+<th style="text-align:center">解释说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">普通用户</td>
+<td style="text-align:center">表示平时使用的用户概念，在使用Linux时，需要通过用户名和密码登录，获取该用户相应的权限，<strong>其权限具体表现在对系统中文件的增删改查和命令执行的限制</strong>，不同用户具有不同的权限设置，其<strong>UID通常大于500</strong></td>
+</tr>
+<tr>
+<td style="text-align:center">根用户</td>
+<td style="text-align:center">该用户就是ROOT用户，<strong>其UID为0</strong>，可以对系统中任何文件进行增删改查处理，执行任何命令，因此ROOT用户极其危险，如操作不当，会导致系统彻底崩掉</td>
+</tr>
+<tr>
+<td style="text-align:center">系统用户</td>
+<td style="text-align:center">该用户是系统虚拟出的用户概念，不对使用者开发的用户，<strong>其UID范围为1-499</strong>，例如运行MySQL数据库服务时，需要使用系统用户mysql来运行mysqld进程</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>
+<p><strong>PID</strong></p>
+<p>系统在程序运行时，会为<strong>每个可执行程序分配一个唯一的进程ID（PID）</strong>，PID的直接作用是为了表明该程序所拥有的文件操作权限，不同的可执行程序运行时互不影响，相互之间的数据访问具有权限限制。</p>
+</li>
+<li>
+<p><strong>GID</strong></p>
+<p>GID顾名思义就是对于UID的封装处理，就是<strong>包含多个UID的意思</strong>，实际上在<strong>Linux下每个UID都对应着一个GID</strong>。设计GID是为了便于对系统的统一管理，例如增加某个文件的用户权限时，只对admin组的用户开放，那么在分配权限时，只需对该组分配，其组下的所有用户均获取权限。同样在删除时，也便于统一操作。</p>
+<p>除了UID和GID外，其还包括其扩展的有效的用户、组（euid、egid）、文件系统的用户、组（fsuid、fsgid）和保存的设置用户、组（suid、sgid）等。</p>
+</li>
+</ol>
+<ul>
+<li>不同的应用具有<strong>唯一的UID</strong>，<strong>同一个UID可具有不同的PID</strong>；</li>
+<li>针对不同的PID之间数据的暴露可采用私有暴露和权限暴露，针对不同的UID之间可通过完全暴露的方式；</li>
+<li>如果一个应用是系统应用，则不需要其他应用暴露，便可直接访问该应用的数据。</li>
+</ul>
+</blockquote>
+<p>另外上面的socket还存在封装，封装成了对应的SocketConnection</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">  1</span><span class="c1">//system/core/init/property_service.cpp
+</span><span class="ln">  2</span><span class="c1"></span><span class="k">class</span> <span class="nc">SocketConnection</span> <span class="p">{</span>
+<span class="ln">  3</span>  <span class="k">public</span><span class="o">:</span>
+<span class="ln">  4</span>    <span class="n">SocketConnection</span><span class="p">(</span><span class="kt">int</span> <span class="n">socket</span><span class="p">,</span> <span class="k">const</span> <span class="n">ucred</span><span class="o">&amp;</span> <span class="n">cred</span><span class="p">)</span> <span class="o">:</span> <span class="n">socket_</span><span class="p">(</span><span class="n">socket</span><span class="p">),</span> <span class="n">cred_</span><span class="p">(</span><span class="n">cred</span><span class="p">)</span> <span class="p">{}</span>
+<span class="ln">  5</span>	<span class="p">...</span>
+<span class="ln">  6</span>    <span class="c1">//以接收string为例，另外的int和char都是类似    
+</span><span class="ln">  7</span><span class="c1"></span>    <span class="kt">bool</span> <span class="n">RecvString</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">*</span> <span class="n">value</span><span class="p">,</span> <span class="kt">uint32_t</span><span class="o">*</span> <span class="n">timeout_ms</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">  8</span>        <span class="kt">uint32_t</span> <span class="n">len</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">  9</span>        <span class="o">/</span>
+<span class="ln"> 10</span>        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">RecvUint32</span><span class="p">(</span><span class="o">&amp;</span><span class="n">len</span><span class="p">,</span> <span class="n">timeout_ms</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln"> 11</span>            <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln"> 12</span>        <span class="p">}</span>
+<span class="ln"> 13</span>
+<span class="ln"> 14</span>        <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span> <span class="n">chars</span><span class="p">(</span><span class="n">len</span><span class="p">);</span>
+<span class="ln"> 15</span>        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">RecvChars</span><span class="p">(</span><span class="o">&amp;</span><span class="n">chars</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">len</span><span class="p">,</span> <span class="n">timeout_ms</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln"> 16</span>            <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln"> 17</span>        <span class="p">}</span>
+<span class="ln"> 18</span>
+<span class="ln"> 19</span>        <span class="o">*</span><span class="n">value</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">(</span><span class="o">&amp;</span><span class="n">chars</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">len</span><span class="p">);</span>
+<span class="ln"> 20</span>        <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln"> 21</span>    <span class="p">}</span>
+<span class="ln"> 22</span>
+<span class="ln"> 23</span>    <span class="kt">bool</span> <span class="nf">SendUint32</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 24</span>        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">socket_</span><span class="p">.</span><span class="n">ok</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln"> 25</span>            <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln"> 26</span>        <span class="p">}</span>
+<span class="ln"> 27</span>        <span class="c1">//发送的话，直接发送
+</span><span class="ln"> 28</span><span class="c1"></span>        <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">send</span><span class="p">(</span><span class="n">socket_</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">value</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="mi">0</span><span class="p">));</span>
+<span class="ln"> 29</span>        <span class="k">return</span> <span class="n">result</span> <span class="o">==</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
+<span class="ln"> 30</span>    <span class="p">}</span>
+<span class="ln"> 31</span>
+<span class="ln"> 32</span>    <span class="k">const</span> <span class="n">ucred</span><span class="o">&amp;</span> <span class="n">cred</span><span class="p">()</span> <span class="p">{</span> <span class="k">return</span> <span class="n">cred_</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln"> 33</span>
+<span class="ln"> 34</span>  <span class="k">private</span><span class="o">:</span>
+<span class="ln"> 35</span>    <span class="c1">//接收的过程用到了poll机制,这里传递进来的timeout_ms为2s
+</span><span class="ln"> 36</span><span class="c1"></span>    <span class="kt">bool</span> <span class="n">PollIn</span><span class="p">(</span><span class="kt">uint32_t</span><span class="o">*</span> <span class="n">timeout_ms</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 37</span>        <span class="k">struct</span> <span class="nc">pollfd</span> <span class="n">ufds</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+<span class="ln"> 38</span>        <span class="n">ufds</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">fd</span> <span class="o">=</span> <span class="n">socket_</span><span class="p">;</span>
+<span class="ln"> 39</span>        <span class="n">ufds</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">events</span> <span class="o">=</span> <span class="n">POLLIN</span><span class="p">;</span>
+<span class="ln"> 40</span>        <span class="n">ufds</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">revents</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 41</span>        <span class="k">while</span> <span class="p">(</span><span class="o">*</span><span class="n">timeout_ms</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 42</span>            <span class="k">auto</span> <span class="n">start_time</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">steady_clock</span><span class="o">::</span><span class="n">now</span><span class="p">();</span>
+<span class="ln"> 43</span>            <span class="c1">//对socket_，其实就是s进行监听，是否会超时。只有fds中准备好读写，返回值nr大于0为s
+</span><span class="ln"> 44</span><span class="c1"></span>            <span class="kt">int</span> <span class="n">nr</span> <span class="o">=</span> <span class="n">poll</span><span class="p">(</span><span class="n">ufds</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="n">timeout_ms</span><span class="p">);</span>
+<span class="ln"> 45</span>            <span class="k">auto</span> <span class="n">now</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">steady_clock</span><span class="o">::</span><span class="n">now</span><span class="p">();</span>
+<span class="ln"> 46</span>            <span class="k">auto</span> <span class="n">time_elapsed</span> <span class="o">=</span>
+<span class="ln"> 47</span>                <span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">duration_cast</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">milliseconds</span><span class="o">&gt;</span><span class="p">(</span><span class="n">now</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">);</span>
+<span class="ln"> 48</span>            <span class="kt">uint64_t</span> <span class="n">millis</span> <span class="o">=</span> <span class="n">time_elapsed</span><span class="p">.</span><span class="n">count</span><span class="p">();</span>
+<span class="ln"> 49</span>            <span class="o">*</span><span class="n">timeout_ms</span> <span class="o">=</span> <span class="p">(</span><span class="n">millis</span> <span class="o">&gt;</span> <span class="o">*</span><span class="n">timeout_ms</span><span class="p">)</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="o">*</span><span class="n">timeout_ms</span> <span class="o">-</span> <span class="n">millis</span><span class="p">;</span>
+<span class="ln"> 50</span>
+<span class="ln"> 51</span>            <span class="k">if</span> <span class="p">(</span><span class="n">nr</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 52</span>                <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln"> 53</span>            <span class="p">}</span>
+<span class="ln"> 54</span>
+<span class="ln"> 55</span>            <span class="k">if</span> <span class="p">(</span><span class="n">nr</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 56</span>                <span class="c1">// Timeout
+</span><span class="ln"> 57</span><span class="c1"></span>                <span class="k">break</span><span class="p">;</span>
+<span class="ln"> 58</span>            <span class="p">}</span>
+<span class="ln"> 59</span>
+<span class="ln"> 60</span>            <span class="k">if</span> <span class="p">(</span><span class="n">nr</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">errno</span> <span class="o">!=</span> <span class="n">EINTR</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 61</span>                <span class="n">PLOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;sys_prop: error waiting for uid &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">cred_</span><span class="p">.</span><span class="n">uid</span>
+<span class="ln"> 62</span>                            <span class="o">&lt;&lt;</span> <span class="s">&#34; to send property message&#34;</span><span class="p">;</span>
+<span class="ln"> 63</span>                <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln"> 64</span>            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>  <span class="c1">// errno == EINTR
+</span><span class="ln"> 65</span><span class="c1"></span>                <span class="c1">// Timer rounds milliseconds down in case of EINTR we want it to be rounded up
+</span><span class="ln"> 66</span><span class="c1"></span>                <span class="c1">// to avoid slowing init down by causing EINTR with under millisecond timeout.
+</span><span class="ln"> 67</span><span class="c1"></span>                <span class="k">if</span> <span class="p">(</span><span class="o">*</span><span class="n">timeout_ms</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 68</span>                    <span class="o">--</span><span class="p">(</span><span class="o">*</span><span class="n">timeout_ms</span><span class="p">);</span>
+<span class="ln"> 69</span>                <span class="p">}</span>
+<span class="ln"> 70</span>            <span class="p">}</span>
+<span class="ln"> 71</span>        <span class="p">}</span>
+<span class="ln"> 72</span>
+<span class="ln"> 73</span>        <span class="n">LOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;sys_prop: timeout waiting for uid &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">cred_</span><span class="p">.</span><span class="n">uid</span>
+<span class="ln"> 74</span>                   <span class="o">&lt;&lt;</span> <span class="s">&#34; to send property message.&#34;</span><span class="p">;</span>
+<span class="ln"> 75</span>        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln"> 76</span>    <span class="p">}</span>
+<span class="ln"> 77</span>	
+<span class="ln"> 78</span>    <span class="kt">bool</span> <span class="nf">RecvFully</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">data_ptr</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">size</span><span class="p">,</span> <span class="kt">uint32_t</span><span class="o">*</span> <span class="n">timeout_ms</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 79</span>        <span class="n">size_t</span> <span class="n">bytes_left</span> <span class="o">=</span> <span class="n">size</span><span class="p">;</span>
+<span class="ln"> 80</span>        <span class="kt">char</span><span class="o">*</span> <span class="n">data</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">data_ptr</span><span class="p">);</span>
+<span class="ln"> 81</span>        <span class="k">while</span> <span class="p">(</span><span class="o">*</span><span class="n">timeout_ms</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">bytes_left</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 82</span>            <span class="c1">//用于判断接收是否超时2s，这里是不允许超时的
+</span><span class="ln"> 83</span><span class="c1"></span>            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">PollIn</span><span class="p">(</span><span class="n">timeout_ms</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln"> 84</span>                <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln"> 85</span>            <span class="p">}</span>
+<span class="ln"> 86</span>			<span class="c1">//这里实际上是流的形式，所以或循环去读取的操作
+</span><span class="ln"> 87</span><span class="c1"></span>            <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">recv</span><span class="p">(</span><span class="n">socket_</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">bytes_left</span><span class="p">,</span> <span class="n">MSG_DONTWAIT</span><span class="p">));</span>
+<span class="ln"> 88</span>            <span class="k">if</span> <span class="p">(</span><span class="n">result</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 89</span>                <span class="n">PLOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;sys_prop: recv error&#34;</span><span class="p">;</span>
+<span class="ln"> 90</span>                <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln"> 91</span>            <span class="p">}</span>
+<span class="ln"> 92</span>
+<span class="ln"> 93</span>            <span class="n">bytes_left</span> <span class="o">-=</span> <span class="n">result</span><span class="p">;</span>
+<span class="ln"> 94</span>            <span class="n">data</span> <span class="o">+=</span> <span class="n">result</span><span class="p">;</span>
+<span class="ln"> 95</span>        <span class="p">}</span>
+<span class="ln"> 96</span>
+<span class="ln"> 97</span>        <span class="k">if</span> <span class="p">(</span><span class="n">bytes_left</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 98</span>            <span class="n">LOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;sys_prop: recv data is not properly obtained.&#34;</span><span class="p">;</span>
+<span class="ln"> 99</span>        <span class="p">}</span>
+<span class="ln">100</span>
+<span class="ln">101</span>        <span class="k">return</span> <span class="n">bytes_left</span> <span class="o">==</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">102</span>    <span class="p">}</span>
+<span class="ln">103</span>
+<span class="ln">104</span>    <span class="n">unique_fd</span> <span class="n">socket_</span><span class="p">;</span>
+<span class="ln">105</span>    <span class="n">ucred</span> <span class="n">cred_</span><span class="p">;</span>
+<span class="ln">106</span>
+<span class="ln">107</span>    <span class="n">DISALLOW_IMPLICIT_CONSTRUCTORS</span><span class="p">(</span><span class="n">SocketConnection</span><span class="p">);</span>
+<span class="ln">108</span><span class="p">};</span>
+</code></pre></div><p>内容比较多</p>
+<p>接收。以接收string为例，另外的int和char都是类似，循环recv接收数据。先判断传输的string长度，长度限制为0-2^16-1。然后接收的过程以char类型接收，接收完成之后再转成string类。</p>
+<p>发送。已发送int为例，这里发送直接通过send发送数据。</p>
+<blockquote>
+<p><strong>poll机制</strong></p>
+<p>poll是Linux的<code>事件轮询机制</code>函数，每个进程都可以管理一个<code>pollfd</code>队列，由<code>poll函数</code>进行事件注册和查询。内核将用户的<code>fds结构体数组</code>拷贝到内核中。当有事件发生时，再将所有事件都返回到<code>fds结构体数组</code>中，poll只返回已就绪事件的个数，所以用户要操作就绪事件就要用<code>轮询</code>的方法。</p>
+<p>1）函数原型</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="cp">#include</span> <span class="cpf">&lt;poll.h&gt;</span><span class="cp">
+</span><span class="ln">2</span><span class="cp"></span><span class="kt">int</span> <span class="nf">poll</span><span class="p">(</span><span class="k">struct</span> <span class="nc">pollfd</span><span class="o">*</span> <span class="n">fds</span><span class="p">,</span> <span class="n">nfds_t</span> <span class="n">nfds</span><span class="p">,</span> <span class="kt">int</span> <span class="n">timeout</span><span class="p">);</span>
+</code></pre></div><ul>
+<li>**fds：**是一个struct pollfd类型的指针，用于存放需要检测其状态的socket描述符</li>
+<li>**nfds：**是nfd_t类型的参数，用于标记fds数组中结构体元素的数量</li>
+<li>**timeout：**没有接受事件时等待的事件，单位毫秒，若值为-1，则永远不会超时</li>
+</ul>
+<p>2）pollfd结构体</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="k">struct</span> <span class="nc">pollfd</span>
+<span class="ln">2</span><span class="p">{</span>
+<span class="ln">3</span>	<span class="kt">int</span> <span class="n">fd</span><span class="p">;</span> 
+<span class="ln">4</span>	<span class="kt">short</span> <span class="n">events</span><span class="p">;</span>
+<span class="ln">5</span>	<span class="kt">short</span> <span class="n">revents</span><span class="p">;</span> 
+<span class="ln">6</span><span class="p">}</span>
+</code></pre></div><ul>
+<li>**fd：**文件描述符</li>
+<li><strong>events</strong>：等待发生的事件类型</li>
+<li>**revents：**检测之后返回的事件，当某个文件描述符有变化时，值就不为空</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">事件标识</th>
+<th style="text-align:center">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"><code>POLLIN</code></td>
+<td style="text-align:center">普通或优先级带数据可读</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>POLLRDNORM</code></td>
+<td style="text-align:center">普通数据可读</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>POLLRDBAND</code></td>
+<td style="text-align:center">优先级带数据可读</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>POLLPRI</code></td>
+<td style="text-align:center">高优先级数据可读</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>POLLOUT</code></td>
+<td style="text-align:center">普通数据可写</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>POLLWRNORM</code></td>
+<td style="text-align:center">普通数据可写不会导致阻塞</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>POLLERR</code></td>
+<td style="text-align:center">发生错误</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>POLLHUP</code></td>
+<td style="text-align:center">发生挂起</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>POLLNVAL</code></td>
+<td style="text-align:center">描述字不是一个打开的文件</td>
+</tr>
+</tbody>
+</table>
+<p>3）poll返回值</p>
+<p>poll机制会判断fds中的文件是否满足条件，如果休眠时间内条件满足则会唤醒进程；超过休眠时间，条件一直不满足则自动唤醒。</p>
+<ul>
+<li><strong>返回值&gt;0</strong>：fds中准备好读写，或出错状态的那些socket描述符</li>
+<li>**返回值=0：**fds中没有socket描述符需要读写或出错；此时poll超时，时长为timeout</li>
+<li>**返回值=-1：**调用失败</li>
+</ul>
+</blockquote>
+<p>poll机制也是IO多路复用的一种方式，这里主要是承接连接的客户端的socket，对应服务端会有一个连接socket句柄s，对其poll轮询机制，可以更好的去获取对应的TCP流。</p>
+<p>这里的s接收到的数据，实际上是客户端发送的数据。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socketpair/sp_11.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socketpair/sp_11.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h4 id="3122handleinitsocket">3.1.2.2HandleInitSocket</h4>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/init/property_service.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">HandleInitSocket</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="c1">//处理socketpair对端传过来的数据
+</span><span class="ln"> 4</span><span class="c1"></span>    <span class="k">auto</span> <span class="n">message</span> <span class="o">=</span> <span class="n">ReadMessage</span><span class="p">(</span><span class="n">init_socket</span><span class="p">);</span>
+<span class="ln"> 5</span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">message</span><span class="p">.</span><span class="n">ok</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln"> 6</span>        <span class="n">LOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Could not read message from init_dedicated_recv_socket: &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">message</span><span class="p">.</span><span class="n">error</span><span class="p">();</span>
+<span class="ln"> 7</span>        <span class="k">return</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="p">}</span>
+<span class="ln"> 9</span>	<span class="c1">//初始化proto数据
+</span><span class="ln">10</span><span class="c1"></span>    <span class="k">auto</span> <span class="n">init_message</span> <span class="o">=</span> <span class="n">InitMessage</span><span class="p">{};</span>
+<span class="ln">11</span>    <span class="c1">//将序列化数据转化成string类
+</span><span class="ln">12</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">init_message</span><span class="p">.</span><span class="n">ParseFromString</span><span class="p">(</span><span class="o">*</span><span class="n">message</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">13</span>        <span class="n">LOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Could not parse message from init&#34;</span><span class="p">;</span>
+<span class="ln">14</span>        <span class="k">return</span><span class="p">;</span>
+<span class="ln">15</span>    <span class="p">}</span>
+<span class="ln">16</span>	<span class="c1">//判断属性系统传过来的数据类型，是否为kLoadPersistentProperties
+</span><span class="ln">17</span><span class="c1"></span>    <span class="k">switch</span> <span class="p">(</span><span class="n">init_message</span><span class="p">.</span><span class="n">msg_case</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln">18</span>        <span class="k">case</span> <span class="n">InitMessage</span><span class="o">::</span><span class="nl">kLoadPersistentProperties</span><span class="p">:</span> <span class="p">{</span>
+<span class="ln">19</span>            <span class="n">load_override_properties</span><span class="p">();</span>
+<span class="ln">20</span>            <span class="c1">// 导入persist属性，并且初始化
+</span><span class="ln">21</span><span class="c1"></span>            <span class="k">auto</span> <span class="n">persistent_properties</span> <span class="o">=</span> <span class="n">LoadPersistentProperties</span><span class="p">();</span>
+<span class="ln">22</span>            <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="nl">persistent_property_record</span> <span class="p">:</span> <span class="n">persistent_properties</span><span class="p">.</span><span class="n">properties</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln">23</span>                <span class="n">InitPropertySet</span><span class="p">(</span><span class="n">persistent_property_record</span><span class="p">.</span><span class="n">name</span><span class="p">(),</span>
+<span class="ln">24</span>                                <span class="n">persistent_property_record</span><span class="p">.</span><span class="n">value</span><span class="p">());</span>
+<span class="ln">25</span>            <span class="p">}</span>
+<span class="ln">26</span>            <span class="n">InitPropertySet</span><span class="p">(</span><span class="s">&#34;ro.persistent_properties.ready&#34;</span><span class="p">,</span> <span class="s">&#34;true&#34;</span><span class="p">);</span>
+<span class="ln">27</span>            <span class="n">persistent_properties_loaded</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">28</span>            <span class="k">break</span><span class="p">;</span>
+<span class="ln">29</span>        <span class="p">}</span>
+<span class="ln">30</span>        <span class="k">default</span><span class="o">:</span>
+<span class="ln">31</span>            <span class="n">LOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Unknown message type from init: &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">init_message</span><span class="p">.</span><span class="n">msg_case</span><span class="p">();</span>
+<span class="ln">32</span>    <span class="p">}</span>
+<span class="ln">33</span><span class="p">}</span>
+</code></pre></div><p>上面主要做了几件事</p>
+<ol>
+<li>处理socketpair对端传过来的数据</li>
+<li>将proto序列化数据转化成string类</li>
+<li>判断属性系统传过来的数据类型，如果是就加载并初始化persist属性</li>
+</ol>
+<p>ReadMessage</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/core/init/proto_utils.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">constexpr</span> <span class="n">size_t</span> <span class="n">kBufferSize</span> <span class="o">=</span> <span class="mi">4096</span><span class="p">;</span>
+<span class="ln"> 3</span>
+<span class="ln"> 4</span><span class="kr">inline</span> <span class="n">Result</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">ReadMessage</span><span class="p">(</span><span class="kt">int</span> <span class="n">socket</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 5</span>    <span class="kt">char</span> <span class="n">buffer</span><span class="p">[</span><span class="n">kBufferSize</span><span class="p">]</span> <span class="o">=</span> <span class="p">{};</span>
+<span class="ln"> 6</span>    <span class="k">auto</span> <span class="n">result</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">recv</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buffer</span><span class="p">),</span> <span class="mi">0</span><span class="p">));</span>
+<span class="ln"> 7</span>    <span class="k">if</span> <span class="p">(</span><span class="n">result</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 8</span>        <span class="k">return</span> <span class="nf">Error</span><span class="p">();</span>
+<span class="ln"> 9</span>    <span class="p">}</span> <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">result</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">10</span>        <span class="k">return</span> <span class="n">ErrnoError</span><span class="p">();</span>
+<span class="ln">11</span>    <span class="p">}</span>
+<span class="ln">12</span>    <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+<span class="ln">13</span><span class="p">}</span>
+</code></pre></div><p>这个具体数据，实际上就是对应的msg_case为InitMessage::kLoadPersistentProperties的数据。</p>
+<h3 id="313总结">3.1.3总结</h3>
+<p>实际上，这里的socket的作用意图很明显，将<strong>Init进程</strong>和<strong>非Init进程</strong>的隔离开来，非Init进程操作属性的写入需要转到Init进程去操作，而非Init进程和Init进程通信这里用到了本地的socket通信。这样，属性的管控者就是Init进程，可以做到<strong>过滤隔离</strong>作用。</p>
+<p>除此之外，这里还涉及到了epoll、poll、protobuf、socket和socketpair等概念，充分理解和掌握这些基本概念之后，对于源码的阅读可以理解的更加深入。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socketpair/sp_10.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socketpair/sp_10.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="32camera-dump数据源码">3.2Camera dump数据源码</h2>
+<p>Camera dump操作中用到了<strong>SOCK_STREAM</strong>套接字类型的socketpair。</p>
+<h3 id="321创建socketpair">3.2.1创建socketpair</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/base/core/jni/android_hardware_camera2_CameraMetadata.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">CameraMetadata_dump</span><span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jclass</span> <span class="n">thiz</span><span class="p">,</span> <span class="n">jlong</span> <span class="n">ptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="n">ALOGV</span><span class="p">(</span><span class="s">&#34;%s&#34;</span><span class="p">,</span> <span class="n">__FUNCTION__</span><span class="p">);</span>
+<span class="ln"> 4</span>    <span class="n">CameraMetadata</span><span class="o">*</span> <span class="n">metadata</span> <span class="o">=</span> <span class="n">CameraMetadata_getPointerThrow</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">ptr</span><span class="p">);</span>
+<span class="ln"> 5</span>    <span class="k">if</span> <span class="p">(</span><span class="n">metadata</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 6</span>        <span class="k">return</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="p">}</span>
+<span class="ln"> 8</span>	<span class="kt">int</span> <span class="n">writeFd</span><span class="p">,</span> <span class="n">readFd</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="p">{</span>
+<span class="ln">10</span>        <span class="kt">int</span> <span class="n">sv</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+<span class="ln">11</span>        <span class="c1">//这里创建socketpair，使用TCP的形式，一端发送，一端接受
+</span><span class="ln">12</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="n">socketpair</span><span class="p">(</span><span class="n">AF_LOCAL</span><span class="p">,</span> <span class="n">SOCK_STREAM</span><span class="p">,</span> <span class="cm">/*protocol*/</span><span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sv</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">13</span>            <span class="n">jniThrowExceptionFmt</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s">&#34;java/io/IOException&#34;</span><span class="p">,</span>
+<span class="ln">14</span>                    <span class="s">&#34;Failed to create socketpair (errno = %#x, message = &#39;%s&#39;)&#34;</span><span class="p">,</span>
+<span class="ln">15</span>                    <span class="n">errno</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">16</span>            <span class="k">return</span><span class="p">;</span>
+<span class="ln">17</span>        <span class="p">}</span>
+<span class="ln">18</span>        <span class="n">writeFd</span> <span class="o">=</span> <span class="n">sv</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+<span class="ln">19</span>        <span class="n">readFd</span> <span class="o">=</span> <span class="n">sv</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+<span class="ln">20</span>    <span class="p">}</span>
+<span class="ln">21</span>
+<span class="ln">22</span>    <span class="n">pthread_t</span> <span class="n">writeThread</span><span class="p">;</span>
+<span class="ln">23</span>    <span class="n">DumpMetadataParams</span> <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln">24</span>        <span class="n">writeFd</span><span class="p">,</span>
+<span class="ln">25</span>        <span class="n">metadata</span>
+<span class="ln">26</span>    <span class="p">};</span>
+<span class="ln">27</span>	<span class="c1">//开启write线程，作为写入段
+</span><span class="ln">28</span><span class="c1"></span>    <span class="p">{</span>
+<span class="ln">29</span>        <span class="kt">int</span> <span class="n">threadRet</span> <span class="o">=</span> <span class="n">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">writeThread</span><span class="p">,</span> <span class="cm">/*attr*/</span><span class="nb">NULL</span><span class="p">,</span>
+<span class="ln">30</span>                <span class="n">CameraMetadata_writeMetadataThread</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">params</span><span class="p">);</span>
+<span class="ln">31</span>
+<span class="ln">32</span>        <span class="k">if</span> <span class="p">(</span><span class="n">threadRet</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">33</span>            <span class="n">close</span><span class="p">(</span><span class="n">writeFd</span><span class="p">);</span>
+<span class="ln">34</span>            <span class="n">close</span><span class="p">(</span><span class="n">readFd</span><span class="p">);</span>
+<span class="ln">35</span>
+<span class="ln">36</span>            <span class="n">jniThrowExceptionFmt</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s">&#34;java/io/IOException&#34;</span><span class="p">,</span>
+<span class="ln">37</span>                    <span class="s">&#34;Failed to create thread for writing (errno = %#x, message = &#39;%s&#39;)&#34;</span><span class="p">,</span>
+<span class="ln">38</span>                    <span class="n">threadRet</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">threadRet</span><span class="p">));</span>
+<span class="ln">39</span>            <span class="k">return</span><span class="p">;</span>
+<span class="ln">40</span>        <span class="p">}</span>
+<span class="ln">41</span>    <span class="p">}</span>
+<span class="ln">42</span>	<span class="p">...</span>
+<span class="ln">43</span>
+<span class="ln">44</span>    <span class="kt">int</span> <span class="n">res</span><span class="p">;</span>
+<span class="ln">45</span>
+<span class="ln">46</span>    <span class="c1">// 等待数据完成后，退出线程
+</span><span class="ln">47</span><span class="c1"></span>    <span class="k">if</span> <span class="p">((</span><span class="n">res</span> <span class="o">=</span> <span class="n">pthread_join</span><span class="p">(</span><span class="n">writeThread</span><span class="p">,</span> <span class="cm">/*retval*/</span><span class="nb">NULL</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">48</span>        <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;%s: Failed to join thread (errno = %#x, message = &#39;%s&#39;)&#34;</span><span class="p">,</span>
+<span class="ln">49</span>                <span class="n">__FUNCTION__</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">res</span><span class="p">));</span>
+<span class="ln">50</span>    <span class="p">}</span>
+<span class="ln">51</span><span class="p">}</span>
+</code></pre></div><h3 id="322发送端">3.2.2发送端</h3>
+<p>子线程用来发送数据</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/base/core/jni/android_hardware_camera2_CameraMetadata.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">struct</span> <span class="nc">DumpMetadataParams</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="kt">int</span> <span class="n">writeFd</span><span class="p">;</span>
+<span class="ln"> 4</span>    <span class="k">const</span> <span class="n">CameraMetadata</span><span class="o">*</span> <span class="n">metadata</span><span class="p">;</span>
+<span class="ln"> 5</span><span class="p">};</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span><span class="k">static</span> <span class="kt">void</span><span class="o">*</span> <span class="nf">CameraMetadata_writeMetadataThread</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">arg</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 8</span>    <span class="n">DumpMetadataParams</span><span class="o">*</span> <span class="n">p</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">DumpMetadataParams</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">arg</span><span class="p">);</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span>    <span class="n">p</span><span class="o">-&gt;</span><span class="n">metadata</span><span class="o">-&gt;</span><span class="n">dump</span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">writeFd</span><span class="p">,</span> <span class="cm">/*verbosity*/</span><span class="mi">2</span><span class="p">);</span>
+<span class="ln">11</span>
+<span class="ln">12</span>    <span class="k">if</span> <span class="p">(</span><span class="n">close</span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">writeFd</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">13</span>        <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;%s: Failed to close writeFd (errno = %#x, message = &#39;%s&#39;)&#34;</span><span class="p">,</span>
+<span class="ln">14</span>                <span class="n">__FUNCTION__</span><span class="p">,</span> <span class="n">errno</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">15</span>    <span class="p">}</span>
+<span class="ln">16</span>
+<span class="ln">17</span>    <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="ln">18</span><span class="p">}</span>
+</code></pre></div><p>这里的p为DumpMetadataParams是结构体类型，实际上是CameraMetadata数据dump</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//frameworks/av/camera/CameraMetadata.cpp
+</span><span class="ln">2</span><span class="c1"></span><span class="n">camera_metadata_t</span> <span class="o">*</span><span class="n">mBuffer</span><span class="p">;</span>
+<span class="ln">3</span><span class="kt">void</span> <span class="nf">dump</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">verbosity</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="kt">int</span> <span class="n">indentation</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+<span class="ln">4</span><span class="kt">void</span> <span class="n">CameraMetadata</span><span class="o">::</span><span class="n">dump</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">verbosity</span><span class="p">,</span> <span class="kt">int</span> <span class="n">indentation</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span>
+<span class="ln">5</span>    <span class="n">dump_indented_camera_metadata</span><span class="p">(</span><span class="n">mBuffer</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">verbosity</span><span class="p">,</span> <span class="n">indentation</span><span class="p">);</span>
+<span class="ln">6</span><span class="p">}</span>
+</code></pre></div><p>调用到dump_indented_camera_metadata</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system/media/camera/src/camera_metadata.c
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span> <span class="nf">dump_indented_camera_metadata</span><span class="p">(</span><span class="k">const</span> <span class="n">camera_metadata_t</span> <span class="o">*</span><span class="n">metadata</span><span class="p">,</span>
+<span class="ln"> 3</span>        <span class="kt">int</span> <span class="n">fd</span><span class="p">,</span>
+<span class="ln"> 4</span>        <span class="kt">int</span> <span class="n">verbosity</span><span class="p">,</span>
+<span class="ln"> 5</span>        <span class="kt">int</span> <span class="n">indentation</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 6</span>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="n">dprintf</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span>
+<span class="ln"> 8</span>            <span class="s">&#34;%*sDumping camera metadata array: %&#34;</span> <span class="n">PRIu32</span> <span class="s">&#34; / %&#34;</span> <span class="n">PRIu32</span> <span class="s">&#34; entries, &#34;</span>
+<span class="ln"> 9</span>            <span class="s">&#34;%&#34;</span> <span class="n">PRIu32</span> <span class="s">&#34; / %&#34;</span> <span class="n">PRIu32</span> <span class="s">&#34; bytes of extra data.</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">indentation</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">,</span>
+<span class="ln">10</span>            <span class="n">metadata</span><span class="o">-&gt;</span><span class="n">entry_count</span><span class="p">,</span> <span class="n">metadata</span><span class="o">-&gt;</span><span class="n">entry_capacity</span><span class="p">,</span>
+<span class="ln">11</span>            <span class="n">metadata</span><span class="o">-&gt;</span><span class="n">data_count</span><span class="p">,</span> <span class="n">metadata</span><span class="o">-&gt;</span><span class="n">data_capacity</span><span class="p">);</span>
+<span class="ln">12</span>    <span class="n">dprintf</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="s">&#34;%*sVersion: %d, Flags: %08x</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span>
+<span class="ln">13</span>            <span class="n">indentation</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">,</span>
+<span class="ln">14</span>            <span class="n">metadata</span><span class="o">-&gt;</span><span class="n">version</span><span class="p">,</span> <span class="n">metadata</span><span class="o">-&gt;</span><span class="n">flags</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="n">camera_metadata_buffer_entry_t</span> <span class="o">*</span><span class="n">entry</span> <span class="o">=</span> <span class="n">get_entries</span><span class="p">(</span><span class="n">metadata</span><span class="p">);</span>
+<span class="ln">16</span>    <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">metadata</span><span class="o">-&gt;</span><span class="n">entry_count</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">,</span> <span class="n">entry</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">17</span>
+<span class="ln">18</span>        <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">tag_name</span><span class="p">,</span> <span class="o">*</span><span class="n">tag_section</span><span class="p">;</span>
+<span class="ln">19</span>        <span class="n">tag_section</span> <span class="o">=</span> <span class="n">get_local_camera_metadata_section_name</span><span class="p">(</span><span class="n">entry</span><span class="o">-&gt;</span><span class="n">tag</span><span class="p">,</span> <span class="n">metadata</span><span class="p">);</span>
+<span class="ln">20</span>        <span class="k">if</span> <span class="p">(</span><span class="n">tag_section</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">21</span>            <span class="n">tag_section</span> <span class="o">=</span> <span class="s">&#34;unknownSection&#34;</span><span class="p">;</span>
+<span class="ln">22</span>        <span class="p">}</span>
+<span class="ln">23</span>        <span class="n">tag_name</span> <span class="o">=</span> <span class="n">get_local_camera_metadata_tag_name</span><span class="p">(</span><span class="n">entry</span><span class="o">-&gt;</span><span class="n">tag</span><span class="p">,</span> <span class="n">metadata</span><span class="p">);</span>
+<span class="ln">24</span>        <span class="k">if</span> <span class="p">(</span><span class="n">tag_name</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">25</span>            <span class="n">tag_name</span> <span class="o">=</span> <span class="s">&#34;unknownTag&#34;</span><span class="p">;</span>
+<span class="ln">26</span>        <span class="p">}</span>
+<span class="ln">27</span>        <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">type_name</span><span class="p">;</span>
+<span class="ln">28</span>        <span class="k">if</span> <span class="p">(</span><span class="n">entry</span><span class="o">-&gt;</span><span class="n">type</span> <span class="o">&gt;=</span> <span class="n">NUM_TYPES</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">29</span>            <span class="n">type_name</span> <span class="o">=</span> <span class="s">&#34;unknown&#34;</span><span class="p">;</span>
+<span class="ln">30</span>        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">31</span>            <span class="n">type_name</span> <span class="o">=</span> <span class="n">camera_metadata_type_names</span><span class="p">[</span><span class="n">entry</span><span class="o">-&gt;</span><span class="n">type</span><span class="p">];</span>
+<span class="ln">32</span>        <span class="p">}</span>
+<span class="ln">33</span>        <span class="n">dprintf</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="s">&#34;%*s%s.%s (%05x): %s[%&#34;</span> <span class="n">PRIu32</span> <span class="s">&#34;]</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span>
+<span class="ln">34</span>             <span class="n">indentation</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">,</span>
+<span class="ln">35</span>             <span class="n">tag_section</span><span class="p">,</span>
+<span class="ln">36</span>             <span class="n">tag_name</span><span class="p">,</span>
+<span class="ln">37</span>             <span class="n">entry</span><span class="o">-&gt;</span><span class="n">tag</span><span class="p">,</span>
+<span class="ln">38</span>             <span class="n">type_name</span><span class="p">,</span>
+<span class="ln">39</span>             <span class="n">entry</span><span class="o">-&gt;</span><span class="n">count</span><span class="p">);</span>
+<span class="ln">40</span>
+<span class="ln">41</span>        <span class="k">if</span> <span class="p">(</span><span class="n">verbosity</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">)</span> <span class="k">continue</span><span class="p">;</span>
+<span class="ln">42</span>
+<span class="ln">43</span>        <span class="k">if</span> <span class="p">(</span><span class="n">entry</span><span class="o">-&gt;</span><span class="n">type</span> <span class="o">&gt;=</span> <span class="n">NUM_TYPES</span><span class="p">)</span> <span class="k">continue</span><span class="p">;</span>
+<span class="ln">44</span>
+<span class="ln">45</span>        <span class="n">size_t</span> <span class="n">type_size</span> <span class="o">=</span> <span class="n">camera_metadata_type_size</span><span class="p">[</span><span class="n">entry</span><span class="o">-&gt;</span><span class="n">type</span><span class="p">];</span>
+<span class="ln">46</span>        <span class="kt">uint8_t</span> <span class="o">*</span><span class="n">data_ptr</span><span class="p">;</span>
+<span class="ln">47</span>        <span class="k">if</span> <span class="p">(</span> <span class="n">type_size</span> <span class="o">*</span> <span class="n">entry</span><span class="o">-&gt;</span><span class="n">count</span> <span class="o">&gt;</span> <span class="mi">4</span> <span class="p">)</span> <span class="p">{</span>
+<span class="ln">48</span>            <span class="k">if</span> <span class="p">(</span><span class="n">entry</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">offset</span> <span class="o">&gt;=</span> <span class="n">metadata</span><span class="o">-&gt;</span><span class="n">data_count</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">49</span>                <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;%s: Malformed entry data offset: %&#34;</span> <span class="n">PRIu32</span> <span class="s">&#34; (max %&#34;</span> <span class="n">PRIu32</span> <span class="s">&#34;)&#34;</span><span class="p">,</span>
+<span class="ln">50</span>                        <span class="n">__FUNCTION__</span><span class="p">,</span>
+<span class="ln">51</span>                        <span class="n">entry</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">offset</span><span class="p">,</span>
+<span class="ln">52</span>                        <span class="n">metadata</span><span class="o">-&gt;</span><span class="n">data_count</span><span class="p">);</span>
+<span class="ln">53</span>                <span class="k">continue</span><span class="p">;</span>
+<span class="ln">54</span>            <span class="p">}</span>
+<span class="ln">55</span>            <span class="n">data_ptr</span> <span class="o">=</span> <span class="n">get_data</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span> <span class="o">+</span> <span class="n">entry</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">offset</span><span class="p">;</span>
+<span class="ln">56</span>        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">57</span>            <span class="n">data_ptr</span> <span class="o">=</span> <span class="n">entry</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">value</span><span class="p">;</span>
+<span class="ln">58</span>        <span class="p">}</span>
+<span class="ln">59</span>        <span class="kt">int</span> <span class="n">count</span> <span class="o">=</span> <span class="n">entry</span><span class="o">-&gt;</span><span class="n">count</span><span class="p">;</span>
+<span class="ln">60</span>        <span class="k">if</span> <span class="p">(</span><span class="n">verbosity</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="o">&amp;&amp;</span> <span class="n">count</span> <span class="o">&gt;</span> <span class="mi">16</span><span class="p">)</span> <span class="n">count</span> <span class="o">=</span> <span class="mi">16</span><span class="p">;</span>
+<span class="ln">61</span>
+<span class="ln">62</span>        <span class="n">print_data</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">data_ptr</span><span class="p">,</span> <span class="n">entry</span><span class="o">-&gt;</span><span class="n">tag</span><span class="p">,</span> <span class="n">entry</span><span class="o">-&gt;</span><span class="n">type</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">indentation</span><span class="p">);</span>
+<span class="ln">63</span>    <span class="p">}</span>
+<span class="ln">64</span><span class="p">}</span>
+</code></pre></div><p>可以看到这里没有使用相应的write去发送，而是选择使用dprintf的方式来发送。</p>
+<blockquote>
+<p>关于IO函数比较，write和dprintf区别</p>
+<p><strong>write</strong></p>
+<p>向已打开文件描述符. 将缓存buf内容写count个字节到fd指向的文件. <strong>buf不必以null终结符结尾</strong>.</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span><span class="ln">2</span><span class="cp"></span><span class="n">ssize_t</span> <span class="nf">write</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">count</span><span class="p">);</span>
+</code></pre></div><p>示例: 向stdout写入所有缓存字符</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="sc">&#39;a&#39;</span><span class="p">,</span> <span class="sc">&#39;b&#39;</span><span class="p">};</span>
+<span class="ln">2</span><span class="kt">int</span> <span class="n">n</span> <span class="o">=</span> <span class="n">write</span><span class="p">(</span><span class="n">STDOUT_FILENO</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">));</span>
+<span class="ln">3</span><span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">4</span> <span class="n">perror</span><span class="p">(</span><span class="s">&#34;write error&#34;</span><span class="p">);</span>
+<span class="ln">5</span> <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln">6</span><span class="p">}</span>
+</code></pre></div><p><strong>dprintf</strong></p>
+<p>将格式化串输出到已打开文件描述符, 其他同printf.</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="ln">2</span><span class="cp"></span><span class="kt">int</span> <span class="nf">sprintf</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">str</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">format</span><span class="p">,</span> <span class="p">...);</span>
+</code></pre></div><p>示例: 向标准输出(默认已打开, 文件描述符 = STDOUT_FILENO)输出</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="kt">int</span> <span class="n">age</span> <span class="o">=</span> <span class="mi">20</span><span class="p">;</span>
+<span class="ln">2</span><span class="n">dprintf</span><span class="p">(</span><span class="n">STDOUT_FILENO</span><span class="p">,</span> <span class="s">&#34;my age is %d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">age</span><span class="p">);</span>
+</code></pre></div><p><strong>区别</strong></p>
+<p>write函数和dprintf函数，都可以实现将字符串写入文件，但两者的区别在于，write会写入字符串中的NULL字符，因而以vim打开文件后会出现少量乱码，dprintf则不会。</p>
+</blockquote>
+<h3 id="323接收端">3.2.3接收端</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/base/core/jni/android_hardware_camera2_CameraMetadata.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">CameraMetadata_dump</span><span class="p">(</span><span class="n">JNIEnv</span> <span class="o">*</span><span class="n">env</span><span class="p">,</span> <span class="n">jclass</span> <span class="n">thiz</span><span class="p">,</span> <span class="n">jlong</span> <span class="n">ptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>	<span class="c1">//当前线程读取数据
+</span><span class="ln"> 4</span><span class="c1"></span>    <span class="p">{</span>
+<span class="ln"> 5</span>        <span class="kt">char</span> <span class="n">out</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="sc">&#39;\0&#39;</span><span class="p">,</span> <span class="sc">&#39;\0&#39;</span><span class="p">};</span> 
+<span class="ln"> 6</span>        <span class="n">String8</span> <span class="n">logLine</span><span class="p">;</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span>        <span class="c1">//每次读取一个数据，当读取到换行符的时候，就把当前缓冲区数据，打印出来，直到全部读完为止
+</span><span class="ln"> 9</span><span class="c1"></span>        <span class="n">ssize_t</span> <span class="n">res</span><span class="p">;</span>
+<span class="ln">10</span>        <span class="k">while</span> <span class="p">((</span><span class="n">res</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">read</span><span class="p">(</span><span class="n">readFd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">out</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="cm">/*count*/</span><span class="mi">1</span><span class="p">)))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">11</span>            <span class="k">if</span> <span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="sc">&#39;\n&#39;</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">12</span>                <span class="n">ALOGD</span><span class="p">(</span><span class="s">&#34;%s&#34;</span><span class="p">,</span> <span class="n">logLine</span><span class="p">.</span><span class="n">string</span><span class="p">());</span>
+<span class="ln">13</span>                <span class="n">logLine</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+<span class="ln">14</span>            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">15</span>                <span class="n">logLine</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">out</span><span class="p">);</span>
+<span class="ln">16</span>            <span class="p">}</span>
+<span class="ln">17</span>        <span class="p">}</span>
+<span class="ln">18</span>
+<span class="ln">19</span>        <span class="n">ALOGD</span><span class="p">(</span><span class="s">&#34;%s&#34;</span><span class="p">,</span> <span class="n">logLine</span><span class="p">.</span><span class="n">string</span><span class="p">());</span>
+<span class="ln">20</span>        <span class="n">close</span><span class="p">(</span><span class="n">readFd</span><span class="p">);</span>
+<span class="ln">21</span>    <span class="p">}</span>
+<span class="ln">22</span>    <span class="p">...</span>
+<span class="ln">23</span><span class="p">}</span>
+</code></pre></div><h3 id="324总结">3.2.4总结</h3>
+<p>其实这一块内容比较简单，主要这里可能涉及到了Camera相关的CameraMetadata数据结构，这个比较复杂，具体关于CameraMetadata可以在参考中查找，这里不展开说明。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socketpair/sp_12.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socketpair/sp_12.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="33audiogroup相关源码">3.3AudioGroup相关源码</h2>
+<p>Audio相关操作中用到了<strong>SOCK_DGRAM</strong>套接字类型的socketpair。</p>
+<h3 id="331创建socketpair">3.3.1创建socketpair</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/opt/net/voip/src/jni/rtp/AudioGroup.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">bool</span> <span class="n">AudioGroup</span><span class="o">::</span><span class="n">set</span><span class="p">(</span><span class="kt">int</span> <span class="n">sampleRate</span><span class="p">,</span> <span class="kt">int</span> <span class="n">sampleCount</span><span class="p">)</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="c1">//这里也涉及到了epoll机制
+</span><span class="ln"> 5</span><span class="c1"></span>    <span class="n">mEventQueue</span> <span class="o">=</span> <span class="n">epoll_create1</span><span class="p">(</span><span class="n">EPOLL_CLOEXEC</span><span class="p">);</span>
+<span class="ln"> 6</span>    <span class="k">if</span> <span class="p">(</span><span class="n">mEventQueue</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 7</span>        <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;epoll_create1: %s&#34;</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln"> 8</span>        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="p">}</span>
+<span class="ln">10</span>
+<span class="ln">11</span>    <span class="n">mSampleRate</span> <span class="o">=</span> <span class="n">sampleRate</span><span class="p">;</span>
+<span class="ln">12</span>    <span class="n">mSampleCount</span> <span class="o">=</span> <span class="n">sampleCount</span><span class="p">;</span>
+<span class="ln">13</span>
+<span class="ln">14</span>    <span class="c1">// 创建socketpair，是UDP的形式
+</span><span class="ln">15</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">pair</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+<span class="ln">16</span>    <span class="k">if</span> <span class="p">(</span><span class="n">socketpair</span><span class="p">(</span><span class="n">AF_UNIX</span><span class="p">,</span> <span class="n">SOCK_DGRAM</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">pair</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">17</span>        <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;socketpair: %s&#34;</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">18</span>        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">19</span>    <span class="p">}</span>
+<span class="ln">20</span>    <span class="c1">//会在线程中使用
+</span><span class="ln">21</span><span class="c1"></span>    <span class="n">mDeviceSocket</span> <span class="o">=</span> <span class="n">pair</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+<span class="ln">22</span>
+<span class="ln">23</span>    <span class="c1">// Create device stream.
+</span><span class="ln">24</span><span class="c1"></span>    <span class="n">mChain</span> <span class="o">=</span> <span class="k">new</span> <span class="n">AudioStream</span><span class="p">;</span>
+<span class="ln">25</span>    <span class="c1">//把另一端发给mChain保存
+</span><span class="ln">26</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">mChain</span><span class="o">-&gt;</span><span class="n">set</span><span class="p">(</span><span class="n">AudioStream</span><span class="o">::</span><span class="n">NORMAL</span><span class="p">,</span> <span class="n">pair</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">NULL</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span>
+<span class="ln">27</span>        <span class="n">sampleRate</span><span class="p">,</span> <span class="n">sampleCount</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">28</span>        <span class="n">close</span><span class="p">(</span><span class="n">pair</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+<span class="ln">29</span>        <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;cannot initialize device stream&#34;</span><span class="p">);</span>
+<span class="ln">30</span>        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">31</span>    <span class="p">}</span>
+<span class="ln">32</span>
+<span class="ln">33</span>    <span class="c1">// Give device socket a reasonable timeout.
+</span><span class="ln">34</span><span class="c1"></span>    <span class="n">timeval</span> <span class="n">tv</span><span class="p">;</span>
+<span class="ln">35</span>    <span class="n">tv</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">36</span>    <span class="n">tv</span><span class="p">.</span><span class="n">tv_usec</span> <span class="o">=</span> <span class="mi">1000</span> <span class="o">*</span> <span class="n">sampleCount</span> <span class="o">/</span> <span class="n">sampleRate</span> <span class="o">*</span> <span class="mi">500</span><span class="p">;</span>
+<span class="ln">37</span>    <span class="c1">//设置接收时间为微妙
+</span><span class="ln">38</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">pair</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">SOL_SOCKET</span><span class="p">,</span> <span class="n">SO_RCVTIMEO</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tv</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">tv</span><span class="p">)))</span> <span class="p">{</span>
+<span class="ln">39</span>        <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;setsockopt: %s&#34;</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">40</span>        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">41</span>    <span class="p">}</span>
+<span class="ln">42</span>
+<span class="ln">43</span>    <span class="c1">// Add device stream into event queue.
+</span><span class="ln">44</span><span class="c1"></span>    <span class="n">epoll_event</span> <span class="n">event</span><span class="p">;</span>
+<span class="ln">45</span>    <span class="n">event</span><span class="p">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">EPOLLIN</span><span class="p">;</span>
+<span class="ln">46</span>    <span class="n">event</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">mChain</span><span class="p">;</span>
+<span class="ln">47</span>    <span class="c1">//将pair[1]加入到epoll中，当发生变化，回调给mChain
+</span><span class="ln">48</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">epoll_ctl</span><span class="p">(</span><span class="n">mEventQueue</span><span class="p">,</span> <span class="n">EPOLL_CTL_ADD</span><span class="p">,</span> <span class="n">pair</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">&amp;</span><span class="n">event</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">49</span>        <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;epoll_ctl: %s&#34;</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">50</span>        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">51</span>    <span class="p">}</span>
+<span class="ln">52</span>
+<span class="ln">53</span>    <span class="c1">// Anything else?
+</span><span class="ln">54</span><span class="c1"></span>    <span class="n">ALOGD</span><span class="p">(</span><span class="s">&#34;stream[%d] joins group[%d]&#34;</span><span class="p">,</span> <span class="n">pair</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">pair</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+<span class="ln">55</span>    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">56</span><span class="p">}</span>
+</code></pre></div><p>AudioStream::set</p>
+<p>这里是一些初始化操作，包括模式，传输头的魔数</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/opt/net/voip/src/jni/rtp/AudioGroup.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">bool</span> <span class="n">AudioStream</span><span class="o">::</span><span class="n">set</span><span class="p">(</span><span class="kt">int</span> <span class="n">mode</span><span class="p">,</span> <span class="kt">int</span> <span class="n">socket</span><span class="p">,</span> <span class="n">sockaddr_storage</span> <span class="o">*</span><span class="n">remote</span><span class="p">,</span>
+<span class="ln"> 3</span>    <span class="n">AudioCodec</span> <span class="o">*</span><span class="n">codec</span><span class="p">,</span> <span class="kt">int</span> <span class="n">sampleRate</span><span class="p">,</span> <span class="kt">int</span> <span class="n">sampleCount</span><span class="p">,</span>
+<span class="ln"> 4</span>    <span class="kt">int</span> <span class="n">codecType</span><span class="p">,</span> <span class="kt">int</span> <span class="n">dtmfType</span><span class="p">)</span>
+<span class="ln"> 5</span><span class="p">{</span>
+<span class="ln"> 6</span>    <span class="k">if</span> <span class="p">(</span><span class="n">mode</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">||</span> <span class="n">mode</span> <span class="o">&gt;</span> <span class="n">LAST_MODE</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 7</span>        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="p">}</span>
+<span class="ln"> 9</span>    <span class="n">mMode</span> <span class="o">=</span> <span class="n">mode</span><span class="p">;</span>
+<span class="ln">10</span>
+<span class="ln">11</span>    <span class="n">mCodecMagic</span> <span class="o">=</span> <span class="p">(</span><span class="mh">0x8000</span> <span class="o">|</span> <span class="n">codecType</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">;</span>
+<span class="ln">12</span>    <span class="n">mDtmfMagic</span> <span class="o">=</span> <span class="p">(</span><span class="n">dtmfType</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="p">(</span><span class="mh">0x8000</span> <span class="o">|</span> <span class="n">dtmfType</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">;</span>
+<span class="ln">13</span>	<span class="p">...</span>
+<span class="ln">14</span>    <span class="c1">// 传入的pair[1]赋值给mSocket
+</span><span class="ln">15</span><span class="c1"></span>    <span class="n">mSocket</span> <span class="o">=</span> <span class="n">socket</span><span class="p">;</span>
+<span class="ln">16</span> 	<span class="p">...</span>
+<span class="ln">17</span>    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">18</span><span class="p">}</span>
+</code></pre></div><p>pair[0]赋值给了mDeviceSocket，pair[1]最终加入到了epoll中，等到写入操作触发。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socketpair/sp_13.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socketpair/sp_13.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="332发送端">3.3.2发送端</h3>
+<p>发送端主要是NetworkThread线程中的encode和decode</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/opt/net/voip/src/jni/rtp/AudioGroup.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">bool</span> <span class="n">AudioGroup</span><span class="o">::</span><span class="n">NetworkThread</span><span class="o">::</span><span class="n">threadLoop</span><span class="p">()</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="n">AudioStream</span> <span class="o">*</span><span class="n">chain</span> <span class="o">=</span> <span class="n">mGroup</span><span class="o">-&gt;</span><span class="n">mChain</span><span class="p">;</span>
+<span class="ln"> 5</span>    <span class="kt">int</span> <span class="n">tick</span> <span class="o">=</span> <span class="n">elapsedRealtime</span><span class="p">();</span>
+<span class="ln"> 6</span>    <span class="kt">int</span> <span class="n">deadline</span> <span class="o">=</span> <span class="n">tick</span> <span class="o">+</span> <span class="mi">10</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="kt">int</span> <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 8</span>	<span class="c1">//根据mChain数量来确定epoll等待fd数量
+</span><span class="ln"> 9</span><span class="c1"></span>    <span class="k">for</span> <span class="p">(</span><span class="n">AudioStream</span> <span class="o">*</span><span class="n">stream</span> <span class="o">=</span> <span class="n">chain</span><span class="p">;</span> <span class="n">stream</span><span class="p">;</span> <span class="n">stream</span> <span class="o">=</span> <span class="n">stream</span><span class="o">-&gt;</span><span class="n">mNext</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">10</span>        <span class="k">if</span> <span class="p">(</span><span class="n">tick</span> <span class="o">-</span> <span class="n">stream</span><span class="o">-&gt;</span><span class="n">mTick</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">11</span>            <span class="c1">//[1]首先编码传输
+</span><span class="ln">12</span><span class="c1"></span>            <span class="n">stream</span><span class="o">-&gt;</span><span class="n">encode</span><span class="p">(</span><span class="n">tick</span><span class="p">,</span> <span class="n">chain</span><span class="p">);</span>
+<span class="ln">13</span>        <span class="p">}</span>
+<span class="ln">14</span>        <span class="k">if</span> <span class="p">(</span><span class="n">deadline</span> <span class="o">-</span> <span class="n">stream</span><span class="o">-&gt;</span><span class="n">mTick</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">15</span>            <span class="n">deadline</span> <span class="o">=</span> <span class="n">stream</span><span class="o">-&gt;</span><span class="n">mTick</span><span class="p">;</span>
+<span class="ln">16</span>        <span class="p">}</span>
+<span class="ln">17</span>        <span class="o">++</span><span class="n">count</span><span class="p">;</span>
+<span class="ln">18</span>    <span class="p">}</span>
+<span class="ln">19</span>
+<span class="ln">20</span>    <span class="kt">int</span> <span class="n">event</span> <span class="o">=</span> <span class="n">mGroup</span><span class="o">-&gt;</span><span class="n">mDtmfEvent</span><span class="p">;</span>
+<span class="ln">21</span>    <span class="k">if</span> <span class="p">(</span><span class="n">event</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">22</span>        <span class="k">for</span> <span class="p">(</span><span class="n">AudioStream</span> <span class="o">*</span><span class="n">stream</span> <span class="o">=</span> <span class="n">chain</span><span class="p">;</span> <span class="n">stream</span><span class="p">;</span> <span class="n">stream</span> <span class="o">=</span> <span class="n">stream</span><span class="o">-&gt;</span><span class="n">mNext</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">23</span>            <span class="n">stream</span><span class="o">-&gt;</span><span class="n">sendDtmf</span><span class="p">(</span><span class="n">event</span><span class="p">);</span>
+<span class="ln">24</span>        <span class="p">}</span>
+<span class="ln">25</span>        <span class="n">mGroup</span><span class="o">-&gt;</span><span class="n">mDtmfEvent</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">26</span>    <span class="p">}</span>
+<span class="ln">27</span>
+<span class="ln">28</span>    <span class="n">deadline</span> <span class="o">-=</span> <span class="n">tick</span><span class="p">;</span>
+<span class="ln">29</span>    <span class="k">if</span> <span class="p">(</span><span class="n">deadline</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">30</span>        <span class="n">deadline</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">31</span>    <span class="p">}</span>
+<span class="ln">32</span>
+<span class="ln">33</span>    <span class="n">epoll_event</span> <span class="n">events</span><span class="p">[</span><span class="n">count</span><span class="p">];</span>
+<span class="ln">34</span>    <span class="c1">//等待时间至少是1s
+</span><span class="ln">35</span><span class="c1"></span>    <span class="n">count</span> <span class="o">=</span> <span class="n">epoll_wait</span><span class="p">(</span><span class="n">mGroup</span><span class="o">-&gt;</span><span class="n">mEventQueue</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">deadline</span><span class="p">);</span>
+<span class="ln">36</span>    <span class="k">if</span> <span class="p">(</span><span class="n">count</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">37</span>        <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;epoll_wait: %s&#34;</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">38</span>        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">39</span>    <span class="p">}</span>
+<span class="ln">40</span>    <span class="c1">//有写入事件发生，调用对应的ptr-&gt;decode,实际是mChain-&gt;decode回调函数
+</span><span class="ln">41</span><span class="c1"></span>    <span class="c1">//[2]然后解码传输
+</span><span class="ln">42</span><span class="c1"></span>    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">count</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">43</span>        <span class="p">((</span><span class="n">AudioStream</span> <span class="o">*</span><span class="p">)</span><span class="n">events</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">data</span><span class="p">.</span><span class="n">ptr</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">decode</span><span class="p">(</span><span class="n">tick</span><span class="p">);</span>
+<span class="ln">44</span>    <span class="p">}</span>
+<span class="ln">45</span>
+<span class="ln">46</span>    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">47</span><span class="p">}</span>
+</code></pre></div><p>上面主要是两个环节，先编码然后解码</p>
+<h4 id="3321循环调用encode">3.3.2.1循环调用encode</h4>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/opt/net/voip/src/jni/rtp/AudioGroup.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span> <span class="n">AudioStream</span><span class="o">::</span><span class="n">encode</span><span class="p">(</span><span class="kt">int</span> <span class="n">tick</span><span class="p">,</span> <span class="n">AudioStream</span> <span class="o">*</span><span class="n">chain</span><span class="p">)</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="p">...</span>  
+<span class="ln"> 5</span>    <span class="k">if</span> <span class="p">(</span><span class="n">mMode</span> <span class="o">!=</span> <span class="n">RECEIVE_ONLY</span> <span class="o">&amp;&amp;</span> <span class="n">mDtmfEvent</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 6</span>        <span class="kt">int</span> <span class="n">duration</span> <span class="o">=</span> <span class="n">mTimestamp</span> <span class="o">-</span> <span class="n">mDtmfStart</span><span class="p">;</span>
+<span class="ln"> 7</span>        <span class="c1">// Make sure duration is reasonable.
+</span><span class="ln"> 8</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="n">duration</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">duration</span> <span class="o">&lt;</span> <span class="n">mSampleRate</span> <span class="o">*</span> <span class="n">DTMF_PERIOD</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 9</span>            <span class="n">duration</span> <span class="o">+=</span> <span class="n">mSampleCount</span><span class="p">;</span>
+<span class="ln">10</span>            <span class="kt">int32_t</span> <span class="n">buffer</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln">11</span>                <span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int32_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">htonl</span><span class="p">(</span><span class="n">mDtmfMagic</span> <span class="o">|</span> <span class="n">mSequence</span><span class="p">)),</span>
+<span class="ln">12</span>                <span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int32_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">htonl</span><span class="p">(</span><span class="n">mDtmfStart</span><span class="p">)),</span>
+<span class="ln">13</span>                <span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int32_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">mSsrc</span><span class="p">),</span>
+<span class="ln">14</span>                <span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int32_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">htonl</span><span class="p">(</span><span class="n">mDtmfEvent</span> <span class="o">|</span> <span class="n">duration</span><span class="p">)),</span>
+<span class="ln">15</span>            <span class="p">};</span>
+<span class="ln">16</span>            <span class="k">if</span> <span class="p">(</span><span class="n">duration</span> <span class="o">&gt;=</span> <span class="n">mSampleRate</span> <span class="o">*</span> <span class="n">DTMF_PERIOD</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">17</span>                <span class="n">buffer</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">|=</span> <span class="n">htonl</span><span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">23</span><span class="p">);</span>
+<span class="ln">18</span>                <span class="n">mDtmfEvent</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">19</span>            <span class="p">}</span>
+<span class="ln">20</span>            <span class="c1">//[1]第一次发送一些关于头部的信息，总共16个字节
+</span><span class="ln">21</span><span class="c1"></span>            <span class="n">sendto</span><span class="p">(</span><span class="n">mSocket</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buffer</span><span class="p">),</span> <span class="n">MSG_DONTWAIT</span><span class="p">,</span>
+<span class="ln">22</span>                <span class="p">(</span><span class="n">sockaddr</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">mRemote</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">mRemote</span><span class="p">));</span>
+<span class="ln">23</span>            <span class="k">return</span><span class="p">;</span>
+<span class="ln">24</span>        <span class="p">}</span>
+<span class="ln">25</span>        <span class="n">mDtmfEvent</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln">26</span>    <span class="p">}</span>
+<span class="ln">27</span>    <span class="kt">int32_t</span> <span class="n">buffer</span><span class="p">[</span><span class="n">mSampleCount</span> <span class="o">+</span> <span class="mi">3</span><span class="p">];</span>
+<span class="ln">28</span>    <span class="kt">int16_t</span> <span class="n">samples</span><span class="p">[</span><span class="n">mSampleCount</span><span class="p">];</span>
+<span class="ln">29</span>    <span class="c1">// Cook the packet and send it out.
+</span><span class="ln">30</span><span class="c1"></span>    <span class="n">buffer</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">htonl</span><span class="p">(</span><span class="n">mCodecMagic</span> <span class="o">|</span> <span class="n">mSequence</span><span class="p">);</span>
+<span class="ln">31</span>    <span class="n">buffer</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">htonl</span><span class="p">(</span><span class="n">mTimestamp</span><span class="p">);</span>
+<span class="ln">32</span>    <span class="n">buffer</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">mSsrc</span><span class="p">;</span>
+<span class="ln">33</span>    <span class="c1">//[2]在发送前先编码，调用AudioCodec编码
+</span><span class="ln">34</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">length</span> <span class="o">=</span> <span class="n">mCodec</span><span class="o">-&gt;</span><span class="n">encode</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buffer</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">samples</span><span class="p">);</span>
+<span class="ln">35</span>    <span class="k">if</span> <span class="p">(</span><span class="n">length</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">36</span>        <span class="n">ALOGV</span><span class="p">(</span><span class="s">&#34;stream[%d] encoder error&#34;</span><span class="p">,</span> <span class="n">mSocket</span><span class="p">);</span>
+<span class="ln">37</span>        <span class="k">return</span><span class="p">;</span>
+<span class="ln">38</span>    <span class="p">}</span>
+<span class="ln">39</span>    <span class="c1">//[3]编码之后发送,MSG_DONTWAIT代表无阻塞
+</span><span class="ln">40</span><span class="c1"></span>    <span class="n">sendto</span><span class="p">(</span><span class="n">mSocket</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">length</span> <span class="o">+</span> <span class="mi">12</span><span class="p">,</span> <span class="n">MSG_DONTWAIT</span><span class="p">,</span> <span class="p">(</span><span class="n">sockaddr</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">mRemote</span><span class="p">,</span>
+<span class="ln">41</span>        <span class="k">sizeof</span><span class="p">(</span><span class="n">mRemote</span><span class="p">));</span>
+<span class="ln">42</span><span class="p">}</span>
+</code></pre></div><h4 id="3322回调到decode函数">3.3.2.2回调到decode函数</h4>
+<p>当完成发送的时候，epoll会回调到decode函数</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/opt/net/voip/src/jni/rtp/AudioGroup.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">void</span> <span class="n">AudioStream</span><span class="o">::</span><span class="n">decode</span><span class="p">(</span><span class="kt">int</span> <span class="n">tick</span><span class="p">)</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="p">...</span>
+<span class="ln"> 5</span>    <span class="kt">int</span> <span class="n">count</span> <span class="o">=</span> <span class="p">(</span><span class="n">BUFFER_SIZE</span> <span class="o">-</span> <span class="p">(</span><span class="n">mBufferTail</span> <span class="o">-</span> <span class="n">mBufferHead</span><span class="p">))</span> <span class="o">*</span> <span class="n">mSampleRate</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="k">if</span> <span class="p">(</span><span class="n">count</span> <span class="o">&lt;</span> <span class="n">mSampleCount</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 7</span>        <span class="c1">// 如果发送的数据越界，那么退出
+</span><span class="ln"> 8</span><span class="c1"></span>        <span class="n">ALOGV</span><span class="p">(</span><span class="s">&#34;stream[%d] buffer overflow&#34;</span><span class="p">,</span> <span class="n">mSocket</span><span class="p">);</span>
+<span class="ln"> 9</span>        <span class="n">recv</span><span class="p">(</span><span class="n">mSocket</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">MSG_DONTWAIT</span><span class="p">);</span>
+<span class="ln">10</span>        <span class="k">return</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="p">}</span>
+<span class="ln">12</span>
+<span class="ln">13</span>    <span class="c1">// Receive the packet and decode it.
+</span><span class="ln">14</span><span class="c1"></span>    <span class="kt">int16_t</span> <span class="n">samples</span><span class="p">[</span><span class="n">count</span><span class="p">];</span>
+<span class="ln">15</span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">mCodec</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">16</span>        <span class="p">...</span> 
+<span class="ln">17</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">18</span>        <span class="c1">//四字节对其
+</span><span class="ln">19</span><span class="c1"></span>        <span class="n">__attribute__</span><span class="p">((</span><span class="n">aligned</span><span class="p">(</span><span class="mi">4</span><span class="p">)))</span> <span class="kt">uint8_t</span> <span class="n">buffer</span><span class="p">[</span><span class="mi">2048</span><span class="p">];</span>
+<span class="ln">20</span>        <span class="n">sockaddr_storage</span> <span class="n">remote</span><span class="p">;</span>
+<span class="ln">21</span>        <span class="n">socklen_t</span> <span class="n">addrlen</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">remote</span><span class="p">);</span>
+<span class="ln">22</span>
+<span class="ln">23</span>        <span class="kt">int</span> <span class="n">bufferSize</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buffer</span><span class="p">);</span>
+<span class="ln">24</span>        <span class="c1">//接收数据
+</span><span class="ln">25</span><span class="c1"></span>        <span class="kt">int</span> <span class="n">length</span> <span class="o">=</span> <span class="n">recvfrom</span><span class="p">(</span><span class="n">mSocket</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">bufferSize</span><span class="p">,</span>
+<span class="ln">26</span>            <span class="n">MSG_TRUNC</span> <span class="o">|</span> <span class="n">MSG_DONTWAIT</span><span class="p">,</span> <span class="p">(</span><span class="n">sockaddr</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">remote</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">addrlen</span><span class="p">);</span>
+<span class="ln">27</span>
+<span class="ln">28</span>        <span class="c1">//进行数据头部校验
+</span><span class="ln">29</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="n">length</span> <span class="o">&lt;</span> <span class="mi">12</span> <span class="o">||</span> <span class="n">length</span> <span class="o">&gt;</span> <span class="n">bufferSize</span> <span class="o">||</span>
+<span class="ln">30</span>            <span class="p">(</span><span class="n">ntohl</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="o">*</span><span class="p">)</span><span class="n">buffer</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xC07F0000</span><span class="p">)</span> <span class="o">!=</span> <span class="n">mCodecMagic</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">31</span>            <span class="n">ALOGV</span><span class="p">(</span><span class="s">&#34;stream[%d] malformed packet&#34;</span><span class="p">,</span> <span class="n">mSocket</span><span class="p">);</span>
+<span class="ln">32</span>            <span class="k">return</span><span class="p">;</span>
+<span class="ln">33</span>        <span class="p">}</span>
+<span class="ln">34</span>        <span class="kt">int</span> <span class="n">offset</span> <span class="o">=</span> <span class="mi">12</span> <span class="o">+</span> <span class="p">((</span><span class="n">buffer</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x0F</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">2</span><span class="p">);</span>
+<span class="ln">35</span>        <span class="k">if</span> <span class="p">(</span><span class="n">offset</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">uint16_t</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">length</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">36</span>            <span class="n">ALOGV</span><span class="p">(</span><span class="s">&#34;invalid buffer offset: %d&#34;</span><span class="p">,</span> <span class="n">offset</span><span class="o">+</span><span class="mi">2</span><span class="p">);</span>
+<span class="ln">37</span>            <span class="k">return</span><span class="p">;</span>
+<span class="ln">38</span>        <span class="p">}</span>
+<span class="ln">39</span>        <span class="k">if</span> <span class="p">((</span><span class="n">buffer</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x10</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">40</span>            <span class="n">offset</span> <span class="o">+=</span> <span class="mi">4</span> <span class="o">+</span> <span class="p">(</span><span class="n">ntohs</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="kt">uint16_t</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">buffer</span><span class="p">[</span><span class="n">offset</span> <span class="o">+</span> <span class="mi">2</span><span class="p">])</span> <span class="o">&lt;&lt;</span> <span class="mi">2</span><span class="p">);</span>
+<span class="ln">41</span>        <span class="p">}</span>
+<span class="ln">42</span>        <span class="k">if</span> <span class="p">((</span><span class="n">buffer</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x20</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">43</span>            <span class="n">length</span> <span class="o">-=</span> <span class="n">buffer</span><span class="p">[</span><span class="n">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">];</span>
+<span class="ln">44</span>        <span class="p">}</span>
+<span class="ln">45</span>        <span class="n">length</span> <span class="o">-=</span> <span class="n">offset</span><span class="p">;</span>
+<span class="ln">46</span>        <span class="k">if</span> <span class="p">(</span><span class="n">length</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">47</span>            <span class="c1">//接收完成后解码，调用AudioCodec
+</span><span class="ln">48</span><span class="c1"></span>            <span class="n">length</span> <span class="o">=</span> <span class="n">mCodec</span><span class="o">-&gt;</span><span class="n">decode</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">buffer</span><span class="p">[</span><span class="n">offset</span><span class="p">],</span> <span class="n">length</span><span class="p">);</span>
+<span class="ln">49</span>        <span class="p">}</span>
+<span class="ln">50</span>        <span class="k">if</span> <span class="p">(</span><span class="n">length</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">mFixRemote</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">51</span>            <span class="n">mRemote</span> <span class="o">=</span> <span class="n">remote</span><span class="p">;</span>
+<span class="ln">52</span>            <span class="n">mFixRemote</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">53</span>        <span class="p">}</span>
+<span class="ln">54</span>        <span class="n">count</span> <span class="o">=</span> <span class="n">length</span><span class="p">;</span>
+<span class="ln">55</span>    <span class="p">}</span>
+<span class="ln">56</span>    <span class="p">...</span>
+<span class="ln">57</span><span class="p">}</span>
+</code></pre></div><h3 id="333接收端">3.3.3接收端</h3>
+<p>接收端也是另外一个DeviceThread线程，主要是用于本地的一些实时处理</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/opt/net/voip/src/jni/rtp/AudioGroup.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">bool</span> <span class="n">AudioGroup</span><span class="o">::</span><span class="n">DeviceThread</span><span class="o">::</span><span class="n">threadLoop</span><span class="p">()</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="c1">//在线程初始化的时候就赋值了
+</span><span class="ln"> 5</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">deviceSocket</span> <span class="o">=</span> <span class="n">mGroup</span><span class="o">-&gt;</span><span class="n">mDeviceSocket</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="p">...</span>
+<span class="ln"> 7</span>    <span class="c1">//[0]设置接收和发送的数据为最小帧数
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="n">setsockopt</span><span class="p">(</span><span class="n">deviceSocket</span><span class="p">,</span> <span class="n">SOL_SOCKET</span><span class="p">,</span> <span class="n">SO_RCVBUF</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">output</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">output</span><span class="p">));</span>
+<span class="ln"> 9</span>    <span class="n">setsockopt</span><span class="p">(</span><span class="n">deviceSocket</span><span class="p">,</span> <span class="n">SOL_SOCKET</span><span class="p">,</span> <span class="n">SO_SNDBUF</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">output</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">output</span><span class="p">));</span>
+<span class="ln">10</span>
+<span class="ln">11</span>    <span class="c1">// [0]这里主要去除一些错误信息
+</span><span class="ln">12</span><span class="c1"></span>    <span class="kt">char</span> <span class="n">c</span><span class="p">;</span>
+<span class="ln">13</span>    <span class="k">while</span> <span class="p">(</span><span class="n">recv</span><span class="p">(</span><span class="n">deviceSocket</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">MSG_DONTWAIT</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">);</span>
+<span class="ln">14</span>	<span class="p">...</span>
+<span class="ln">15</span>    <span class="c1">//本地回声处理的一些初始化操作 
+</span><span class="ln">16</span><span class="c1"></span>    <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">exitPending</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln">17</span>        <span class="kt">int16_t</span> <span class="n">output</span><span class="p">[</span><span class="n">sampleCount</span><span class="p">];</span>
+<span class="ln">18</span>        <span class="c1">//[1]接收数据，缓冲区大小为2*sampleCount
+</span><span class="ln">19</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="n">recv</span><span class="p">(</span><span class="n">deviceSocket</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">output</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">20</span>            <span class="n">memset</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">output</span><span class="p">));</span>
+<span class="ln">21</span>        <span class="p">}</span>
+<span class="ln">22</span>
+<span class="ln">23</span>        <span class="kt">int16_t</span> <span class="n">input</span><span class="p">[</span><span class="n">sampleCount</span><span class="p">];</span>
+<span class="ln">24</span>        <span class="kt">int</span> <span class="n">toWrite</span> <span class="o">=</span> <span class="n">sampleCount</span><span class="p">;</span>
+<span class="ln">25</span>        <span class="kt">int</span> <span class="n">toRead</span> <span class="o">=</span> <span class="p">(</span><span class="n">mode</span> <span class="o">==</span> <span class="n">MUTED</span><span class="p">)</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="n">sampleCount</span><span class="p">;</span>
+<span class="ln">26</span>        <span class="kt">int</span> <span class="n">chances</span> <span class="o">=</span> <span class="mi">100</span><span class="p">;</span>
+<span class="ln">27</span>		<span class="p">...</span>
+<span class="ln">28</span>		<span class="c1">//处理数据
+</span><span class="ln">29</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="n">mode</span> <span class="o">!=</span> <span class="n">MUTED</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">30</span>            <span class="k">if</span> <span class="p">(</span><span class="n">echo</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">31</span>                <span class="n">ALOGV</span><span class="p">(</span><span class="s">&#34;echo-&gt;run()&#34;</span><span class="p">);</span>
+<span class="ln">32</span>                <span class="c1">//[2]回声抵消操作
+</span><span class="ln">33</span><span class="c1"></span>                <span class="n">echo</span><span class="o">-&gt;</span><span class="n">run</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">input</span><span class="p">);</span>
+<span class="ln">34</span>            <span class="p">}</span>
+<span class="ln">35</span>            <span class="c1">//[3]处理完成之后，再把处理后的数据发送给对端,MSG_DONTWAIT非阻塞
+</span><span class="ln">36</span><span class="c1"></span>            <span class="n">send</span><span class="p">(</span><span class="n">deviceSocket</span><span class="p">,</span> <span class="n">input</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">input</span><span class="p">),</span> <span class="n">MSG_DONTWAIT</span><span class="p">);</span>
+<span class="ln">37</span>        <span class="p">}</span>
+<span class="ln">38</span>    <span class="p">}</span>
+<span class="ln">39</span>
+<span class="ln">40</span><span class="nl">exit</span><span class="p">:</span>
+<span class="ln">41</span>    <span class="k">delete</span> <span class="n">echo</span><span class="p">;</span>
+<span class="ln">42</span>    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">43</span><span class="p">}</span>
+</code></pre></div><h3 id="334总结">3.3.4总结</h3>
+<p>这里是rtp协议，通过网络形式发送实时流，然后通过编码传输到本地，进行回声抵消等操作，然后处理完成后再从本地发送给网络端，并对其解码，整个流程是UDP的套接字，说明对数据的实时性要求非常高，且允许发送和接收过程丢包。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/socketpair/sp_14.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/socketpair/sp_14.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="4总结">4总结</h1>
+<p>总的来说，socketpair就是socket和pipe的结合，具有全双工，并且两端都可读写，不管是在源码中还是平时使用中，特别是多进程/多线程之间的通信，都会涉及到socketpair这一块。本文主要讲了三种类型的套接字类型<code>SOCK_STREAM</code>（TCP流），<code>SOCK_SEQPACKET</code>（整体发送），<code>SOCK_DGRAM</code>（UDP性质的），其实还可以有其他类型，这一块需要读者自己去研究了。耐心阅读，找到最根本的原理，即可一通百通。</p>
+<h1 id="参考">参考</h1>
+<p><a href="https://www.cnblogs.com/fortunely/p/14872465.html">[1] 明明1109. Linux C常见数I/O函数比较: printf, sprintf, fprintf, write&hellip;, 2021.</a></p>
+<p><a href="https://blog.csdn.net/Donald_Shallwing/article/details/86767572">[1] Donald_Shallwing. 经验分享：编写简易的温度监控程序（3）, 2019.</a></p>
+<p><a href="https://blog.csdn.net/weixin_36389889/article/details/125820456">[1] alibli. Camera MetaData介绍_独家原创, 2023.</a></p>
+<p><a href="http://www.5ityx.com/cate100/261276.html">[1] IT技术分享网. Android Camera之CameraMetadata分析, 2023.</a></p>
+<p><a href="https://blog.csdn.net/cfc1243570631/article/details/128033812">[1] cfc1243570631. CameraMetadata 知识学习整理, 2022.</a></p>
+<p><a href="https://blog.csdn.net/armwind/article/details/52027010">[1] armwind. Android Camera之CameraMetadata分析, 2016.</a></p>
+<p><a href="https://blog.csdn.net/Ciellee/article/details/105807436">[1] &ldquo;小夜猫&amp;小懒虫&amp;小财迷&quot;的男人. 【高通SDM660平台】(8) &mdash; Camera MetaData介绍, 2020.</a></p>
+<p><a href="https://blog.csdn.net/rikeyone/article/details/88828154">[1]程序猿Ricky的日常干货 . Linux fcntl 函数详解, 2019.</a></p>
+<p><a href="https://www.cnblogs.com/roger-yu/p/16158539.html">[1] 二的次方. Android 图像显示系统 - 基础知识之 BitTube, 2022.</a></p>
+<p><a href="https://mp.weixin.qq.com/s/gEiTIgStFkIrPPSXLlJ2WA">[1] 程序员Android. Android 系统init进程启动流程, 2023.</a></p>
+<p><a href="https://blog.csdn.net/xk7298/article/details/102291785">[1] 晓涵涵. Android中UID、GID和PID的讲解, 2019.</a></p>
+<p><a href="https://blog.csdn.net/lang151719/article/details/115214859">[1] 猿來孺兹. protobuf c/c++详解, 2022.</a></p>
+<p><a href="https://blog.csdn.net/weixin_43389824/article/details/124731063">[1] 书山青鸟叫. 浅谈Linux poll机制, 2022.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/socket/">socket</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/pipe/">pipe</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/bittube/">BitTube</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/epoll/">epoll</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/poll/">poll</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/proto/">proto</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/property_service/">property_service</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/camerametadata/">CameraMetadata</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/audiogroup/">AudioGroup</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/07/c-stdbind/" data-tooltip="C&#43;&#43; std::bind">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/07/%E5%85%B3%E4%BA%8E%E5%8F%AF%E5%8F%98%E5%87%BD%E6%95%B0va_list%E5%8E%9F%E7%90%86%E5%8F%8A%E7%94%A8%E6%B3%95/" data-tooltip="关于可变函数va_list原理及用法">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2023 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/07/c-stdbind/" data-tooltip="C&#43;&#43; std::bind">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/07/%E5%85%B3%E4%BA%8E%E5%8F%AF%E5%8F%98%E5%87%BD%E6%95%B0va_list%E5%8E%9F%E7%90%86%E5%8F%8A%E7%94%A8%E6%B3%95/" data-tooltip="关于可变函数va_list原理及用法">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2023%2F07%2F%25E5%2585%25B3%25E4%25BA%258Esocketpair%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25AF%2587%25E5%258C%2585%25E5%2590%25AB%25E6%25BA%2590%25E7%25A0%2581%25E5%25AF%25B9%25E7%2585%25A7%25E8%25A7%25A3%25E6%259E%2590%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2023%2F07%2F%25E5%2585%25B3%25E4%25BA%258Esocketpair%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25AF%2587%25E5%258C%2585%25E5%2590%25AB%25E6%25BA%2590%25E7%25A0%2581%25E5%25AF%25B9%25E7%2585%25A7%25E8%25A7%25A3%25E6%259E%2590%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2023%2F07%2F%25E5%2585%25B3%25E4%25BA%258Esocketpair%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25AF%2587%25E5%258C%2585%25E5%2590%25AB%25E6%25BA%2590%25E7%25A0%2581%25E5%25AF%25B9%25E7%2585%25A7%25E8%25A7%25A3%25E6%259E%2590%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2023\/07\/%E5%85%B3%E4%BA%8Esocketpair%E5%AD%A6%E4%B9%A0%E7%AF%87%E5%8C%85%E5%90%AB%E6%BA%90%E7%A0%81%E5%AF%B9%E7%85%A7%E8%A7%A3%E6%9E%90\/';
+          
+            this.page.identifier = '\/2023\/07\/%E5%85%B3%E4%BA%8Esocketpair%E5%AD%A6%E4%B9%A0%E7%AF%87%E5%8C%85%E5%90%AB%E6%BA%90%E7%A0%81%E5%AF%B9%E7%85%A7%E8%A7%A3%E6%9E%90\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
