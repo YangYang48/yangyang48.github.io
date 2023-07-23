@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="源码中出现很多关于operator重载的操作符，但是本文着重讲述关于小括号，指针操作，自定义类型和类型转换。">
+
+
+<meta property="og:description" content="源码中出现很多关于operator重载的操作符，但是本文着重讲述关于小括号，指针操作，自定义类型和类型转换。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C&#43;&#43; operator重载">
+<meta name="twitter:title" content="C&#43;&#43; operator重载">
+<meta property="og:url" content="https://yangyang48.github.io/2023/07/c-operator%E9%87%8D%E8%BD%BD/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2023/07/c-operator%E9%87%8D%E8%BD%BD/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="源码中出现很多关于operator重载的操作符，但是本文着重讲述关于小括号，指针操作，自定义类型和类型转换。">
+<meta name="twitter:description" content="源码中出现很多关于operator重载的操作符，但是本文着重讲述关于小括号，指针操作，自定义类型和类型转换。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2023-07-23T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2023-07-23T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="c&#43;&#43;">
+    
+      <meta property="article:section" content="2023">
+    
+      <meta property="article:section" content="July">
+    
+  
+  
+    
+      <meta property="article:tag" content="基础">
+    
+      <meta property="article:tag" content="类型转换">
+    
+      <meta property="article:tag" content="仿函数">
+    
+      <meta property="article:tag" content="谓词">
+    
+      <meta property="article:tag" content="指针操作">
+    
+      <meta property="article:tag" content="自定义类型">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/c&#43;&#43;/base/operator/op_thumb.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/c&#43;&#43;/base/operator/op_thumb.png">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/c&#43;&#43;/base/operator/op_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/c&#43;&#43;/base/operator/op_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+
+
+    <title>C&#43;&#43; operator重载</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2023/07/c-operator%E9%87%8D%E8%BD%BD/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/c&#43;&#43;/base/operator/op_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      C&#43;&#43; operator重载
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2023-07-23T00:00:00Z">
+        
+  七月 23, 2023
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/c&#43;&#43;">c&#43;&#43;</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2023">2023</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/july">July</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">1200 Words|Read in about 6 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>源码中出现很多关于operator重载的操作符，但是本文着重讲述关于小括号，指针操作，自定义类型和类型转换。</p>
+<h1 id="1介绍">1介绍</h1>
+<p>我们在设计一个类的时候，不可避免的需要在某些时候对这个类的实例进行操作符运算，例如比较、自增、自减等。此时就必须在类中重载相应的操作符，如果能够自定义一些规则，就可以让类之间像基本整数一样能够自由的运算。比如string类，可以使用加号<code>+</code>和<code>==</code>等。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="cp">#include</span> <span class="cpf">&lt;string&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp"></span>
+<span class="ln"> 4</span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln"> 7</span><span class="p">{</span>
+<span class="ln"> 8</span>    <span class="c1">//使用 + 操作符拼接两个字符串
+</span><span class="ln"> 9</span><span class="c1"></span>    <span class="n">string</span> <span class="n">str1</span><span class="p">(</span><span class="s">&#34;2023 &#34;</span><span class="p">);</span>
+<span class="ln">10</span>    <span class="n">string</span> <span class="n">str2</span><span class="p">(</span><span class="s">&#34;yangyang48&#34;</span><span class="p">);</span>
+<span class="ln">11</span>    <span class="n">string</span> <span class="n">str3</span> <span class="o">=</span> <span class="n">str1</span> <span class="o">+</span> <span class="n">str2</span><span class="p">;</span><span class="c1">//&#34;2023 yangyang48&#34;
+</span><span class="ln">12</span><span class="c1"></span>    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">str3</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">13</span>    <span class="c1">//使用==来比较两个字符串的内容
+</span><span class="ln">14</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">str1</span> <span class="o">==</span> <span class="n">str2</span><span class="p">)</span>
+<span class="ln">15</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;str1 = str2&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">16</span>    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">str1</span> <span class="o">&lt;</span> <span class="n">str2</span><span class="p">)</span>
+<span class="ln">17</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;str1 &lt; str2&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">18</span>    <span class="k">else</span>
+<span class="ln">19</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;str1 &gt; str2&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">20</span>
+<span class="ln">21</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">22</span><span class="p">}</span>
+</code></pre></div><p>输出结果</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="mi">2023</span> <span class="n">yangyang48</span>
+<span class="ln">2</span><span class="n">str1</span> <span class="o">&lt;</span> <span class="n">str2</span>
+</code></pre></div><p>多数的C++操作符都可以被重载，重载的操作符（有些情况例外）不必是成员函数，但必须至少有一个操作数是用户定义的类型。下面详细介绍C++对用户定义的操作符重载的<strong>限制</strong></p>
+<ol>
+<li>
+<p>运算符的优先级（precedence）不可改变。例如，除法的运算优先级永远高于加法。</p>
+</li>
+<li>
+<p>不能引入新的操作符。例如，不能定义operator**()函数来表示求幂。</p>
+</li>
+<li>
+<p>不能重载以下操作符</p>
+<p><code>sizeof</code> ——<strong>sizeof操作符</strong></p>
+<p><code>.</code>——<strong>成员操作符</strong></p>
+<p><code>.*</code>——<strong>成员指针操作符</strong></p>
+<p><code>::</code>——<strong>作用域解析操作符</strong></p>
+<p><code>?:</code>——<strong>条件操作符</strong></p>
+<p><code>typeid</code>——<strong>一个RTTI操作符</strong></p>
+<p><code>const_cast</code>——<strong>强制类型转换操作符</strong></p>
+<p><code>dynamic_cast</code>——<strong>强制类型转换操作符</strong></p>
+<p><code>reinterpret_cast</code>——<strong>强制类型转换操作符</strong></p>
+<p><code>static_cast</code>——<strong>强制类型转换操作符</strong></p>
+<p>可以重载的运算符表</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center"><code>=</code></th>
+<th style="text-align:center"><code>()</code></th>
+<th style="text-align:center"><code>[]</code></th>
+<th style="text-align:center"><code>-&gt;</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"><code>+</code></td>
+<td style="text-align:center"><code>-</code></td>
+<td style="text-align:center"><code>*</code></td>
+<td style="text-align:center"><code>/</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>%</code></td>
+<td style="text-align:center"><code>^</code></td>
+<td style="text-align:center"><code>&amp;</code></td>
+<td style="text-align:center">`</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>~=</code></td>
+<td style="text-align:center"><code>!</code></td>
+<td style="text-align:center"><code>&lt;</code></td>
+<td style="text-align:center"><code>&gt;</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>+=</code></td>
+<td style="text-align:center"><code>-=</code></td>
+<td style="text-align:center"><code>*=</code></td>
+<td style="text-align:center"><code>/=</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>%=</code></td>
+<td style="text-align:center"><code>^=</code></td>
+<td style="text-align:center"><code>&amp;=</code></td>
+<td style="text-align:center">`</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>&lt;&lt;</code></td>
+<td style="text-align:center"><code>&gt;&gt;</code></td>
+<td style="text-align:center"><code>&gt;&gt;=</code></td>
+<td style="text-align:center"><code>&lt;&lt;=</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>==</code></td>
+<td style="text-align:center"><code>!=</code></td>
+<td style="text-align:center"><code>&lt;=</code></td>
+<td style="text-align:center"><code>&gt;=</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>&amp;&amp;</code></td>
+<td style="text-align:center">`</td>
+<td style="text-align:center"></td>
+<td style="text-align:center">`</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>,</code></td>
+<td style="text-align:center"><code>-&gt;*</code></td>
+<td style="text-align:center"><code>new</code></td>
+<td style="text-align:center"><code>delete</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>new[]</code></td>
+<td style="text-align:center"><code>delete[]</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ol>
+<h1 id="2具体demo">2具体demo</h1>
+<h2 id="21仿函数">2.1仿函数</h2>
+<p>仿函数(functor)，就是使一个类的使用看上去像一个函数。其实现就是类中实现一个<code>operator()</code>，这个类就有了类似函数的行为，就是一个仿函数类了。仿函数是比较特殊的重载符号，为括号<code>()</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="cp">#include</span> <span class="cpf">&lt;string&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp">#include</span> <span class="cpf">&lt;vector&gt;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span><span class="ln"> 4</span><span class="cp"></span>
+<span class="ln"> 5</span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+<span class="ln"> 6</span><span class="c1">//筛选大于5的数
+</span><span class="ln"> 7</span><span class="c1"></span><span class="k">class</span> <span class="nc">GreaterFive</span>
+<span class="ln"> 8</span><span class="p">{</span>
+<span class="ln"> 9</span><span class="k">public</span><span class="o">:</span>
+<span class="ln">10</span>    <span class="n">GreaterFive</span><span class="p">()</span>
+<span class="ln">11</span>    <span class="p">{</span>
+<span class="ln">12</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;GreaterFive constructor&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">13</span>    <span class="p">}</span>
+<span class="ln">14</span>
+<span class="ln">15</span>    <span class="kt">bool</span> <span class="nf">operator</span><span class="p">()(</span><span class="kt">int</span> <span class="n">val</span><span class="p">)</span>
+<span class="ln">16</span>    <span class="p">{</span>
+<span class="ln">17</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;GreaterFive functor&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">18</span>        <span class="k">return</span> <span class="n">val</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">;</span>
+<span class="ln">19</span>    <span class="p">}</span>
+<span class="ln">20</span><span class="p">};</span>
+<span class="ln">21</span>
+<span class="ln">22</span><span class="k">class</span> <span class="nc">MyCompare</span><span class="p">{</span>
+<span class="ln">23</span><span class="k">public</span><span class="o">:</span>
+<span class="ln">24</span>    <span class="c1">//排序从大到小
+</span><span class="ln">25</span><span class="c1"></span>    <span class="kt">bool</span> <span class="k">operator</span><span class="p">()(</span><span class="kt">int</span> <span class="n">v1</span><span class="p">,</span><span class="kt">int</span> <span class="n">v2</span><span class="p">)</span>
+<span class="ln">26</span>    <span class="p">{</span>
+<span class="ln">27</span>        <span class="k">return</span> <span class="n">v1</span> <span class="o">&gt;</span> <span class="n">v2</span><span class="p">;</span>
+<span class="ln">28</span>    <span class="p">}</span>
+<span class="ln">29</span><span class="p">};</span>
+<span class="ln">30</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln">31</span><span class="p">{</span>
+<span class="ln">32</span>    <span class="n">vector</span> <span class="n">v</span><span class="p">{</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">8</span><span class="p">};</span>
+<span class="ln">33</span>    <span class="c1">//传入的GreaterFive()是一个匿名的对象，通过传入的匿名对象调用这个对象的仿函数
+</span><span class="ln">34</span><span class="c1"></span>    <span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;::</span><span class="n">iterator</span> <span class="n">iter</span> <span class="o">=</span> <span class="n">find_if</span><span class="p">(</span><span class="n">v</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">v</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">GreaterFive</span><span class="p">());</span>
+<span class="ln">35</span>    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span><span class="n">i</span> <span class="o">&lt;</span><span class="n">v</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+<span class="ln">36</span>    <span class="p">{</span>
+<span class="ln">37</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;</span><span class="se">\t</span><span class="s">&#34;</span><span class="p">;</span>
+<span class="ln">38</span>    <span class="p">}</span>
+<span class="ln">39</span>    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">40</span>    <span class="n">sort</span><span class="p">(</span><span class="n">v</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">v</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">MyCompare</span><span class="p">());</span>
+<span class="ln">41</span>    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span><span class="n">i</span> <span class="o">&lt;</span><span class="n">v</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+<span class="ln">42</span>    <span class="p">{</span>
+<span class="ln">43</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;</span><span class="se">\t</span><span class="s">&#34;</span><span class="p">;</span>
+<span class="ln">44</span>    <span class="p">}</span>
+<span class="ln">45</span><span class="p">}</span>
+</code></pre></div><p>这里可以看到处理STL中的查找函数和排序函数，都使用到了仿函数。</p>
+<p>这里的仿函数作用原理也是比较巧妙，<strong>利用匿名的构造函数调用传入对象</strong>，<strong>然后STL内部会调用对应的仿函数达到目的</strong>。</p>
+<p>另外特别的是，如果仿函数的<strong>返回类型为bool类型，那么可以称为谓词</strong>，有几个参数可以称为几元谓词。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//一元谓词
+</span><span class="ln">2</span><span class="c1"></span><span class="kt">bool</span> <span class="n">GreaterFive</span><span class="o">::</span><span class="k">operator</span><span class="p">()(</span><span class="kt">int</span> <span class="n">val</span><span class="p">);</span>
+<span class="ln">3</span><span class="c1">//二元谓词
+</span><span class="ln">4</span><span class="c1"></span><span class="kt">bool</span> <span class="n">MyCompare</span><span class="o">::</span><span class="k">operator</span><span class="p">()(</span><span class="kt">int</span> <span class="n">v1</span><span class="p">,</span><span class="kt">int</span> <span class="n">v2</span><span class="p">);</span>
+</code></pre></div><h2 id="22指针引用相关运算符重载">2.2指针/引用相关运算符重载</h2>
+<p>在强指针中，出现了使用指针运算重载的运算符操作，具体可以查看<a href="https://yangyang48.github.io/2022/11/android%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E8%A7%A3%E6%9E%90/">Android智能指针解析</a></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//system_core/blob/HEAD/libutils/include/utils/StrongPointer.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="ln"> 3</span><span class="k">class</span> <span class="nc">sp</span> <span class="p">{</span>
+<span class="ln"> 4</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 5</span>    <span class="p">...</span>
+<span class="ln"> 6</span>    <span class="c1">// Accessors
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="kr">inline</span> <span class="n">T</span><span class="o">&amp;</span>       <span class="k">operator</span><span class="o">*</span> <span class="p">()</span> <span class="k">const</span>     <span class="p">{</span> <span class="k">return</span> <span class="o">*</span><span class="n">m_ptr</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln"> 8</span>    <span class="kr">inline</span> <span class="n">T</span><span class="o">*</span>       <span class="k">operator</span><span class="o">-&gt;</span> <span class="p">()</span> <span class="k">const</span>    <span class="p">{</span> <span class="k">return</span> <span class="n">m_ptr</span><span class="p">;</span>  <span class="p">}</span>
+<span class="ln"> 9</span>    <span class="kr">inline</span> <span class="n">T</span><span class="o">*</span>       <span class="nf">get</span><span class="p">()</span> <span class="k">const</span>            <span class="p">{</span> <span class="k">return</span> <span class="n">m_ptr</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln">10</span>    <span class="kr">inline</span> <span class="k">explicit</span> <span class="k">operator</span> <span class="nf">bool</span> <span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">m_ptr</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln">11</span><span class="p">};</span>
+</code></pre></div><p>如果这个时候调用</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="k">using</span> <span class="k">namespace</span> <span class="n">android</span><span class="p">;</span>
+<span class="ln"> 2</span><span class="k">class</span> <span class="nc">A</span> <span class="o">:</span> <span class="k">public</span> <span class="n">RefBase</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 5</span>    <span class="k">virtual</span> <span class="o">~</span><span class="n">A</span><span class="p">(){};</span>
+<span class="ln"> 6</span>    <span class="kt">int</span> <span class="nf">value</span><span class="p">()</span>
+<span class="ln"> 7</span>    <span class="p">{</span>
+<span class="ln"> 8</span>        <span class="k">return</span> <span class="mi">723</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="p">}</span>
+<span class="ln">10</span><span class="p">};</span>
+<span class="ln">11</span>
+<span class="ln">12</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln">13</span><span class="p">{</span>
+<span class="ln">14</span>    <span class="n">sp</span><span class="o">&lt;</span><span class="n">A</span><span class="o">&gt;</span> <span class="n">a</span> <span class="o">=</span> <span class="k">new</span> <span class="n">A</span><span class="p">();</span>
+<span class="ln">15</span>    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">a</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">16</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">17</span><span class="p">}</span>
+</code></pre></div><p>输出结果</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>723
+</code></pre></div><p>上面的a-&gt;value，这里的a并不是一个指针（a保存的不是一个地址，a是一个<code>sp&lt;a&gt;</code>的临时变量），但是有一个运算符重载，这个运算符重载相当于是指针的运算。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="n">a</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">();</span>
+<span class="ln">2</span><span class="c1">//等价于 a.operator-&gt;()-&gt;value();
+</span><span class="ln">3</span><span class="c1">//等价于 m_ptr-&gt;value();
+</span><span class="ln">4</span><span class="c1">//等价于 (*m_ptr).value();这里才真正调用到了默认的指针运算方式，调用到函数value
+</span></code></pre></div><h2 id="23自定义字符串重载">2.3自定义字符串重载</h2>
+<p>这里举一个源码中的操作，用于FPS的计算，即1/60s的计算</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/services/surfaceflinger/Scheduler/include/scheduler/Fps.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">class</span> <span class="nc">Fps</span> <span class="p">{</span>
+<span class="ln"> 3</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 4</span>    <span class="k">constexpr</span> <span class="n">Fps</span><span class="p">()</span> <span class="o">=</span> <span class="k">default</span><span class="p">;</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span>    <span class="k">static</span> <span class="k">constexpr</span> <span class="n">Fps</span> <span class="nf">fromValue</span><span class="p">(</span><span class="kt">float</span> <span class="n">frequency</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 7</span>        <span class="k">return</span> <span class="n">frequency</span> <span class="o">&gt;</span> <span class="mf">0.f</span> <span class="o">?</span> <span class="n">Fps</span><span class="p">(</span><span class="n">frequency</span><span class="p">,</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">nsecs_t</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">1e9</span><span class="n">f</span> <span class="o">/</span> <span class="n">frequency</span><span class="p">))</span> <span class="o">:</span> <span class="n">Fps</span><span class="p">();</span>
+<span class="ln"> 8</span>    <span class="p">}</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span>    <span class="k">static</span> <span class="k">constexpr</span> <span class="n">Fps</span> <span class="nf">fromPeriodNsecs</span><span class="p">(</span><span class="n">nsecs_t</span> <span class="n">period</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">11</span>        <span class="k">return</span> <span class="n">period</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">?</span> <span class="n">Fps</span><span class="p">(</span><span class="mf">1e9</span><span class="n">f</span> <span class="o">/</span> <span class="n">period</span><span class="p">,</span> <span class="n">period</span><span class="p">)</span> <span class="o">:</span> <span class="n">Fps</span><span class="p">();</span>
+<span class="ln">12</span>    <span class="p">}</span>
+<span class="ln">13</span>
+<span class="ln">14</span>    <span class="k">constexpr</span> <span class="kt">bool</span> <span class="nf">isValid</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">mFrequency</span> <span class="o">&gt;</span> <span class="mf">0.f</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln">15</span>
+<span class="ln">16</span>    <span class="k">constexpr</span> <span class="kt">float</span> <span class="nf">getValue</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">mFrequency</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln">17</span>    <span class="kt">int</span> <span class="nf">getIntValue</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">round</span><span class="p">(</span><span class="n">mFrequency</span><span class="p">));</span> <span class="p">}</span>
+<span class="ln">18</span>
+<span class="ln">19</span>    <span class="k">constexpr</span> <span class="n">nsecs_t</span> <span class="nf">getPeriodNsecs</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">mPeriod</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln">20</span>
+<span class="ln">21</span><span class="k">private</span><span class="o">:</span>
+<span class="ln">22</span>    <span class="k">constexpr</span> <span class="n">Fps</span><span class="p">(</span><span class="kt">float</span> <span class="n">frequency</span><span class="p">,</span> <span class="n">nsecs_t</span> <span class="n">period</span><span class="p">)</span> <span class="o">:</span> <span class="n">mFrequency</span><span class="p">(</span><span class="n">frequency</span><span class="p">),</span> <span class="n">mPeriod</span><span class="p">(</span><span class="n">period</span><span class="p">)</span> <span class="p">{}</span>
+<span class="ln">23</span>
+<span class="ln">24</span>    <span class="kt">float</span> <span class="n">mFrequency</span> <span class="o">=</span> <span class="mf">0.f</span><span class="p">;</span>
+<span class="ln">25</span>    <span class="n">nsecs_t</span> <span class="n">mPeriod</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">26</span><span class="p">};</span>
+<span class="ln">27</span>
+<span class="ln">28</span><span class="k">struct</span> <span class="nc">FpsRange</span> <span class="p">{</span>
+<span class="ln">29</span>    <span class="n">Fps</span> <span class="n">min</span> <span class="o">=</span> <span class="n">Fps</span><span class="o">::</span><span class="n">fromValue</span><span class="p">(</span><span class="mf">0.f</span><span class="p">);</span>
+<span class="ln">30</span>    <span class="n">Fps</span> <span class="n">max</span> <span class="o">=</span> <span class="n">Fps</span><span class="o">::</span><span class="n">fromValue</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">numeric_limits</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;::</span><span class="n">max</span><span class="p">());</span>
+<span class="ln">31</span>
+<span class="ln">32</span>    <span class="kt">bool</span> <span class="nf">includes</span><span class="p">(</span><span class="n">Fps</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+<span class="ln">33</span><span class="p">};</span>
+<span class="ln">34</span><span class="c1">//类外定义
+</span><span class="ln">35</span><span class="c1"></span><span class="k">constexpr</span> <span class="n">Fps</span> <span class="k">operator</span><span class="s">&#34;&#34;</span><span class="n">_Hz</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span> <span class="kt">long</span> <span class="n">frequency</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">36</span>    <span class="k">return</span> <span class="n">Fps</span><span class="o">::</span><span class="n">fromValue</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="n">frequency</span><span class="p">));</span>
+<span class="ln">37</span><span class="p">}</span>
+<span class="ln">38</span><span class="c1">//类外定义
+</span><span class="ln">39</span><span class="c1"></span><span class="k">constexpr</span> <span class="n">Fps</span> <span class="k">operator</span><span class="s">&#34;&#34;</span><span class="n">_Hz</span><span class="p">(</span><span class="kt">long</span> <span class="kt">double</span> <span class="n">frequency</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">40</span>    <span class="k">return</span> <span class="n">Fps</span><span class="o">::</span><span class="n">fromValue</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="n">frequency</span><span class="p">));</span>
+<span class="ln">41</span><span class="p">}</span>
+</code></pre></div><p>这个类，只有两个内部私有变量，一个是外部传入定义的帧率，可以是60.0，也可以是其他浮点数，后一个参数即为转换为毫秒的数，对应具体的1/mFrequency的值。这个封装起来非常巧妙，使用默认的例子即可。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//使用方式
+</span><span class="ln">2</span><span class="c1">// Frames per second, stored as floating-point frequency. Provides conversion from/to period in
+</span><span class="ln">3</span><span class="c1">// nanoseconds, and relational operators with precision threshold.
+</span><span class="ln">4</span><span class="c1">//
+</span><span class="ln">5</span><span class="c1">//     const Fps fps = 60_Hz;
+</span><span class="ln">6</span><span class="c1">//
+</span><span class="ln">7</span><span class="c1">//     using namespace fps_approx_ops;
+</span><span class="ln">8</span><span class="c1">//     assert(fps == Fps::fromPeriodNsecs(16&#39;666&#39;667));
+</span><span class="ln">9</span><span class="c1">//
+</span></code></pre></div><p>完整版</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp"></span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+<span class="ln"> 4</span><span class="k">class</span> <span class="nc">Fps</span> <span class="p">{</span>
+<span class="ln"> 5</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 6</span>    <span class="k">constexpr</span> <span class="n">Fps</span><span class="p">()</span> <span class="o">=</span> <span class="k">default</span><span class="p">;</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span>    <span class="k">static</span> <span class="k">constexpr</span> <span class="n">Fps</span> <span class="nf">fromValue</span><span class="p">(</span><span class="kt">float</span> <span class="n">frequency</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 9</span>        <span class="k">return</span> <span class="n">frequency</span> <span class="o">&gt;</span> <span class="mf">0.f</span> <span class="o">?</span> <span class="n">Fps</span><span class="p">(</span><span class="n">frequency</span><span class="p">,</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">long</span> <span class="kt">long</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">1e9</span><span class="n">f</span> <span class="o">/</span> <span class="n">frequency</span><span class="p">))</span> <span class="o">:</span> <span class="n">Fps</span><span class="p">();</span>
+<span class="ln">10</span>    <span class="p">}</span>
+<span class="ln">11</span>
+<span class="ln">12</span>    <span class="k">static</span> <span class="k">constexpr</span> <span class="n">Fps</span> <span class="nf">fromPeriodNsecs</span><span class="p">(</span><span class="kt">long</span> <span class="kt">long</span> <span class="n">period</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">13</span>        <span class="k">return</span> <span class="n">period</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">?</span> <span class="n">Fps</span><span class="p">(</span><span class="mf">1e9</span><span class="n">f</span> <span class="o">/</span> <span class="n">period</span><span class="p">,</span> <span class="n">period</span><span class="p">)</span> <span class="o">:</span> <span class="n">Fps</span><span class="p">();</span>
+<span class="ln">14</span>    <span class="p">}</span>
+<span class="ln">15</span>
+<span class="ln">16</span>    <span class="k">constexpr</span> <span class="kt">bool</span> <span class="nf">isValid</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">mFrequency</span> <span class="o">&gt;</span> <span class="mf">0.f</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln">17</span>
+<span class="ln">18</span>    <span class="k">constexpr</span> <span class="kt">float</span> <span class="nf">getValue</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">mFrequency</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln">19</span>
+<span class="ln">20</span>    <span class="k">constexpr</span> <span class="kt">long</span> <span class="kt">long</span> <span class="nf">getPeriodNsecs</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">mPeriod</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln">21</span>
+<span class="ln">22</span><span class="k">private</span><span class="o">:</span>
+<span class="ln">23</span>    <span class="k">constexpr</span> <span class="n">Fps</span><span class="p">(</span><span class="kt">float</span> <span class="n">frequency</span><span class="p">,</span> <span class="kt">long</span> <span class="kt">long</span> <span class="n">period</span><span class="p">)</span> <span class="o">:</span> <span class="n">mFrequency</span><span class="p">(</span><span class="n">frequency</span><span class="p">),</span> <span class="n">mPeriod</span><span class="p">(</span><span class="n">period</span><span class="p">)</span> <span class="p">{}</span>
+<span class="ln">24</span>
+<span class="ln">25</span>    <span class="kt">float</span> <span class="n">mFrequency</span> <span class="o">=</span> <span class="mf">0.f</span><span class="p">;</span>
+<span class="ln">26</span>    <span class="kt">long</span> <span class="kt">long</span> <span class="n">mPeriod</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">27</span><span class="p">};</span>
+<span class="ln">28</span>
+<span class="ln">29</span><span class="k">struct</span> <span class="nc">FpsRange</span> <span class="p">{</span>
+<span class="ln">30</span>    <span class="n">Fps</span> <span class="n">min</span> <span class="o">=</span> <span class="n">Fps</span><span class="o">::</span><span class="n">fromValue</span><span class="p">(</span><span class="mf">0.f</span><span class="p">);</span>
+<span class="ln">31</span>
+<span class="ln">32</span>    <span class="kt">bool</span> <span class="nf">includes</span><span class="p">(</span><span class="n">Fps</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+<span class="ln">33</span><span class="p">};</span>
+<span class="ln">34</span><span class="c1">//类外定义
+</span><span class="ln">35</span><span class="c1"></span><span class="k">constexpr</span> <span class="n">Fps</span> <span class="k">operator</span><span class="s">&#34;&#34;</span><span class="n">_Hz</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span> <span class="kt">long</span> <span class="n">frequency</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">36</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;unsigned long long frequency %llu</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">frequency</span><span class="p">);</span>
+<span class="ln">37</span>    <span class="k">return</span> <span class="n">Fps</span><span class="o">::</span><span class="n">fromValue</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="n">frequency</span><span class="p">));</span>
+<span class="ln">38</span><span class="p">}</span>
+<span class="ln">39</span><span class="c1">//类外定义
+</span><span class="ln">40</span><span class="c1"></span><span class="k">constexpr</span> <span class="n">Fps</span> <span class="k">operator</span><span class="s">&#34;&#34;</span><span class="n">_Hz</span><span class="p">(</span><span class="kt">long</span> <span class="kt">double</span> <span class="n">frequency</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">41</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;unsigned long double frequency %llf</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">frequency</span><span class="p">);</span>
+<span class="ln">42</span>    <span class="k">return</span> <span class="n">Fps</span><span class="o">::</span><span class="n">fromValue</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="n">frequency</span><span class="p">));</span>
+<span class="ln">43</span><span class="p">}</span>
+<span class="ln">44</span>
+<span class="ln">45</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln">46</span><span class="p">{</span>
+<span class="ln">47</span>    <span class="k">const</span> <span class="n">Fps</span> <span class="n">fps</span> <span class="o">=</span> <span class="mf">59.5</span><span class="n">_Hz</span><span class="p">;</span>
+<span class="ln">48</span>    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">fps</span><span class="p">.</span><span class="n">getValue</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">49</span>    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">fps</span><span class="p">.</span><span class="n">getPeriodNsecs</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">50</span><span class="p">}</span>
+</code></pre></div><p>输出结果</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//60
+</span><span class="ln">2</span><span class="c1">//16666667
+</span><span class="ln">3</span><span class="c1"></span><span class="mf">59.5</span>
+<span class="ln">4</span><span class="mi">16806722</span>
+</code></pre></div><p>另外上面加printf或者cout日志，在C++20会出错，但是低版本使用printf不会报错。constexpr函数中原因是使用了non-&lsquo;constexpr&rsquo;的函数，具体可以点击<a href="https://stackoverflow.com/questions/60841136/c-error-call-to-non-constexpr-function">这里</a>。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/c&#43;&#43;/base/operator/op_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/c&#43;&#43;/base/operator/op_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="24类型转换">2.4类型转换</h2>
+<p>这里类型转换，实际上就将类强制转化成某成类型（多见基本类型）</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp"></span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="k">class</span> <span class="nc">A</span><span class="p">{</span>
+<span class="ln"> 4</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 5</span>    <span class="n">A</span><span class="p">(</span><span class="kt">int</span> <span class="n">num</span><span class="p">)</span> <span class="o">:</span> <span class="n">mNum</span><span class="p">(</span><span class="n">num</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 6</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;A constructor &#34;</span> <span class="o">&lt;&lt;</span> <span class="k">this</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="p">}</span>
+<span class="ln"> 8</span>    <span class="o">~</span><span class="n">A</span><span class="p">(){</span>
+<span class="ln"> 9</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;A destructor &#34;</span> <span class="o">&lt;&lt;</span> <span class="k">this</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">10</span>    <span class="p">}</span>
+<span class="ln">11</span>    <span class="c1">//使用显示方式，使用explicit关键字后不支持隐式转换
+</span><span class="ln">12</span><span class="c1"></span>    <span class="k">explicit</span> <span class="k">operator</span> <span class="nf">int</span><span class="p">()</span> <span class="k">const</span>
+<span class="ln">13</span>    <span class="p">{</span>
+<span class="ln">14</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;A operator int &#34;</span> <span class="o">&lt;&lt;</span> <span class="k">this</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">15</span>        <span class="k">return</span> <span class="n">mNum</span><span class="p">;</span>
+<span class="ln">16</span>    <span class="p">}</span>
+<span class="ln">17</span><span class="k">private</span><span class="o">:</span>
+<span class="ln">18</span>    <span class="kt">int</span> <span class="n">mNum</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">19</span><span class="p">};</span>
+<span class="ln">20</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln">21</span><span class="p">{</span>
+<span class="ln">22</span>    <span class="n">A</span> <span class="n">a</span><span class="p">(</span><span class="mi">2023</span><span class="p">);</span>
+<span class="ln">23</span>    <span class="c1">//类本身转换成int类型和0723就行运算
+</span><span class="ln">24</span><span class="c1"></span>    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">a</span> <span class="o">+</span> <span class="mo">0723</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">25</span>    <span class="c1">//cout &lt;&lt; static_cast&lt;int&gt;(a) + 0723 &lt;&lt; endl;
+</span><span class="ln">26</span><span class="c1"></span><span class="p">}</span>
+</code></pre></div><p>输出结果为</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="n">A</span> <span class="n">constructor</span> <span class="mh">0x72c59ffa2c</span>
+<span class="ln">2</span><span class="n">A</span> <span class="k">operator</span> <span class="kt">int</span> <span class="mh">0x72c59ffa2c</span>
+<span class="ln">3</span><span class="mi">2490</span>
+<span class="ln">4</span><span class="n">A</span> <span class="n">destructor</span> <span class="mh">0x72c59ffa2c</span>
+</code></pre></div><p>进一步的，转换成其他类型</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp"></span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="k">class</span> <span class="nc">B</span><span class="p">{</span>
+<span class="ln"> 4</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 5</span>    <span class="n">B</span><span class="p">(){</span>
+<span class="ln"> 6</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;B constructor &#34;</span> <span class="o">&lt;&lt;</span> <span class="k">this</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="p">}</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span>    <span class="o">~</span><span class="n">B</span><span class="p">(){</span>
+<span class="ln">10</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;B destructor &#34;</span> <span class="o">&lt;&lt;</span> <span class="k">this</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="p">}</span>
+<span class="ln">12</span>    <span class="kt">void</span> <span class="nf">print</span><span class="p">()</span>
+<span class="ln">13</span>    <span class="p">{</span>
+<span class="ln">14</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;B print &#34;</span> <span class="o">&lt;&lt;</span> <span class="k">this</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">15</span>    <span class="p">}</span>
+<span class="ln">16</span><span class="p">};</span>
+<span class="ln">17</span>
+<span class="ln">18</span><span class="k">class</span> <span class="nc">A</span><span class="p">{</span>
+<span class="ln">19</span><span class="k">public</span><span class="o">:</span>
+<span class="ln">20</span>    <span class="n">A</span><span class="p">(</span><span class="kt">int</span> <span class="n">num</span><span class="p">,</span> <span class="n">B</span><span class="o">&amp;</span> <span class="n">b</span><span class="p">)</span> <span class="o">:</span> <span class="n">mNum</span><span class="p">(</span><span class="n">num</span><span class="p">),</span> <span class="n">mB</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">21</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;A constructor &#34;</span> <span class="o">&lt;&lt;</span> <span class="k">this</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">22</span>    <span class="p">}</span>
+<span class="ln">23</span>    <span class="o">~</span><span class="n">A</span><span class="p">(){</span>
+<span class="ln">24</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;A destructor &#34;</span> <span class="o">&lt;&lt;</span> <span class="k">this</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">25</span>    <span class="p">}</span>
+<span class="ln">26</span>    <span class="c1">//默认隐式转换
+</span><span class="ln">27</span><span class="c1"></span>    <span class="k">explicit</span> <span class="k">operator</span> <span class="nf">B</span><span class="p">()</span> <span class="k">const</span>
+<span class="ln">28</span>    <span class="p">{</span>
+<span class="ln">29</span>        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;A operator int &#34;</span> <span class="o">&lt;&lt;</span> <span class="k">this</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="ln">30</span>        <span class="k">return</span> <span class="n">mB</span><span class="p">;</span>
+<span class="ln">31</span>    <span class="p">}</span>
+<span class="ln">32</span><span class="k">private</span><span class="o">:</span>
+<span class="ln">33</span>    <span class="kt">int</span> <span class="n">mNum</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">34</span>    <span class="n">B</span> <span class="n">mB</span><span class="p">;</span>
+<span class="ln">35</span><span class="p">};</span>
+<span class="ln">36</span>
+<span class="ln">37</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln">38</span><span class="p">{</span>
+<span class="ln">39</span>    <span class="n">B</span> <span class="n">b</span><span class="p">;</span>
+<span class="ln">40</span>    <span class="n">A</span> <span class="n">a</span><span class="p">(</span><span class="mi">2023</span><span class="p">,</span> <span class="n">b</span><span class="p">);</span>
+<span class="ln">41</span>    <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">B</span><span class="o">&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">).</span><span class="n">print</span><span class="p">();</span>
+<span class="ln">42</span><span class="p">}</span>
+</code></pre></div><p>输出结果</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="n">B</span> <span class="n">constructor</span> <span class="mh">0xb33cbffc5e</span>
+<span class="ln">2</span><span class="n">A</span> <span class="n">constructor</span> <span class="mh">0xb33cbffc54</span>
+<span class="ln">3</span><span class="n">A</span> <span class="k">operator</span> <span class="kt">int</span> <span class="mh">0xb33cbffc54</span>
+<span class="ln">4</span><span class="n">B</span> <span class="n">print</span> <span class="mh">0xb33cbffc5f</span>
+<span class="ln">5</span><span class="n">B</span> <span class="n">destructor</span> <span class="mh">0xb33cbffc5f</span>
+<span class="ln">6</span><span class="n">A</span> <span class="n">destructor</span> <span class="mh">0xb33cbffc54</span>
+<span class="ln">7</span><span class="n">B</span> <span class="n">destructor</span> <span class="mh">0xb33cbffc58</span>
+<span class="ln">8</span><span class="n">B</span> <span class="n">destructor</span> <span class="mh">0xb33cbffc5e</span>
+</code></pre></div><p>转换结果虽好，但不建议不同类型之间转换，一般这种类转换成其他类型并不是很多见，最多会用到在大括号的隐式类型转化中，具体可以点击<a href="https://yangyang48.github.io/2023/07/c-%E5%A4%A7%E6%8B%AC%E5%8F%B7/">这里查看</a>。</p>
+<h1 id="3总结">3总结</h1>
+<p>总的来说，操作符的高阶玩法，远远不止上述，上述也只是笔者遇到的一个小总结。如果后续还出现一些比较高阶的用法会持续更新。另外操作符的重载虽然可以重载<code>new</code>和<code>delete</code>，但是不建议去修改，因为这样使用很容易造成逻辑混乱，导致出现意想不到的异常。</p>
+<h1 id="关于上述的在线编译">关于上述的在线编译</h1>
+<p><a href="https://c.runoob.com/compile/12/">点击这里</a>。使用的是菜鸟教程的c++编译器，运行速度还不较快，也不容易挂掉</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/c&#43;&#43;/base/operator/op_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/c&#43;&#43;/base/operator/op_2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="参考">参考</h1>
+<p><a href="https://blog.csdn.net/t114211200/article/details/78029553">[1] 时空-大海水, std::chrono::duration详解, 2017.</a></p>
+<p><a href="https://stackoverflow.com/questions/60841136/c-error-call-to-non-constexpr-function">[2] Iron Fist, C++ error: Call to non-constexpr function, 2020.</a></p>
+<p><a href="https://blog.csdn.net/t114211200/article/details/78029553">[3] 时空-大海水, std::chrono::duration详解, 2017.</a></p>
+<p><a href="https://blog.csdn.net/shadow_xwl/article/details/125237563">[4] shadow_xwl, C++操作符重载, 2022.</a></p>
+<p><a href="https://blog.csdn.net/zzl_python/article/details/83243353">[5] zzl_python, 关于&rsquo;-&gt;&lsquo;运算符的重载问题, 2018.</a></p>
+<p><a href="https://baijiahao.baidu.com/s?id=1679542777359982612&amp;wfr=spider&amp;for=pc">[6] 软件技术分享, 记住这个，能少走弯路，C++两种隐式类型转换, 2020.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E5%9F%BA%E7%A1%80/">基础</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2/">类型转换</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E4%BB%BF%E5%87%BD%E6%95%B0/">仿函数</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E8%B0%93%E8%AF%8D/">谓词</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%8C%87%E9%92%88%E6%93%8D%E4%BD%9C/">指针操作</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E8%87%AA%E5%AE%9A%E4%B9%89%E7%B1%BB%E5%9E%8B/">自定义类型</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/07/c-nodiscard/" data-tooltip="C&#43;&#43; nodiscard">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2023 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/07/c-nodiscard/" data-tooltip="C&#43;&#43; nodiscard">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2023%2F07%2Fc-operator%25E9%2587%258D%25E8%25BD%25BD%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2023%2F07%2Fc-operator%25E9%2587%258D%25E8%25BD%25BD%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2023%2F07%2Fc-operator%25E9%2587%258D%25E8%25BD%25BD%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2023\/07\/c-operator%E9%87%8D%E8%BD%BD\/';
+          
+            this.page.identifier = '\/2023\/07\/c-operator%E9%87%8D%E8%BD%BD\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+

@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="源码中出现很多关于私有继承的操作（默认不加public），但是通过using外部可以直接调用，这个是什么原理？">
+
+
+<meta property="og:description" content="源码中出现很多关于私有继承的操作（默认不加public），但是通过using外部可以直接调用，这个是什么原理？">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C&#43;&#43; using使用">
+<meta name="twitter:title" content="C&#43;&#43; using使用">
+<meta property="og:url" content="https://yangyang48.github.io/2023/07/c-using%E4%BD%BF%E7%94%A8/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2023/07/c-using%E4%BD%BF%E7%94%A8/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="源码中出现很多关于私有继承的操作（默认不加public），但是通过using外部可以直接调用，这个是什么原理？">
+<meta name="twitter:description" content="源码中出现很多关于私有继承的操作（默认不加public），但是通过using外部可以直接调用，这个是什么原理？">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2023-07-22T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2023-07-22T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="c&#43;&#43;">
+    
+      <meta property="article:section" content="2023">
+    
+      <meta property="article:section" content="July">
+    
+  
+  
+    
+      <meta property="article:tag" content="基础">
+    
+      <meta property="article:tag" content="using">
+    
+      <meta property="article:tag" content="私有继承">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/c&#43;&#43;/base/using/using_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/c&#43;&#43;/base/using/using_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/c&#43;&#43;/base/using/using_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/c&#43;&#43;/base/using/using_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+
+
+    <title>C&#43;&#43; using使用</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2023/07/c-using%E4%BD%BF%E7%94%A8/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/c&#43;&#43;/base/using/using_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      C&#43;&#43; using使用
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2023-07-22T00:00:00Z">
+        
+  七月 22, 2023
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/c&#43;&#43;">c&#43;&#43;</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2023">2023</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/july">July</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">400 Words|Read in about 2 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>源码中出现很多关于私有继承的操作（默认不加public），但是通过using外部可以直接调用，这个是什么原理？</p>
+<h1 id="1介绍">1介绍</h1>
+<p>(1)父类的public成员在private/protected继承后，在派生类中就成了private/protected权限而不是public权限，子类对象就不能再调用父类的public成员</p>
+<p>(2)可能在父类中有100个public成员，在子类对象中只需要访问1个成员，其余99个成员都不需要访问，合适的做法是将100个父类的public成员以private/protected权限继承到子类，然后使用using关键字对需要访问的那一个父类public成员进行权限修改</p>
+<h1 id="2demo">2demo</h1>
+<h1 id="21使用动态机制突破private权限">2.1使用动态机制突破private权限</h1>
+<p>通过引用来突破private关键字的方式</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp"></span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+<span class="ln"> 3</span>
+<span class="ln"> 4</span><span class="k">class</span> <span class="nc">A</span>
+<span class="ln"> 5</span><span class="p">{</span>
+<span class="ln"> 6</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 7</span>	<span class="k">virtual</span> <span class="kt">void</span> <span class="n">func</span><span class="p">()</span> <span class="p">{</span> <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;func in A&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln"> 8</span><span class="p">};</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span><span class="k">class</span> <span class="nc">B</span> <span class="o">:</span> <span class="k">public</span> <span class="n">A</span>
+<span class="ln">11</span><span class="p">{</span>
+<span class="ln">12</span><span class="k">private</span><span class="o">:</span>
+<span class="ln">13</span>	<span class="k">virtual</span> <span class="kt">void</span> <span class="n">func</span><span class="p">()</span> <span class="p">{</span> <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;func in B&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln">14</span><span class="p">};</span>
+<span class="ln">15</span>
+<span class="ln">16</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln">17</span><span class="p">{</span>
+<span class="ln">18</span>	<span class="n">B</span> <span class="n">b</span><span class="p">;</span>
+<span class="ln">19</span>
+<span class="ln">20</span>	<span class="c1">//b.func(); /* 错误：private函数对外不可见 */
+</span><span class="ln">21</span><span class="c1"></span>
+<span class="ln">22</span>	<span class="cm">/* 通过虚函数机制，可以突破private的限制，实现对B中的func进行调用 */</span>
+<span class="ln">23</span>	<span class="n">A</span> <span class="o">&amp;</span><span class="n">ra</span> <span class="o">=</span> <span class="n">b</span><span class="p">;</span>
+<span class="ln">24</span>	<span class="n">ra</span><span class="p">.</span><span class="n">func</span><span class="p">();</span> <span class="cm">/* 输出：func in B */</span>
+<span class="ln">25</span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/c&#43;&#43;/base/using/using_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/c&#43;&#43;/base/using/using_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>因为class B继承自class A（<strong>严格来说是public继承</strong>），所以依据动态绑定规则，class A的引用<code>ra</code>可以绑定到class B的实例<code>b</code>上。之后，通过<code>ra</code>调用<code>func</code>函数，实际调用到的就是class B中的<code>func</code>。</p>
+<h2 id="22当做private来使用">2.2当做private来使用</h2>
+<p>如果把虚继承直接当做一个类内的private字段来操作，那就简单很多了</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp">#include</span> <span class="cpf">&lt;string&gt;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp"></span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+<span class="ln"> 4</span>
+<span class="ln"> 5</span><span class="k">class</span> <span class="nc">A</span> <span class="o">:</span> <span class="k">private</span> <span class="n">string</span>
+<span class="ln"> 6</span><span class="p">{</span>
+<span class="ln"> 7</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 8</span>    <span class="n">A</span><span class="p">()</span> <span class="o">:</span> <span class="n">string</span><span class="p">(</span><span class="s">&#34;yangyang48&#34;</span><span class="p">)</span> <span class="p">{}</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span>    <span class="n">size_t</span> <span class="nf">GetSize1</span><span class="p">()</span> <span class="k">const</span>
+<span class="ln">11</span>    <span class="p">{</span>
+<span class="ln">12</span>        <span class="k">return</span> <span class="p">((</span><span class="k">const</span> <span class="n">string</span> <span class="o">*</span><span class="p">)</span><span class="k">this</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">();</span>
+<span class="ln">13</span>    <span class="p">}</span>
+<span class="ln">14</span>
+<span class="ln">15</span>    <span class="n">size_t</span> <span class="nf">GetSize2</span><span class="p">()</span> <span class="k">const</span>
+<span class="ln">16</span>    <span class="p">{</span>
+<span class="ln">17</span>        <span class="k">return</span> <span class="n">string</span><span class="o">::</span><span class="n">size</span><span class="p">();</span>
+<span class="ln">18</span>    <span class="p">}</span>
+<span class="ln">19</span><span class="p">};</span>
+<span class="ln">20</span>
+<span class="ln">21</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln">22</span><span class="p">{</span>
+<span class="ln">23</span>    <span class="n">A</span> <span class="n">a</span><span class="p">;</span>
+<span class="ln">24</span>    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">a</span><span class="p">.</span><span class="n">GetSize1</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span> <span class="cm">/* 输出： 10 */</span>
+<span class="ln">25</span>    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">a</span><span class="p">.</span><span class="n">GetSize2</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span> <span class="cm">/* 输出： 10 */</span>
+<span class="ln">26</span><span class="p">}</span>
+</code></pre></div><p>这里说明下，我们操作的string，实际上是<code>basic_string</code>;</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//string
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">using</span> <span class="n">string</span>    <span class="o">=</span> <span class="n">basic_string</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="c1">//basic_string.h
+</span><span class="ln"> 4</span><span class="c1"></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">_CharT</span><span class="p">,</span> <span class="k">typename</span> <span class="n">_Traits</span><span class="p">,</span> <span class="k">typename</span> <span class="n">_Alloc</span><span class="o">&gt;</span>
+<span class="ln"> 5</span><span class="k">class</span> <span class="nc">basic_string</span>
+<span class="ln"> 6</span><span class="p">{</span>
+<span class="ln"> 7</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 8</span>    <span class="n">size_type</span>
+<span class="ln"> 9</span>    <span class="n">size</span><span class="p">()</span> <span class="k">const</span> <span class="n">_GLIBCXX_NOEXCEPT</span>
+<span class="ln">10</span>    <span class="p">{</span> <span class="k">return</span> <span class="n">_M_string_length</span><span class="p">;</span> <span class="p">}</span>
+<span class="ln">11</span><span class="p">};</span>
+</code></pre></div><p>这里是string是一个共有方法的size()，只是用到了私有继承的方式。</p>
+<p>实际上上面的两个get方法，本质还是公有函数中调用私有函数，变相增加了两个get方法，但不使用公有get直接调用也是不行的。</p>
+<blockquote>
+<p>领导（string）给马屁精（class A）传达了一些信息（公开了.empty()、.size()、.substr()等public接口），并告诉马屁精：「这些资料，你要原封不动地公开给其它同事（外部调用）</p>
+<p>马屁精（class A）转头回到同事中又开始鸡毛当令箭了（将继承方式改为 private继承）。抠抠搜搜地公开了一些信息，还美其名曰“帮大家整理总结”（将size()封装到GetSize1/GetSize2中供外部调用）。</p>
+<p>同事（外部调用）一看所谓的“整理总结”，就是糊了个封皮封底（class A公布的接口中，除了无条件调用string的size()接口，别的什么也没做），这个时候同事们（外部调用）不干了，马屁精拍马屁（保持private继承）可以，但能不能别给其他人添乱（不要给接口套层壳，直接让外部调用string的原始接口），马屁精（class A）一看只能用using方式来替换自己的整理，毕竟如果不使用私有继承，自己就没啥用了也不需要using。</p>
+</blockquote>
+<p>C++还确实提供了这种机制：在class A中使用<code>using string::size;</code>可以直接将string的<code>size()</code>接口提升为public权限。即外部可以直接调用该接口，形式上等同于针对该接口使用了public继承（string提供的其余接口仍旧是private继承）。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span><span class="ln"> 2</span><span class="cp">#include</span> <span class="cpf">&lt;string&gt;</span><span class="cp">
+</span><span class="ln"> 3</span><span class="cp"></span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+<span class="ln"> 4</span>
+<span class="ln"> 5</span><span class="k">class</span> <span class="nc">A</span> <span class="o">:</span> <span class="k">private</span> <span class="n">string</span>
+<span class="ln"> 6</span><span class="p">{</span>
+<span class="ln"> 7</span><span class="k">public</span><span class="o">:</span>
+<span class="ln"> 8</span>    <span class="n">A</span><span class="p">()</span> <span class="o">:</span> <span class="n">string</span><span class="p">(</span><span class="s">&#34;yangyang48&#34;</span><span class="p">)</span> <span class="p">{}</span>
+<span class="ln"> 9</span>    <span class="k">using</span> <span class="n">string</span><span class="o">::</span><span class="n">size</span><span class="p">;</span>
+<span class="ln">10</span><span class="p">};</span>
+<span class="ln">11</span>
+<span class="ln">12</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">13</span>    <span class="n">A</span> <span class="n">a</span><span class="p">;</span>
+<span class="ln">14</span>    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">a</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span> <span class="cm">/* 输出： 10 */</span>
+<span class="ln">15</span><span class="p">}</span>
+</code></pre></div><p>输出结果跟上面一样</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>10
+</code></pre></div><h2 id="23源码分析">2.3源码分析</h2>
+<p>在源码中，也会存在使用using来提升继承成员的访问权限</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/native/services/surfaceflinger/Scheduler/Scheduler.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">namespace</span> <span class="n">android</span> <span class="p">{</span>
+<span class="ln"> 3</span><span class="k">namespace</span> <span class="n">scheduler</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="k">class</span> <span class="nc">Scheduler</span> <span class="o">:</span> <span class="n">impl</span><span class="o">::</span><span class="n">MessageQueue</span> <span class="p">{</span>
+<span class="ln"> 5</span>        <span class="k">using</span> <span class="n">Impl</span> <span class="o">=</span> <span class="n">impl</span><span class="o">::</span><span class="n">MessageQueue</span><span class="p">;</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span>    <span class="k">public</span><span class="o">:</span>
+<span class="ln"> 8</span>        <span class="n">Scheduler</span><span class="p">(</span><span class="n">ICompositor</span><span class="o">&amp;</span><span class="p">,</span> <span class="n">ISchedulerCallback</span><span class="o">&amp;</span><span class="p">,</span> <span class="n">FeatureFlags</span><span class="p">);</span>
+<span class="ln"> 9</span>        <span class="k">virtual</span> <span class="o">~</span><span class="n">Scheduler</span><span class="p">();</span>
+<span class="ln">10</span>        <span class="p">...</span>
+<span class="ln">11</span>        <span class="k">using</span> <span class="n">Impl</span><span class="o">::</span><span class="n">initVsync</span><span class="p">;</span>
+<span class="ln">12</span>        <span class="k">using</span> <span class="n">Impl</span><span class="o">::</span><span class="n">setInjector</span><span class="p">;</span>
+<span class="ln">13</span>        <span class="k">using</span> <span class="n">Impl</span><span class="o">::</span><span class="n">getScheduledFrameTime</span><span class="p">;</span>
+<span class="ln">14</span>        <span class="k">using</span> <span class="n">Impl</span><span class="o">::</span><span class="n">setDuration</span><span class="p">;</span>
+<span class="ln">15</span>        <span class="k">using</span> <span class="n">Impl</span><span class="o">::</span><span class="n">scheduleFrame</span><span class="p">;</span>
+<span class="ln">16</span>    <span class="p">};</span> 
+<span class="ln">17</span><span class="p">}</span>
+<span class="ln">18</span><span class="p">}</span>
+<span class="ln">19</span>
+<span class="ln">20</span><span class="k">namespace</span> <span class="n">android</span> <span class="p">{</span>
+<span class="ln">21</span><span class="k">namespace</span> <span class="n">impl</span> <span class="p">{</span>
+<span class="ln">22</span>
+<span class="ln">23</span><span class="k">class</span> <span class="nc">MessageQueue</span> <span class="o">:</span> <span class="k">public</span> <span class="n">android</span><span class="o">::</span><span class="n">MessageQueue</span> <span class="p">{</span>
+<span class="ln">24</span><span class="p">...</span>
+<span class="ln">25</span><span class="k">public</span><span class="o">:</span>
+<span class="ln">26</span>    <span class="k">explicit</span> <span class="n">MessageQueue</span><span class="p">(</span><span class="n">ICompositor</span><span class="o">&amp;</span><span class="p">);</span>
+<span class="ln">27</span>
+<span class="ln">28</span>    <span class="kt">void</span> <span class="nf">initVsync</span><span class="p">(</span><span class="n">scheduler</span><span class="o">::</span><span class="n">VSyncDispatch</span><span class="o">&amp;</span><span class="p">,</span> <span class="n">frametimeline</span><span class="o">::</span><span class="n">TokenManager</span><span class="o">&amp;</span><span class="p">,</span>
+<span class="ln">29</span>                   <span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">nanoseconds</span> <span class="n">workDuration</span><span class="p">)</span> <span class="k">override</span><span class="p">;</span>
+<span class="ln">30</span>    <span class="kt">void</span> <span class="nf">setDuration</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">nanoseconds</span> <span class="n">workDuration</span><span class="p">)</span> <span class="k">override</span><span class="p">;</span>
+<span class="ln">31</span>    <span class="kt">void</span> <span class="nf">setInjector</span><span class="p">(</span><span class="n">sp</span><span class="o">&lt;</span><span class="n">EventThreadConnection</span><span class="o">&gt;</span><span class="p">)</span> <span class="k">override</span><span class="p">;</span>
+<span class="ln">32</span>    <span class="kt">void</span> <span class="nf">waitMessage</span><span class="p">()</span> <span class="k">override</span><span class="p">;</span>
+<span class="ln">33</span>    <span class="kt">void</span> <span class="nf">postMessage</span><span class="p">(</span><span class="n">sp</span><span class="o">&lt;</span><span class="n">MessageHandler</span><span class="o">&gt;&amp;&amp;</span><span class="p">)</span> <span class="k">override</span><span class="p">;</span>
+<span class="ln">34</span>    <span class="kt">void</span> <span class="nf">scheduleFrame</span><span class="p">()</span> <span class="k">override</span><span class="p">;</span>
+<span class="ln">35</span>    <span class="n">std</span><span class="o">::</span><span class="n">optional</span><span class="o">&lt;</span><span class="n">Clock</span><span class="o">::</span><span class="n">time_point</span><span class="o">&gt;</span> <span class="n">getScheduledFrameTime</span><span class="p">()</span> <span class="k">const</span> <span class="k">override</span><span class="p">;</span>
+<span class="ln">36</span><span class="p">};</span>
+<span class="ln">37</span><span class="p">}</span>    
+<span class="ln">38</span><span class="p">}</span>
+</code></pre></div><p>上述Scheduler使用默认继承impl::MessageQueue，默认继承为private继承，也就是<strong>当类的继承方式是私有继承时，基类中的公有和保护成员在派生类中变成私有成员，而基类的私有成员在派生类中不能直接访问</strong>。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="c1">//frameworks/native/services/surfaceflinger/SurfaceFlinger.cpp
+</span><span class="ln">2</span><span class="c1"></span><span class="kt">void</span> <span class="n">SurfaceFlinger</span><span class="o">::</span><span class="n">initScheduler</span><span class="p">(</span><span class="k">const</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">DisplayDevice</span><span class="o">&gt;&amp;</span> <span class="n">display</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">3</span>    <span class="n">mScheduler</span><span class="o">-&gt;</span><span class="n">initVsync</span><span class="p">(</span><span class="n">mScheduler</span><span class="o">-&gt;</span><span class="n">getVsyncDispatch</span><span class="p">(),</span> <span class="o">*</span><span class="n">mFrameTimeline</span><span class="o">-&gt;</span><span class="n">getTokenManager</span><span class="p">(),</span>
+<span class="ln">4</span>                          <span class="n">configs</span><span class="p">.</span><span class="n">late</span><span class="p">.</span><span class="n">sfWorkDuration</span><span class="p">);</span>
+<span class="ln">5</span><span class="p">}</span>
+</code></pre></div><p>但是在源码中，发现使用到了initVsync，这个可以直接使用调用到基类impl::MessageQueue中的方法。</p>
+<p>往前面看，class Scheduler定义了using Impl::initVsync;这就说明权限不一致了，把using可以修改子类继承自父类的成员权限成public</p>
+<blockquote>
+<p>(1)using可以修改子类继承自父类的成员权限成public，但并不是所有继承自父类的成员都可以修改成public权限；</p>
+<p>(2) 如果成员在父类中本来就是private权限，那在子类中是无法使用using声明成public权限的；</p>
+<p>总结：using只是用来找回在继承中损失的权限，给部分成员开特例；</p>
+</blockquote>
+<h1 id="3总结">3总结</h1>
+<p>总的来说，使用using可以让私有继承中原本父类的公有方法，在子类中恢复到公有的方法，可以在外部直接调用，这样可以隔离部分私有继承中需要不公开的方法的一种方式。</p>
+<h1 id="参考">参考</h1>
+<p><a href="https://blog.csdn.net/weixin_42031299/article/details/127579689">[1] 正在起飞的蜗牛. 【C++入门】使用using重新定义继承的成员访问权限, 2022.</a></p>
+<p><a href="https://blog.csdn.net/Renekton_bhk/article/details/104130622">[2] Renekton_bhk. C++的private并没有听起来那么“保密”（virtual）（using）, 2020.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E5%9F%BA%E7%A1%80/">基础</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/using/">using</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E7%A7%81%E6%9C%89%E7%BB%A7%E6%89%BF/">私有继承</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/07/c-nodiscard/" data-tooltip="C&#43;&#43; nodiscard">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/07/c-%E5%A4%A7%E6%8B%AC%E5%8F%B7/" data-tooltip="C&#43;&#43;大括号">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2023 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/07/c-nodiscard/" data-tooltip="C&#43;&#43; nodiscard">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/07/c-%E5%A4%A7%E6%8B%AC%E5%8F%B7/" data-tooltip="C&#43;&#43;大括号">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2023%2F07%2Fc-using%25E4%25BD%25BF%25E7%2594%25A8%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2023%2F07%2Fc-using%25E4%25BD%25BF%25E7%2594%25A8%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2023%2F07%2Fc-using%25E4%25BD%25BF%25E7%2594%25A8%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2023\/07\/c-using%E4%BD%BF%E7%94%A8\/';
+          
+            this.page.identifier = '\/2023\/07\/c-using%E4%BD%BF%E7%94%A8\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
