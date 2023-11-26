@@ -42,6 +42,12 @@
     
       <meta property="article:tag" content="Android">
     
+      <meta property="article:tag" content="native">
+    
+      <meta property="article:tag" content="kernel">
+    
+      <meta property="article:tag" content="dump_stack">
+    
       <meta property="article:tag" content="调试工具">
     
   
@@ -270,7 +276,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">300 Words|Read in about 2 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">400 Words|Read in about 2 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
 		  
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -279,7 +285,7 @@
 <p><code>addr2line</code>这个工具是<code>Linux</code>源码自带的工具，位置<code>/user/bin/addr2line</code></p>
 <p>用<code>addr2line</code>可以将函数地址解析为函数名，在抓取调堆栈时<code>Java</code>层的堆栈本身就是显示函数名与行数，这个不需要转换，但对于<code>native</code>和<code>kernel</code>层的则是函数地址，需要借助<code>addr2line</code>来进行转换。</p>
 <p>除了本来<strong>动态库</strong>之外，应用到<strong>进程</strong>也是可行的</p>
-<h1 id="1使用">1使用</h1>
+<h1 id="1native使用">1native使用</h1>
 <table>
 <thead>
 <tr>
@@ -391,6 +397,49 @@
 <span class="ln">14</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;---&gt;&gt;&gt;div(%d)&#34;</span><span class="p">,</span> <span class="n">div</span><span class="p">);</span>
 <span class="ln">15</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 <span class="ln">16</span><span class="p">}</span>
+</code></pre></div><h1 id="2kernel使用">2kernel使用</h1>
+<p>一定要找对应的系统可执行文件和vmlinux</p>
+<h2 id="21获取函数名的符号地址">2.1获取函数名的符号地址</h2>
+<blockquote>
+<p>在kernel崩溃时，方便定位代码。</p>
+<p>需要打开kernel配置<strong>CONFIG_DEBUG_INFO</strong>。</p>
+<p>需要有System.map和vmlinux文件，一般在out目录。</p>
+</blockquote>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="o">[</span>&lt;ffffff9d17e832d0&gt;<span class="o">]</span> el1_da+0x24/0x3c
+</code></pre></div><p>解释如下：</p>
+<p>函数el1_da汇编代码偏移0x24位置，函数总长度0x3c。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>//64位：
+<span class="ln">2</span>prebuilts/gcc/linux-x86/aarch64/aarch64-linux-gnu-6.3.1/bin/aarch64-linux-gnu-nm out/target/product/tb8788p1_64_wifi/obj/KERNEL_OBJ/vmlinux <span class="p">|</span> grep el1_da
+<span class="ln">3</span>
+<span class="ln">4</span>//32位：
+<span class="ln">5</span>prebuilts/gcc/linux-x86/arm/arm-eabi-4.8/bin/arm-eabi-nm  out/target/product/iot_1_item/obj/KERNEL_OBJ/vmlinux <span class="p">|</span> grep el1_da
+</code></pre></div><p>计算符号结果</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>ffffff80080832ac t el1_da
+</code></pre></div><h2 id="22计算地址">2.2计算地址</h2>
+<p>则计算后的地址ffffff80080832ac + 24 = 目标地址</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>//ffffff80080832ac + 24 = ffffff80080832d0
+<span class="ln">2</span>prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/bin/aarch64-linux-android-addr2line -Cfe out/target/product/tb8788p1_64_wifi/obj/KERNEL_OBJ/vmlinux FFFFFF80080832D0
+</code></pre></div><p>最终结果</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>el1_ia
+<span class="ln">2</span>kernel-4.14/arch/arm64/kernel/entry.S:606
+</code></pre></div><h1 id="3补充">3补充</h1>
+<p>关于<strong>linux kernel</strong>打印堆栈，具体可以点击<a href="https://blog.csdn.net/zhaojia92/article/details/102642719">这里</a></p>
+<p>在kernel代码的任意位置直接调用dump_stack方法即可。dump_stack已经包含在内核符号表中，并在include/linux/kernel.h中被声明。获取栈信息的原理是使用ebp逐层回溯。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="cm">/*
+</span><span class="ln"> 2</span><span class="cm"> * The architecture-independent dump_stack generator
+</span><span class="ln"> 3</span><span class="cm"> */</span>
+<span class="ln"> 4</span><span class="kt">void</span> <span class="nf">dump_stack</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="ln"> 5</span><span class="p">{</span>
+<span class="ln"> 6</span>	<span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">stack</span><span class="p">;</span>
+<span class="ln"> 7</span> 
+<span class="ln"> 8</span>	<span class="n">printk</span><span class="p">(</span><span class="s">&#34;Pid: %d, comm: %.20s %s %s %.*s</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span>
+<span class="ln"> 9</span>		<span class="n">current</span><span class="o">-&gt;</span><span class="n">pid</span><span class="p">,</span> <span class="n">current</span><span class="o">-&gt;</span><span class="n">comm</span><span class="p">,</span> <span class="n">print_tainted</span><span class="p">(),</span>
+<span class="ln">10</span>		<span class="n">init_utsname</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">release</span><span class="p">,</span>
+<span class="ln">11</span>		<span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">strcspn</span><span class="p">(</span><span class="n">init_utsname</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">version</span><span class="p">,</span> <span class="s">&#34; &#34;</span><span class="p">),</span>
+<span class="ln">12</span>		<span class="n">init_utsname</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">version</span><span class="p">);</span>
+<span class="ln">13</span>	<span class="n">show_trace</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">stack</span><span class="p">);</span>
+<span class="ln">14</span><span class="p">}</span>
+<span class="ln">15</span><span class="n">EXPORT_SYMBOL</span><span class="p">(</span><span class="n">dump_stack</span><span class="p">);</span>
 </code></pre></div>
               
             </div>
@@ -404,6 +453,12 @@
                     <span class="text-color-light text-small">标签</span><br/>
                     
   <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/android/">Android</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/native/">native</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/kernel/">kernel</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/dump_stack/">dump_stack</a>
 
   <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7/">调试工具</a>
 

@@ -1,0 +1,3146 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="本文主要记录一些关于声学相关的概念和资料，主要是整体的一些概念，细节方面后续会单独有篇章去介绍。">
+
+
+<meta property="og:description" content="本文主要记录一些关于声学相关的概念和资料，主要是整体的一些概念，细节方面后续会单独有篇章去介绍。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="声学相关">
+<meta name="twitter:title" content="声学相关">
+<meta property="og:url" content="https://yangyang48.github.io/2023/11/%E5%A3%B0%E5%AD%A6%E7%9B%B8%E5%85%B3/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2023/11/%E5%A3%B0%E5%AD%A6%E7%9B%B8%E5%85%B3/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="本文主要记录一些关于声学相关的概念和资料，主要是整体的一些概念，细节方面后续会单独有篇章去介绍。">
+<meta name="twitter:description" content="本文主要记录一些关于声学相关的概念和资料，主要是整体的一些概念，细节方面后续会单独有篇章去介绍。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2023-11-26T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2023-11-26T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="audio">
+    
+      <meta property="article:section" content="2023">
+    
+      <meta property="article:section" content="November">
+    
+  
+  
+    
+      <meta property="article:tag" content="Android">
+    
+      <meta property="article:tag" content="PCM">
+    
+      <meta property="article:tag" content="麦克风">
+    
+      <meta property="article:tag" content="采样率">
+    
+      <meta property="article:tag" content="截幅">
+    
+      <meta property="article:tag" content="混叠">
+    
+      <meta property="article:tag" content="奈奎斯特采样定律">
+    
+      <meta property="article:tag" content="tinyalsa">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/audio/audio_thumb.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/audio/audio_thumb.png">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/audio/audio_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/audio/audio_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+
+
+    <title>声学相关</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2023/11/%E5%A3%B0%E5%AD%A6%E7%9B%B8%E5%85%B3/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/audio/audio_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      声学相关
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2023-11-26T00:00:00Z">
+        
+  十一月 26, 2023
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/audio">audio</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2023">2023</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/november">November</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">2400 Words|Read in about 11 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>本文主要记录一些关于声学相关的概念和资料，主要是整体的一些概念，细节方面后续会单独有篇章去介绍。</p>
+<h1 id="0认识声音">0认识声音</h1>
+<h2 id="01声音与哲学">0.1声音与哲学</h2>
+<p>在探索声音前，我们先来看个有趣的问题：</p>
+<p>有人在知乎上问：</p>
+<blockquote>
+<p>如果世界上没有声音那世界会怎么样?</p>
+</blockquote>
+<p>结果最高票的回答是：</p>
+<blockquote>
+<p>世界上是没有声音的！！声音不是客观存在！！</p>
+</blockquote>
+<p><a href="https://www.zhihu.com/question/52928318/answer/132691966">如果世界上没有声音那世界会怎么样？ - 李如春的回答 - 知乎</a></p>
+<p>看完文章是不是非常惊喜，原来声音的问题都可以上升到哲学层面了。</p>
+<p>简单来说，声音的产生有三个要素, 离开任何一环，都没有声音产生。</p>
+<ol>
+<li><strong>物体振动产生的波；</strong></li>
+<li><strong>传播媒介（如空气）；</strong></li>
+<li><strong>人耳的接收与大脑解读。</strong></li>
+</ol>
+<p>因此，声音是人耳对一定频率振动波(振动频率16HZ~20000HZ的波)的反应和解读，而非客观实在。
+也就是说自然界中只存在振动波和传播媒介，而没有&quot;响&quot;声。</p>
+<h2 id="02最早的录音">0.2最早的录音</h2>
+<p>最早录音也许要追溯到130年前，具体是谁，直到今天都一直有争议，很多人说是爱迪生，很多人说是贝尔，也有很多人说是法国的scott，这里我们就认为是一个外国人好了。</p>
+<p>早期的录音机器大概是这个样子的，需要一个大喇叭收集声音，然后手摇传动轴，声音被记录在一张煤灰纸上。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="03最早的录音">0.3最早的录音</h2>
+<p>最早录音也许要追溯到130年前，具体是谁，直到今天都一直有争议，很多人说是爱迪生，很多人说是贝尔，也有很多人说是法国的scott，这里我们就认为是一个外国人好了。</p>
+<p>早期的录音机器大概是这个样子的，需要一个大喇叭收集声音，然后手摇传动轴，声音被记录在一张煤灰纸上。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>播放的原理是唱针接触到黑胶纹路，产生摩擦，还原了当时刻录的震动声波，再通过电音把震动声放大数千倍，就形成了黑胶音乐，原始胶片还原度最高了。</p>
+<h2 id="04数字化记录">0.4数字化记录</h2>
+<p>随着时代的发展，通过黑胶刻录的时代逐步过去，接着是磁带技术的新老交替， 而如今，数字电子技术的发展和集成电路技术的进步，录音机的性能和功能都达到了前所未有的水平。 这里我们简单来介绍一下</p>
+<ol>
+<li>
+<p>麦克风工作原理。以常见麦克风分为动圈和电容为例：
+<strong>动圈麦克风(Dynamic Micphone):</strong>
+原理要从法拉第电磁感应定律说起：</p>
+<p>简单说就是封闭线圈在磁场中做切割运动，就会产生感应电压。
+下面就是麦克风解刨放大图，可以看到一层薄膜和金属线圈，薄膜用来接受外界空气震动，推动线圈在磁场中做切割运动，从而将声音的震动转换成电信号。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_3.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><strong>电容麦克风(Condenser Micphone):</strong>
+电容式麦克风有两块金属极板，其中一块表面涂有驻极体薄膜并将其接地，另一极板接在场效应晶体管的栅极上，栅极与源极之间接有一个二极管，当驻极体膜片本身带有电荷，表面电荷地电量为Q，板极间地电容量为C，则在极头上产生地电压U=Q/C，当受到振动或受到气流地摩擦时，由于振动使两极板间的距离改变，即电容C改变，而电量Q不变，就会引起电压的变化，电压变化的大小，反映了外界声压的强弱。当前嵌入式设备中，大部分采用体积小，灵敏度高的电容麦克风。常用的两种电容式麦克风：驻极体电容麦克风（ECM）和微机电麦克风（MEMS Micphone 也称硅麦）。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_5.png" >
+  
+    </a>
+  
+  
+</div>
+
+</li>
+<li>
+<p>数字化记录和播放过程</p>
+<p>通过接受外界声音的震动，从而改变测量点的电压值，将采集的值进行一定格式的编码<code>PCM</code>记录在计算机中存储为原始音频文件。播放则按照存储的格式从新将数据取出，转换成数字信号传递给喇叭进行播放。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_6.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_7.png" >
+  
+    </a>
+  
+  
+</div>
+
+</li>
+<li>
+<p>采样参数说明</p>
+<ul>
+<li>采样率：一秒需要采集多少个点数据；</li>
+<li>采样精度：每个数据需要多少位来存储；</li>
+<li>采样通道：需要采样多少个通道，比如人就是双通道录音（左耳和右耳），单通道播放（一个嘴巴）；</li>
+<li>录音为什么是16k/16bit?
+<strong>16k采样频率:</strong> 实际的情况下，采集频率往往比信号的实际频率要高出5到10倍以上。因为采集频率仅仅高于信号频率的2倍(<a href="https://www.zhihu.com/question/24490634/answer/490847222">乃奎斯特定律</a>)的情况下，是很难获取测量的精度的。 而人的发音频率集中在80HZ~1200HZ(2018年,中国达人王晓龙以5,243Hz的成绩打破了吉尼斯世界纪录),所以16KHZ采样频率能够尽量减少失真的情况采集到人的声音信号。
+<strong>16bit采样位数:</strong> 2^16=65536,20log(65536)约等于96dB的动态范围,足够覆盖一般场景,比如覆盖安静的夜晚(30dB)到球磨机工作(约120dB)。</li>
+<li>播放的音频为什么是44.1k
+<strong>44.1k播放音频:</strong> 因为人耳的听觉范围大概在20Hz～20kHz，如果想还原20khz的音频采样频率至少要40khz ,但是梳状滤波器不可能是完美的，截止频率不能完全截断，所以需要将通带适当放开，增加一个大概10%衰减缓冲的带宽，所以就需要44k的播放音频，具体为什么是44.1k，这个就和播放的格式和数据的编码传输有关。</li>
+</ul>
+</li>
+</ol>
+<p>说钢琴是乐器国王不是没有道理的</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_8.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="1语音技术">1语音技术</h1>
+<p>玩过智能设备的朋友比较清楚现在的语音交互，可以通过“唤醒”对设备发起一个指令，让设备最终执行某个或者某些动作。</p>
+<p>首先有几个疑问</p>
+<div class="highlight"><pre class="chroma"><code class="language-txt" data-lang="txt"><span class="ln">1</span>1）为什么需要“信号处理”呢？
+<span class="ln">2</span>2）为什么要“语音唤醒”呢？
+<span class="ln">3</span>3）“语音识别”是什么？
+<span class="ln">4</span>4）为什么要“对话管理”？
+</code></pre></div><h2 id="11语音的诉求和赋能">1.1语音的诉求和赋能</h2>
+<p>在远古时代，那些对外界震动无法理解和做出反应的人可能被躲在草丛里，蹑手蹑脚的野兽吃掉，而能听到声音就成了生存本能。 也许正是因为如此，大脑对声音会更情有独钟和信赖，在人类逐步形成群居特性后，“情感的表达”，“沟通交流” 的诉求就越发突出， 而用语音表达,成了这些述求最自然的选择。</p>
+<p>在文明的发展过程中，我们总是在不停的发明创造工具，希望通过工具改变效率。如今越来越多智能设备的出现， 很大程度方便了我们的日常生活，随之而来的是设备的复杂度也越高，如何用最简单的方式和设备交互呢？</p>
+<p>用手点屏幕吗？👆 这是用户理解设备后的交互方式，那设备理解用户的交互方式是什么？</p>
+<p>这也许要回归到人和人交互最习惯的方式：语音。</p>
+<h2 id="12人机对话">1.2人机对话</h2>
+<p>要人机对话，设备至少得能感知外界震动，能做出回应，最关键的是能理解说话的意思。 所以基于以上三点，设计出来的对话系统由以下模块组成。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_9.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_9.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>回答下上面的问题</p>
+<blockquote>
+<p>1)<strong>为什么需要“信号处理”呢？</strong></p>
+<p>因为我们生活的环境充满了噪声，有来自车辆行驶的噪声，有空调吹风的噪声，还有墙壁反射形成的混响， 我们需要在噪声中找到声源，通过信号处理，让声源信号更加清晰，这样为后面更准确的识别打好基础。</p>
+<p>2)<strong>为什么要“语音唤醒”呢？</strong></p>
+<p>“语音唤醒”是什么？在人机对话中，每次发起语音对话前需要先通过特定的词组来触发对话。 就像上课时老师要学生回答问题，需要先叫某个同学的名字，再开始对答一样。 然而在语音交互中，最理想的情况应该是没有唤醒操作，任何时候我们发出的语音指令设备都应该做出相应。 但是受限于当前设备性能算力，功耗，网络带宽等条件，如果一直识别，大量无意义的输入解析会加重设备和 网络负担，特别是功耗要求严格的移动设备。</p>
+<p>3)<strong>“语音识别”是什么？</strong></p>
+<p>举个例子：在上课时，你想把你的想法传达给同桌，又不能说话，你会怎么做？ 你也许会把你想说的话写在一张字条上，然后传给他，他看文字也能明白你的意思。
+这就是语音识别，是一个声音抽象成文字的过程。</p>
+<p>4)<strong>为什么要“对话管理”？</strong></p>
+<p>这都要怪我们太懒了，我们对话时，常常会省略掉一些背景或之前提过的信息，比如天气等。</p>
+</blockquote>
+<h2 id="13人机对话情景分析">1.3人机对话情景分析</h2>
+<p>下面我们会针对一个具体的语音对话场景， 来简单分析一下，在一轮人机对话中，涉及到哪些语音模块和状态的切换。</p>
+<blockquote>
+<p>对话开始
+人：天猫精灵 （唤醒信号发出）
+机：你好 （唤醒回复）
+人：我要听周杰伦的歌 (用户指令)
+识别语义理解&hellip;
+机：好的，播放周杰伦的夜曲
+机：打开音乐播放器播放指定音乐
+对话结束</p>
+</blockquote>
+<h3 id="131语音状态">1.3.1语音状态</h3>
+<p>一轮人机对话，涉及的语音状态可以简单分为</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">状态</th>
+<th>英文</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">闲置状态</td>
+<td>（IDLE）</td>
+</tr>
+<tr>
+<td style="text-align:center">播报状态</td>
+<td>（PLAYING）</td>
+</tr>
+<tr>
+<td style="text-align:center">识别状态</td>
+<td>（WAIT_SPEAK_START, RECOGNITION，WAIT_SPEAK_END）</td>
+</tr>
+<tr>
+<td style="text-align:center">处理状态</td>
+<td>（PROCESSING）</td>
+</tr>
+</tbody>
+</table>
+<p>状态和状态之间切换则需要以下一些信号触</p>
+<p>语音端点检测 (VAD)，用于断句的
+唤醒信号 (WAKEUP_SIGNAL)，比如天猫精灵的唤醒词</p>
+<h3 id="132识别状态">1.3.2识别状态</h3>
+<p>识别状态细分有三个:</p>
+<ol>
+<li>播报结束后刚开启识别时，但是这时候用户可能没有说话，到检测到用户说话是有一个短暂的WAIT_SPEAK_START状态，
+如果这个状态持续时间过长的话，对话会提示“您没有说话哦”，让整个对话体验更加自然。</li>
+<li>当WAIT_SPEAK_START超时前检查到用户开始说话，会进入RECOGNITION状态，这个状态会持续采集用户输入音频，通过识别引擎将音频转化为文本内容。</li>
+<li>当用户说完话后，到开始处理前，有一个说话结束判断，类似微信发送语音消息，说完话松开录音按键动作。而这里的人机对话是不需要用户按住说话按钮， 全部依靠语音算法(VAD)自动检测判断。这段时间称为WAIT_SPEAK_END, 根据超时参数(一般600ms)，语音会有一个自动截断处理，但是如果这时候除了说话人以外有其他较大噪声存在， 会影响这个状态判断，导致用户指令说完后迟迟没有进入处理阶段。</li>
+</ol>
+<p>大部分情况，WAIT_SPEAK_START, WAIT_SPEAK_END是不需要开发者操作，相关操作已经封装在语音识别引擎中，开发者只需要根据产品需求，在初始化时设置对应的接口参数即可，这里将其细分出来是方便开发者在对接过程中遇到这类问题有一个判断方向。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_10.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_10.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>如果在上面的基础上加入回声抵消（AEC）之后</p>
+<p>我们将上面的对话时序图和当前（加入AEC算法）时序图进行对比，最大的差别就是加入AEC算法后，你可以在机器播报的中途输入语音指令，这样可以给到用户更自由的对话交互。 在上面例子可以看到VAD的检测和ASR的开启都放在唤醒播报结束后才开启，这是为了避免机器播报语（TTS）干扰了识别，但是如果设备提供了参考回路数据， 并集成了AEC算法，这个时候可以在唤醒触发后就开启识别，可以更快的响应用户语音输入。而不用再等待设备播报完再交互，同时也为后续播报提供了打断支持，如下图。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_11.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_11.png" >
+  
+    </a>
+  
+  
+</div>
+
+<ol>
+<li>误唤醒提升;</li>
+<li>识别率下降（识别结果混入了播报语）;</li>
+<li>打断效果差或无法打断;</li>
+<li>以及vad判断不准确带来识别和oneshot功能体验差等问题。</li>
+</ol>
+<h1 id="14专业名词解释">1.4专业名词解释</h1>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">缩写</th>
+<th style="text-align:center">全拼</th>
+<th style="text-align:center">解释</th>
+<th>举例说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"><code>AEC</code></td>
+<td style="text-align:center">Acoustic Echo Cancellation</td>
+<td style="text-align:center">回声消除，将本机播放的音频在录音数据剔除</td>
+<td>播放音乐的时候想唤醒，或者tts播报的时候想打断</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>AGC</code></td>
+<td style="text-align:center">Automatic Gain Control</td>
+<td style="text-align:center">自动增益控制</td>
+<td>一般用在远场通话或者录音效果上，根据音频信号强度动态调整增益控制实现这种功能电路检查<code>AGC</code>环</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>API</code></td>
+<td style="text-align:center">Application Programming Interface</td>
+<td style="text-align:center">应用程序编程接口</td>
+<td>常用于不同层面，不同开发团队等对接时使用，具体实现前，先对接<code>API</code>，后续更新接口不变，具体实现更新</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>APK</code></td>
+<td style="text-align:center">Android Package</td>
+<td style="text-align:center">Android应用程序安装包</td>
+<td>Android应用开发后打包程序，用于安装和分发</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>ASR</code></td>
+<td style="text-align:center">Automatic Speech Recognition</td>
+<td style="text-align:center">自动语音识别技术</td>
+<td>将声音转成文字</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>AOP</code></td>
+<td style="text-align:center">Acoustic Over-loading Power</td>
+<td style="text-align:center">声学过载点</td>
+<td>一般作为麦克风选型参考指标，如常用的<code>AOP&gt;=120dB SPL</code></td>
+</tr>
+<tr>
+<td style="text-align:center"><code>dB</code></td>
+<td style="text-align:center">-</td>
+<td style="text-align:center">分贝</td>
+<td>是量度两个相同单位之数量比例的计量单位，可用于度量声音强度</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>BF</code></td>
+<td style="text-align:center">Beam Forming</td>
+<td style="text-align:center">波束成形,对指角度定声音做增强</td>
+<td>经常用在远场语音场景，提高声源方向信噪比</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>BSS</code></td>
+<td style="text-align:center">Blind Signal/Source Separation</td>
+<td style="text-align:center">盲源分离，在不知道源信号在哪里，从噪声中把声源分离出来</td>
+<td>比如在酒吧嘈杂的环境，无法确认声源方向，则只能根据声音特征分离出需要的声音</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>DM</code></td>
+<td style="text-align:center">Dialogue Management</td>
+<td style="text-align:center">对话管理</td>
+<td>多轮对话或者复杂对话逻辑需要，让设备对话更符合人的思维</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>DNN</code></td>
+<td style="text-align:center">Deep Neural Network</td>
+<td style="text-align:center">深度神经网络</td>
+<td><code>CNN</code>：卷积神经网络，<code>RNN</code>：循环神经网络</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>DOA</code></td>
+<td style="text-align:center">Direction of Arrival</td>
+<td style="text-align:center">声源定位,找到声源的位置，经常搭配BF使用</td>
+<td>找到<strong>声音方向</strong>，比如可以用于机器人根据声源转向，面对说话人</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>DRC</code></td>
+<td style="text-align:center">Dynamic range compression</td>
+<td style="text-align:center">动态范围抑制</td>
+<td>和agc类似，一般用于音频输出，在音量大时，压制音量在某一范围内，音量小时，适当提升音量</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>FAR</code></td>
+<td style="text-align:center">False Alarm Rate</td>
+<td style="text-align:center">误唤醒率</td>
+<td>唤醒测试指标，用于统计外部信号播放24小时内，设备被唤醒次数</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>FRR</code></td>
+<td style="text-align:center">False Rejection Rate</td>
+<td style="text-align:center">误识别率</td>
+<td>of missed wake-words / of wake-words spoken</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>GSC</code></td>
+<td style="text-align:center">Generalized Sidelobe Cancellatior</td>
+<td style="text-align:center">广义旁瓣对消</td>
+<td>和BF类似，依赖麦克风阵列，以多个固定波束输出结果作为输入，并嘉定对准声源方位为主波束，其他则为参考波束</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>HAL</code></td>
+<td style="text-align:center">Hardware Abstract Laeyer</td>
+<td style="text-align:center">硬件抽象层</td>
+<td>拿Android来说，第三方厂商常常会将各自的算法集成在hal层</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>IAR</code></td>
+<td style="text-align:center">-</td>
+<td style="text-align:center">他人误闯</td>
+<td>用于测试声纹算法鲁棒性</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>IMEI</code></td>
+<td style="text-align:center">International Mobile Equipment Identity</td>
+<td style="text-align:center">即通常所说的手机序列号</td>
+<td>手机“串号”，用于在移动电话网络中识别每一部独立手机等移动通信设备，相当于移动电话身份证</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>IOT</code></td>
+<td style="text-align:center">Internet Of Things</td>
+<td style="text-align:center">万物互联</td>
+<td>也常常指家居设备通过网络互联</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>KG</code></td>
+<td style="text-align:center">Knowledge Graph</td>
+<td style="text-align:center">知识图谱</td>
+<td>显示知识发展进程与结构关系的一系列各种不同图形，用可视化技术描述知识资源及其载体，挖掘，分析，构建，绘制和显示知识及他们之间的相互联系</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>LM</code></td>
+<td style="text-align:center">Language Mode</td>
+<td style="text-align:center">语言模型</td>
+<td>在定制识别时常常涉及不同策略的语言模型</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>N-Gram</code></td>
+<td style="text-align:center">-</td>
+<td style="text-align:center">语言模型之一</td>
+<td>是大词汇连续语音识别中常用的一种语言模型，对中文而言，我们称之为汉语语言模型（<code>CLM, Chinese Language Model</code>）</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>NLP</code></td>
+<td style="text-align:center">Nature Language Processing</td>
+<td style="text-align:center">自然语言处理</td>
+<td>“处理”好比控制眼睛、耳朵、舌头的神经，他们将接收的信息转化成大脑可以理解的内部信息</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>NLU</code></td>
+<td style="text-align:center">Nature Language Understanding</td>
+<td style="text-align:center">自然语言理解</td>
+<td>“理解”是大脑皮层负责语言理解那部分，数亿脑细胞共同完成的功能。一个人因为其自身家庭背景、受教育程度、接触现实中长期形成的条件反射刺激、特殊的强列刺激、当时的心理状况等因素都会影响和改变“理解”的功能</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>NN</code></td>
+<td style="text-align:center">Neual Network</td>
+<td style="text-align:center">神经网络</td>
+<td>神经网络主要是默认人类脑结构进行的一种代码程序结构的表现，同时是<code>RNN</code>，<code>CNN</code>，<code>DNN</code>的基础。结构上大体上分为三个部分（输入，含隐，输出），各层都有个的讲究，其中，输入层主要是特征处理后的入口，含隐层用来训练相应函数，节点越多，训练出的函数就越复杂，输出层输出相应的预测结果。对于稳态噪声场景，<code>nn</code>有点比较突出</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>NR</code></td>
+<td style="text-align:center">Noise Reduction</td>
+<td style="text-align:center">噪声抑制</td>
+<td>噪声和信号之间的模式差别识别出噪声，信噪比越高，声音之间的差别越大，越容易分离。现在常用的差别包括响度和频率之间的差异，是通话降噪常用算法模块之一</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>MFCC</code></td>
+<td style="text-align:center">Mel-Frequency Cepstral Coefficients</td>
+<td style="text-align:center">梅尔平率倒谱系数（音频信号提取特征）</td>
+<td>声道的形态在语音短时功率的包络中显示出来，而<code>MFCCs</code>就是一种准确描述这个包络的一种特征。包含两个关键步骤：转化到梅尔频率，然后进行倒谱分析</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>Oneshot</code></td>
+<td style="text-align:center">One shot</td>
+<td style="text-align:center">唤醒和指令一次流畅的说完,不需要唤醒后等待提示音再对话</td>
+<td>如果没有用<code>oneshot</code>，唤醒后需要等机器反馈“嘟”或“我在”等提示音播报结束再说语音指令</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>PPL</code></td>
+<td style="text-align:center">Perplexity</td>
+<td style="text-align:center">混淆度</td>
+<td>语言模型的衡量指标，<code>ppl</code>越小越好，同时它又是一个相对量</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>Res</code></td>
+<td style="text-align:center">resource</td>
+<td style="text-align:center">资源</td>
+<td>在语音使用时，常常指代算法配置资源等</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>SDS</code></td>
+<td style="text-align:center">Spoken Based Dialog System</td>
+<td style="text-align:center">基于语音交互系统</td>
+<td>类似的还有语音交互界面（<code>SUI</code>,<code>Speech User Interface</code>），直接使用语音和计算机系统交互。类似的还有（<code>GUI</code>，<code>Graph User Interface</code>）</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>SER</code></td>
+<td style="text-align:center">Sentence Error Rate</td>
+<td style="text-align:center">句错率</td>
+<td>句错率 = 错误句子数/句总数</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>SNR</code></td>
+<td style="text-align:center">Signal to Noise Ratio</td>
+<td style="text-align:center">信噪比</td>
+<td>有效信号量和噪声干扰的比值,单位<code>dB</code>，常常作为一个衡量麦克风的指标</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>SN</code></td>
+<td style="text-align:center">Serial Number</td>
+<td style="text-align:center">序列号</td>
+<td>指软件注册信息，一般用SN做注册码文件名，数码产品也同样有自己的SN号，常用于设备唯一号用于授权统计</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>THD</code></td>
+<td style="text-align:center">Toal Harmonic Distortion</td>
+<td style="text-align:center">总谐波失真</td>
+<td>声学测试指标，指输出信号比输入信号多出的谐波部分；总谐波失真（<code>THD</code>）：&lt;= 1%(1<code>kHz</code>),1<code>kHz</code>频率处谐波失真最小，因此不少产品以该频段作为失真指标，<code>THD</code>指标直接影响<code>AEC</code>消除效果</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>TTS</code></td>
+<td style="text-align:center">Text To Speech</td>
+<td style="text-align:center">语音合成</td>
+<td>将对话需要表达的文字转成声音</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>Turnkey</code></td>
+<td style="text-align:center">turnkey project</td>
+<td style="text-align:center">一站式解决方案</td>
+<td>软硬件打包完整方案</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>VAD</code></td>
+<td style="text-align:center">Voice Activity Detection</td>
+<td style="text-align:center">语音端点检测，检测是否有人在说话</td>
+<td>常用于自动断句和无效输入判断,比如唤醒后几秒内没有说话，会触发<code>vad</code>超时，语音会播报“您没有说话哦”</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>VP</code></td>
+<td style="text-align:center">voice Print</td>
+<td style="text-align:center">声纹识别</td>
+<td>根据声音特征，区分发生人，类似指纹功能</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>WER</code></td>
+<td style="text-align:center">Word Error Rate</td>
+<td style="text-align:center">字错率</td>
+<td>字错率 = 识别错误字数/总字数</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>WK</code></td>
+<td style="text-align:center">Wakeup</td>
+<td style="text-align:center">语音唤醒</td>
+<td>固定的指令词来触发语音对话</td>
+</tr>
+</tbody>
+</table>
+<h3 id="141关于进一步的说明">1.4.1关于进一步的说明</h3>
+<p>具体可以看<a href="https://shichaog1.gitbooks.io/hand-book-of-speech-enhancement-and-recognition/content/">这里</a></p>
+<h2 id="15android平台">1.5Android平台</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_12.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_12.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="151android音频框架简介">1.5.1Android音频框架简介</h3>
+<p>整个Android音频框架涉及到的内容非常繁多，因为本章重点是hal层进行算法集成，所以只对上行录音做一个简单介绍。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_13.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_13.png" >
+  
+    </a>
+  
+  
+</div>
+
+<ol>
+<li>从上面框架图可以看出来，整个android系统的模块化和分层思想是非常明显的。这样便于模块集成和不同层的问题排查定位。</li>
+<li>在application层，只暴露给用户简单的接口，对于录音来说，用户只需要创建AudioRecord，通过AudioRecord来和framework的音频服务通信，用于读取音频数据。</li>
+<li>整个音频系统最为复杂的都在framework层进行处理了，经常涉及到的主要是两个模块，AudioFlinger和AudioPolicy，分别负责音频操作执行和音频策略选择。怎么理解这两个模块呢？比如录音操作，需要把音频数据从hal层拷贝出来，是一个动作，则由AudioFlinger负责，而是从本机麦克风录音呢？还是从蓝牙耳机录音还是usb声卡录音呢？具体选择哪个设备录音，则有AudioPlicy来决策。</li>
+<li>AudioHal可以看到是一个独立的模块，最终会别编译成一个动态库，由AudioFlinger加载（android 8以后则由专门的vendor server加载，通过binder和framework audioservice进行通信）。它起到一个承上启下的作用，对上实现framework给到的接口，对下调用kernel提供的tinyalsa接口来从驱动获取音频数据。中间有很大的自由度留给第三方厂商进行发挥。</li>
+<li>在android系统中，在标准linux kernel音频库alsa集成上做了裁剪，提供精简后的tinyalsa版本，主要提供pcm.c用于音频读写和mix.c用于音频通路控制。</li>
+</ol>
+<h3 id="152android-audiohal接口">1.5.2Android AudioHal接口</h3>
+<ol>
+<li>默认android aosp代码里，Audiohal是空实现的，代码目录在hardware/libhardware(_legacy)/audio/audio_hw.c。源码只将关键的接口和结构体做了实现，而对接tinyalsa的动作则没有实现。</li>
+<li>因为每家尝试底层驱动千差万别，什么时机open声卡，声卡支持什么样的采样率，采用精度，通道数都是不同的，所以在Hal集成的时候，需要根据底层声卡驱动支持的实际情况来初始化声卡才能正确拿到期望的音频数据。</li>
+<li>在tinyalsa和audio_hw之间是各个厂商自由发挥的地方，可以根据实际情况来集成想要的算法。</li>
+<li>在framework调用hal接口adev_open_input_stream的时候，会传入audio_hw_device和audio_config两个参数，device可以用于hal选择audiopolicy决策的音频设备，config则携带了framework期望的录音参数，比如采样率，精度，通道和source，而source可以用于决定hal层采取何种算法类型。source的声明和介绍可以参考MediaRecorder.java里的注释，默认录音可以采用MIC = 1或者 DEFAULT = 0，摄像CAMCORDER = 5，语音识别可以采用VOICE_RECOGNITION = 6，网络通话采用VOICE_COMMUNICATION = 7等。</li>
+</ol>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_14.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_14.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="2相关audio问题">2相关Audio问题</h1>
+<h2 id="21录音参数检查">2.1录音参数检查</h2>
+<p>在碰到语音问题时，比如无法唤醒，最简单，也最容易出现的问题是录音参数配置错了， 下面列出基于AISpeech Audio Hal适配时不同语音方案的录音参数。</p>
+<table>
+<thead>
+<tr>
+<th>录音场景</th>
+<th style="text-align:center">AudioSource</th>
+<th style="text-align:center">SampleRate</th>
+<th style="text-align:center">ChannelConfig</th>
+<th>对应 Hal 算法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>单麦</td>
+<td style="text-align:center">voice_recognition(6)</td>
+<td style="text-align:center">16000 Hz</td>
+<td style="text-align:center">CHANNEL_IN_MONO（1）</td>
+<td>AEC</td>
+</tr>
+<tr>
+<td>双麦</td>
+<td style="text-align:center">voice_recognition(6)</td>
+<td style="text-align:center">16000 Hz</td>
+<td style="text-align:center">CHANNEL_IN_STEREO（2）</td>
+<td>AEC</td>
+</tr>
+<tr>
+<td>厂测</td>
+<td style="text-align:center">voice_recognition(6)</td>
+<td style="text-align:center">32000 Hz</td>
+<td style="text-align:center">CHANNEL_IN_MONO（1）</td>
+<td>无</td>
+</tr>
+<tr>
+<td>四麦</td>
+<td style="text-align:center">voice_recognition(6)</td>
+<td style="text-align:center">32000 Hz</td>
+<td style="text-align:center">CHANNEL_IN_STEREO（2）</td>
+<td>AEC</td>
+</tr>
+<tr>
+<td>六麦</td>
+<td style="text-align:center">voice_recognition(6)</td>
+<td style="text-align:center">48000 Hz</td>
+<td style="text-align:center">CHANNEL_IN_STEREO（2）</td>
+<td>AEC</td>
+</tr>
+<tr>
+<td>VOIP通话</td>
+<td style="text-align:center">voice_communication(7)</td>
+<td style="text-align:center">16000 Hz - 44.1k Hz</td>
+<td style="text-align:center">CHANNEL_IN_MONO（1）</td>
+<td>VOIP</td>
+</tr>
+<tr>
+<td>普通录音</td>
+<td style="text-align:center">default(0) / mic(1)</td>
+<td style="text-align:center">8000 Hz - &hellip;</td>
+<td style="text-align:center">CHANNEL_IN_MONO（1）</td>
+<td>AGC</td>
+</tr>
+</tbody>
+</table>
+<h3 id="211如何查录音参数">2.1.1如何查录音参数</h3>
+<p>Android 默认提供了两个非常有用的命令用于dump framework audioserver的状态：</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>adb shell dumpsys media.audio_flingerCopy to clipboardErrorCopied
+<span class="ln">2</span>adb shell dumpsys media.audio_policyCopy to clipboardErrorCopied
+</code></pre></div><blockquote>
+<p>简单讲讲这两个命令，在Android Audio System里, audio flinger担任执行动作的角色，audio policy则担任音频策略的角色，policy的决策如何实现？</p>
+<p>依赖/vendor/etc/audio_policy_configuration.xml配置文件，配置文件里决定了不同的声卡由哪个hal库来负责操作，不同声卡的录音参数支持情况等等。</p>
+<p>在系统运行时，音频策略决定后，则会统一通过audio flinger来执行，如数打开hal库，下发录音参数，音频数据数据拷贝等等。</p>
+<p>有了这个认知后，我们就可以大概知道这里要用到的就是dump audio flinger这个指令，dump后我们找到“Input thread”部分，如下：</p>
+</blockquote>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_15.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_15.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>通过上面dump结果，我们可以查到AudioRecord的source，采样率，通道参数，录音设备类型，录音进程号等， 根据这些参数，可以做如下步骤排查：</p>
+<ol>
+<li>根据录音进程号，判断当前录音进程是否是语音进程，如果不是的话，则说明语音无法使用是录音被占用引起，到底谁占用，参考2.2到底是谁在录音。</li>
+<li>根据上面提供的语音方案对应录音参数表比对，看录音参数是否和dump的一致，如果不一致，则有可能是AudioRecord初始化时参数设置错误，或者语音sdk配置语音方案出现错误。</li>
+<li>如果上面两步都符合预期，发现语音还是有问题，这时候就要看音频是否正常，参考2.4如何保存音频如何保存音频)。</li>
+</ol>
+<h3 id="212如何查播放参数">2.1.2如何查播放参数</h3>
+<p>上面说了如何查录音参数，这里再顺便看看如何查播放参数： 和上面两个dump命令一样，在dump audio_flinger的时候，我们主要关注Output thread, 如下：</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_16.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_16.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>如果我们想知道当前播放是哪个stream type以及对应音量，则可以通过dump audio policy命令来查看，如下</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_17.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_17.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="22到底是谁在录音">2.2到底是谁在录音</h2>
+<p>在排查众多语音问题中，我们发现一个非常基础，又非常容易出现的问题就是录音被占用了， 导致语音SDK无法正常拾音而出现无法唤醒或无法识别的情况，但是我却不知道是谁在背后捣蛋。</p>
+<ol>
+<li>
+<p>抓log看 在Android10以前，原生系统对多app同时录音并不支持，这会导致第一个app在录音时， 再启动一个AudioRecord实例录音会出现报错，可以通过logcat抓取日志后分析(这里以Android8.1为例), 过滤audio看是否有already started和status -38的打印：</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>W/APM_AudioPolicyManager: startInput<span class="o">(</span>38<span class="o">)</span> failed: other input <span class="m">30</span> already started
+<span class="ln">2</span>E/AudioRecord: start<span class="o">()</span> status -38
+<span class="ln">3</span>E/MediaRecorder: start failed: -38
+</code></pre></div></li>
+<li>
+<p>通过dump命令看是录音进程归属</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>adb shell dumpsys media.audio_flinger
+</code></pre></div><p>在dump结果里，我们找是否存在“Input thread”的部分，如下图：</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_19.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_19.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>利用Client找到的录音进程号，通过ps命令来确认进程包名（android8以下不需要加-A参数），如果不是本应用录音的包名， 说明是其他app在录音，如果和本应用同包名，可能是之前录音线程没有正常关闭导致，可以杀掉进程后再尝试。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_20.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_20.png" >
+  
+    </a>
+  
+  
+</div>
+
+</li>
+<li>
+<p>其他情况</p>
+<p>当然，还有一种极端情况，就是有进程跳过了Android的framework层，直接通过文件节点在录音，这也会导致录音失败， 但是在dump结果中却没有“Input thread”部分的打印。那该如何排查呢？首先我们写一个脚本用于确认这时候的确有人在录音， 同时通过一些linux的命令即可确认，如下：</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="nv">dir</span><span class="o">=</span>/proc/asound/card*
+<span class="ln">2</span>
+<span class="ln">3</span><span class="k">for</span> file in <span class="nv">$dir</span>/*<span class="p">;</span> <span class="k">do</span>
+<span class="ln">4</span>    <span class="k">if</span> <span class="o">[[</span> <span class="nv">$file</span> <span class="o">==</span> *c <span class="o">]]</span><span class="p">;</span> <span class="k">then</span> 
+<span class="ln">5</span>    <span class="nv">card</span><span class="o">=</span><span class="s2">&#34;</span><span class="nv">$file</span><span class="s2">&#34;&#34;/sub0/hw_params&#34;</span><span class="p">;</span>
+<span class="ln">6</span>    <span class="nb">echo</span> <span class="nv">$card</span><span class="p">;</span>
+<span class="ln">7</span>    cat <span class="nv">$card</span><span class="p">;</span>
+<span class="ln">8</span>    <span class="k">fi</span>
+<span class="ln">9</span><span class="k">done</span>
+</code></pre></div><p>将如上shell命令保存到文件，例如found_opendev.sh，然后将其push到root后的设备的/data目录，并赋予执行权限。</p>
+<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh"><span class="ln">1</span>adb push found_opendev.sh /data
+<span class="ln">2</span>adb shell
+<span class="ln">3</span>chmod <span class="m">777</span> /data/found_opendev.sh
+<span class="ln">4</span>./found_opendev.sh
+</code></pre></div><p>如果发现hw_params有录音参数，则说明的确有进程在录音。 根据打开的声卡，看status里的owner_pid来确认是哪个进程在录音。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_21.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_21.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_22.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_22.png" >
+  
+    </a>
+  
+  
+</div>
+
+</li>
+</ol>
+<h2 id="23录音冲突">2.3录音冲突</h2>
+<p>在Android平台，默认情况不支持多个APP同时录音，如果语音APP启动了唤醒功能在后台录音，其他应用想在这时候启动录音大部分情况是会失败。 这里举最常见的一个例子带大家一起分析问题原因以及如何处理：</p>
+<h3 id="231问题现象">2.3.1问题现象</h3>
+<p>语音启动后，通话没声音。</p>
+<h3 id="232问题原因">2.3.2问题原因</h3>
+<p>在Android平台的framework的AudioPolicyManager::startInput里有判断，如果已经有record在录音，后面尝试启动录音时会被认为是invalid操作，被直接return了。（下面是android11的代码）</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_23.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_23.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="233处理方案">2.3.3处理方案</h3>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>操作说明</th>
+<th>优点</th>
+<th>缺点</th>
+<th>使用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>APP状态同步方案</td>
+<td>遵循Android设计，同一时间只允许一个APP录音，当语音在录音时需要通话，则在通话接通前发命令给语音APP（如广播等），语音APP关闭录音后，再通知通话APP启动录音。通话APP结束通话后释放录音，再发消息给语音APP，语音APP重新启动录音。</td>
+<td>无需系统层修改，应用层即可处理</td>
+<td>应用层操作繁琐，一旦消息状态同步异常，容易导致无法唤醒或通话没声音问题。在产品需求方面，没办法在源头解决同时录音需求</td>
+<td>系统无法修改或者没有集成AISpeechAudioHal时使用</td>
+</tr>
+<tr>
+<td>l录音复用方案</td>
+<td>1，在hal里默认对录音复用做了支持； 2，系统framework的AudiopolicyManager修改</td>
+<td>源头上处理了多APP同时录音问题，录音异常bug减少</td>
+<td>对系统有一定植入性</td>
+<td>framework允许修改。 通话APP等录音APP无法和语音APP通信同步状态</td>
+</tr>
+</tbody>
+</table>
+<p>第二种方式修改如下</p>
+<h4 id="2331低版本">2.3.3.1低版本</h4>
+<p>根据报错的地方 , 找到对应的报错的文件和对应的函数.
+在android低版本时报错会在/hardware/libhardware_legacy/audio/AudioPolicyManagerBase.cpp中的startInput()函数中.
+将1报错的地方的return注释掉, 保证startInput可以正常调用到hal层</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">///hardware/libhardware_legacy/audio/AudioPolicyManagerBase.cpp#startInput
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">status_t</span> <span class="n">AudioPolicyManagerBase</span><span class="o">::</span><span class="n">startInput</span><span class="p">(</span><span class="n">audio_io_handle_t</span> <span class="n">input</span><span class="p">)</span>
+<span class="ln"> 3</span>        <span class="n">stopInput</span><span class="p">(</span><span class="n">activeInput</span><span class="p">);</span>
+<span class="ln"> 4</span>        <span class="n">releaseInput</span><span class="p">(</span><span class="n">activeInput</span><span class="p">);</span>
+<span class="ln"> 5</span>      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln"> 6</span><span class="o">+</span>        <span class="err">#</span><span class="k">if</span> <span class="mi">0</span> <span class="cm">/* porting aispeech audio hal, support multi inputs at the same time */</span>
+<span class="ln"> 7</span>        <span class="n">ALOGW</span><span class="p">(</span><span class="s">&#34;startInput() input %d failed: other input already started..&#34;</span><span class="p">,</span> <span class="n">input</span><span class="p">);</span>
+<span class="ln"> 8</span>        <span class="k">return</span> <span class="n">INVALID_OPERATION</span><span class="p">;</span>
+<span class="ln"> 9</span><span class="o">+</span>        <span class="err">#</span><span class="n">endif</span>
+<span class="ln">10</span>      <span class="p">}</span>
+<span class="ln">11</span>    <span class="p">}</span>
+<span class="ln">12</span>  <span class="p">}</span>
+</code></pre></div><h4 id="2332高版本">2.3.3.2高版本</h4>
+<p>如果是高版本的android版本, 则这个报错可能在frameworks/av/services/audiopolicy/managerdefault/AudioPolicyManager.cpp中</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//frameworks/av/services/audiopolicy/managerdefault/AudioPolicyManager.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">status_t</span> <span class="n">AudioPolicyManager</span><span class="o">::</span><span class="n">startInput</span><span class="p">(</span><span class="n">audio_io_handle_t</span> <span class="n">input</span><span class="p">,</span> <span class="n">audio_session_t</span> <span class="n">session</span><span class="p">)</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span><span class="n">ALOGV</span><span class="p">(</span><span class="s">&#34;startInput() input %d&#34;</span><span class="p">,</span> <span class="n">input</span><span class="p">);</span>
+<span class="ln"> 5</span>        <span class="n">stopInput</span><span class="p">(</span><span class="n">activeInput</span><span class="p">);</span>
+<span class="ln"> 6</span>        <span class="n">releaseInput</span><span class="p">(</span><span class="n">activeInput</span><span class="p">);</span>
+<span class="ln"> 7</span>      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln"> 8</span><span class="o">+</span>        <span class="err">#</span><span class="k">if</span> <span class="mi">0</span> <span class="cm">/* porting aispeech audio hal, support multi inputs at the same time */</span>
+<span class="ln"> 9</span>        <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;startInput(%d) failed: other input %d already started&#34;</span><span class="p">,</span> <span class="n">input</span><span class="p">,</span> <span class="n">activeInput</span><span class="p">);</span>
+<span class="ln">10</span>        <span class="k">return</span> <span class="n">INVALID_OPERATION</span><span class="p">;</span>
+<span class="ln">11</span><span class="o">+</span>        <span class="err">#</span><span class="n">endif</span>
+<span class="ln">12</span>      <span class="p">}</span>
+<span class="ln">13</span>    <span class="p">}</span>
+<span class="ln">14</span>  <span class="p">}</span>
+<span class="ln">15</span>
+</code></pre></div><p>具体报错的地方请根据自身代码, 参考上面示例 , 将对应的地方注释掉. 保证多个app同时录音时 , 不会在framework层被return掉。</p>
+<h4 id="2333其他">2.3.3.3其他</h4>
+<p>android10上, AudioPolicy新增了对app状态的管理</p>
+<p>当多个app同时录音时, 会根据app的状态选择对优先级低的app录音数据做silence处理.</p>
+<p>导致后台app录取到的音频数据是0, 简单的处理方法就是把audioflinger中的silence处理注释掉</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="n">diff</span> <span class="o">--</span><span class="n">git</span> <span class="n">a</span><span class="o">/</span><span class="n">audioflinger</span><span class="o">/</span><span class="n">AudioFlinger</span><span class="p">.</span><span class="n">cpp</span> <span class="n">b</span><span class="o">/</span><span class="n">audioflinger</span><span class="o">/</span><span class="n">AudioFlinger</span><span class="p">.</span><span class="n">cpp</span>
+<span class="ln"> 2</span><span class="n">index</span> <span class="mi">47</span><span class="n">dd1a7</span><span class="p">.</span><span class="mf">.61</span><span class="n">b5054</span> <span class="mi">100755</span>
+<span class="ln"> 3</span><span class="o">---</span> <span class="n">a</span><span class="o">/</span><span class="n">audioflinger</span><span class="o">/</span><span class="n">AudioFlinger</span><span class="p">.</span><span class="n">cpp</span>
+<span class="ln"> 4</span><span class="o">+++</span> <span class="n">b</span><span class="o">/</span><span class="n">audioflinger</span><span class="o">/</span><span class="n">AudioFlinger</span><span class="p">.</span><span class="n">cpp</span>
+<span class="ln"> 5</span><span class="err">@@</span> <span class="o">-</span><span class="mi">1175</span><span class="p">,</span><span class="mi">7</span> <span class="o">+</span><span class="mi">1175</span><span class="p">,</span><span class="mi">8</span> <span class="err">@@</span> <span class="kt">bool</span> <span class="n">AudioFlinger</span><span class="o">::</span><span class="n">getMicMute</span><span class="p">()</span> <span class="k">const</span>
+<span class="ln"> 6</span><span class="kt">void</span> <span class="n">AudioFlinger</span><span class="o">::</span><span class="n">setRecordSilenced</span><span class="p">(</span><span class="n">uid_t</span> <span class="n">uid</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">silenced</span><span class="p">)</span>
+<span class="ln"> 7</span><span class="p">{</span>
+<span class="ln"> 8</span><span class="n">MTK_ALOGD</span><span class="p">(</span><span class="s">&#34;AudioFlinger::setRecordSilenced(uid:%d, silenced:%d)&#34;</span><span class="p">,</span> <span class="n">uid</span><span class="p">,</span> <span class="n">silenced</span><span class="p">);</span>
+<span class="ln"> 9</span><span class="o">-</span>
+<span class="ln">10</span><span class="o">+</span><span class="c1">//aispeech:no need silence,if you want multi app record in same time. _2020.8.15
+</span><span class="ln">11</span><span class="c1"></span><span class="o">+</span><span class="err">#</span><span class="k">if</span> <span class="mi">0</span>
+<span class="ln">12</span><span class="n">AutoMutex</span> <span class="n">lock</span><span class="p">(</span><span class="n">mLock</span><span class="p">);</span>
+<span class="ln">13</span><span class="k">for</span> <span class="p">(</span><span class="n">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">mRecordThreads</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">14</span><span class="n">mRecordThreads</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">setRecordSilenced</span><span class="p">(</span><span class="n">uid</span><span class="p">,</span> <span class="n">silenced</span><span class="p">);</span>
+<span class="ln">15</span><span class="err">@@</span> <span class="o">-</span><span class="mi">1183</span><span class="p">,</span><span class="mi">6</span> <span class="o">+</span><span class="mi">1184</span><span class="p">,</span><span class="mi">7</span> <span class="err">@@</span> <span class="kt">void</span> <span class="n">AudioFlinger</span><span class="o">::</span><span class="n">setRecordSilenced</span><span class="p">(</span><span class="n">uid_t</span> <span class="n">uid</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">silenced</span><span class="p">)</span>
+<span class="ln">16</span><span class="k">for</span> <span class="p">(</span><span class="n">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">mMmapThreads</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">17</span><span class="n">mMmapThreads</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">setRecordSilenced</span><span class="p">(</span><span class="n">uid</span><span class="p">,</span> <span class="n">silenced</span><span class="p">);</span>
+<span class="ln">18</span><span class="p">}</span>
+<span class="ln">19</span><span class="o">+</span><span class="err">#</span><span class="n">endif</span>
+<span class="ln">20</span><span class="p">}</span>
+</code></pre></div><h2 id="24如何保存音频">2.4如何保存音频</h2>
+<p>不管多么复杂的软件，都有一个分层的思想，所以我们分析保存音频也类似，出现问题时，我们需要抓取各个层的音频来分析， 通过对比，可以快速定位问题在哪个层面出现。（以Android设备为例）</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">分层</th>
+<th>调试接口和工具</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">Application</td>
+<td>AudioRecord</td>
+</tr>
+<tr>
+<td style="text-align:center">Framework</td>
+<td>dumpsys media.audio_flinger/audio_policy</td>
+</tr>
+<tr>
+<td style="text-align:center">Audio Hal</td>
+<td>Detect.apk: base on aispeech audio hal patches</td>
+</tr>
+<tr>
+<td style="text-align:center">Kernel</td>
+<td>tinyalsa tools:tinycap tinymix</td>
+</tr>
+<tr>
+<td style="text-align:center">Hardware</td>
+<td>logic analyzer/multimeter</td>
+</tr>
+</tbody>
+</table>
+<p>如果对语音的问题和现象不是很熟悉的话，通常建议是从底层往上查：</p>
+<ul>
+<li>硬件层：通常有硬件工程师负责，通过仿真排查电路问题或者用万用表，示波器等工具测量电路信号是否符合预期。</li>
+<li>内核驱动层： 通常采用tinymix配合tinycap录音来测试，如果tinycap录音数据异常，则说明底层驱动有问题。参考3.1tinyalsa</li>
+<li>audio hal： 通常有芯片厂商提供debug接口原生芯片Debug接口</li>
+<li>framework： 目前没有音频保存的接口，但是有dump audio flinger 和 dump audio policy两个指令来将音频系统的状态参数打印处理。</li>
+<li>application： 通常采用AudioRecord或者MediaRecord系统接口来读取数据，保存音频文件分析。</li>
+</ul>
+<blockquote>
+<p>注意： 在hal音频保存开关打开后，有时候没有音频保存，一般有三种可能:</p>
+<ol>
+<li>没有app在录音；</li>
+<li>录音被其他app占用了，导致保存的音频不是想要的；</li>
+<li>系统权限问题，可以通过getenforce命令查看，如果是Enforcing，则需要手动关掉再尝试保存，关掉命令：setenfoce 0 。</li>
+</ol>
+</blockquote>
+<h2 id="25如何分析音频">2.5如何分析音频</h2>
+<p>在分析音频前，我们先来看看什么是PCM格式音频</p>
+<p>前面介绍了如何对音频进行采样， 采样的原始音频数据大部分是以PCM(Pulse Code Modulation，脉冲编码调制)格式保存的，所以我们用audacity分析音频时，也以分析原始音频为主。</p>
+<p>音频数据是<strong>未经压缩的音频采样数据裸流，它是由模拟信号经过采样、量化、编码转换成的标准数字音频数据</strong>。</p>
+<p>描述PCM数据的6个参数：</p>
+<ol>
+<li>Sample Rate : 采样频率。8kHz(电话)、44.1kHz(CD)、48kHz(DVD)。</li>
+<li>Sample Size : 量化位数。通常该值为16-bit。</li>
+<li>Number of Channels : 通道个数。早期音频格式主要是两个左右通道，但是随着多麦阵列出现，8通道或更多通道音频都有出现。</li>
+<li>Sign : 表示样本数据是否是有符号位，比如用一字节表示的样本数据，有符号的话表示范围为-128 ~ 127，无符号是0 ~ 255。一般是有符号位。</li>
+<li>Byte Ordering : 字节序。字节序是little-endian还是big-endian。通常是little-endian。</li>
+<li>Integer Or Floating Point : 整形或浮点型。大多数格式的PCM样本数据使用整形表示，而在一些对精度要求高的应用方面，使用浮点类型表示PCM样本数据。</li>
+</ol>
+<blockquote>
+<p>1)<strong>数据格式</strong>：</p>
+<p>如果是单声道的音频文件，采样数据按时间的先后顺序依次存入（有的时候也会采用LRLRLR方式存储，只是另一个声道的数据为0）， 如果是多声道的话就按照C1C2C3C4&hellip;.C1C2C3C4&hellip;.的方式存储，存储的时候与字节序有关。little-endian模式如下图所示：</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_24.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_24.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>2)<strong>字节序</strong></p>
+<p>谈到字节序的问题，必然牵涉到两大CPU派系。那就是Motorola的PowerPC系列CPU和Intel的x86系列CPU。PowerPC系列采用big endian方式存储数据，而x86系列则采用little endian方式存储数据。</p>
+<p>3)<strong>big endian and little endian</strong></p>
+<p>big endian是指低地址存放最高有效字节（MSB，Most Significant Bit），而little endian则是低地址存放最低有效字节（LSB，Least Significant Bit）。</p>
+<p>下面用图像加以说明。比如数字0x12345678在两种不同字节序CPU中的存储顺序如下所示：</p>
+<p>Big Endian</p>
+<p>低地址 高地址</p>
+<p>&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&ndash;&gt;
+| 12 | 34 | 56 | 78 |</p>
+<p>Little Endian</p>
+<p>低地址 高地址
+&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&ndash;&gt;
+| 78 | 56 | 34 | 12 |</p>
+<p>所有网络协议都是采用big endian的方式来传输数据的。所以也把big endian方式称之为网络字节序。</p>
+</blockquote>
+<h3 id="251wav和pcm格式音频有什么区别">2.5.1wav和pcm格式音频有什么区别?</h3>
+<p>区别在于wav格式音频是pcm格式音频的基础上，添加了一个44字节的文件头， 实际音频数据存储是一致的，所以我们导入音频的时候要注意区分。</p>
+<blockquote>
+<p>如果以“原始数据”方式导入wav格式数据，则需要在导入参数里在起始位置偏移掉44个字节，否则会出现通道错乱情况。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_25.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_25.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_26.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_26.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_27.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_27.png" >
+  
+    </a>
+  
+  
+</div>
+
+</blockquote>
+<p>在实际工作中，我们常常碰到音频命名错乱的问题，如pcm格式音频命名成wav结尾了，wav格式的反而命名成pcm格式。 为了避免这些不专业的命名扰乱我们分析问题，有没有一个简单的方式来鉴别呢？这里提供一个linux常用命令：file工具来分析。</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>file ok_4mic2ref.pcm
+<span class="ln">2</span>ok_4mic2ref.pcm: data
+<span class="ln">3</span>file ch4_2.wav
+<span class="ln">4</span>ch4_2.wav: RIFF <span class="o">(</span>little-endian<span class="o">)</span> data, WAVE audio, Microsoft PCM, <span class="m">16</span> bit, <span class="m">4</span> channels <span class="m">16000</span> Hz
+</code></pre></div><h3 id="252音频分析需要几步">2.5.2音频分析需要几步</h3>
+<p>从来没有分析过音频的人来说，对于一个音频是否正常，不知道如何下手，觉得这是一个无比困难的问题。
+就像要把大象装进冰箱一样，不知道要怎么做。🤭
+实际上你只需要三步：1、把冰箱门打开 2、把大象放进去 3、把冰箱门关上。</p>
+<p>分析音频也一样，分三步：</p>
+<ol>
+<li>导入音频。</li>
+<li>用耳朵听音频是否正常,转换频谱观察是否正常。</li>
+<li>对比问题音频异常音频和硬件验收指标， 看当前音频是否属于异常音频或者达不到验收指标。</li>
+</ol>
+<h3 id="253音频文件大小对比">2.5.3音频文件大小对比</h3>
+<p>观察音频数据大小是否符合预期，也是我们常用的一个分析音频的手段。</p>
+<p>计算公式如下，如果保存文件大小异常，则要排查是否丢数据了或者采样率，时钟配置。如果音频文件都是0， 则要考虑保存文件是否遇到权限问题，或者更底层的问题，一般出现这种情况，从log中都是可以看到明显异常。</p>
+<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh"><span class="ln">1</span>公式: 采样率x采用精度x通道数x录制时间（单位秒） <span class="o">=</span> 文件大小（Bit）
+</code></pre></div><p>举例：</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span><span class="c1">#16k 16bit 单通道，录制一分钟音频文件大小是多少？</span>
+<span class="ln">2</span><span class="m">16000</span> x <span class="m">16</span> x <span class="m">1</span> x <span class="nv">60</span> <span class="o">=</span> <span class="m">15360000</span> Bit
+</code></pre></div><p>但是实际我们使用的时候，常常不是用Bit为单位，而是Byte, KB，MB，GB 换算规则如下：</p>
+<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh"><span class="ln">1</span><span class="m">1</span> <span class="nv">Byte</span> <span class="o">=</span> <span class="m">8</span> Bits
+<span class="ln">2</span><span class="m">1</span> <span class="nv">KB</span> <span class="o">=</span> <span class="m">1024</span> Bytes
+<span class="ln">3</span><span class="m">1</span> <span class="nv">MB</span> <span class="o">=</span> <span class="m">1024</span> KB
+<span class="ln">4</span><span class="m">1</span> <span class="nv">GB</span> <span class="o">=</span> <span class="m">1024</span> MB
+</code></pre></div><p>所以将上述音频换算成常见单位，如下：</p>
+<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh"><span class="ln">1</span><span class="m">15360000</span> / <span class="nv">8</span> <span class="o">=</span> <span class="m">1920000</span> Byte
+<span class="ln">2</span><span class="m">1920000</span> / <span class="nv">1024</span> <span class="o">=</span> <span class="m">1875</span> KB
+<span class="ln">3</span><span class="m">1875</span> / <span class="nv">1024</span> <span class="o">=</span> 1.83 MB
+</code></pre></div><p>那48k 16bit 双通道，录制一分钟音频文件大小是多少呢？</p>
+<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh"><span class="ln">1</span><span class="m">48000</span> x <span class="m">16</span> x <span class="m">2</span> x <span class="nv">60</span> <span class="o">=</span> <span class="m">92160000</span> Bit
+<span class="ln">2</span><span class="m">92160000</span> / <span class="nv">8</span> <span class="o">=</span> <span class="m">11520000</span> Byte
+<span class="ln">3</span><span class="m">11520000</span> / <span class="nv">1024</span> <span class="o">=</span> <span class="m">11250</span> KB
+<span class="ln">4</span><span class="m">11250</span> / <span class="nv">1024</span> <span class="o">=</span> 10.98 MB
+</code></pre></div><p>下面截图是实际录音测试的音频，基本符合我们理论计算值，所以可以大致判断录音保存文件大小是正确的。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_28.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_28.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="26丢数据音频">2.6丢数据音频</h2>
+<p>如果<strong>扫频波</strong>数据丢失，正常的频谱图会出现一条<strong>明显竖线</strong></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_29.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_29.png" >
+  
+    </a>
+  
+  
+</div>
+
+<ul>
+<li>什么原因导致丢数据呢？
+<ol>
+<li>硬件传输不稳定，外挂设备容易出现。</li>
+<li>录音参数不合理，例如设置给alsa的采样率，采用精度，period和period_count等和底层驱动不匹配。</li>
+<li>app层录音线程阻塞，导致底层音频数据溢出。</li>
+</ol>
+</li>
+<li>如何解决？
+<ol>
+<li>保证外挂设备和主机端传输稳定。避免出现断连情况，同时在收发数据端都预留一定的缓冲区，减少时钟偏差导致的数据溢出。</li>
+<li>和硬件，驱动沟通，下发正确的录音参数。</li>
+<li>在app层读数据的录音线程不要阻塞，提高录音线程的优先级，同时在Audio Hal层添加一定的缓冲buffer，给应用层一些处理时间。</li>
+</ol>
+</li>
+</ul>
+<h2 id="27截幅音频">2.7截幅音频</h2>
+<p>这类音频出现的频率最高，也最好处理。 截幅和削波通常是同时存在的，但是也有削波不截幅的情况：</p>
+<ul>
+<li>引发问题：</li>
+</ul>
+<ol>
+<li>播放音乐时唤醒率低。</li>
+<li>唤醒后识别出现首字错误或识别结果有播报语情况。</li>
+<li>tts播报时打断效果不佳。</li>
+</ol>
+<ul>
+<li>如何解决：
+一般出现该问题都是增益配置不正确引起，可以通过调节增益接口来将音频幅度调节到一个合理范围。 部分参考回路有时候增益调到0也出现截幅，这时候需要修改硬件，加大分压电阻， 同理，如果增益调到最大，参考回路的幅度也还是偏小，则相应的减少分压电阻。</li>
+</ul>
+<p>偏大偏小都是基于音频验收标准文档为基准。 如下图是参考回路严重截幅的情况：</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_30.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_30.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="28音频通道确认">2.8音频通道确认</h2>
+<ul>
+<li>音频通道怎么确认？</li>
+</ul>
+<ol>
+<li>线麦阵列遵守从左到右，环形麦遵守逆时针顺序排列。</li>
+<li>一般用<strong>手指头依次敲击</strong>（避免指甲敲击，产生过多震动），或者用<strong>吸管对准mic孔按顺序吹气</strong>，将录音音频导出分析验证。</li>
+<li>注意录音数据如果是wav格式音频，导入时需要偏移44字节，如果是pcm格式数据，则不需要偏移。</li>
+</ol>
+<h2 id="29底噪过大">2.9底噪过大</h2>
+<p>底噪测试分为两部分：</p>
+<ol>
+<li>mic底噪测试，最好是在静音室测试，避免外界噪声干扰。</li>
+<li>参考回路测试，则对外界环境没有要求，根据需求播放指定音频即可。</li>
+</ol>
+<h2 id="210恒频干扰音频">2.10恒频干扰音频</h2>
+<p>测试恒频时，建议在安静的环境测试，避免外接噪声干扰。</p>
+<ul>
+<li>如何解决
+恒频干扰问题可从<strong>电源</strong>处入手，查看供电是否稳定、干净，更换成 LDO 给 MIC 阵列供电等方式解决问题；或者检查 MIC 信号走线是否与其他电信号存在 <strong>串扰</strong>可能，常见串扰包括 LED，触控 IC 等。</li>
+</ul>
+<p>异常音频用audacity导入后转换成频谱图后看，是可以看到固定频段会有一条直线，如下图，在6.3KHz的地方存在恒频。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_31.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_31.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="211-混叠音频">2.11 混叠音频</h2>
+<p>先来看两组混叠和没有混叠的音频，如下</p>
+<p><strong>混叠音频</strong></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_32.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_32.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p><strong>无混叠音频</strong></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_33.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_33.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>1.什么是混叠？</p>
+<p>需要被采样的<strong>数字信号频率高于采样频率1/2的频率</strong>，高出来的频率将被重采样成低于采样率的1/2频 率的信号,高频信号被低频信号代替，两种波形完全重叠在一起，形成严重失真，这种频谱的重叠导致 的失真称为混叠.</p>
+<p>2.如何消除混叠？</p>
+<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh"><span class="ln"> 1</span>a. 提高采样频率:提高到被采样频率的2倍以上,但不可能将采样频率提高到无限大, 通过提高采样频率避免混叠是有限制的。
+<span class="ln"> 2</span>
+<span class="ln"> 3</span>b. 采用抗混叠滤波器:  
+<span class="ln"> 4</span>在采样频率一定的,通过低通滤波器滤掉高于1/2的频率成分,低通滤波器的信号则可避免出现频率混叠. 
+<span class="ln"> 5</span>若不能确保信号的最高频率小于采样频率的1/2，就必须通过低通滤波器限制输入信号的频率,过滤掉高
+<span class="ln"> 6</span>于采样率1/2的频率。
+<span class="ln"> 7</span>
+<span class="ln"> 8</span>c. 滤波器说明  
+<span class="ln"> 9</span>低通滤波器：通低频，阻高频.
+<span class="ln">10</span>高通滤波器：通高频，阻低频.
+</code></pre></div><p>香农采样定理，又称奈奎斯特采样定理，是信息论，特别是通讯与信号处理学科中的一个重要基本结论。1924年奈奎斯特(Nyquist)就推导出在理想低通信道的最高大码元传输速率的公式：理想低通信道的最高大码元传输速率B=2W，信息传输速率C=B*log2N 。（其中W是理想低通信道的带宽，N是电平强度）</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln">1</span>fs &gt; 2* fN
+</code></pre></div><p>时域采样理论</p>
+<p>如果我们将采样定理应用于频率为 f SIGNAL的正弦波，如果我们想要实现完美重建，就必须在 f SAMPLE ≥ 2f SIGNAL处对波形进行采样。换句话说，我们每个正弦周期至少需要两个样本。让我们首先尝试通过在时域中思考来理解这个要求。</p>
+<p>在下图中，正弦波的采样频率远高于信号频率。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_37.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_37.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>每个圆圈代表一个采样时刻，即测量模拟电压并将其转换为数字的精确时刻。</p>
+<p>为了更好地可视化此采样过程为我们提供的内容，我们可以绘制样本值，然后用直线将它们连接起来。下图中显示的直线近似看起来与原始信号完全一样：采样频率相对于信号频率非常高，因此线段与相应的曲线正弦曲线段没有明显不同。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_38.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_38.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>当我们降低采样频率时，直线近似的外观与原来的不同。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_39.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_39.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>每个周期 20 个样本（f样本= 20f信号）</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_40.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_40.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>每个周期 10 个样本（f样本= 10f信号）</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_42.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_42.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>在 fSAMPLE= 5fSIGNAL时，离散时间波形不再是连续时间波形的令人满意的表示。但是请注意，我们仍然可以清楚地识别离散时间波形的频率。信号的循环性质并没有丢失。</p>
+<p>阈值：每个周期两个样本</p>
+<p>当我们将每个周期的样本数减少到五个以下时，采样产生的数据点将继续保留模拟信号的循环性质。然而，最终我们达到了频率信息被破坏的程度。考虑以下情节：</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_43.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_43.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>每个周期 2 个样本（f样本= 2f信号）</p>
+<p>当 fSAMPLE= 2fSIGNAL时，正弦曲线形状完全消失。尽管如此，采样数据点产生的三角波并没有改变正弦波的基本周期性。三角波的频率与原始信号的频率相同。</p>
+<p>但是，一旦我们将采样频率降低到每个周期少于两个样本的程度，就无法再做出这种说法。因此，对于原始波形中的最高频率，每个周期两个样本是混合信号系统中至关重要的阈值，相应的采样频率称为奈奎斯特速率：</p>
+<p>如果我们以低于奈奎斯特速率的频率对模拟信号进行采样，我们将无法完美地重建原始信号。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_44.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_44.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>每个周期 1.1 个样本（f样本= 1.1f信号）</p>
+<p>如果您对正弦曲线一无所知并使用以 1.1f SIGNAL采样产生的离散时间波形进行分析，您将对原始信号的频率形成严重错误的想法。此外，如果您拥有的只是离散数据，则不可能知道频率特性已被破坏。采样创建了原始信号中不存在的新频率，但您不知道该频率不存在。</p>
+<p>底线是：当我们以低于奈奎斯特速率的频率进行采样时，信息将永久丢失，并且无法完美地重建原始信号。</p>
+<h2 id="212直流偏置过大">2.12直流偏置过大</h2>
+<p>直流偏置过大，容易出现截幅等情况，也会影响增益配置等问题。</p>
+<p>分析时为了排除噪声，使用低通滤波器，截止频率 1Hz。
+麦克风通道： 模拟麦克风通路音频直流偏置 mic 处声压级 63dbc&mdash;&mdash; 直流能量不大于 mic 幅值的 1/3
+举例模拟麦：0.005 *1/3，数字麦克风通路音频直流偏置 应该小于 0.0015 *1/3
+回采通道： 0.5%（0.005）</p>
+<ul>
+<li>
+<p>问题音频</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_34.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_34.png" >
+  
+    </a>
+  
+  
+</div>
+
+</li>
+<li>
+<p>低通滤波后音频</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_35.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_35.png" >
+  
+    </a>
+  
+  
+</div>
+
+</li>
+</ul>
+<h2 id="213录音爆破音">2.13录音爆破音</h2>
+<p>在一些设备录音，容易出现刚上电的时候有一个“哔哔”的脉冲噪声，如下图： 出现类似问题有可能是adc稳定时间较长，导致音频数据在稳定期间异常， 一般是硬件优化，如果无法优化，则可以考虑在hal层或驱动层将刚开始录音的音频置零处理。 在hal处理，将录音数据前4帧置零后效果：</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_36.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_36.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="3一些工具">3一些工具</h1>
+<h2 id="31tinycap">3.1tinycap</h2>
+<p>在Android系统框架中，内核采用的是linux的kernel，所以驱动也沿用了alsa作为声卡驱动库， 作为移动设备的操作系统，Android对其做了一些精简，就是我们现在看到的的tinyalsa了。 所以我们可以通过tinyalsa的接口，直接访问音频驱动来播放或者读取音频数据。 可以作为检查驱动和硬件层是否正常的测试工具。</p>
+<h3 id="311如何编译生成tinyalsa工具">3.1.1如何编译生成tinyalsa工具</h3>
+<p>默认的Android系统之后编译tinyalsa的库，并不会把tinyalsa相关的测试工具编译出来，需要我们自己手动编译：</p>
+<ol>
+<li>进入 source/external/tinyalsa 目录，mm 就可以将需要的tinyalsa工具编译出来。</li>
+<li>编译完后，工具会在out/target/product/xxxxx/system/bin目录生成。</li>
+<li>一般会生成tinycap，tinyplay，tinypcminfo，tinymix等工具。</li>
+<li>如果是编译的时候将如下工具打包在img里，则在adb shell后任何目录都可以使用，如果没有的话，则需要手动将这些工具push到/system/bin/或/data目录下 如果是push到/data目录，则执行的时候需进入到/data目录，并使用加./执行。</li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span>adb root
+<span class="ln"> 2</span>adb remount
+<span class="ln"> 3</span>adb push tinyalsa/* /system/bin
+<span class="ln"> 4</span>adb shell
+<span class="ln"> 5</span>chmod <span class="m">777</span> /system/bin/tiny*
+<span class="ln"> 6</span>tinycap xxx
+<span class="ln"> 7</span>或者
+<span class="ln"> 8</span>adb push tinyalsa/* /data
+<span class="ln"> 9</span>adb shell
+<span class="ln">10</span>chmod <span class="m">777</span> /data/tiny*
+<span class="ln">11</span>./data/tinycap xxx
+</code></pre></div><h3 id="312tinycap-录音参数说明">3.1.2tinycap 录音参数说明</h3>
+<p>先说一下tinycap录音命令和参数：</p>
+<blockquote>
+<p>&ldquo;Usage: %s file.wav [-D card] [-d device] [-c channels] [-r rate] [-b bits] [-p period_size] [-n n_periods]\n&rdquo;, argv[0]);</p>
+</blockquote>
+<ul>
+<li>-D 哪个声卡的意思, 比如usb声卡, 本机mic &hellip;</li>
+<li>-d 当前声卡下的哪个设备录音, 一般一个声卡下会有多个设备</li>
+<li>-c 录音通道数</li>
+<li>-b 采样精度,一般是16bit,但是如果需要标记位就要升高精度，如24bit或32bit</li>
+<li>-r 录音采样率</li>
+<li>-p period size:每个中断周期需要准备的音频空间大小</li>
+<li>-n 有多少组 period size</li>
+</ul>
+<p>有很多同学对-p不是很理解, 这里详细说一下:</p>
+<p>period : ALSA的官方是这样介绍的 :</p>
+<blockquote>
+<p>A period is the number of frames in between each hardware interrupt.</p>
+</blockquote>
+<p>意思就是硬件的每次中断所对应的frames数为一个period,简称一个周期吧.</p>
+<blockquote>
+<p>A period is the number of frames in between each hardware interrupt.</p>
+</blockquote>
+<p>意思就是硬件的每次中断所对应的frames数为一个period,简称一个周期吧。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/audio/audio_18.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/audio/audio_18.png" >
+  
+    </a>
+  
+  
+</div>
+
+<blockquote>
+<p><strong>exmple :</strong>
+我们让codec工作在 stereo立体声,16-bits, 44.1KHZ 的采样流中,</p>
+<p>[1] &lsquo;stereo&rsquo; = 2;</p>
+<p>[2] 1 analog sample 是16-bits = 2bytes;</p>
+<p>[3]1 frame = (num_channels) * (1 sample in bytes) = (2 channels) * (2 bytes (16 bits) per sample) = 4 bytes (32 bits)</p>
+<p>[4] Bps_rate = (num_channels) * (1 sample in bytes) * (analog_rate) = 2 * 2 * 44100 = 176400 Bytes/sec.</p>
+<p>如果 ALSA每秒中断一次,那么我们就需要准备176400 bytes的空间.</p>
+<p>如果ALSA半秒中断一次,那么我们就需要准备 176400/2 = 88200 bytes个大小的空间. 100ms中断一次的话我们就需要 176400 * 0.1 = 17640 bytes大小空间.</p>
+<p>由上面的分析可以看出,我们可以控制PCM中断每次的产生,通过设置period 的大小,</p>
+<p>[1] : 如果我们设置16-bit stereo @ 44.1Khz和period_size to 4410 frames =&gt;(对于16-bit stereo @ 44.1Khz, 1 frame 等于 4 bytes 来说- 4410 frames equal 4410 * 4 = 17640 bytes) =&gt; 每100ms一次的中断将产生17640 个字节.</p>
+<p>[2] : 相应的buffer_size 应至少为 2 * period_size = 2 * 4410 = 8820frames = 8820 * 4 = 35280bytes.</p>
+<p>采集过程中ALSA会将按照我们自己设定的格式将数据按照每period大小存放在循环缓冲区中.</p>
+</blockquote>
+<h3 id="313tinycap-录音操作">3.1.3tinycap 录音操作</h3>
+<p>针对tinycap如何录音，我们常常还会碰到一个问题就是刚刚拿到一台设备的时候，不知道要用什么参数，是选择哪个声卡进行录音。</p>
+<p>这里提供一个简单的脚本方便大家查询录音参数</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span><span class="c1">#found_opendev.sh</span>
+<span class="ln"> 2</span><span class="nv">dir</span><span class="o">=</span>/proc/asound/card*
+<span class="ln"> 3</span>
+<span class="ln"> 4</span><span class="k">for</span> file in <span class="nv">$dir</span>/*<span class="p">;</span> <span class="k">do</span>
+<span class="ln"> 5</span>    <span class="k">if</span> <span class="o">[[</span> <span class="nv">$file</span> <span class="o">==</span> *c <span class="o">]]</span><span class="p">;</span> <span class="k">then</span> 
+<span class="ln"> 6</span>	<span class="nv">card</span><span class="o">=</span><span class="s2">&#34;</span><span class="nv">$file</span><span class="s2">&#34;&#34;/sub0/hw_params&#34;</span><span class="p">;</span>
+<span class="ln"> 7</span>	<span class="nb">echo</span> <span class="nv">$card</span><span class="p">;</span>
+<span class="ln"> 8</span>	cat <span class="nv">$card</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="k">fi</span>
+<span class="ln">10</span><span class="k">done</span>
+</code></pre></div><p>操作如下：</p>
+<ol>
+<li>脚本先把这个脚本found_opendev.sh push到设备的/data目录下， 然后chmod 777.</li>
+<li>启动一个app录音, 然后进到data目录./found_opendev.sh 会将当前hal下发录音参数打印出来(如下).</li>
+<li>根据hal下发的参数，我们就知道tinycap该用哪些参数了.</li>
+<li>如果你很悲剧的发现设备默认app无法正常录音，那需要用tinypcminfo来看声卡支持的参数了，然后根据经验，来试出哪一组参数是正确的。 如果发现tinypcminfo有时候无法打印声卡信息，则需要检查当前是否有root权限。</li>
+<li>部分设备(mtk等)在录音先还需要切换一些指定mix, 需要在录音前先用tinymix -D x 来将该声卡的mix项打印出来，然后app录音的时候再tinymix -D x, 将录音时的mix打印出来, 对比一下录音前后有哪些mix不一样, 在没有设置mix无法录音的情况可以尝试tinycap录音前先将mix切换,再尝试录音.</li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span>xxx:/ $ tinypcminfo  -D <span class="m">3</span>
+<span class="ln"> 2</span>Info <span class="k">for</span> card 3, device 0:
+<span class="ln"> 3</span>
+<span class="ln"> 4</span>PCM out:
+<span class="ln"> 5</span>cannot open device <span class="s1">&#39;/dev/snd/pcmC3D0p&#39;</span>
+<span class="ln"> 6</span>Device does not exist.
+<span class="ln"> 7</span>
+<span class="ln"> 8</span>PCM in:
+<span class="ln"> 9</span>cannot open device <span class="s1">&#39;/dev/snd/pcmC3D0c&#39;</span>
+<span class="ln">10</span>Device does not exist.
+<span class="ln">11</span>xxx:/ $ tinypcminfo  -D <span class="m">3</span>
+<span class="ln">12</span>xxx:/ $ <span class="nb">exit</span>
+<span class="ln">13</span>
+<span class="ln">14</span>$ adb root
+<span class="ln">15</span>$ adb shell
+<span class="ln">16</span>
+<span class="ln">17</span>xxx:/ <span class="c1"># tinypcminfo -D 3</span>
+<span class="ln">18</span>Info <span class="k">for</span> card 3, device 0:
+<span class="ln">19</span>
+<span class="ln">20</span>PCM out:
+<span class="ln">21</span>cannot open device <span class="s1">&#39;/dev/snd/pcmC3D0p&#39;</span>
+<span class="ln">22</span>Device does not exist.
+<span class="ln">23</span>
+<span class="ln">24</span>PCM in:
+<span class="ln">25</span>      Access:    0x000009
+<span class="ln">26</span>   Format<span class="o">[</span>0<span class="o">]</span>:    0x000004
+<span class="ln">27</span>   Format<span class="o">[</span>1<span class="o">]</span>:    <span class="m">00000000</span>
+<span class="ln">28</span> Format Name:    S16_LE
+<span class="ln">29</span>   Subformat:    0x000001
+<span class="ln">30</span>        Rate:    <span class="nv">min</span><span class="o">=</span>16000Hz    <span class="nv">max</span><span class="o">=</span>16000Hz
+<span class="ln">31</span>    Channels:    <span class="nv">min</span><span class="o">=</span><span class="m">8</span>        <span class="nv">max</span><span class="o">=</span><span class="m">8</span>
+<span class="ln">32</span> Sample bits:    <span class="nv">min</span><span class="o">=</span><span class="m">16</span>        <span class="nv">max</span><span class="o">=</span><span class="m">16</span>
+<span class="ln">33</span> Period size:    <span class="nv">min</span><span class="o">=</span><span class="m">16</span>        <span class="nv">max</span><span class="o">=</span><span class="m">32768</span>
+<span class="ln">34</span>Period count:    <span class="nv">min</span><span class="o">=</span><span class="m">2</span>        <span class="nv">max</span><span class="o">=</span><span class="m">1024</span>
+</code></pre></div><h3 id="314overrun-and-underrun">3.1.4OverRun and UnderRun</h3>
+<p>当一个声卡活动时，数据总是连续地在硬件缓存区和应用程序缓存区间传输。</p>
+<p>但是也有例外。</p>
+<p>在录音例子中，如果应用程序读取数据不够快，循环缓存区将会被新的数据覆盖。这种数据的丢失被称为&quot;over run&quot;.</p>
+<p>在播放例子中，如果应用程序写入数据到缓存区中的速度不够快，缓存区将会&quot;饿死&quot;。这样的错误被称为&quot;under run&quot;。</p>
+<p>在ALSA文档中，有时将这两种情形统称为&quot;XRUN&quot;。适当地设计应用程序可以最小化XRUN并且可以从中恢复过来。</p>
+<p>XRUN状态又分有两种，在播放时，用户空间没及时写数据导致缓冲区空了，硬件没有 可用数据播放导致&quot;under run&quot;;</p>
+<p>录制时，用户空间没有及时读取数据导致缓冲区满后溢出， 硬件录制的数据没有空闲缓冲可写导致&quot;over run&quot;。</p>
+<p>当用户空间由于系统繁忙等原因，导致hw_ptr&gt;appl_ptr时，缓冲区已空</p>
+<p><strong>内核这里有两种方案</strong>：</p>
+<ol>
+<li>停止DMA传输，进入XRUN状态。这是内核默认的处理方法。 继续播放缓冲区的重复的音频数据或静音数据。</li>
+<li>用户空间配置stop_threshold</li>
+</ol>
+<p>可选择方案1或方案2,配置silence_threshold选择继续播放的原有的音频数据还是静意数据了。</p>
+<p>个人经验，偶尔的系统繁忙导致的这种状态， 重复播放原有的音频数据会显得更平滑，效果更好。</p>
+<h3 id="315alsa-参数说明">3.1.5alsa 参数说明</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">名词</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"><code>period_size</code></td>
+<td>每次传输的数据长度。值越小，时延越小，cpu占用就越高</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>period_count</code></td>
+<td>缓之冲区period的个数。缓冲区越大，发生XRUN的机会就越少。 format: 定义数据格式，如采样位深，大小端</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>start_threshold</code></td>
+<td>缓冲区的数据超过该值时，硬件开始启动数据传输。如果太大， 从开始播放到声音出来时延太长，甚至可导致太短促的声音根本播不出来;如果太小， 又可能容易导致XRUN</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>stop_threshold</code></td>
+<td>缓冲区空闲区大于该值时，硬件停止传输。默认情况下，这个数 为整个缓冲区的大小，即整个缓冲区空了，就停止传输。但偶尔的原因导致缓冲区空， 如CPU忙，增大该值，继续播放缓冲区的历史数据，而不关闭再启动硬件传输(一般此 时有明显的声音卡顿)，可以达到更好的体验</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>silence_threshold</code></td>
+<td>这个值本来是配合stop_threshold使用，往缓冲区填充静音 数据，这样就不会重播历史数据了</td>
+</tr>
+<tr>
+<td style="text-align:center"><code>avail_min</code></td>
+<td>缓冲区空闲区大于该值时，pcm_mmap_write()才往缓冲写数据。这个 值越大，往缓冲区写入数据的次数就越少，面临XRUN的机会就越大<!-- raw HTML omitted -->Android samsung tuna 设备在screen_off时增大该值以减小功耗，在screen_on时减小该 值以减小XRUN的机会</td>
+</tr>
+</tbody>
+</table>
+<p>在不同的场景下，合理的参数就是在性能、时延、功耗等之间达到较好的平衡。为什么在pcm_write()/pcm_mmap_write()，而不在pcm_open()调用pcm_start()?</p>
+<p>这是因为音频流与其它的数据不同，实时性要求很高。作为 TinyAlsa的实现者，不能假定在调用者open之后及时的write数据，所以只能在有 数据写入的时候start设备了。</p>
+<p>Mixer: 通过ioctl()调用访问kcontrols。</p>
+<h1 id="4测试说明">4测试说明</h1>
+<h2 id="41音频验收测试">4.1音频验收测试</h2>
+<p>音频验收有很多指标，其中有一些对外部环境有一定的要求，如<code>MIC底噪测试</code>，<code>增益测试</code>, <code>信噪比测试</code>等（需要静音室）。 也有一些不依赖外部环境的，如丢数据测试，直流偏置测试，混叠测试，参考回路底噪测试等。可以提测前先自己搭建测试环境测试。</p>
+<h2 id="42功能测试">4.2功能测试</h2>
+<p>在测试语音功能时，我们建议尽量保证周围唤醒安静，网络条件良好，测试用例符合产品设计。 在功能测试通过后，再根据实际语音使用场景，设计一定的干扰因数，再测试性能指标。 否则混杂在一起测试，常常会导致问题无法快速定位和分析。</p>
+<h3 id="421常见测试功能点">4.2.1常见测试功能点</h3>
+<ul>
+<li>能否正常唤醒。</li>
+<li>识别结果是否正确。</li>
+<li>语义解析结果是否正确。</li>
+<li>语音播报回复是否正确。</li>
+<li>语音指令是否正常执行。</li>
+</ul>
+<h2 id="43性能测试">4.3性能测试</h2>
+<h3 id="431资源占用测试">4.3.1资源占用测试</h3>
+<p>资源占用我们最关注的两个点： 1，CPU占用; 2，内存占用;</p>
+<p>cpu占用可以采用top命令来观察，命令说明：</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln">1</span>usage: top <span class="o">[</span>-Hbq<span class="o">]</span> <span class="o">[</span>-k FIELD,<span class="o">]</span> <span class="o">[</span>-o FIELD,<span class="o">]</span> <span class="o">[</span>-s SORT<span class="o">]</span> <span class="o">[</span>-n NUMBER<span class="o">]</span> <span class="o">[</span>-m LINES<span class="o">]</span> <span class="o">[</span>-d SECONDS<span class="o">]</span> <span class="o">[</span>-p PID,<span class="o">]</span> <span class="o">[</span>-u USER,<span class="o">]</span>
+<span class="ln">2</span>Show process activity in real time.
+<span class="ln">3</span>
+<span class="ln">4</span>-d    Delay SECONDS between each cycle <span class="o">(</span>default 3<span class="o">)</span> 刷新间隔时间
+<span class="ln">5</span>-m    Maximum number of tasks to show 最多显示多少个进程
+<span class="ln">6</span>-n    Exit after NUMBER iterations 刷新次数
+<span class="ln">7</span>-H    Show threads 显示各个进程对应线程占用
+<span class="ln">8</span>-p    Show these PIDs 指定需要跟踪的进程PID
+</code></pre></div><h2 id="44厂测工具">4.4厂测工具</h2>
+<h3 id="441mic一致性测试">4.4.1mic一致性测试</h3>
+<p>1.操作步骤和说明见源码中的注释。</p>
+<h3 id="442源码">4.4.2源码</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">  1</span><span class="c1">//Audacity_MIC_CO_TEST_v1.1.1.c
+</span><span class="ln">  2</span><span class="c1"></span><span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span><span class="ln">  3</span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="ln">  4</span><span class="cp">#include</span> <span class="cpf">&lt;math.h&gt;</span><span class="cp">
+</span><span class="ln">  5</span><span class="cp"></span>
+<span class="ln">  6</span><span class="cm">/* Calc RMS (Root mean square) */</span>
+<span class="ln">  7</span><span class="kt">void</span> <span class="nf">mic_amp_var_calc</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">short</span> <span class="o">*</span><span class="n">p_buf</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">len</span><span class="p">,</span> <span class="kt">float</span> <span class="o">*</span><span class="n">p_outAmplitude</span><span class="p">)</span>
+<span class="ln">  8</span><span class="p">{</span>
+<span class="ln">  9</span>    <span class="kt">float</span> <span class="n">tmp_amplitude1</span><span class="p">,</span> <span class="n">tmp_amplitude2</span><span class="p">;</span>
+<span class="ln"> 10</span>    <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">audio_value</span><span class="p">;</span>
+<span class="ln"> 11</span>
+<span class="ln"> 12</span>    <span class="k">for</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">len</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+<span class="ln"> 13</span>    <span class="p">{</span>
+<span class="ln"> 14</span>		<span class="cm">/* 归一化在0-1之间 */</span>
+<span class="ln"> 15</span>        <span class="n">audio_value</span> <span class="o">=</span> <span class="p">(</span><span class="n">p_buf</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">&gt;</span><span class="mh">0x8000</span><span class="p">)</span> <span class="o">?</span> <span class="p">(</span><span class="mh">0xFFFF</span><span class="o">-</span><span class="n">p_buf</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">:</span> <span class="n">p_buf</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="ln"> 16</span>        <span class="n">tmp_amplitude1</span> <span class="o">=</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span><span class="n">audio_value</span><span class="o">/</span><span class="mh">0x8000</span><span class="p">;</span>
+<span class="ln"> 17</span>
+<span class="ln"> 18</span>        <span class="n">tmp_amplitude1</span> <span class="o">=</span> <span class="n">tmp_amplitude1</span><span class="o">*</span><span class="n">tmp_amplitude1</span><span class="p">;</span>
+<span class="ln"> 19</span>        <span class="n">tmp_amplitude2</span> <span class="o">+=</span> <span class="n">tmp_amplitude1</span><span class="p">;</span>
+<span class="ln"> 20</span>    <span class="p">}</span>
+<span class="ln"> 21</span>    <span class="n">tmp_amplitude2</span> <span class="o">=</span> <span class="n">tmp_amplitude2</span><span class="o">/</span><span class="n">len</span><span class="p">;</span>
+<span class="ln"> 22</span>    <span class="o">*</span><span class="n">p_outAmplitude</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">tmp_amplitude2</span><span class="p">);</span>
+<span class="ln"> 23</span><span class="p">}</span>
+<span class="ln"> 24</span>
+<span class="ln"> 25</span><span class="cm">/* gcc Audacity_MIC_CO_TEST.c -o audio_cal -lm */</span> 
+<span class="ln"> 26</span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
+<span class="ln"> 27</span><span class="p">{</span>
+<span class="ln"> 28</span>    <span class="kt">char</span> <span class="o">*</span><span class="n">pAudioPath</span><span class="p">;</span>
+<span class="ln"> 29</span>    <span class="kt">int</span>  <span class="n">chans</span><span class="p">;</span>
+<span class="ln"> 30</span>    <span class="kt">int</span>  <span class="n">mic_num</span><span class="p">;</span>
+<span class="ln"> 31</span>    <span class="kt">int</span>  <span class="n">offset</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 32</span>    <span class="kt">int</span>  <span class="n">samples</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 33</span>
+<span class="ln"> 34</span>    <span class="n">FILE</span> <span class="o">*</span><span class="n">pFile</span><span class="p">;</span>
+<span class="ln"> 35</span>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">file_size</span><span class="p">;</span>
+<span class="ln"> 36</span>    <span class="kt">unsigned</span> <span class="kt">short</span> <span class="o">*</span><span class="n">audio_buf</span><span class="p">;</span><span class="c1">//orignal audio data
+</span><span class="ln"> 37</span><span class="c1"></span>    <span class="kt">unsigned</span> <span class="kt">short</span> <span class="o">*</span><span class="n">chan_data</span><span class="p">;</span>
+<span class="ln"> 38</span>
+<span class="ln"> 39</span>    <span class="k">if</span><span class="p">(</span><span class="n">argc</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">)</span>
+<span class="ln"> 40</span>    <span class="p">{</span>
+<span class="ln"> 41</span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;Usage: %s file chans mic_num [0|1]</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+<span class="ln"> 42</span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;file -- audio pcm file</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln"> 43</span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;[0|1] -- 0=pcm file (default); 1=wav file.</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln"> 44</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="ln"> 45</span>    <span class="p">}</span>
+<span class="ln"> 46</span>
+<span class="ln"> 47</span>    <span class="n">pAudioPath</span> <span class="o">=</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+<span class="ln"> 48</span>    <span class="n">chans</span> <span class="o">=</span> <span class="n">atoi</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
+<span class="ln"> 49</span>    <span class="n">mic_num</span> <span class="o">=</span> <span class="n">atoi</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">3</span><span class="p">]);</span>
+<span class="ln"> 50</span>    <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">&gt;</span> <span class="mi">4</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 51</span>        <span class="kt">int</span> <span class="n">v</span> <span class="o">=</span> <span class="n">atoi</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">4</span><span class="p">]);</span>
+<span class="ln"> 52</span>        <span class="k">if</span> <span class="p">(</span><span class="n">v</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 53</span>            <span class="n">offset</span> <span class="o">=</span> <span class="mi">44</span><span class="p">;</span>
+<span class="ln"> 54</span>        <span class="p">}</span>
+<span class="ln"> 55</span>    <span class="p">}</span>
+<span class="ln"> 56</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;pAudioPath=%s, chans=%d, mic_num=%d, offset=%d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">pAudioPath</span><span class="p">,</span> <span class="n">chans</span><span class="p">,</span> <span class="n">mic_num</span><span class="p">,</span> <span class="n">offset</span><span class="p">);</span>
+<span class="ln"> 57</span>
+<span class="ln"> 58</span>    <span class="n">pFile</span> <span class="o">=</span> <span class="n">fopen</span><span class="p">(</span><span class="n">pAudioPath</span><span class="p">,</span> <span class="s">&#34;r&#34;</span><span class="p">);</span>
+<span class="ln"> 59</span>    <span class="k">if</span><span class="p">(</span><span class="n">pFile</span><span class="o">==</span><span class="nb">NULL</span><span class="p">)</span>
+<span class="ln"> 60</span>    <span class="p">{</span>
+<span class="ln"> 61</span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;not find audio file(%s)</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">pAudioPath</span><span class="p">);</span>
+<span class="ln"> 62</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">2</span><span class="p">;</span>
+<span class="ln"> 63</span>    <span class="p">}</span>
+<span class="ln"> 64</span>
+<span class="ln"> 65</span>    <span class="n">fseek</span><span class="p">(</span><span class="n">pFile</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">SEEK_END</span><span class="p">);</span>
+<span class="ln"> 66</span>    <span class="n">file_size</span> <span class="o">=</span> <span class="n">ftell</span><span class="p">(</span><span class="n">pFile</span><span class="p">);</span>
+<span class="ln"> 67</span>    <span class="k">if</span> <span class="p">(</span><span class="n">file_size</span> <span class="o">&lt;=</span> <span class="n">offset</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 68</span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;audio file size (%d) too small</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">file_size</span><span class="p">);</span>
+<span class="ln"> 69</span>        <span class="n">fclose</span><span class="p">(</span><span class="n">pFile</span><span class="p">);</span>
+<span class="ln"> 70</span>        <span class="k">return</span> <span class="o">-</span><span class="mi">2</span><span class="p">;</span>
+<span class="ln"> 71</span>    <span class="p">}</span>
+<span class="ln"> 72</span>    <span class="n">fseek</span><span class="p">(</span><span class="n">pFile</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">SEEK_SET</span><span class="p">);</span>
+<span class="ln"> 73</span>
+<span class="ln"> 74</span>    <span class="n">audio_buf</span> <span class="o">=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">short</span> <span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="n">file_size</span><span class="p">);</span>
+<span class="ln"> 75</span>    <span class="n">fread</span><span class="p">(</span><span class="n">audio_buf</span><span class="p">,</span> <span class="n">file_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">pFile</span><span class="p">);</span>
+<span class="ln"> 76</span>    <span class="n">samples</span> <span class="o">=</span> <span class="n">file_size</span><span class="o">/</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">short</span><span class="p">)</span><span class="o">/</span><span class="n">chans</span><span class="p">;</span>
+<span class="ln"> 77</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;samples=%d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">samples</span><span class="p">);</span>
+<span class="ln"> 78</span>    <span class="n">chan_data</span> <span class="o">=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">short</span> <span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="n">samples</span><span class="o">*</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">short</span><span class="p">));</span>
+<span class="ln"> 79</span>
+<span class="ln"> 80</span>    <span class="kt">float</span> <span class="n">amp_ch</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 81</span>    <span class="kt">float</span> <span class="n">db_ch</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">min_db</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_db</span><span class="o">=-</span><span class="mf">100.0</span><span class="p">,</span> <span class="n">diff_db</span><span class="p">;</span>
+<span class="ln"> 82</span>    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">ch</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">ch</span><span class="o">&lt;</span><span class="n">mic_num</span><span class="p">;</span> <span class="n">ch</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 83</span>        <span class="c1">// get the mic channel data
+</span><span class="ln"> 84</span><span class="c1"></span>        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">samples</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 85</span>            <span class="n">chan_data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">audio_buf</span><span class="p">[</span><span class="n">chans</span><span class="o">*</span><span class="n">i</span> <span class="o">+</span> <span class="n">ch</span><span class="p">];</span>
+<span class="ln"> 86</span>        <span class="p">}</span>
+<span class="ln"> 87</span>		<span class="cm">/* step 1: 计算每个通道所有采样点的有效值(0-1之间) */</span>
+<span class="ln"> 88</span>        <span class="n">mic_amp_var_calc</span><span class="p">(</span><span class="n">chan_data</span><span class="p">,</span> <span class="n">samples</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">amp_ch</span><span class="p">);</span>
+<span class="ln"> 89</span>		
+<span class="ln"> 90</span>		<span class="cm">/* step 2：有效值转变成db (dB定义为两个数值的对数比率，这两个数值分别是测量值和参考值) */</span>
+<span class="ln"> 91</span>        <span class="n">db_ch</span> <span class="o">=</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span><span class="mi">20</span><span class="o">*</span><span class="n">log10</span><span class="p">(</span><span class="n">amp_ch</span><span class="p">);</span>
+<span class="ln"> 92</span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;mic_%d=%fdB (amp=%f); &#34;</span><span class="p">,</span> <span class="n">ch</span><span class="p">,</span> <span class="n">db_ch</span><span class="p">,</span> <span class="n">amp_ch</span><span class="p">);</span>
+<span class="ln"> 93</span>		
+<span class="ln"> 94</span>        <span class="cm">/* step 3: 记录最大&amp;最小dB */</span>
+<span class="ln"> 95</span>        <span class="k">if</span> <span class="p">(</span><span class="n">min_db</span> <span class="o">&gt;</span> <span class="n">db_ch</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 96</span>            <span class="n">min_db</span> <span class="o">=</span> <span class="n">db_ch</span><span class="p">;</span>
+<span class="ln"> 97</span>        <span class="p">}</span>
+<span class="ln"> 98</span>
+<span class="ln"> 99</span>        <span class="k">if</span> <span class="p">(</span><span class="n">max_db</span> <span class="o">&lt;</span> <span class="n">db_ch</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">100</span>            <span class="n">max_db</span> <span class="o">=</span> <span class="n">db_ch</span><span class="p">;</span>
+<span class="ln">101</span>        <span class="p">}</span>
+<span class="ln">102</span>    <span class="p">}</span>
+<span class="ln">103</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">104</span>	<span class="cm">/* step 4: 计算各通道有效值的最大偏差（即一致性偏差），推荐4dB以内 */</span>
+<span class="ln">105</span>    <span class="n">diff_db</span> <span class="o">=</span> <span class="n">max_db</span> <span class="o">-</span> <span class="n">min_db</span><span class="p">;</span>
+<span class="ln">106</span>
+<span class="ln">107</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;db min=%fdB, max=%fdB, diff=%fdB</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">min_db</span><span class="p">,</span> <span class="n">max_db</span><span class="p">,</span> <span class="n">diff_db</span><span class="p">);</span>
+<span class="ln">108</span>
+<span class="ln">109</span>    <span class="n">fclose</span><span class="p">(</span><span class="n">pFile</span><span class="p">);</span>
+<span class="ln">110</span>    <span class="n">free</span><span class="p">(</span><span class="n">audio_buf</span><span class="p">);</span>
+<span class="ln">111</span>
+<span class="ln">112</span>    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;cal done </span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+<span class="ln">113</span>
+<span class="ln">114</span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">115</span><span class="p">}</span>
+</code></pre></div><h2 id="45麦克风阵列音频检查方法及标准">4.5麦克风阵列音频检查方法及标准</h2>
+<p>下面列出了测试项和指标，具体的操作和要求，看<a href="https://github.com/YangYang48/project/tree/master/audio">这里</a></p>
+<table>
+<thead>
+<tr>
+<th>设备类型</th>
+<th>序号</th>
+<th>测试项目</th>
+<th>测试音源</th>
+<th>播放方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>裸板测试</td>
+<td>1</td>
+<td>通道相位一致性</td>
+<td>1kHz 电信号</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td></td>
+<td>2</td>
+<td>长时录音数据完整性</td>
+<td>40min_test.mp3</td>
+<td>安静环境外播录音&amp;自播自录</td>
+</tr>
+<tr>
+<td></td>
+<td>3</td>
+<td>麦克风顺序</td>
+<td>N/A</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td></td>
+<td>4</td>
+<td>通道幅值一致性</td>
+<td>76dBC_sweep.wav</td>
+<td>安静环境外播录音</td>
+</tr>
+<tr>
+<td>整机测试</td>
+<td>5</td>
+<td>音频幅度要求</td>
+<td>mic_amplitude.wav</td>
+<td>MIC 处63dBC 外播—MIC</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td>ref_amplitude.wav</td>
+<td>最大音量自播—回路</td>
+</tr>
+<tr>
+<td></td>
+<td>6</td>
+<td>总谐波失真</td>
+<td>76dBC_sweep.wav</td>
+<td>自播自录DUT麦克风处本机场景验收音量（dBa）</td>
+</tr>
+<tr>
+<td></td>
+<td>7</td>
+<td>麦克风通道信噪比</td>
+<td>EQ 白噪声</td>
+<td>消声室MIC 处63dBC 和安静录音</td>
+</tr>
+<tr>
+<td></td>
+<td>8</td>
+<td>直流偏置</td>
+<td>N/A</td>
+<td>安静环境录音</td>
+</tr>
+<tr>
+<td></td>
+<td>9</td>
+<td>回采通道电噪声检测</td>
+<td>N/A</td>
+<td>安静环境录音</td>
+</tr>
+<tr>
+<td></td>
+<td>10</td>
+<td>恒频干扰</td>
+<td>N/A</td>
+<td>安静环境录音</td>
+</tr>
+<tr>
+<td></td>
+<td>11</td>
+<td>抗混叠</td>
+<td>1~15kHz.wav</td>
+<td>安静环境自播自录</td>
+</tr>
+<tr>
+<td></td>
+<td>12</td>
+<td>通道相对延时</td>
+<td>76dBC_sweep.wav</td>
+<td>自播自录SPK 出声口50cm 76dBC</td>
+</tr>
+<tr>
+<td></td>
+<td>13</td>
+<td>结构共振/震动/异音</td>
+<td>76dBC_sweep.wav</td>
+<td>自播自录SPK 出声口50cm 76dBC</td>
+</tr>
+<tr>
+<td></td>
+<td>14</td>
+<td>麦克风通道气密性</td>
+<td>76dBC_sweep.wav</td>
+<td>安静环境外播录音</td>
+</tr>
+</tbody>
+</table>
+<h1 id="参考">参考</h1>
+<p><a href="https://www.zhihu.com/people/tang-wei-bin-26/posts">汤伟彬</a></p>
+<p><a href="https://iot-sz.aispeech.com/doc/cicada-doc/#/">知了文档</a></p>
+<p><a href="https://shichaog1.gitbooks.io/hand-book-of-speech-enhancement-and-recognition/content/">gitbooks</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/android/">Android</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/pcm/">PCM</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E9%BA%A6%E5%85%8B%E9%A3%8E/">麦克风</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E9%87%87%E6%A0%B7%E7%8E%87/">采样率</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%88%AA%E5%B9%85/">截幅</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%B7%B7%E5%8F%A0/">混叠</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E5%A5%88%E5%A5%8E%E6%96%AF%E7%89%B9%E9%87%87%E6%A0%B7%E5%AE%9A%E5%BE%8B/">奈奎斯特采样定律</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/tinyalsa/">tinyalsa</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/10/aes%E5%8A%A0%E5%AF%86%E5%92%8C%E8%A7%A3%E5%AF%86%E6%B5%81%E7%A8%8B/" data-tooltip="AES加密和解密流程">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2023 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/10/aes%E5%8A%A0%E5%AF%86%E5%92%8C%E8%A7%A3%E5%AF%86%E6%B5%81%E7%A8%8B/" data-tooltip="AES加密和解密流程">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2023%2F11%2F%25E5%25A3%25B0%25E5%25AD%25A6%25E7%259B%25B8%25E5%2585%25B3%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2023%2F11%2F%25E5%25A3%25B0%25E5%25AD%25A6%25E7%259B%25B8%25E5%2585%25B3%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2023%2F11%2F%25E5%25A3%25B0%25E5%25AD%25A6%25E7%259B%25B8%25E5%2585%25B3%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2023\/11\/%E5%A3%B0%E5%AD%A6%E7%9B%B8%E5%85%B3\/';
+          
+            this.page.identifier = '\/2023\/11\/%E5%A3%B0%E5%AD%A6%E7%9B%B8%E5%85%B3\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
