@@ -1,0 +1,1928 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="本文主要记录一些关于camera相关的概念和资料，主要是整体的一些概念，细节方面后续会单独有篇章去介绍。">
+
+
+<meta property="og:description" content="本文主要记录一些关于camera相关的概念和资料，主要是整体的一些概念，细节方面后续会单独有篇章去介绍。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="camera Bayer矩阵">
+<meta name="twitter:title" content="camera Bayer矩阵">
+<meta property="og:url" content="https://yangyang48.github.io/2023/12/camera-bayer%E7%9F%A9%E9%98%B5/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2023/12/camera-bayer%E7%9F%A9%E9%98%B5/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="本文主要记录一些关于camera相关的概念和资料，主要是整体的一些概念，细节方面后续会单独有篇章去介绍。">
+<meta name="twitter:description" content="本文主要记录一些关于camera相关的概念和资料，主要是整体的一些概念，细节方面后续会单独有篇章去介绍。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2023-12-10T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2023-12-10T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="camera">
+    
+      <meta property="article:section" content="2023">
+    
+      <meta property="article:section" content="December">
+    
+  
+  
+    
+      <meta property="article:tag" content="isp">
+    
+      <meta property="article:tag" content="RAW">
+    
+      <meta property="article:tag" content="RGB">
+    
+      <meta property="article:tag" content="HSV">
+    
+      <meta property="article:tag" content="HSL">
+    
+      <meta property="article:tag" content="YUV">
+    
+      <meta property="article:tag" content="JPG">
+    
+      <meta property="article:tag" content="JPEG">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/bayer/bayer_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/bayer/bayer_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/bayer/bayer_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/bayer/bayer_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+
+
+    <title>camera Bayer矩阵</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2023/12/camera-bayer%E7%9F%A9%E9%98%B5/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/camera/bayer/bayer_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      camera Bayer矩阵
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2023-12-10T00:00:00Z">
+        
+  十二月 10, 2023
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/camera">camera</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2023">2023</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/december">December</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">300 Words|Read in about 2 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>本文主要记录一些关于camera相关的概念和资料，主要是整体的一些概念，细节方面后续会单独有篇章去介绍。</p>
+<h1 id="0一些基本概念">0一些基本概念</h1>
+<blockquote>
+<p>开篇先问一个问题</p>
+<p>RAW格式、Bayer阵列、RGB格式、HSV格式、YUV格式、JPG格式、JPEG格式等这些专业名词都是什么意思？</p>
+</blockquote>
+<p>说实话，如果是新手或者刚开始接触的时候肯定只能一个个百度。</p>
+<p>这里直接将概念阐述清楚</p>
+<h2 id="01raw格式">0.1RAW格式</h2>
+<p>原意就是“未经加工”。</p>
+<p>可以理解为：RAW图像就是CMOS或者CCD图像感应器将捕捉到的光源信号转化为数字信号的原始数据。RAW文件是一种记录了数码相机传感器的原始信息，同时记录了由相机拍摄所产生的一些元数据（Metadata，如ISO的设置、快门速度、光圈值、白平衡等）的文件。RAW是未经处理、也未经压缩的格式，可以把RAW概念化为“原始图像编码数据”或更形象的称为“数字底片”。</p>
+<p>通俗的说，就是照相机按下快门之后，光信号到达Sensor之后产生的数字信号，等同于以前的老式机械相机的底片，你还看不到里面的图案，只不过是将里面的元素给数字化了。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_10.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_10.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="02bayer阵列">0.2Bayer阵列</h1>
+<p>这个格式，也是我们这篇的重点</p>
+<p>对于彩色图像，需要采集多种最基本的颜色，如rgb三种颜色，最简单的方法就是用滤镜的方法，红色的滤镜透过红色的波长，绿色的滤镜透过绿色的波长，蓝色的滤镜透过蓝色的波长。</p>
+<p>如果要采集rgb三个基本色，则需要三块滤镜，这样价格昂贵，且不好制造，因为三块滤镜都必须保证每一个像素点都对齐。当用bayer格式的时候，很好的解决了这个问题。bayer 格式图片在一块滤镜上设置的不同的颜色，通过分析人眼对颜色的感知发现，人眼对绿色比较敏感，所以一般bayer格式的图片绿色格式的像素是是r和g像素的和。</p>
+<p>另外，Bayer格式是相机内部的原始图片, 一般后缀名为.raw。很多软件都可以查看, 比如PS。我们相机拍照下来存储在存储卡上的.jpeg或其它格式的图片, 都是从.raw格式转化过来的。如下图，为bayer色彩滤波阵列，由一半的G，1/4的R，1/4的B组成。</p>
+<h1 id="03rgb格式">0.3RGB格式</h1>
+<p>人类眼睛中有三种对不同电磁波频率敏感的视锥细胞，分别是 <strong>Small</strong> <strong>Mediam</strong> <strong>Long</strong>，所有的颜色就是对这三种细胞不同强度刺激的组合结果，比如：</p>
+<ul>
+<li>黄色就是同时刺激 M 细胞和 L 细胞的结果</li>
+<li>同时刺激三种细胞时，我们就会得到白色</li>
+<li>如果都没有刺激，那就是黑色</li>
+</ul>
+<p>这三种基本的光就是我们通常意义上所说的三原色，通过这三种原色，基于同时用540nm 和 570 nm 波长的光刺激锥状细胞在人类大脑看来大约等价于用 560nm光刺激的原理我们可以模拟出任意颜色的效果。不过这种等价只基于人类成立，鸡只有两种视锥细胞，而皮皮虾则有足足十六对，人类眼中相同的颜色在其他生物眼中可能差异非常大，不过这并不重要，只要能骗过我们的大脑就行，这种原理就是我们现代彩色显示器的理论基础。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_14.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_14.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>RGB 是我们接触最多的颜色空间，由三个通道表示一幅图像，分别为红色(R)，绿色(G)和蓝色(B)。这三种颜色的不同组合可以形成几乎所有的其他颜色。RGB 颜色空间是图像处理中最基本、最常用、面向硬件的颜色空间，比较容易理解。利用三个颜色分量的线性组合来表示颜色，任何颜色都与这三个分量有关，而且这三个分量是高度相关的。</p>
+<p>RGB 颜色的十六进制由六位十六进制数字组成的，形式如 <code>#RRGGBB</code>，其中 RR、GG、BB 分别是两位十六进制数字，分别表示红、绿、蓝三原色通道的<strong>色阶</strong>。比如我们使用的截图工具snipaste，可以在截图的时候显示显示器上任意一点的RGB的颜色，默认博客的背景就是255，显示未（255,255,255）对应RGB三色。</p>
+<p>色阶可以表示某个通道的强弱。</p>
+<p>两位十六进制数字可以表示 256 个数字（0 ~ 255），也就是 256 个色阶。所以理论上一共能表示 2 的 24次方，也就是一共 16777216 种不同的颜色。</p>
+<p>我们可以用一个三维立方体，把 RGB 能表示的所有颜色形象地描述出来。效果如下图：</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_17.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_17.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>不过 RGB 并不能表示人眼所能看见的所有颜色，如下图所示</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_18.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_18.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="04hsvhsl格式">0.4HSV/HSL格式</h1>
+<p>自然环境下获取的图像容易受自然光照、遮挡和阴影等情况的影响，即对亮度比较敏感。而 RGB 颜色空间的三个分量都与亮度密切相关，即只要亮度改变，三个分量都会随之相应地改变，而没有一种更直观的方式来表达。</p>
+<h2 id="041hsv颜色空间">0.4.1HSV颜色空间</h2>
+<p>在图像处理中使用较多的是 <strong>HSV 颜色空间</strong>，它比 RGB 更接近人们对彩色的感知经验。非常直观地表达颜色的色调、鲜艳程度和明暗程度，方便进行颜色的对比。</p>
+<p>在 HSV 颜色空间下，比RGB 更容易跟踪某种颜色的物体，常用于分割指定颜色的物体。</p>
+<p>HSV 表达彩色图像的方式由三个部分组成：</p>
+<ul>
+<li>
+<p>Hue（色调、色相）:直接决定了什么颜色，RGB是通过三个值决定颜色，而HSV只通过H值就可以决定；</p>
+<p>用角度度量，取值范围为0°～360°，从红色开始按逆时针方向计算，红色为0°，绿色为120°,蓝色为240°，。它们的补色是：黄色为60°，青色为180°,品红为300°，0°-  359°时颜色会依次变换当角度到达360°时也就是红色，角度也就又回到0°了，所以总共为360°，每变换1°时，色相就会有轻微的变化！如果是顺时针的话这个变换过程会从红色逐渐变换到绿色，在由绿色逐渐变换到蓝色，在由蓝色逐渐变换到红色！逆时针的话就是相反的！
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_20.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_20.png" >
+  
+    </a>
+  
+  
+</div>
+</p>
+</li>
+<li>
+<p>Saturation（饱和度、色彩纯净度）：决定了颜色的纯度，饱和度越高，颜色越鲜艳；</p>
+<p>饱和度S表示颜色接近光谱色的程度。一种颜色，可以看成是某种光谱色与白色混合的结果。其中光谱色所占的比例愈大，颜色接近光谱色的程度就愈高，颜色的饱和度也就愈高。饱和度高，颜色则深而艳。光谱色的白光成分为0，饱和度达到最高。通常取值范围为0%～100%，值越大，颜色越饱和。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_21.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_21.png" >
+  
+    </a>
+  
+  
+</div>
+
+</li>
+<li>
+<p>Value（明度）：决定了颜色的亮度，亮度越高，颜色越亮；</p>
+<p>明度表示颜色明亮的程度，对于光源色，明度值与发光体的光亮度有关；通常取值范围为0%（黑）到100%（白）。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_22.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_22.png" >
+  
+    </a>
+  
+  
+</div>
+
+</li>
+</ul>
+<p>用下面这个圆柱体来表示 HSV 颜色空间，圆柱体的横截面可以看做是一个极坐标系 ，H 用极坐标的极角表示，S 用极坐标的极轴长度表示，V 用圆柱中轴的高度表示。</p>
+<p>HSV数学模型</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_15.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_15.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_38.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_38.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>H参数表示色彩信息，即所处的光谱颜色的位置。该参数用一角度量来表示，红、绿、蓝分别相隔120度。HSV中每一种颜色的互补色分别相差180度。意思就是说：两种颜色在互补时最大为180°</p>
+<p>例如：</p>
+<p>在HSV模型中红与绿的互补色为黄色，其角度为60°</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_23.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_23.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>绿色与蓝色的互补光为青色其角度也为60°</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_24.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_24.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>蓝色与红色的互补光为品红色其角度也为60°</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_25.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_25.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>那么按逆反的方向来算，绿色到红色的互补光为60°</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_26.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_26.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>蓝色到绿色的互补光也为60°</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_27.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_27.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>红色到蓝色的互补光也为60°</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_28.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_28.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>所以通过以上知识可以知道，红色到到绿色之间的互补光为60°，而绿色到红色之间的互补光也为60°所以每一种颜色的色差是：60°+  60°=  120°</p>
+<p>互补光的色差在HSV颜色模型中是这样来算的！</p>
+<p>纯度S为一比例值，范围从0到1，它表示成所选颜色的纯度和该颜色最大的纯度之间的比率。S=0时，只有灰度。</p>
+<p>V表示色彩的明亮程度，范围从0到1。有一点要注意：它和光强度之间并没有直接的联系。</p>
+<p>HSV对用户来说是一种直观的颜色模型。我们可以从一种纯色彩开始，即指定色彩角H，并让V=S=1，然后我们可以通过向其中加入黑色和白色来得到我们需要的颜色。增加黑色可以减小V而S不变，同样增加白色可以减小S而V不变。例如，要得到深蓝色，V=0.4 S=1 H=240度。要得到浅蓝色，V=1 S=0.4 H=240度。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_29.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_29.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>一般说来，人眼最大能区分128种不同的色彩，130种色饱和度，23种明暗度。如果我们用16Bit表示HSV的话，可以用7位存放H，4位存放S，5位存放V，即745或者655就可以满足我们的需要了。</p>
+<h2 id="042hsl颜色空间">0.4.2HSL颜色空间</h2>
+<p>HSL〔Hue-SaturationIntensity(Lightness),HSI或HSL〕颜色模型用H、S、L三参数描述颜色特性，其中H定义颜色的频率，称为色调；S表示颜色的深浅程度，称为饱和度；L表示强度或亮度。</p>
+<ul>
+<li>
+<p>色调(色相)</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_30.jpg" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_30.jpg" >
+  
+    </a>
+  
+  
+</div>
+
+<p>我们修改一下色调，当把色调调低时，颜色更加偏向于红色</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_31.jpg" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_31.jpg" >
+  
+    </a>
+  
+  
+</div>
+
+<p>当我们把色调调高一点时，颜色更加偏向于绿色</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_32.jpg" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_32.jpg" >
+  
+    </a>
+  
+  
+</div>
+
+<p>当颜色在调高一点时，颜色更加偏向于蓝色</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_33.jpg" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_33.jpg" >
+  
+    </a>
+  
+  
+</div>
+
+<p>所以由此可以得出色调是决定一个像素点中的颜色更偏向于哪一方(RGB)</p>
+</li>
+<li>
+<p>饱和度</p>
+<p>饱和度决定了颜色空间中颜色分量，饱和度越高，说明颜色越深，饱和度越低，说明颜色越浅！</p>
+<p>当饱和度为55时，可以发现该颜色空间能显示的颜色分量非常低</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_34.jpg" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_34.jpg" >
+  
+    </a>
+  
+  
+</div>
+
+<p>当我把饱和度调高一点时，可以发现颜色分量显示的明显要深！</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_35.jpg" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_35.jpg" >
+  
+    </a>
+  
+  
+</div>
+
+<p>可以与上图形成鲜明的对比。</p>
+<p>所以饱和度在颜色空间中是起到一个控制RGB组合色的颜色深度的作用。</p>
+</li>
+<li>
+<p>亮度</p>
+<p>亮度决定颜色空间中颜色的明暗程度！</p>
+<p>如图，亮度设置比较高的时候会发现颜色显示的较为鲜艳</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_36.jpg" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_36.jpg" >
+  
+    </a>
+  
+  
+</div>
+
+<p>当我们把亮度调低一点时</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_37.jpg" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_37.jpg" >
+  
+    </a>
+  
+  
+</div>
+
+<p>会发现颜色会变得非常暗！</p>
+<p>所以亮度在颜色空间中起到一个控制RGB组合色的明暗程度的作用。</p>
+</li>
+</ul>
+<p>彩色图片中，色调决定彩色图片更加偏于哪一方！</p>
+<p>当人观察一个彩色物体时，用色调、饱和度、亮度来描述物体的颜色。色调是描述纯色的属性(纯黄色、橘黄或者红色)；饱和度给出一种纯色被白光稀释的程度的度量；亮度是一个主观的描述，实际上，它是不可以测量的，体现了无色的强度概念，并且是描述彩色感觉的关键参数。</p>
+<p>而强度(灰度)是单色图像最有用的描述，这个量是可以测量且很容易解释。则将提出的这个模型称作为HSL(色调、饱和度、强度)彩色模型，该模型可在彩色图像中从携带的彩色信息(色调和饱和度)里消去强度分量的影响，使得HSL模型成为开发基于彩色描述的图像处理方法的良好工具，而这种彩色描述对人来说是自然而直观的。</p>
+<p>数学模型</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_16.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_16.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_39.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_39.png" >
+  
+    </a>
+  
+  
+</div>
+
+<ol>
+<li>明度为0的时候，只有一个点，只能是黑色。没有光，啥都看不见。后面我们要让明度是某个不为零的值，才好谈下去。基于这个条件，</li>
+<li>纯度为0的时候，只有一条线，只能是黑白的。没有对比度，就没有彩色。</li>
+<li>纯度也不为0了，才可能出现彩色，至于到底是哪一种颜色，就要看色度了。</li>
+</ol>
+<p>不知道大家有没有发现，无论你怎么修改色调，饱和度，亮度，RGB三色值会跟随而变化，其实色调，饱和度，亮度都是通过特定的算法经过计算修改RGB三色而达到的控制颜色效果！</p>
+<p>两者比较</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_19.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_19.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="043hsl-和-hsv-的局限性">0.4.3HSL 和 HSV 的局限性</h2>
+<ol>
+<li>色相相差相同的情况下，各个颜色直接的颜色变化并不是均匀的；</li>
+<li>不同色相相同亮度的颜色看起来亮度却不一样，这是由于人眼对不同频率的光的敏感度不同造成的。</li>
+</ol>
+<p>因此，HSL 依然不是最完美的颜色方法，我们还需要建立一套针对人类知觉的标准，这个标准在描述颜色的时候要尽可能地满足以下 2 个原则：</p>
+<ol>
+<li>人眼看到的色差 = 颜色向量间的欧氏距离</li>
+<li>相同的亮度，能让人感觉亮度相同</li>
+</ol>
+<p>于是，一个针对人类感觉的颜色描述方式就产生了，它就是比较新的颜色表示技术 CIE Lab。</p>
+<blockquote>
+<p>CIE Lab</p>
+<p>CIE L<em>a</em>b*（CIELAB）是惯常用来描述人眼可见的所有颜色的最完备的色彩模型，简称 Lab。它是为这个特殊目的而由国际照明委员会（Commission Internationale d&rsquo;Eclairage 的首字母是 CIE）提出的。L、a 和 b 后面的星号（*）是全名的一部分，因为它们表示L*, a* 和 b*，不同于 L, a 和 b。因为红／绿和黄／蓝对立通道被计算为（假定的）锥状细胞响应的类似孟塞尔值的变换的差异，CIELAB 是 Adams 色彩值（Chromatic Value）空间。</p>
+<p>L* 表示亮度, L* = 0 生成黑色而 L* = 100 指示白色，</p>
+<p>a* 表示在红色／品红色和绿色之间的位置（a* 负值指示绿色而正值指示品红）</p>
+<p>b* 表示在黄色和蓝色之间的位置（b* 负值指示蓝色而正值指示黄色）。</p>
+</blockquote>
+<h1 id="05-yuv格式">0.5 YUV格式</h1>
+<p>YUV是一种彩色编码系统，主要用在视频、图形处理流水线中(pipeline)。相对于 RGB 颜色空间，设计 YUV的目的就是为了编码、传输的方便，减少带宽占用和信息出错。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_11.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_11.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>上面的图像为原始图像，可以拆分为RGB的三色图</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_12.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_12.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>原始图像也可以用YUV表示</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_13.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_13.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>根据上面的图片，不难看出：</p>
+<ul>
+<li>Y分量对呈现出清晰的图像有着很大的贡献</li>
+<li>Cb、Cr分量的内容不太容易识别清楚</li>
+</ul>
+<p>此外，你是否感觉：Y分量的内容看着有点眼熟？其实以前黑白电视的画面就是长这样子的。</p>
+<p>YUV的发明处在彩色电视与黑白电视的过渡时期。</p>
+<ul>
+<li>YUV将亮度信息（Y）与色度信息（UV）分离，没有UV信息一样可以显示完整的图像，只不过是黑白的</li>
+<li>这样的设计很好地解决了彩色电视与黑白电视的兼容性问题，使黑白电视也能够接收彩色电视信号，只不过它只显示了Y分量</li>
+<li>彩色电视有Y、U、V分量，如果去掉UV分量，剩下的Y分量和黑白电视相同</li>
+</ul>
+<h1 id="06jpgjpeg格式">0.6JPG、JPEG格式</h1>
+<p>二者没有本质的区别，<strong>Joint Photographic Experts Group</strong>即都是<strong>联合图像专家组</strong>，是用于连续色调静态图像压缩的一种标准，文件后缀名为.jpg或.jpeg，是最常用的图像文件格式。</p>
+<p>通俗的说就是我们保存一张照片的格式，这种格式里面有一些特点：用有损压缩方式去除冗余的图像数据，用较少的磁盘空间得到较好的图像品质。而且JPEG是一种很灵活的格式，具有调节图像质量的功能，它允许用不同的压缩比例对文件进行压缩等等。</p>
+<h1 id="1bayer矩阵">1bayer矩阵</h1>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>这就是图像传感器上面的感光单元，为一个个红绿蓝的滤光片阵列按照某种规则排布的，这种格式的一般规律是：</p>
+<p>​    奇数扫描行输出 RGRG……</p>
+<p>​    偶数扫描行输出 GBGB……</p>
+<p>这种格式也就是所说的专业名词：<strong>Bayer格式</strong></p>
+<blockquote>
+<p>很多人会说，一个像素不是由三基色组成吗？为什么这一个像素只有一种颜色呢？那不是不合理吗？</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>1.人眼观察到的图像  2.RAW原始图像
+3.Bayer格式输出图像 4.运用插值计算后输出图像</p>
+<p>对于图1来说，对1人眼观察到的图像（也可以说是保存在存储设备当中的.JPEG格式的图片）进行放大，我们能观察到其中的每个像素点，也就是RGB颜色空间</p>
+<p>对于图2来说，然后使用相机对着这个景色拍照，得到的RAW数据就是2所示，也就是非常原始的图像信息，其中只有亮度分量，而没有色度、色调、饱和度等其他分量（这里就是没有Y、U分量，只有V的意思吧？应该可以这么理解吧？引出YUV颜色空间知识点），这个图像相对应就是之前所说的老式机械照相机的黑白底片。</p>
+<p>对于图3来说，经过Bayer阵列的采集之后就得到了图3所示相机传感器获取到的原始图像信息，粗略看好像是和人眼看到的大致相同，但是放大之后观察</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>放大后效果其实是和上述所说的Bayer格式一样的，奇数扫描行输出 RGRG……，偶数扫描行输出 GBGB……，每一个像素点只有RGB通道当中的一个分量，也就是说有2/3的颜色分量是没有的。</p>
+<p>对于图4来说，计算机进行后期处理的第一步就是猜色，也叫去马赛克。
+如果一个像素只可能有三种颜色，那么怎么能拍出彩色照片呢？前面说了，每个滤光点周围有“规律”地分布其他颜色的滤光点，那么就有可能结合它们的值，判断出光线本来的颜色。</p>
+</blockquote>
+<h1 id="2bayer插值">2bayer插值</h1>
+<h2 id="21bayer格式图像传感器硬件">2.1bayer格式图像传感器硬件</h2>
+<p>图像传感器的结构如下所示，每一个感光像素之间都有金属隔离层，光纤通过显微镜头，在色彩滤波器过滤之后，投射到相应的漏洞式硅的感光元件上。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>当Image Sensor往外逐行输出数据时，像素的序列为GRGRGR&hellip;/BGBGBG&hellip;（顺序RGB）。这样阵列的Sensor设计，使得RGB传感器减少到了全色传感器的1/3，如下所示。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="o">+</span><span class="mi">1</span><span class="o">/</span><span class="mi">4</span><span class="o">+</span><span class="mi">1</span><span class="o">/</span><span class="mi">4</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="mi">1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="mi">3</span>
+</code></pre></div><h2 id="22bayer格式插值红蓝算法实现">2.2bayer格式插值红蓝算法实现</h2>
+<p>这里只介绍算法，具体算法怎么实现需要自己查阅资料了</p>
+<p>每一个像素仅仅包括了光谱的一部分，必须通过插值来实现每个像素的RGB值。为了从Bayer格式得到每个像素的RGB格式，我们需要通过插值填补缺失的2个色彩。插值的方法有很多（包括领域、线性、3*3等），速度与质量权衡，最好的线性插值补偿算法。其中算法如下：</p>
+<p>R和B通过线性领域插值，但这有四种不同的分布，如下图所示：</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>在（a）与（b）中，R和B分别取邻域的平均值。</p>
+<p>在（c）与（d）中，取领域的4个B或R的均值作为中间像素的B值。</p>
+<blockquote>
+<p>关于为什么叫拜耳矩阵</p>
+<p>2012年末，一位对世界，特别是对蜂鸟网所有网友的生活，产生巨大影响的老人，进入了天堂，他的名字叫布莱斯·拜尔（Bryce Bayer）。</p>
+<p>拜尔在天堂遇见了上帝。</p>
+<p>上帝：拜尔，你这个骗子！看看你在下面做的好事，现在还有脸来见我？</p>
+<p>拜尔：我的主啊，我是您忠实的信徒，我怎么会是骗子呢？
+上帝：你在下面发明了个什么“拜尔阵列”，这玩意儿几乎垄断了人类的数码相机行业，这是你干的吗？！</p>
+<p>拜尔：是啊，我的主。我发明了这种传感器，让数码摄影技术在人类中得到了普及，这难道不是干了个大好事吗？</p>
+<p>上帝：普及数码摄影技术当然是好事，但关键是，你的传感器偷工减料啊！我在创世纪的时候，说要有光，于是就有了光，我创造的光里面包含了红、绿、蓝三种基本色。</p>
+<p>但是你的传感器里面根本就没有完整记录我这三种颜色，你每个像素只记下了一种颜色的亮度值，然后通过后期处理（=PS？）软件，胡乱猜出像素里另两个基本色，再弄出图像来糊弄人，一张照片里只有1/3的色彩是真实的，这还不算骗子啊你！</p>
+<p>拜尔：我的主啊，您看我一脸老实相，会是骗子吗！我的传感器这么干，是有苦衷的啊！您得听我慢慢道来。</p>
+<p>上帝：好，那你说吧。要是说得有道理，能说服我，特别是能说服蜂鸟网上的网友，那才能让你进入名人堂。否则的话，你还得回到人间去，自己去收拾你的烂摊子。</p>
+<p>拜尔手臂一挥，上帝面前出现了一个大屏幕，结合着屏幕上的图文，拜尔开上给上帝解释起来。</p>
+<p>拜尔：那是上个世纪的70年代，我在柯达公司从事科研工作，其中一个重要课题，就是怎么样才能将影像转换成数字信号储存下来。我们都是凡人啊，凡人没有您那样无边法力，所以我们的光电传感器只能够记录光的强度，而无法分辨光的颜色，即使是现在21世纪了，依然是这样。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>但是凡人也是贪心的，我们不满足于只能拍黑白数码照片，只能在有限的条件下想尽办法，去尽可能的获得色彩。我绞尽了脑汁，要想办法解决颜色的记录问题，直到有一天我的小狗菲儿帮我解决了这个问题。</p>
+<p>上帝：你的狗？</p>
+<p>拜尔：是的，我的小狗狗菲儿。这天它嘴里咬着一件东西，跑到我面前，是一个黄色滤镜。就是我以前拍黑白照片时常用的那种滤镜，黄色的滤镜可以滤除或减小红、蓝光对照片的影响。</p>
+<p>看到这个滤镜，我脑中顿时灵光一闪，如果我在每个像素上分别装上这三种滤镜，不就能得到三种光的亮度了吗，然后一合成，色彩就重现了！上帝啊，难道不是您指示我的小狗来帮助我的吗？</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_7.jpg" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_7.jpg" >
+  
+    </a>
+  
+  
+</div>
+
+<p>上帝：咳咳，嗯，这倒是我干的……</p>
+<p>拜尔：但是，我们凡人做不到。我们的元器件制造水平达不到这个要求。我们无法轻易地在一个像素里造进去三个滤镜和感光元件。即使勉强能做到，这个成本也不是绝大多数人能够承受的。无法商业化的东西，对于我们商业化的公司而言，没有现实价值。</p>
+<p>在随后的日子里，我又尝试了各种方法，最后，发明了一种基于单个颜色微小滤镜的影像传感器系统，就是现在被人们称为“拜尔阵列”的传感器系统。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_8.jpg" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_8.jpg" >
+  
+    </a>
+  
+  
+</div>
+
+<p>这只用一块图像传感器，就解决了颜色的识别。做法是在图像传感器前面，设置一个滤光层（Color filter array），上面布满了一个个滤光点，与下层的像素一一对应。</p>
+<p>每个滤光点只能通过红、绿、蓝之中的一种颜色，这意味着在它下层的像素点只可能有三种颜色：红、绿、蓝，或者什么也没有（黑）。</p>
+<p>不同颜色的滤光点的排列是有规律的：每个绿点的四周，分布着2个红点、2个蓝点、4个绿点。这意味着，整体上，绿点的数量是其他两种颜色点的两倍。这是因为研究显示人眼对绿色最敏感，所以滤光层的绿点最多。</p>
+<p>以黄光为例，它由红光和绿光混合而成，那么通过滤光层以后，红点和绿点下面的像素都会有值，但是蓝点下面的像素没有值，因此看一个像素周围的颜色分布&mdash;-有红色和绿色，但是没有蓝色&mdash;-就可以推测出来这个像素点的本来颜色应该是黄色。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/bayer/bayer_9.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/bayer/bayer_9.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>在得到每个像素的RGB颜色后，后期软件还要加入白平衡矫正、gamma校正，并应用风格曲线、降噪锐化设置等参数，这些参数多数可以人为去设定，这个参数设定的过程，就是俗称的ps，准确地讲就是人工地后期处理。</p>
+<p>处理完后最后生成一幅位图，可以用TIFF、JPG等位图格式保存在磁盘上。</p>
+<p>上帝：不对，不对！你说是要完成后期处理后才能看到图像，但是多数相机都有实时取景模式，我都没拍呢，哪来的后期！还有我看到我们天国摄协里也在玩LR什么的，这不是在做后期调整前就看到图了？还是看着图一点一点地调呢！这你怎么解释？</p>
+<p>拜尔：我的主啊，人类是很狡猾的！实时取景和LR等软件里给先你看到的图像，都是先用它内部默认的后期参数进行粗略后处理，先糊弄一下人眼，满足一下心理。当你全部后期参数设置完后，这不还有一个“导出”的过程吗？这才是真正在进行完整全面的图像后处理呢！</p>
+<p>上帝：我的上帝啊！哦，也就是我的我啊！弄出个照片还有这么多花花肠子！</p>
+<p>拜尔：在您还未赐予我们人类全色彩的感光器件前，我也是没办法才想出这么个主意，通过计算去猜测颜色的啊！</p>
+<p>上帝：那后来不是有个适马公司搞出个叫FOVEON X3的全色彩图像传感器吗？有了这个怎么还在用你的老拜尔？</p>
+<p>拜尔：我的主啊，FOVEON X3的全色彩传感器是好，但是一来有专利权的限制，难以推广，二来也是由于技术水平限制，这个FOVEON X3传感器在高感光度下的表现实在是不行，所以多数厂家还是在沿用我的老拜尔阵列。</p>
+<p>哦，还有一家富士公司，改进了我拜尔阵列的颜色滤镜的排列方式，也取得了很好的效果。据说佳能公司也有了全色彩的传感器专利。不知道今后那天，我的老拜尔阵列也会和我一起进入天堂，存入天堂博物馆了。</p>
+</blockquote>
+<h1 id="参考">参考</h1>
+<p><a href="https://blog.csdn.net/JJarven/article/details/130638186?app_version=6.2.2&amp;code=app_1562916241&amp;csdn_share_tail=%7B%22type%22%3A%22blog%22%2C%22rType%22%3A%22article%22%2C%22rId%22%3A%22130638186%22%2C%22source%22%3A%22unlogin%22%7D&amp;uLinkId=usr1mkqgl919blen&amp;utm_source=app">[1] JJarven. 数字图像处理—Bayer初学（小记）, 2023.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/isp/">isp</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/raw/">RAW</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/rgb/">RGB</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/hsv/">HSV</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/hsl/">HSL</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/yuv/">YUV</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/jpg/">JPG</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/jpeg/">JPEG</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/11/%E5%A3%B0%E5%AD%A6%E7%9B%B8%E5%85%B3/" data-tooltip="声学相关">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2023 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/11/%E5%A3%B0%E5%AD%A6%E7%9B%B8%E5%85%B3/" data-tooltip="声学相关">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fcamera-bayer%25E7%259F%25A9%25E9%2598%25B5%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fcamera-bayer%25E7%259F%25A9%25E9%2598%25B5%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fcamera-bayer%25E7%259F%25A9%25E9%2598%25B5%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2023\/12\/camera-bayer%E7%9F%A9%E9%98%B5\/';
+          
+            this.page.identifier = '\/2023\/12\/camera-bayer%E7%9F%A9%E9%98%B5\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
