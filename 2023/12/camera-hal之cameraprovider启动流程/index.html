@@ -1,0 +1,1726 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="本文主要记录一些关于camera相关的camera hal之CameraProvider启动流程，包含从rc文件启动camera provider服务到最后打开供应商的so来完成初始化。">
+
+
+<meta property="og:description" content="本文主要记录一些关于camera相关的camera hal之CameraProvider启动流程，包含从rc文件启动camera provider服务到最后打开供应商的so来完成初始化。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="camera hal之CameraProvider启动流程">
+<meta name="twitter:title" content="camera hal之CameraProvider启动流程">
+<meta property="og:url" content="https://yangyang48.github.io/2023/12/camera-hal%E4%B9%8Bcameraprovider%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2023/12/camera-hal%E4%B9%8Bcameraprovider%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="本文主要记录一些关于camera相关的camera hal之CameraProvider启动流程，包含从rc文件启动camera provider服务到最后打开供应商的so来完成初始化。">
+<meta name="twitter:description" content="本文主要记录一些关于camera相关的camera hal之CameraProvider启动流程，包含从rc文件启动camera provider服务到最后打开供应商的so来完成初始化。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2023-12-24T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2023-12-24T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="camera">
+    
+      <meta property="article:section" content="2023">
+    
+      <meta property="article:section" content="December">
+    
+  
+  
+    
+      <meta property="article:tag" content="hal">
+    
+      <meta property="article:tag" content="provider">
+    
+      <meta property="article:tag" content="rc">
+    
+      <meta property="article:tag" content="HMI">
+    
+      <meta property="article:tag" content="libhardware">
+    
+      <meta property="article:tag" content="interfaces">
+    
+      <meta property="article:tag" content="v4l2">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/hal/provider/p_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/hal/provider/p_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/hal/provider/p_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/hal/provider/p_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+
+
+    <title>camera hal之CameraProvider启动流程</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2023/12/camera-hal%E4%B9%8Bcameraprovider%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/camera/hal/provider/p_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      camera hal之CameraProvider启动流程
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2023-12-24T00:00:00Z">
+        
+  十二月 24, 2023
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/camera">camera</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2023">2023</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/december">December</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">3400 Words|Read in about 16 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+      
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>本文主要记录一些关于camera相关的camera hal之CameraProvider启动流程，包含从rc文件启动camera provider服务到最后打开供应商的so来完成初始化。</p>
+<div style="text-align: center;">
+<iframe 
+    frameborder="no" border="1"
+    marginwidth="0" marginheight="0"
+    width=400 height=100
+    src="//music.163.com/outchain/player?type=2&id=1873321491&auto=1&height=66"></iframe>
+</div>
+<h1 id="1hal-module架构">1Hal module架构</h1>
+<p>注意这里只进行依赖libhardware库这种方式实现，不讲解legacy方式</p>
+<p>HAL module架构主要分为以下3个结构体：</p>
+<ul>
+<li><strong>struct hw_module_t</strong></li>
+<li><strong>struct hw_module_methods_t</strong></li>
+<li><strong>struct hw_device_t</strong></li>
+</ul>
+<p>3个结构体是写这个标准方式hal的最关键部分，它们定义是在 hardware/libhardware/include/hardware/hardware.h</p>
+<h2 id="11struct-hw_module_t">1.1struct hw_module_t</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//struct hw_module_t
+</span><span class="ln"> 2</span><span class="c1">// hardware/libhardware/include/hardware/hardware.h
+</span><span class="ln"> 3</span><span class="c1"></span><span class="cm">/*
+</span><span class="ln"> 4</span><span class="cm">每个硬件模块都必须有一个名为HAL_MODULE_INFO_SYM的数据结构，该数据结构的字段必须以hw_module_t开始,后面是模块相关信息。
+</span><span class="ln"> 5</span><span class="cm">*/</span>
+<span class="ln"> 6</span><span class="k">typedef</span> <span class="k">struct</span> <span class="n">hw_module_t</span> <span class="p">{</span>
+<span class="ln"> 7</span>    <span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="kt">uint16_t</span> <span class="n">module_api_version</span><span class="p">;</span>
+<span class="ln"> 9</span><span class="cp">#define version_major module_api_version
+</span><span class="ln">10</span><span class="cp"></span>    <span class="kt">uint16_t</span> <span class="n">hal_api_version</span><span class="p">;</span>
+<span class="ln">11</span><span class="cp">#define version_minor hal_api_version
+</span><span class="ln">12</span><span class="cp"></span>    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">id</span><span class="p">;</span>
+<span class="ln">13</span>    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">;</span>
+<span class="ln">14</span>    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">author</span><span class="p">;</span>
+<span class="ln">15</span>    <span class="k">struct</span> <span class="n">hw_module_methods_t</span><span class="o">*</span> <span class="n">methods</span><span class="p">;</span>
+<span class="ln">16</span>    <span class="kt">void</span><span class="o">*</span> <span class="n">dso</span><span class="p">;</span>
+<span class="ln">17</span>
+<span class="ln">18</span><span class="cp">#ifdef __LP64__
+</span><span class="ln">19</span><span class="cp"></span>    <span class="kt">uint64_t</span> <span class="n">reserved</span><span class="p">[</span><span class="mi">32</span><span class="o">-</span><span class="mi">7</span><span class="p">];</span>
+<span class="ln">20</span><span class="cp">#else
+</span><span class="ln">21</span><span class="cp"></span>    <span class="kt">uint32_t</span> <span class="n">reserved</span><span class="p">[</span><span class="mi">32</span><span class="o">-</span><span class="mi">7</span><span class="p">];</span>
+<span class="ln">22</span><span class="cp">#endif
+</span><span class="ln">23</span><span class="cp"></span>
+<span class="ln">24</span><span class="p">}</span> <span class="n">hw_module_t</span><span class="p">;</span>
+</code></pre></div><p>1、每一个hardware硬件抽象模块必须定义有一个模块结构体，名字是<code>HAL_MODULE_INFO_SYM</code>，即<code>HMI</code>，这个模块结构体第一个成员变量类型必须是<code>hw_module_t </code></p>
+<p>2、<code>hw_module_t</code>的<code>tag</code>的值必须为<code>HARDWARE_MODULE_TAG</code>，这个就是来标识是硬件抽象的结构体</p>
+<p>3、<code>id</code>这个属性代表这个<code>module</code>的唯一性，即每个硬件抽象模块都会有自己的<code>id </code></p>
+<p>4、<code>methods</code>这个代表每个硬件抽象模块对应的方法结构体，类型<code>hw_module_methods_t</code></p>
+<p>举一个实例化例子</p>
+<blockquote>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//实例化HAL_MODULE_INFO_SYM：
+</span><span class="ln"> 2</span><span class="c1"></span>
+<span class="ln"> 3</span><span class="cm">/* every module must have HAL_MODULE_INFO_SYM */</span>
+<span class="ln"> 4</span><span class="k">struct</span> <span class="n">mytest_module_t</span> <span class="n">HAL_MODULE_INFO_SYM</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln"> 5</span>    <span class="p">.</span><span class="n">common</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln"> 6</span>        <span class="p">.</span><span class="n">tag</span> <span class="o">=</span> <span class="n">HARDWARE_MODULE_TAG</span><span class="p">,</span>
+<span class="ln"> 7</span>        <span class="p">.</span><span class="n">version_major</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+<span class="ln"> 8</span>        <span class="p">.</span><span class="n">version_minor</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="ln"> 9</span>        <span class="p">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">MYTEST_HARDWARE_MODULE_ID</span><span class="p">,</span>
+<span class="ln">10</span>        <span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">MYTEST_HARDWARE_MODULE_ID</span><span class="p">,</span>
+<span class="ln">11</span>        <span class="p">.</span><span class="n">author</span> <span class="o">=</span> <span class="s">&#34;test&#34;</span><span class="p">,</span>
+<span class="ln">12</span>        <span class="p">.</span><span class="n">methods</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">mytest_module_methods</span><span class="p">,</span>
+<span class="ln">13</span>    <span class="p">},</span>
+<span class="ln">14</span><span class="p">};</span>
+</code></pre></div></blockquote>
+<h2 id="12struct-hw_module_methods_t">1.2struct hw_module_methods_t</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">// hardware/libhardware/include/hardware/hardware.h
+</span><span class="ln">2</span><span class="c1"></span><span class="k">typedef</span> <span class="k">struct</span> <span class="n">hw_module_methods_t</span> <span class="p">{</span>
+<span class="ln">3</span>    <span class="cm">/** Open a specific device */</span>
+<span class="ln">4</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">open</span><span class="p">)(</span><span class="k">const</span> <span class="k">struct</span> <span class="n">hw_module_t</span><span class="o">*</span> <span class="n">module</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">id</span><span class="p">,</span>
+<span class="ln">5</span>            <span class="k">struct</span> <span class="n">hw_device_t</span><span class="o">**</span> <span class="n">device</span><span class="p">);</span>
+<span class="ln">6</span>
+<span class="ln">7</span><span class="p">}</span> <span class="n">hw_module_methods_t</span><span class="p">;</span>
+</code></pre></div><p>在结构体 <code>hw_module_methods_t</code> 中只有一个成员，它是一个函数指针，名字是<code>open</code>，它主要作用就是用来打开硬件抽象层中给的硬件设备。因为一个硬件抽象模块<code>module</code>可以包含多个设备<code>device</code>，所以这里需要指定<code>id</code>。</p>
+<ul>
+<li><strong>moudlue</strong>：代表打开硬件设备设备所属模块</li>
+<li><strong>id</strong>：代表打开设备的id</li>
+<li><strong>device</strong>：这个双重指针，一般是输出内容到这个参数里面，即返回值，用来描述一个打开的硬件设备</li>
+</ul>
+<h2 id="13struct-hw_device_t">1.3struct hw_device_t</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">// hardware/libhardware/include/hardware/hardware.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cm">/**
+</span><span class="ln"> 3</span><span class="cm">每个设备数据结构都必须以hw_device_t开始
+</span><span class="ln"> 4</span><span class="cm">后面是特定于模块的公共方法和属性
+</span><span class="ln"> 5</span><span class="cm"> */</span>
+<span class="ln"> 6</span><span class="k">typedef</span> <span class="k">struct</span> <span class="n">hw_device_t</span> <span class="p">{</span>
+<span class="ln"> 7</span>    <span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="kt">uint32_t</span> <span class="n">version</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="k">struct</span> <span class="n">hw_module_t</span><span class="o">*</span> <span class="n">module</span><span class="p">;</span>
+<span class="ln">10</span><span class="cp">#ifdef __LP64__
+</span><span class="ln">11</span><span class="cp"></span>    <span class="kt">uint64_t</span> <span class="n">reserved</span><span class="p">[</span><span class="mi">12</span><span class="p">];</span>
+<span class="ln">12</span><span class="cp">#else
+</span><span class="ln">13</span><span class="cp"></span>    <span class="kt">uint32_t</span> <span class="n">reserved</span><span class="p">[</span><span class="mi">12</span><span class="p">];</span>
+<span class="ln">14</span><span class="cp">#endif
+</span><span class="ln">15</span><span class="cp"></span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">close</span><span class="p">)(</span><span class="k">struct</span> <span class="n">hw_device_t</span><span class="o">*</span> <span class="n">device</span><span class="p">);</span>
+<span class="ln">16</span><span class="p">}</span> <span class="n">hw_device_t</span><span class="p">;</span>
+</code></pre></div><p>其实这个和前面的<code>hw_module_t</code>高度相识，只不过一个代表整个模块一个代表模块的设备 同样总结一下<code>hw_device_t</code>:</p>
+<p>1、每个硬件设备都必须自定义一个硬件设备的结构体，第一个成员变量为<code>hw_device_t</code></p>
+<p>2、<code>tag</code>必须为所在的硬件模块<code>HARDWARE_DEVICE_TAG</code>，代表他是个硬件设备结构体</p>
+<p>3、会有一个<code>close</code>的函数指针，主要是关闭一个硬件设备</p>
+<p>4、自定义设备结构体，除了第一个成员<code>hw_device_t</code>外，最重要就是会定义其他成员方法指针，这些方法就是用来对外提供操作硬件设备的</p>
+<h1 id="14实例">1.4实例</h1>
+<p>自定义<code>hw_device_t</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="k">struct</span> <span class="n">mytest_device_t</span> <span class="p">{</span>
+<span class="ln">2</span>    <span class="k">struct</span> <span class="n">hw_device_t</span> <span class="n">common</span><span class="p">;</span> <span class="c1">//第一成员必须为hw_device_t
+</span><span class="ln">3</span><span class="c1"></span>       <span class="kt">int</span><span class="p">(</span><span class="o">*</span><span class="n">addTest</span><span class="p">)(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span><span class="kt">int</span> <span class="n">b</span><span class="p">);</span>
+<span class="ln">4</span><span class="p">};</span>
+</code></pre></div><p>然后进行初始化赋值操作</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="k">struct</span> <span class="n">mytest_device_t</span> <span class="o">*</span> <span class="n">device</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="ln">2</span><span class="n">device</span> <span class="o">=</span> <span class="p">(</span> <span class="k">struct</span> <span class="n">mytest_device_t</span> <span class="o">*</span> <span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">device</span><span class="p">));</span>
+<span class="ln">3</span><span class="n">memset</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">device</span><span class="p">));</span>
+<span class="ln">4</span><span class="n">device</span><span class="o">-&gt;</span><span class="n">common</span><span class="p">.</span><span class="n">tag</span> <span class="o">=</span> <span class="n">HARDWARE_DEVICE_TAG</span><span class="p">;</span>
+<span class="ln">5</span><span class="n">device</span><span class="o">-&gt;</span><span class="n">common</span><span class="p">.</span><span class="n">version</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">6</span><span class="n">device</span><span class="o">-&gt;</span><span class="n">common</span><span class="p">.</span><span class="n">module</span> <span class="o">=</span> <span class="p">(</span><span class="n">hw_module_t</span><span class="o">*</span><span class="p">)</span><span class="n">module</span><span class="p">;</span>
+<span class="ln">7</span><span class="n">device</span><span class="o">-&gt;</span><span class="n">common</span><span class="p">.</span><span class="n">close</span> <span class="o">=</span> <span class="n">close_mytest</span><span class="p">;</span>
+<span class="ln">8</span><span class="n">device</span><span class="o">-&gt;</span><span class="n">addTest</span> <span class="o">=</span> <span class="n">addTest</span><span class="p">;</span>
+</code></pre></div><p>上面最重要就是把hw_device_t构造出，而且给成员变量test赋值了具体方法，后面获取了这个hw_device_t就可以调用真正的hal实现方法了</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/hal/provider/p1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/hal/provider/p1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="2hardwarec源码流程">2hardware.c源码流程</h1>
+<h2 id="21hw_get_module">2.1hw_get_module</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//hardware/libhardware/hardware.c
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="nf">hw_get_module</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">id</span><span class="p">,</span> <span class="k">const</span> <span class="k">struct</span> <span class="n">hw_module_t</span> <span class="o">**</span><span class="n">module</span><span class="p">)</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="k">return</span> <span class="n">hw_get_module_by_class</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">module</span><span class="p">);</span>
+<span class="ln"> 5</span><span class="p">}</span>
+<span class="ln"> 6</span><span class="c1">//这里第二个参数为NULL，即inst为NULL
+</span><span class="ln"> 7</span><span class="c1"></span><span class="kt">int</span> <span class="nf">hw_get_module_by_class</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">class_id</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">inst</span><span class="p">,</span>
+<span class="ln"> 8</span>                           <span class="k">const</span> <span class="k">struct</span> <span class="n">hw_module_t</span> <span class="o">**</span><span class="n">module</span><span class="p">)</span>
+<span class="ln"> 9</span><span class="p">{</span>
+<span class="ln">10</span>    <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="kt">char</span> <span class="n">prop</span><span class="p">[</span><span class="n">PATH_MAX</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+<span class="ln">12</span>    <span class="kt">char</span> <span class="n">path</span><span class="p">[</span><span class="n">PATH_MAX</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+<span class="ln">13</span>    <span class="kt">char</span> <span class="n">name</span><span class="p">[</span><span class="n">PATH_MAX</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+<span class="ln">14</span>    <span class="kt">char</span> <span class="n">prop_name</span><span class="p">[</span><span class="n">PATH_MAX</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+<span class="ln">15</span>
+<span class="ln">16</span>
+<span class="ln">17</span>    <span class="k">if</span> <span class="p">(</span><span class="n">inst</span><span class="p">)</span>
+<span class="ln">18</span>        <span class="n">snprintf</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">PATH_MAX</span><span class="p">,</span> <span class="s">&#34;%s.%s&#34;</span><span class="p">,</span> <span class="n">class_id</span><span class="p">,</span> <span class="n">inst</span><span class="p">);</span>
+<span class="ln">19</span>    <span class="k">else</span>
+<span class="ln">20</span>        <span class="c1">//name就为传入的class_id
+</span><span class="ln">21</span><span class="c1"></span>        <span class="n">strlcpy</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">class_id</span><span class="p">,</span> <span class="n">PATH_MAX</span><span class="p">);</span>
+<span class="ln">22</span>
+<span class="ln">23</span>
+<span class="ln">24</span>    <span class="cm">/*
+</span><span class="ln">25</span><span class="cm">     这里我们依赖于多次调用dlopen相同的so,将简单地增加一个refcount(而不是加载库的新副本)。
+</span><span class="ln">26</span><span class="cm">     我们还假设dlopen()是线程安全的。
+</span><span class="ln">27</span><span class="cm">    */</span>
+<span class="ln">28</span>    <span class="c1">//获取属性比如ro.hardware.camera 一般对应会显示厂商mtk，rk，amlogic等
+</span><span class="ln">29</span><span class="c1"></span>    <span class="n">snprintf</span><span class="p">(</span><span class="n">prop_name</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">prop_name</span><span class="p">),</span> <span class="s">&#34;ro.hardware.%s&#34;</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
+<span class="ln">30</span>    <span class="k">if</span> <span class="p">(</span><span class="n">property_get</span><span class="p">(</span><span class="n">prop_name</span><span class="p">,</span> <span class="n">prop</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">31</span>        <span class="k">if</span> <span class="p">(</span><span class="n">hw_module_exists</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">name</span><span class="p">,</span> <span class="n">prop</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">32</span>            <span class="k">goto</span> <span class="n">found</span><span class="p">;</span>
+<span class="ln">33</span>        <span class="p">}</span>
+<span class="ln">34</span>    <span class="p">}</span>
+<span class="ln">35</span>    <span class="c1">//以此获取下面几个属性值，&#34;ro.hardware&#34;、&#34;ro.product.board&#34;、&#34;ro.board.platform&#34;、&#34;ro.arch&#34;
+</span><span class="ln">36</span><span class="c1"></span>    <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="mi">0</span> <span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">HAL_VARIANT_KEYS_COUNT</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">37</span>        <span class="k">if</span> <span class="p">(</span><span class="n">property_get</span><span class="p">(</span><span class="n">variant_keys</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">prop</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">38</span>            <span class="k">continue</span><span class="p">;</span>
+<span class="ln">39</span>        <span class="p">}</span>
+<span class="ln">40</span>        <span class="k">if</span> <span class="p">(</span><span class="n">hw_module_exists</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">name</span><span class="p">,</span> <span class="n">prop</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">41</span>            <span class="k">goto</span> <span class="n">found</span><span class="p">;</span>
+<span class="ln">42</span>        <span class="p">}</span>
+<span class="ln">43</span>    <span class="p">}</span>
+<span class="ln">44</span>
+<span class="ln">45</span>    <span class="c1">//如果上述属性还是没有对应值，那么加载默认的so，比如default
+</span><span class="ln">46</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">hw_module_exists</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">name</span><span class="p">,</span> <span class="s">&#34;default&#34;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">47</span>        <span class="k">goto</span> <span class="n">found</span><span class="p">;</span>
+<span class="ln">48</span>    <span class="p">}</span>
+<span class="ln">49</span>
+<span class="ln">50</span>    <span class="k">return</span> <span class="o">-</span><span class="n">ENOENT</span><span class="p">;</span>
+<span class="ln">51</span>
+<span class="ln">52</span><span class="nl">found</span><span class="p">:</span>
+<span class="ln">53</span>    <span class="c1">//这里开始加载so
+</span><span class="ln">54</span><span class="c1"></span>    <span class="k">return</span> <span class="n">load</span><span class="p">(</span><span class="n">class_id</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">module</span><span class="p">);</span>
+<span class="ln">55</span><span class="p">}</span>
+</code></pre></div><ol>
+<li>hw_module_exists会根据传递进来的name，subname，然后去拼出一个so的文件名字</li>
+<li>load会开始加载对应so，来进行初始化调用</li>
+</ol>
+<h2 id="22hw_module_exists">2.2hw_module_exists</h2>
+<p>检查具有给定名称和子名称的HAL是否存在，如果存在则返回0，否则返回0；否则返回负值。成功之路将包含通往HAL的路径。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//hardware/libhardware/hardware.c
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#if defined(__LP64__)
+</span><span class="ln"> 3</span><span class="cp">#define HAL_LIBRARY_PATH1 &#34;/system/lib64/hw&#34;
+</span><span class="ln"> 4</span><span class="cp">#define HAL_LIBRARY_PATH2 &#34;/vendor/lib64/hw&#34;
+</span><span class="ln"> 5</span><span class="cp">#define HAL_LIBRARY_PATH3 &#34;/odm/lib64/hw&#34;
+</span><span class="ln"> 6</span><span class="cp">#else
+</span><span class="ln"> 7</span><span class="cp">#define HAL_LIBRARY_PATH1 &#34;/system/lib/hw&#34;
+</span><span class="ln"> 8</span><span class="cp">#define HAL_LIBRARY_PATH2 &#34;/vendor/lib/hw&#34;
+</span><span class="ln"> 9</span><span class="cp">#define HAL_LIBRARY_PATH3 &#34;/odm/lib/hw&#34;
+</span><span class="ln">10</span><span class="cp">#endif
+</span><span class="ln">11</span><span class="cp"></span>
+<span class="ln">12</span><span class="k">static</span> <span class="kt">int</span> <span class="nf">hw_module_exists</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">path</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">path_len</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">,</span>
+<span class="ln">13</span>                            <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">subname</span><span class="p">)</span>
+<span class="ln">14</span><span class="p">{</span>
+<span class="ln">15</span>    <span class="c1">//遍历odm路径的so，比如camera.default.so
+</span><span class="ln">16</span><span class="c1"></span>    <span class="n">snprintf</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">path_len</span><span class="p">,</span> <span class="s">&#34;%s/%s.%s.so&#34;</span><span class="p">,</span>
+<span class="ln">17</span>             <span class="n">HAL_LIBRARY_PATH3</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">subname</span><span class="p">);</span>
+<span class="ln">18</span>    <span class="k">if</span> <span class="p">(</span><span class="n">path_in_path</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">HAL_LIBRARY_PATH3</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">access</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">R_OK</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+<span class="ln">19</span>        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">20</span>    <span class="c1">//遍历vendor路径的so，比如camera.default.so
+</span><span class="ln">21</span><span class="c1"></span>    <span class="n">snprintf</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">path_len</span><span class="p">,</span> <span class="s">&#34;%s/%s.%s.so&#34;</span><span class="p">,</span>
+<span class="ln">22</span>             <span class="n">HAL_LIBRARY_PATH2</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">subname</span><span class="p">);</span>
+<span class="ln">23</span>    <span class="k">if</span> <span class="p">(</span><span class="n">path_in_path</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">HAL_LIBRARY_PATH2</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">access</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">R_OK</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+<span class="ln">24</span>        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">25</span>
+<span class="ln">26</span><span class="cp">#ifndef __ANDROID_VNDK__
+</span><span class="ln">27</span><span class="cp"></span>    <span class="n">snprintf</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">path_len</span><span class="p">,</span> <span class="s">&#34;%s/%s.%s.so&#34;</span><span class="p">,</span>
+<span class="ln">28</span>             <span class="n">HAL_LIBRARY_PATH1</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">subname</span><span class="p">);</span>
+<span class="ln">29</span>    <span class="k">if</span> <span class="p">(</span><span class="n">path_in_path</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">HAL_LIBRARY_PATH1</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">access</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">R_OK</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+<span class="ln">30</span>        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">31</span><span class="cp">#endif
+</span><span class="ln">32</span><span class="cp"></span>
+<span class="ln">33</span>    <span class="k">return</span> <span class="o">-</span><span class="n">ENOENT</span><span class="p">;</span>
+<span class="ln">34</span><span class="p">}</span>
+</code></pre></div><p>如果不存在，直接返回错误，标识无法加载对应的hal的so；如果存在，那么加载对应的so，比如/vendor/lib/hw/camera.default.so</p>
+<h2 id="23load">2.3load</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//hardware/libhardware/hardware.c
+</span><span class="ln"> 2</span><span class="c1"></span><span class="o">/</span> <span class="o">*</span> <span class="o">*</span>
+<span class="ln"> 3</span><span class="o">*</span><span class="err">如果成功，加载变量定义的文件</span>
+<span class="ln"> 4</span><span class="o">*</span><span class="err">返回</span><span class="n">dlopen</span> <span class="err">句柄和</span><span class="n">hmi</span><span class="err">。</span>
+<span class="ln"> 5</span><span class="o">*</span> <span class="err">@</span><span class="k">return</span> <span class="mi">0</span> <span class="o">=</span><span class="err">成功，</span><span class="o">!</span><span class="mi">0</span> <span class="o">=</span><span class="err">失败。</span>
+<span class="ln"> 6</span><span class="o">*</span> <span class="o">/</span>
+<span class="ln"> 7</span><span class="k">static</span> <span class="kt">int</span> <span class="n">load</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">id</span><span class="p">,</span>
+<span class="ln"> 8</span>        <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">path</span><span class="p">,</span>
+<span class="ln"> 9</span>        <span class="k">const</span> <span class="k">struct</span> <span class="n">hw_module_t</span> <span class="o">**</span><span class="n">pHmi</span><span class="p">)</span>
+<span class="ln">10</span><span class="p">{</span>
+<span class="ln">11</span>    <span class="kt">int</span> <span class="n">status</span> <span class="o">=</span> <span class="o">-</span><span class="n">EINVAL</span><span class="p">;</span>
+<span class="ln">12</span>    <span class="kt">void</span> <span class="o">*</span><span class="n">handle</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="ln">13</span>    <span class="k">struct</span> <span class="n">hw_module_t</span> <span class="o">*</span><span class="n">hmi</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="ln">14</span><span class="cp">#ifdef __ANDROID_VNDK__
+</span><span class="ln">15</span><span class="cp"></span>    <span class="k">const</span> <span class="kt">bool</span> <span class="n">try_system</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">16</span><span class="cp">#else
+</span><span class="ln">17</span><span class="cp"></span>    <span class="k">const</span> <span class="kt">bool</span> <span class="n">try_system</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">18</span><span class="cp">#endif
+</span><span class="ln">19</span><span class="cp"></span>    <span class="c1">//加载so，方法是android封装了dlopen
+</span><span class="ln">20</span><span class="c1"></span>    <span class="c1">//特别注意：加载so的时候，如果so中有全局变量会优先构造或者初始化
+</span><span class="ln">21</span><span class="c1"></span>    <span class="n">handle</span> <span class="o">=</span> <span class="n">android_load_sphal_library</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">RTLD_NOW</span><span class="p">);</span>
+<span class="ln">22</span>    <span class="k">if</span> <span class="p">(</span><span class="n">handle</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">23</span>        <span class="kt">char</span> <span class="k">const</span> <span class="o">*</span><span class="n">err_str</span> <span class="o">=</span> <span class="n">dlerror</span><span class="p">();</span>
+<span class="ln">24</span>        <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;load: module=%s</span><span class="se">\n</span><span class="s">%s&#34;</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">err_str</span><span class="o">?</span><span class="nl">err_str</span><span class="p">:</span><span class="s">&#34;unknown&#34;</span><span class="p">);</span>
+<span class="ln">25</span>        <span class="n">status</span> <span class="o">=</span> <span class="o">-</span><span class="n">EINVAL</span><span class="p">;</span>
+<span class="ln">26</span>        <span class="k">goto</span> <span class="n">done</span><span class="p">;</span>
+<span class="ln">27</span>    <span class="p">}</span>
+<span class="ln">28</span>    
+<span class="ln">29</span>    <span class="c1">//加载完so，寻找struct hal_module_info,并且持有hmi句柄
+</span><span class="ln">30</span><span class="c1"></span>    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">sym</span> <span class="o">=</span> <span class="n">HAL_MODULE_INFO_SYM_AS_STR</span><span class="p">;</span>
+<span class="ln">31</span>    <span class="n">hmi</span> <span class="o">=</span> <span class="p">(</span><span class="k">struct</span> <span class="n">hw_module_t</span> <span class="o">*</span><span class="p">)</span><span class="n">dlsym</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">sym</span><span class="p">);</span>
+<span class="ln">32</span>    <span class="k">if</span> <span class="p">(</span><span class="n">hmi</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">33</span>        <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;load: couldn&#39;t find symbol %s&#34;</span><span class="p">,</span> <span class="n">sym</span><span class="p">);</span>
+<span class="ln">34</span>        <span class="n">status</span> <span class="o">=</span> <span class="o">-</span><span class="n">EINVAL</span><span class="p">;</span>
+<span class="ln">35</span>        <span class="k">goto</span> <span class="n">done</span><span class="p">;</span>
+<span class="ln">36</span>    <span class="p">}</span>
+<span class="ln">37</span>
+<span class="ln">38</span>    <span class="c1">//传入的id和so定义的id是否一致，不一致说明加载错误
+</span><span class="ln">39</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="n">hmi</span><span class="o">-&gt;</span><span class="n">id</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">40</span>        <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;load: id=%s != hmi-&gt;id=%s&#34;</span><span class="p">,</span> <span class="n">id</span><span class="p">,</span> <span class="n">hmi</span><span class="o">-&gt;</span><span class="n">id</span><span class="p">);</span>
+<span class="ln">41</span>        <span class="n">status</span> <span class="o">=</span> <span class="o">-</span><span class="n">EINVAL</span><span class="p">;</span>
+<span class="ln">42</span>        <span class="k">goto</span> <span class="n">done</span><span class="p">;</span>
+<span class="ln">43</span>    <span class="p">}</span>
+<span class="ln">44</span>
+<span class="ln">45</span>    <span class="n">hmi</span><span class="o">-&gt;</span><span class="n">dso</span> <span class="o">=</span> <span class="n">handle</span><span class="p">;</span>
+<span class="ln">46</span>
+<span class="ln">47</span>    <span class="cm">/* success */</span>
+<span class="ln">48</span>    <span class="n">status</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">49</span>
+<span class="ln">50</span>    <span class="nl">done</span><span class="p">:</span>
+<span class="ln">51</span>    <span class="k">if</span> <span class="p">(</span><span class="n">status</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">52</span>        <span class="n">hmi</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="ln">53</span>        <span class="k">if</span> <span class="p">(</span><span class="n">handle</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">54</span>            <span class="n">dlclose</span><span class="p">(</span><span class="n">handle</span><span class="p">);</span>
+<span class="ln">55</span>            <span class="n">handle</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="ln">56</span>        <span class="p">}</span>
+<span class="ln">57</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">58</span>        <span class="c1">//走到这里，hmi句柄不会释放，一直持有
+</span><span class="ln">59</span><span class="c1"></span>        <span class="n">ALOGV</span><span class="p">(</span><span class="s">&#34;loaded HAL id=%s path=%s hmi=%p handle=%p&#34;</span><span class="p">,</span>
+<span class="ln">60</span>                <span class="n">id</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">hmi</span><span class="p">,</span> <span class="n">handle</span><span class="p">);</span>
+<span class="ln">61</span>    <span class="p">}</span>
+<span class="ln">62</span>
+<span class="ln">63</span>    <span class="o">*</span><span class="n">pHmi</span> <span class="o">=</span> <span class="n">hmi</span><span class="p">;</span>
+<span class="ln">64</span>
+<span class="ln">65</span>    <span class="k">return</span> <span class="n">status</span><span class="p">;</span>
+<span class="ln">66</span><span class="p">}</span>
+</code></pre></div><blockquote>
+<p>特别注意：加载so的时候，如果so中有<strong>全局变量</strong>会<strong>优先构造或者初始化</strong></p>
+</blockquote>
+<p>dlopen()是一个强大的库函数。该函数将打开一个新库，并把它装入内存。该函数主要用来加载库中的符号，这些符号在编译的时候是不知道的。dlsym是一个计算机函数，功能是根据动态链接库操作句柄与符号，返回符号对应的地址，不但可以获取函数地址，也可以获取变量地址。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/hal/provider/p2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/hal/provider/p2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="24实例说明">2.4实例说明</h2>
+<p>以笔者努比亚Z50SP手机为例</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span>-?????????  ? ?    ?           ?                ? audio.bluetooth_qti.default.so
+<span class="ln"> 2</span>-?????????  ? ?    ?           ?                ? audio.primary.default.so
+<span class="ln"> 3</span>-?????????  ? ?    ?           ?                ? audio.primary.kalama.so
+<span class="ln"> 4</span>-?????????  ? ?    ?           ?                ? audio.r_submix.default.so
+<span class="ln"> 5</span>-?????????  ? ?    ?           ?                ? audio.usb.default.so
+<span class="ln"> 6</span>-?????????  ? ?    ?           ?                ? camera.qcom.so
+<span class="ln"> 7</span>-?????????  ? ?    ?           ?                ? com.dsi.ant@1.0-impl.so
+<span class="ln"> 8</span>-?????????  ? ?    ?           ?                ? com.qti.chi.offline.so
+<span class="ln"> 9</span>-?????????  ? ?    ?           ?                ? com.qti.chi.override.so
+<span class="ln">10</span>-?????????  ? ?    ?           ?                ? consumerir.zte.so
+<span class="ln">11</span>-rw-r--r--  <span class="m">1</span> root root    <span class="m">11056</span> 2009-01-01 08:00 gralloc.default.so
+<span class="ln">12</span>-?????????  ? ?    ?           ?                ? local_time.default.so
+<span class="ln">13</span>-?????????  ? ?    ?           ?                ? power.default.so
+</code></pre></div><p>可以看出camera使用的是高通的so，audio使用的是kalama，另外的usbaudio，gralloc和power使用的是默认的so</p>
+<p>对应属性查看，跟上面的so加载对应上了</p>
+<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell"><span class="ln"> 1</span>PQ82A02:/ $ getprop <span class="p">|</span>grep ro.board.platform
+<span class="ln"> 2</span><span class="o">[</span>ro.board.platform<span class="o">]</span>: <span class="o">[</span>kalama<span class="o">]</span>
+<span class="ln"> 3</span>PQ82A02:/ $ getprop <span class="p">|</span>grep ro.arch
+<span class="ln"> 4</span>1<span class="p">|</span>PQ82A02:/ $ getprop <span class="p">|</span>grep ro.hardware.camera
+<span class="ln"> 5</span>1<span class="p">|</span>PQ82A02:/ $ getprop <span class="p">|</span>grep ro.hardware
+<span class="ln"> 6</span><span class="o">[</span>ro.hardware<span class="o">]</span>: <span class="o">[</span>qcom<span class="o">]</span>
+<span class="ln"> 7</span><span class="o">[</span>ro.hardware.consumerir<span class="o">]</span>: <span class="o">[</span>zte<span class="o">]</span>
+<span class="ln"> 8</span><span class="o">[</span>ro.hardware.egl<span class="o">]</span>: <span class="o">[</span>adreno<span class="o">]</span>
+<span class="ln"> 9</span><span class="o">[</span>ro.hardware.keystore_desede<span class="o">]</span>: <span class="o">[</span>true<span class="o">]</span>
+<span class="ln">10</span><span class="o">[</span>ro.hardware.vulkan<span class="o">]</span>: <span class="o">[</span>adreno<span class="o">]</span>
+<span class="ln">11</span>PQ82A02:/ $ getprop <span class="p">|</span>grep ro.product.board
+<span class="ln">12</span><span class="o">[</span>ro.product.board<span class="o">]</span>: <span class="o">[</span>kalama<span class="o">]</span>
+<span class="ln">13</span>PQ82A02:/ $ getprop <span class="p">|</span>grep ro.board.platform
+<span class="ln">14</span><span class="o">[</span>ro.board.platform<span class="o">]</span>: <span class="o">[</span>kalama<span class="o">]</span>
+<span class="ln">15</span>PQ82A02:/ $ getprop <span class="p">|</span>grep ro.arch
+<span class="ln">16</span>1<span class="p">|</span>PQ82A02:/ $
+</code></pre></div><h1 id="3hal-module流程">3HAL module流程</h1>
+<p>上面只是一个个的定义好硬件抽象模块的步骤，接下来是要要怎么使用上面的hardware接口进行调用到相关的hal方法呢？</p>
+<ol>
+<li>通过hw_get_module(char* id, struct hw_module_t ** module) 方法**获取一个硬件抽象模块的指针**</li>
+<li>通过模块调用module-&gt;common.methods-&gt;open()方法<strong>获取一个硬件抽象</strong>即hw_device_t的指针</li>
+<li>使用硬件抽象设备的hw_device_t指针<strong>调用具体的hal实现方法</strong>，比如上面 mytest_dev-&gt;addTest</li>
+</ol>
+<p>相关调用hal的代码如下：</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="n">mytest_module_t</span><span class="o">*</span> <span class="n">module</span><span class="p">;</span>
+<span class="ln"> 2</span><span class="c1">//1.获取hw_module_t
+</span><span class="ln"> 3</span><span class="c1"></span><span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">==</span> <span class="n">hw_get_module</span><span class="p">(</span><span class="n">MYTEST_HARDWARE_MODULE_ID</span><span class="p">,</span> <span class="p">(</span><span class="k">const</span> <span class="n">hw_module_t</span><span class="o">**</span><span class="p">)</span><span class="o">&amp;</span><span class="n">module</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span> 
+<span class="ln"> 4</span>    <span class="c1">//2.调用methods的open方法，目的获取hw_device_t的指针
+</span><span class="ln"> 5</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">==</span> <span class="p">((</span><span class="n">hw_module_t</span><span class="o">*</span><span class="p">)</span><span class="n">module</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">methods</span><span class="o">-&gt;</span><span class="n">open</span><span class="p">((</span><span class="n">hw_module_t</span><span class="o">*</span><span class="p">)</span><span class="n">module</span><span class="p">,</span> 
+<span class="ln"> 6</span>                                                   <span class="n">MYTEST_HARDWARE_MODULE_ID</span><span class="p">,</span>
+<span class="ln"> 7</span>                                                   <span class="p">(</span><span class="k">struct</span> <span class="n">hw_device_t</span><span class="o">**</span><span class="p">)</span><span class="o">&amp;</span><span class="n">mytest_device</span><span class="p">))</span> <span class="p">{</span> 
+<span class="ln"> 8</span>        <span class="c1">//3.利用获取的mytest_device，调用对于的方法
+</span><span class="ln"> 9</span><span class="c1"></span>        <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="n">mytest_device</span><span class="o">-&gt;</span><span class="n">addTest</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">);</span>
+<span class="ln">10</span>    <span class="p">}</span>
+<span class="ln">11</span><span class="p">}</span>
+</code></pre></div><h1 id="4cameraprovider">4<strong>CameraProvider</strong></h1>
+<p>Camera HAL运行在CameraProvider进程当中，目前已经到2.7版本，但是使用最多的是2.4版本，2.4是加入Treble机制后CameraProvider进程的第一个版本，所以我们先从这里开始。</p>
+<h2 id="41rc启动cameraprovider-service">4.1rc启动cameraprovider service</h2>
+<p>CameraProvider进程是一个native服务，通过init.rc启动</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback"><span class="ln"> 1</span># hardware/interfaces/camera/provider/2.4/default/android.hardware.camera.provider@2.4-service_64.rc
+<span class="ln"> 2</span>#真正的进程名称是android.hardware.camera.provider@2.4-service_64
+<span class="ln"> 3</span>service vendor.camera-provider-2-4 /vendor/bin/hw/android.hardware.camera.provider@2.4-service_64
+<span class="ln"> 4</span>    interface android.hardware.camera.provider@2.4::ICameraProvider legacy/0
+<span class="ln"> 5</span>    class hal
+<span class="ln"> 6</span>    user cameraserver
+<span class="ln"> 7</span>    group audio camera input drmrpc
+<span class="ln"> 8</span>    ioprio rt 4
+<span class="ln"> 9</span>    capabilities SYS_NICE
+<span class="ln">10</span>    task_profiles CameraServiceCapacity MaxPerformance
+</code></pre></div><p>由上可以看出，进程启动时执行的时二进制/vendor/bin/hw/android.hardware.camera.provider@2.4-service_64</p>
+<h2 id="42查找进程的入口">4.2查找进程的入口</h2>
+<p>下面我们从Android.bp中找到该二进制的入口文件和入口函数。</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="ln"> 1</span><span class="c1">// hardware/interfaces/camera/provider/2.4/default/Android.bp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="o">...</span>
+<span class="ln"> 3</span><span class="nx">cc_binary</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="nx">name</span><span class="p">:</span> <span class="s">&#34;android.hardware.camera.provider@2.4-service_64&#34;</span><span class="p">,</span>
+<span class="ln"> 5</span>    <span class="nx">defaults</span><span class="p">:</span> <span class="p">[</span><span class="s">&#34;camera_service_defaults&#34;</span><span class="p">],</span>
+<span class="ln"> 6</span>    <span class="nx">compile_multilib</span><span class="p">:</span> <span class="s">&#34;64&#34;</span><span class="p">,</span>
+<span class="ln"> 7</span>    <span class="nx">init_rc</span><span class="p">:</span> <span class="p">[</span><span class="s">&#34;android.hardware.camera.provider@2.4-service_64.rc&#34;</span><span class="p">],</span>
+<span class="ln"> 8</span><span class="p">}</span>
+<span class="ln"> 9</span><span class="nx">cc_defaults</span> <span class="p">{</span>
+<span class="ln">10</span>    <span class="nx">name</span><span class="p">:</span> <span class="s">&#34;camera_service_defaults&#34;</span><span class="p">,</span>
+<span class="ln">11</span>    <span class="nx">defaults</span><span class="p">:</span> <span class="p">[</span><span class="s">&#34;hidl_defaults&#34;</span><span class="p">],</span>
+<span class="ln">12</span>    <span class="nx">proprietary</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+<span class="ln">13</span>    <span class="nx">relative_install_path</span><span class="p">:</span> <span class="s">&#34;hw&#34;</span><span class="p">,</span>
+<span class="ln">14</span>    <span class="nx">srcs</span><span class="p">:</span> <span class="p">[</span><span class="s">&#34;service.cpp&#34;</span><span class="p">],</span> <span class="c1">// 二进制入口肯定时service.cpp里面的main函数
+</span><span class="ln">15</span><span class="c1"></span>    <span class="nx">shared_libs</span><span class="p">:</span> <span class="p">[</span>
+<span class="ln">16</span>        <span class="s">&#34;android.hardware.camera.common@1.0&#34;</span><span class="p">,</span>
+<span class="ln">17</span>        <span class="s">&#34;android.hardware.camera.device@1.0&#34;</span><span class="p">,</span>
+<span class="ln">18</span>        <span class="s">&#34;android.hardware.camera.device@3.2&#34;</span><span class="p">,</span>
+<span class="ln">19</span>        <span class="s">&#34;android.hardware.camera.device@3.3&#34;</span><span class="p">,</span>
+<span class="ln">20</span>        <span class="s">&#34;android.hardware.camera.device@3.4&#34;</span><span class="p">,</span>
+<span class="ln">21</span>        <span class="s">&#34;android.hardware.camera.device@3.5&#34;</span><span class="p">,</span>
+<span class="ln">22</span>        <span class="s">&#34;android.hardware.camera.provider@2.4&#34;</span><span class="p">,</span>
+<span class="ln">23</span>        <span class="s">&#34;android.hardware.graphics.mapper@2.0&#34;</span><span class="p">,</span>
+<span class="ln">24</span>        <span class="s">&#34;android.hardware.graphics.mapper@3.0&#34;</span><span class="p">,</span>
+<span class="ln">25</span>        <span class="s">&#34;android.hardware.graphics.mapper@4.0&#34;</span><span class="p">,</span>
+<span class="ln">26</span>        <span class="s">&#34;android.hidl.allocator@1.0&#34;</span><span class="p">,</span>
+<span class="ln">27</span>        <span class="s">&#34;android.hidl.memory@1.0&#34;</span><span class="p">,</span>
+<span class="ln">28</span>        <span class="s">&#34;libbinder&#34;</span><span class="p">,</span>
+<span class="ln">29</span>        <span class="s">&#34;libcamera_metadata&#34;</span><span class="p">,</span>
+<span class="ln">30</span>        <span class="s">&#34;libcutils&#34;</span><span class="p">,</span>
+<span class="ln">31</span>        <span class="s">&#34;libhardware&#34;</span><span class="p">,</span>
+<span class="ln">32</span>        <span class="s">&#34;libhidlbase&#34;</span><span class="p">,</span>
+<span class="ln">33</span>        <span class="s">&#34;liblog&#34;</span><span class="p">,</span>
+<span class="ln">34</span>        <span class="s">&#34;libutils&#34;</span><span class="p">,</span>
+<span class="ln">35</span>    <span class="p">],</span>
+<span class="ln">36</span>    <span class="nx">static_libs</span><span class="p">:</span> <span class="p">[</span>
+<span class="ln">37</span>        <span class="s">&#34;android.hardware.camera.common@1.0-helper&#34;</span><span class="p">,</span>
+<span class="ln">38</span>    <span class="p">],</span>
+<span class="ln">39</span>    <span class="nx">header_libs</span><span class="p">:</span> <span class="p">[</span>
+<span class="ln">40</span>        <span class="s">&#34;camera.device@3.4-external-impl_headers&#34;</span><span class="p">,</span>
+<span class="ln">41</span>        <span class="s">&#34;camera.device@3.4-impl_headers&#34;</span><span class="p">,</span>
+<span class="ln">42</span>        <span class="s">&#34;camera.device@3.5-external-impl_headers&#34;</span><span class="p">,</span>
+<span class="ln">43</span>        <span class="s">&#34;camera.device@3.5-impl_headers&#34;</span><span class="p">,</span>
+<span class="ln">44</span>    <span class="p">],</span>
+<span class="ln">45</span><span class="p">}</span>
+<span class="ln">46</span><span class="o">...</span>
+</code></pre></div><p>从以上Android.bp文件中可以看出，/vendor/bin/hw/android.hardware.camera.provider@2.4-service_64只包含了一个源文件service.cpp，那么入口函数肯定就是这个cpp里面的main函数了。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">// hardware/interfaces/camera/provider/2.4/default/service.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="ln"> 3</span><span class="p">{</span>
+<span class="ln"> 4</span>    <span class="n">ALOGI</span><span class="p">(</span><span class="s">&#34;CameraProvider@2.4 legacy service is starting.&#34;</span><span class="p">);</span>
+<span class="ln"> 5</span>    <span class="c1">// /dev/vndbinder
+</span><span class="ln"> 6</span><span class="c1"></span>    <span class="c1">// 这里表示Camera hal可以跟其他 vendor hal进程通过binder通信，否则不可以
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="n">android</span><span class="o">::</span><span class="n">ProcessState</span><span class="o">::</span><span class="n">initWithDriver</span><span class="p">(</span><span class="s">&#34;/dev/vndbinder&#34;</span><span class="p">);</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span>    <span class="c1">// b/166675194
+</span><span class="ln">10</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">property_get_bool</span><span class="p">(</span><span class="s">&#34;ro.vendor.camera.provider24.disable_mem_init&#34;</span><span class="p">,</span> <span class="nb">false</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">11</span>        <span class="k">if</span> <span class="p">(</span><span class="n">mallopt</span><span class="p">(</span><span class="n">M_BIONIC_ZERO_INIT</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">12</span>            <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;Disabling heap initialization failed.&#34;</span><span class="p">);</span>
+<span class="ln">13</span>        <span class="p">}</span>
+<span class="ln">14</span>    <span class="p">}</span>
+<span class="ln">15</span>
+<span class="ln">16</span>    <span class="n">status_t</span> <span class="n">status</span><span class="p">;</span>
+<span class="ln">17</span>    <span class="k">if</span> <span class="p">(</span><span class="n">kLazyService</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">18</span>        <span class="n">status</span> <span class="o">=</span> <span class="n">defaultLazyPassthroughServiceImplementation</span><span class="o">&lt;</span><span class="n">ICameraProvider</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&#34;legacy/0&#34;</span><span class="p">,</span>
+<span class="ln">19</span>                                                                              <span class="cm">/*maxThreads*/</span> <span class="mi">6</span><span class="p">);</span>
+<span class="ln">20</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">21</span>        <span class="c1">// 启动时会执行下面的函数，这里记下这里的泛型类型为ICameraProvider，还有两个参数，后面有用
+</span><span class="ln">22</span><span class="c1"></span>        <span class="n">status</span> <span class="o">=</span> <span class="n">defaultPassthroughServiceImplementation</span><span class="o">&lt;</span><span class="n">ICameraProvider</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&#34;legacy/0&#34;</span><span class="p">,</span>
+<span class="ln">23</span>                                                                          <span class="cm">/*maxThreads*/</span> <span class="mi">6</span><span class="p">);</span>
+<span class="ln">24</span>    <span class="p">}</span>
+<span class="ln">25</span>    <span class="k">return</span> <span class="n">status</span><span class="p">;</span>
+<span class="ln">26</span><span class="p">}</span>
+</code></pre></div><h2 id="43服务调用">4.3服务调用</h2>
+<p>defaultPassthroughServiceImplementation的实现如下</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">// system/libhidl/transport/include/hidl/LegacySupport.h
+</span><span class="ln"> 2</span><span class="c1">// 这里的两个泛型参数都为ICameraProvider
+</span><span class="ln"> 3</span><span class="c1"></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">Interface</span><span class="p">,</span> <span class="k">class</span> <span class="nc">ExpectInterface</span> <span class="o">=</span> <span class="n">Interface</span><span class="o">&gt;</span>
+<span class="ln"> 4</span><span class="n">__attribute__</span><span class="p">((</span><span class="n">warn_unused_result</span><span class="p">))</span> <span class="n">status_t</span> <span class="n">defaultPassthroughServiceImplementation</span><span class="p">(</span>
+<span class="ln"> 5</span>        <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">name</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">maxThreads</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 6</span>    <span class="c1">// 设置该进程中binder通信线程池的最大线程数，这里maxThreads=6
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="n">configureRpcThreadpool</span><span class="p">(</span><span class="n">maxThreads</span><span class="p">,</span> <span class="nb">true</span><span class="p">);</span>
+<span class="ln"> 8</span>    <span class="c1">// 注意这里的泛型类型为ICameraProvider， 参数name为legacy/0
+</span><span class="ln"> 9</span><span class="c1"></span>    <span class="n">status_t</span> <span class="n">result</span> <span class="o">=</span> <span class="n">registerPassthroughServiceImplementation</span><span class="o">&lt;</span><span class="n">Interface</span><span class="p">,</span> <span class="n">ExpectInterface</span><span class="o">&gt;</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+<span class="ln">10</span>
+<span class="ln">11</span>    <span class="k">if</span> <span class="p">(</span><span class="n">result</span> <span class="o">!=</span> <span class="n">OK</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">12</span>        <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="ln">13</span>    <span class="p">}</span>
+<span class="ln">14</span>    <span class="c1">// 把当前线程也就是主线程加入binder线程池
+</span><span class="ln">15</span><span class="c1"></span>    <span class="n">joinRpcThreadpool</span><span class="p">();</span>
+<span class="ln">16</span>    <span class="k">return</span> <span class="n">UNKNOWN_ERROR</span><span class="p">;</span>
+<span class="ln">17</span><span class="p">}</span>
+</code></pre></div><ul>
+<li>设置该进程中binder通信线程池的最大线程数，这里maxThreads=6</li>
+<li>注册服务，使用泛型，name为legacy/0</li>
+<li>把当前线程也就是主线程加入binder线程池</li>
+</ul>
+<h2 id="44注册服务">4.4注册服务</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">// system/libhidl/transport/include/hidl/LegacySupport.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">Interface</span><span class="p">,</span> <span class="k">class</span> <span class="nc">ExpectInterface</span> <span class="o">=</span> <span class="n">Interface</span><span class="o">&gt;</span>
+<span class="ln"> 3</span><span class="n">__attribute__</span><span class="p">((</span><span class="n">warn_unused_result</span><span class="p">))</span> <span class="n">status_t</span> <span class="n">registerPassthroughServiceImplementation</span><span class="p">(</span>
+<span class="ln"> 4</span>        <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">name</span> <span class="o">=</span> <span class="s">&#34;default&#34;</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 5</span>    <span class="c1">// 这里Interface和ExpectInterface是ICameraProvider
+</span><span class="ln"> 6</span><span class="c1"></span>    <span class="c1">// ICameraProvider::descriptor为android.hardware.camera.provider@2.4::ICameraProvider
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="c1">// 至于ICameraProvider::descriptor的值哪里赋值的，后面细讲
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="k">return</span> <span class="nf">registerPassthroughServiceImplementation</span><span class="p">(</span><span class="n">Interface</span><span class="o">::</span><span class="n">descriptor</span><span class="p">,</span>
+<span class="ln"> 9</span>                                                    <span class="n">ExpectInterface</span><span class="o">::</span><span class="n">descriptor</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
+<span class="ln">10</span><span class="p">}</span>
+<span class="ln">11</span>
+<span class="ln">12</span><span class="c1">// system/libhidl/transport/LegacySupport.cpp
+</span><span class="ln">13</span><span class="c1"></span><span class="n">__attribute__</span><span class="p">((</span><span class="n">warn_unused_result</span><span class="p">))</span> <span class="n">status_t</span> <span class="n">registerPassthroughServiceImplementation</span><span class="p">(</span>
+<span class="ln">14</span>        <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">interfaceName</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">expectInterfaceName</span><span class="p">,</span>
+<span class="ln">15</span>        <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">serviceName</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">16</span>    <span class="c1">// 这里前两个参数为android.hardware.camera.provider@2.4::ICameraProvider，
+</span><span class="ln">17</span><span class="c1"></span>    <span class="c1">// 第三个参数为lambda表达式的一个函数，该函数传入两个参数，然后执行registerAsServiceInternal
+</span><span class="ln">18</span><span class="c1"></span>    <span class="c1">// 第四个参数为legacy/0
+</span><span class="ln">19</span><span class="c1"></span>    <span class="k">return</span> <span class="n">details</span><span class="o">::</span><span class="n">registerPassthroughServiceImplementation</span><span class="p">(</span>
+<span class="ln">20</span>            <span class="n">interfaceName</span><span class="p">,</span> <span class="n">expectInterfaceName</span><span class="p">,</span>
+<span class="ln">21</span>            <span class="p">[](</span><span class="k">const</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">IBase</span><span class="o">&gt;&amp;</span> <span class="n">service</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">name</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">22</span>                <span class="k">return</span> <span class="n">details</span><span class="o">::</span><span class="n">registerAsServiceInternal</span><span class="p">(</span><span class="n">service</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
+<span class="ln">23</span>            <span class="p">},</span>
+<span class="ln">24</span>            <span class="n">serviceName</span><span class="p">);</span>
+<span class="ln">25</span><span class="p">}</span>
+<span class="ln">26</span>
+<span class="ln">27</span>
+<span class="ln">28</span><span class="n">__attribute__</span><span class="p">((</span><span class="n">warn_unused_result</span><span class="p">))</span> <span class="n">status_t</span> <span class="n">registerPassthroughServiceImplementation</span><span class="p">(</span>
+<span class="ln">29</span>        <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">interfaceName</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">expectInterfaceName</span><span class="p">,</span>
+<span class="ln">30</span>        <span class="n">RegisterServiceCb</span> <span class="n">registerServiceCb</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">serviceName</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">31</span>    <span class="c1">// 这是一个关键函数，第一个参数为android.hardware.camera.provider@2.4::ICameraProvider
+</span><span class="ln">32</span><span class="c1"></span>    <span class="c1">// 第二个参数为 legacy/0
+</span><span class="ln">33</span><span class="c1"></span>    <span class="c1">// 我们下面先分析这个函数，然后再继续
+</span><span class="ln">34</span><span class="c1"></span>    <span class="n">sp</span><span class="o">&lt;</span><span class="n">IBase</span><span class="o">&gt;</span> <span class="n">service</span> <span class="o">=</span>
+<span class="ln">35</span>            <span class="n">getRawServiceInternal</span><span class="p">(</span><span class="n">interfaceName</span><span class="p">,</span> <span class="n">serviceName</span><span class="p">,</span> <span class="nb">true</span> <span class="cm">/*retry*/</span><span class="p">,</span> <span class="nb">true</span> <span class="cm">/*getStub*/</span><span class="p">);</span>
+<span class="ln">36</span>
+<span class="ln">37</span>    <span class="c1">// 这里我们把后面的代码先省略掉，等getRawServiceInternal函数讲完之后再继续往下分析
+</span><span class="ln">38</span><span class="c1"></span>    <span class="p">...</span>
+<span class="ln">39</span><span class="p">}</span>
+</code></pre></div><ul>
+<li>打开camera hal的so库，初始化Camera Hal，比如获取camera numbers，在getRawServiceInternal里实现</li>
+<li>将camera hal注册为binder服务，在registerServiceCb里实现，也就是上一步的lamda函数，最终调用的是
+registerAsServiceInternal</li>
+</ul>
+<h2 id="45获取原生内部服务">4.5获取原生内部服务</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">// system/libhidl/transport/ServiceManagement.cpp
+</span><span class="ln"> 2</span><span class="c1">// 第一个参数为android.hardware.camera.provider@2.4::ICameraProvider
+</span><span class="ln"> 3</span><span class="c1">//  第二个参数为 legacy/0
+</span><span class="ln"> 4</span><span class="c1">// 后两个参数都为true
+</span><span class="ln"> 5</span><span class="c1"></span><span class="n">sp</span><span class="o">&lt;::</span><span class="n">android</span><span class="o">::</span><span class="n">hidl</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">V1_0</span><span class="o">::</span><span class="n">IBase</span><span class="o">&gt;</span> <span class="n">getRawServiceInternal</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">descriptor</span><span class="p">,</span>
+<span class="ln"> 6</span>                                                             <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">instance</span><span class="p">,</span>
+<span class="ln"> 7</span>                                                             <span class="kt">bool</span> <span class="n">retry</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">getStub</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 8</span>    <span class="k">using</span> <span class="n">Transport</span> <span class="o">=</span> <span class="n">IServiceManager1_0</span><span class="o">::</span><span class="n">Transport</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="n">sp</span><span class="o">&lt;</span><span class="n">Waiter</span><span class="o">&gt;</span> <span class="n">waiter</span><span class="p">;</span>
+<span class="ln">10</span>
+<span class="ln">11</span>    <span class="n">sp</span><span class="o">&lt;</span><span class="n">IServiceManager1_1</span><span class="o">&gt;</span> <span class="n">sm</span><span class="p">;</span>
+<span class="ln">12</span>    <span class="n">Transport</span> <span class="n">transport</span> <span class="o">=</span> <span class="n">Transport</span><span class="o">::</span><span class="n">EMPTY</span><span class="p">;</span>
+<span class="ln">13</span>    <span class="k">if</span> <span class="p">(</span><span class="n">kIsRecovery</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">14</span>        <span class="n">transport</span> <span class="o">=</span> <span class="n">Transport</span><span class="o">::</span><span class="n">PASSTHROUGH</span><span class="p">;</span>
+<span class="ln">15</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">16</span>        <span class="n">sm</span> <span class="o">=</span> <span class="n">defaultServiceManager1_1</span><span class="p">();</span>
+<span class="ln">17</span>        <span class="k">if</span> <span class="p">(</span><span class="n">sm</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">18</span>            <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;getService: defaultServiceManager() is null&#34;</span><span class="p">);</span>
+<span class="ln">19</span>            <span class="k">return</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln">20</span>        <span class="p">}</span>
+<span class="ln">21</span>        
+<span class="ln">22</span>        <span class="c1">// transport类型决定了当前HAL是绑定式还是直通式
+</span><span class="ln">23</span><span class="c1"></span>        <span class="n">Return</span><span class="o">&lt;</span><span class="n">Transport</span><span class="o">&gt;</span> <span class="n">transportRet</span> <span class="o">=</span> <span class="n">sm</span><span class="o">-&gt;</span><span class="n">getTransport</span><span class="p">(</span><span class="n">descriptor</span><span class="p">,</span> <span class="n">instance</span><span class="p">);</span>
+<span class="ln">24</span>
+<span class="ln">25</span>        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">transportRet</span><span class="p">.</span><span class="n">isOk</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln">26</span>            <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;getService: defaultServiceManager()-&gt;getTransport returns %s&#34;</span><span class="p">,</span>
+<span class="ln">27</span>                  <span class="n">transportRet</span><span class="p">.</span><span class="n">description</span><span class="p">().</span><span class="n">c_str</span><span class="p">());</span>
+<span class="ln">28</span>            <span class="k">return</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln">29</span>        <span class="p">}</span>
+<span class="ln">30</span>        <span class="n">transport</span> <span class="o">=</span> <span class="n">transportRet</span><span class="p">;</span>
+<span class="ln">31</span>    <span class="p">}</span>
+<span class="ln">32</span>
+<span class="ln">33</span>    <span class="k">const</span> <span class="kt">bool</span> <span class="n">vintfHwbinder</span> <span class="o">=</span> <span class="p">(</span><span class="n">transport</span> <span class="o">==</span> <span class="n">Transport</span><span class="o">::</span><span class="n">HWBINDER</span><span class="p">);</span> <span class="c1">// true
+</span><span class="ln">34</span><span class="c1"></span>    <span class="k">const</span> <span class="kt">bool</span> <span class="n">vintfPassthru</span> <span class="o">=</span> <span class="p">(</span><span class="n">transport</span> <span class="o">==</span> <span class="n">Transport</span><span class="o">::</span><span class="n">PASSTHROUGH</span><span class="p">);</span> <span class="c1">// false
+</span><span class="ln">35</span><span class="c1"></span>    <span class="k">const</span> <span class="kt">bool</span> <span class="n">trebleTestingOverride</span> <span class="o">=</span> <span class="n">isTrebleTestingOverride</span><span class="p">();</span> <span class="c1">// false
+</span><span class="ln">36</span><span class="c1"></span>    <span class="k">const</span> <span class="kt">bool</span> <span class="n">allowLegacy</span> <span class="o">=</span> <span class="o">!</span><span class="n">kEnforceVintfManifest</span> <span class="o">||</span> <span class="p">(</span><span class="n">trebleTestingOverride</span> <span class="o">&amp;&amp;</span> <span class="n">isDebuggable</span><span class="p">());</span> <span class="c1">// false
+</span><span class="ln">37</span><span class="c1"></span>    <span class="k">const</span> <span class="kt">bool</span> <span class="n">vintfLegacy</span> <span class="o">=</span> <span class="p">(</span><span class="n">transport</span> <span class="o">==</span> <span class="n">Transport</span><span class="o">::</span><span class="n">EMPTY</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">allowLegacy</span><span class="p">;</span> <span class="c1">// false
+</span><span class="ln">38</span><span class="c1"></span>
+<span class="ln">39</span>    <span class="c1">// 因为参数getStub为true,所以这里的for循环不进入，不执行
+</span><span class="ln">40</span><span class="c1"></span>    <span class="p">...</span>
+<span class="ln">41</span>
+<span class="ln">42</span>    <span class="c1">// getStub为true，进入这里的if语句
+</span><span class="ln">43</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">getStub</span> <span class="o">||</span> <span class="n">vintfPassthru</span> <span class="o">||</span> <span class="n">vintfLegacy</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">44</span>        <span class="c1">// getPassthroughServiceManager 返回new PassthroughServiceManager()
+</span><span class="ln">45</span><span class="c1"></span>        <span class="k">const</span> <span class="n">sp</span><span class="o">&lt;</span><span class="n">IServiceManager1_0</span><span class="o">&gt;</span> <span class="n">pm</span> <span class="o">=</span> <span class="n">getPassthroughServiceManager</span><span class="p">();</span>
+<span class="ln">46</span>        <span class="k">if</span> <span class="p">(</span><span class="n">pm</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">47</span>            <span class="c1">// 下面单独分析PassthroughServiceManager的get函数
+</span><span class="ln">48</span><span class="c1"></span>            <span class="n">sp</span><span class="o">&lt;</span><span class="n">IBase</span><span class="o">&gt;</span> <span class="n">base</span> <span class="o">=</span> <span class="n">pm</span><span class="o">-&gt;</span><span class="n">get</span><span class="p">(</span><span class="n">descriptor</span><span class="p">,</span> <span class="n">instance</span><span class="p">).</span><span class="n">withDefault</span><span class="p">(</span><span class="k">nullptr</span><span class="p">);</span>
+<span class="ln">49</span>            <span class="c1">// getStub为true， trebleTestingOverride为false，这里的if进不去
+</span><span class="ln">50</span><span class="c1"></span>            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">getStub</span> <span class="o">||</span> <span class="n">trebleTestingOverride</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">51</span>                <span class="n">base</span> <span class="o">=</span> <span class="n">wrapPassthrough</span><span class="p">(</span><span class="n">base</span><span class="p">);</span>
+<span class="ln">52</span>            <span class="p">}</span>
+<span class="ln">53</span>            <span class="k">return</span> <span class="n">base</span><span class="p">;</span>
+<span class="ln">54</span>        <span class="p">}</span>
+<span class="ln">55</span>    <span class="p">}</span>
+<span class="ln">56</span>
+<span class="ln">57</span>    <span class="k">return</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln">58</span><span class="p">}</span>
+</code></pre></div><ul>
+<li>
+<p>getTransport，会读取/vendor/etc/vintf/manifest.xml文件来获取当前transport类型， transport类型决定了当前HAL是绑定式还是直通式</p>
+<blockquote>
+<p>// 这里最终会去读取/vendor/etc/vintf/manifest.xml文件来获取当前transport类型
+// 初始文件在device/xxx/manifest.xml，编译时跟其他manifest
+// 一起写入/vendor/etc/vintf/manifest.xml，定义如下：</p>
+<div class="highlight"><pre class="chroma"><code class="language-xml" data-lang="xml"><span class="ln">1</span><span class="c">&lt;!--/vendor/etc/vintf/manifest.xml --&gt;</span>
+<span class="ln">2</span>        <span class="nt">&lt;manifest</span> <span class="na">version=</span><span class="s">&#34;1.0&#34;</span> <span class="na">type=</span><span class="s">&#34;device&#34;</span> <span class="na">target-level=</span><span class="s">&#34;3&#34;</span><span class="nt">&gt;</span>
+<span class="ln">3</span>            <span class="nt">&lt;hal</span> <span class="na">format=</span><span class="s">&#34;hidl&#34;</span><span class="nt">&gt;</span>
+<span class="ln">4</span>                <span class="nt">&lt;name&gt;</span>android.hardware.camera.provider<span class="nt">&lt;/name&gt;</span>
+<span class="ln">5</span>                <span class="nt">&lt;transport&gt;</span>hwbinder<span class="nt">&lt;/transport&gt;</span>
+<span class="ln">6</span>                <span class="nt">&lt;fqname&gt;</span>@2.4::ICameraProvider/legacy/0<span class="nt">&lt;/fqname&gt;</span>
+<span class="ln">7</span>            <span class="nt">&lt;/hal&gt;</span>
+<span class="ln">8</span>        <span class="nt">&lt;/manifest&gt;</span>
+</code></pre></div></blockquote>
+</li>
+<li>
+<p>getPassthroughServiceManager，获取对应服务的代理对象</p>
+</li>
+<li>
+<p>PassthroughServiceManager.get，会打开对应的lib，即android.hardware.camera.provider@2.4-impl.so</p>
+</li>
+</ul>
+<h2 id="46打开对应的lib">4.6打开对应的lib</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">  1</span><span class="c1">// system/libhidl/transport/ServiceManagement.cpp
+</span><span class="ln">  2</span><span class="c1">// descriptor： android.hardware.camera.provider@2.4::ICameraProvider
+</span><span class="ln">  3</span><span class="c1">// instance:  legacy/0
+</span><span class="ln">  4</span><span class="c1"></span><span class="n">sp</span><span class="o">&lt;</span><span class="n">IBase</span><span class="o">&gt;</span> <span class="n">base</span> <span class="o">=</span> <span class="n">pm</span><span class="o">-&gt;</span><span class="n">get</span><span class="p">(</span><span class="n">descriptor</span><span class="p">,</span> <span class="n">instance</span><span class="p">)</span>
+<span class="ln">  5</span><span class="n">Return</span><span class="o">&lt;</span><span class="n">sp</span><span class="o">&lt;</span><span class="n">IBase</span><span class="o">&gt;&gt;</span> <span class="n">get</span><span class="p">(</span><span class="k">const</span> <span class="n">hidl_string</span><span class="o">&amp;</span> <span class="n">fqName</span><span class="p">,</span>
+<span class="ln">  6</span>                        <span class="k">const</span> <span class="n">hidl_string</span><span class="o">&amp;</span> <span class="n">name</span><span class="p">)</span> <span class="k">override</span> <span class="p">{</span>
+<span class="ln">  7</span>    <span class="n">sp</span><span class="o">&lt;</span><span class="n">IBase</span><span class="o">&gt;</span> <span class="n">ret</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln">  8</span>
+<span class="ln">  9</span>    <span class="c1">// 主要就是执行了openLibs函数，我们先把参数理一下，然后在进入openLibs函数进行分析
+</span><span class="ln"> 10</span><span class="c1"></span>    <span class="c1">// 第一个参数fqName: android.hardware.camera.provider@2.4::ICameraProvider
+</span><span class="ln"> 11</span><span class="c1"></span>    <span class="c1">// 第二个参数是一个lamda函数,这个函数有三个参数，这里主要是这个lamda函数的实现，
+</span><span class="ln"> 12</span><span class="c1"></span>    <span class="n">openLibs</span><span class="p">(</span><span class="n">fqName</span><span class="p">,</span> <span class="p">[</span><span class="o">&amp;</span><span class="p">](</span><span class="kt">void</span><span class="o">*</span> <span class="n">handle</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="o">&amp;</span><span class="n">lib</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="o">&amp;</span><span class="n">sym</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 13</span>    <span class="p">...</span>
+<span class="ln"> 14</span>    <span class="p">}</span>
+<span class="ln"> 15</span><span class="p">}</span>
+<span class="ln"> 16</span>             
+<span class="ln"> 17</span><span class="c1">// openLibs函数实现
+</span><span class="ln"> 18</span><span class="c1"></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">openLibs</span><span class="p">(</span>
+<span class="ln"> 19</span>    <span class="c1">// fqName:  android.hardware.camera.provider@2.4::ICameraProvider
+</span><span class="ln"> 20</span><span class="c1"></span>    <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">fqName</span><span class="p">,</span>
+<span class="ln"> 21</span>    <span class="c1">// eachLib: 就是上面提到的lamda函数
+</span><span class="ln"> 22</span><span class="c1"></span>    <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="kt">bool</span> <span class="cm">/* continue */</span> <span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="cm">/* handle */</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="cm">/* lib */</span><span class="p">,</span>
+<span class="ln"> 23</span>                                                <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="cm">/* sym */</span><span class="p">)</span><span class="o">&gt;&amp;</span> <span class="n">eachLib</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 24</span>    <span class="c1">//fqName looks like android.hardware.foo@1.0::IFoo
+</span><span class="ln"> 25</span><span class="c1"></span>    <span class="c1">// 用::符号将参数分割为android.hardware.camera.provider@2.4和ICameraProvider
+</span><span class="ln"> 26</span><span class="c1"></span>    <span class="n">size_t</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">fqName</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#34;::&#34;</span><span class="p">);</span>
+<span class="ln"> 27</span>
+<span class="ln"> 28</span>    <span class="k">if</span> <span class="p">(</span><span class="n">idx</span> <span class="o">==</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">::</span><span class="n">npos</span> <span class="o">||</span>
+<span class="ln"> 29</span>            <span class="n">idx</span> <span class="o">+</span> <span class="n">strlen</span><span class="p">(</span><span class="s">&#34;::&#34;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&gt;=</span> <span class="n">fqName</span><span class="p">.</span><span class="n">size</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln"> 30</span>        <span class="n">LOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Invalid interface name passthrough lookup: &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">fqName</span><span class="p">;</span>
+<span class="ln"> 31</span>        <span class="k">return</span><span class="p">;</span>
+<span class="ln"> 32</span>    <span class="p">}</span>
+<span class="ln"> 33</span>
+<span class="ln"> 34</span>    <span class="c1">// 这里拿到的就是android.hardware.camera.provider@2.4
+</span><span class="ln"> 35</span><span class="c1"></span>    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">packageAndVersion</span> <span class="o">=</span> <span class="n">fqName</span><span class="p">.</span><span class="n">substr</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">idx</span><span class="p">);</span>
+<span class="ln"> 36</span>    <span class="c1">// 这里拿到的就是 ICameraProvider
+</span><span class="ln"> 37</span><span class="c1"></span>    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">ifaceName</span> <span class="o">=</span> <span class="n">fqName</span><span class="p">.</span><span class="n">substr</span><span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="n">strlen</span><span class="p">(</span><span class="s">&#34;::&#34;</span><span class="p">));</span>
+<span class="ln"> 38</span>
+<span class="ln"> 39</span>    <span class="c1">// prefix为android.hardware.camera.provider@2.4-impl
+</span><span class="ln"> 40</span><span class="c1"></span>    <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">prefix</span> <span class="o">=</span> <span class="n">packageAndVersion</span> <span class="o">+</span> <span class="s">&#34;-impl&#34;</span><span class="p">;</span>
+<span class="ln"> 41</span>    <span class="c1">// sym为 HIDL_FETCH_ICameraProvider
+</span><span class="ln"> 42</span><span class="c1"></span>    <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">sym</span> <span class="o">=</span> <span class="s">&#34;HIDL_FETCH_&#34;</span> <span class="o">+</span> <span class="n">ifaceName</span><span class="p">;</span>
+<span class="ln"> 43</span>
+<span class="ln"> 44</span>    <span class="c1">// 到此，上面参数已经解析完毕，下面根据prefix和sym来执行
+</span><span class="ln"> 45</span><span class="c1"></span>
+<span class="ln"> 46</span>    <span class="k">constexpr</span> <span class="kt">int</span> <span class="n">dlMode</span> <span class="o">=</span> <span class="n">RTLD_LAZY</span><span class="p">;</span>
+<span class="ln"> 47</span>    <span class="kt">void</span><span class="o">*</span> <span class="n">handle</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln"> 48</span>
+<span class="ln"> 49</span>    <span class="n">dlerror</span><span class="p">();</span> <span class="c1">// clear
+</span><span class="ln"> 50</span><span class="c1"></span>
+<span class="ln"> 51</span>    <span class="k">static</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">halLibPathVndkSp</span> <span class="o">=</span> <span class="n">details</span><span class="o">::</span><span class="n">getVndkSpHwPath</span><span class="p">();</span>
+<span class="ln"> 52</span>    <span class="c1">//这里的变量分别为&#34;/odm/lib64/hw/&#34;, &#34;/vendor/lib64/hw/&#34;, &#34;/apex/com.android.vndk.v33/lib64/hw/&#34;
+</span><span class="ln"> 53</span><span class="c1"></span>    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">paths</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln"> 54</span>        <span class="n">HAL_LIBRARY_PATH_ODM</span><span class="p">,</span> <span class="n">HAL_LIBRARY_PATH_VENDOR</span><span class="p">,</span> <span class="n">halLibPathVndkSp</span><span class="p">,</span>
+<span class="ln"> 55</span><span class="cp">#ifndef __ANDROID_VNDK__
+</span><span class="ln"> 56</span><span class="cp"></span>        <span class="c1">//这里的变量为&#34;/system/lib64/hw/&#34;
+</span><span class="ln"> 57</span><span class="c1"></span>        <span class="n">HAL_LIBRARY_PATH_SYSTEM</span><span class="p">,</span>
+<span class="ln"> 58</span><span class="cp">#endif
+</span><span class="ln"> 59</span><span class="cp"></span>    <span class="p">};</span>
+<span class="ln"> 60</span>
+<span class="ln"> 61</span>    <span class="c1">// 条件为false，不进入
+</span><span class="ln"> 62</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">details</span><span class="o">::</span><span class="n">isTrebleTestingOverride</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln"> 63</span>        <span class="c1">// Load HAL implementations that are statically linked
+</span><span class="ln"> 64</span><span class="c1"></span>        <span class="n">handle</span> <span class="o">=</span> <span class="n">dlopen</span><span class="p">(</span><span class="k">nullptr</span><span class="p">,</span> <span class="n">dlMode</span><span class="p">);</span>
+<span class="ln"> 65</span>        <span class="k">if</span> <span class="p">(</span><span class="n">handle</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 66</span>            <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">error</span> <span class="o">=</span> <span class="n">dlerror</span><span class="p">();</span>
+<span class="ln"> 67</span>            <span class="n">LOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Failed to dlopen self: &#34;</span>
+<span class="ln"> 68</span>                        <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">error</span> <span class="o">==</span> <span class="k">nullptr</span> <span class="o">?</span> <span class="s">&#34;unknown error&#34;</span> <span class="o">:</span> <span class="n">error</span><span class="p">);</span>
+<span class="ln"> 69</span>        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">eachLib</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="s">&#34;SELF&#34;</span><span class="p">,</span> <span class="n">sym</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln"> 70</span>            <span class="k">return</span><span class="p">;</span>
+<span class="ln"> 71</span>        <span class="p">}</span>
+<span class="ln"> 72</span>    <span class="p">}</span>
+<span class="ln"> 73</span>    <span class="c1">// 在paths的几个路径中寻找android.hardware.camera.provider@2.4-impl.so文件
+</span><span class="ln"> 74</span><span class="c1"></span>    <span class="c1">// 我们到设备里查看一下，发现在/vendor/lib64/hw目录下，因为是64位系统，所以/vendor/lib/hw/是不会遍历的
+</span><span class="ln"> 75</span><span class="c1"></span>    <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="nl">path</span> <span class="p">:</span> <span class="n">paths</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 76</span>        <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">libs</span> <span class="o">=</span> <span class="n">findFiles</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="s">&#34;.so&#34;</span><span class="p">);</span>
+<span class="ln"> 77</span>
+<span class="ln"> 78</span>        <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="o">&amp;</span><span class="nl">lib</span> <span class="p">:</span> <span class="n">libs</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 79</span>            <span class="c1">// fullPath=/vendor/lib64/hw/android.hardware.camera.provider@2.4-impl.so
+</span><span class="ln"> 80</span><span class="c1"></span>            <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">fullPath</span> <span class="o">=</span> <span class="n">path</span> <span class="o">+</span> <span class="n">lib</span><span class="p">;</span>
+<span class="ln"> 81</span>
+<span class="ln"> 82</span>            <span class="k">if</span> <span class="p">(</span><span class="n">kIsRecovery</span> <span class="o">||</span> <span class="n">path</span> <span class="o">==</span> <span class="n">HAL_LIBRARY_PATH_SYSTEM</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 83</span>                <span class="n">handle</span> <span class="o">=</span> <span class="n">dlopen</span><span class="p">(</span><span class="n">fullPath</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="n">dlMode</span><span class="p">);</span>
+<span class="ln"> 84</span>            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln"> 85</span><span class="cp">#if !defined(__ANDROID_RECOVERY__) &amp;&amp; defined(__ANDROID__)
+</span><span class="ln"> 86</span><span class="cp"></span>                <span class="c1">// 最终执行这里，load so库，拿到handle
+</span><span class="ln"> 87</span><span class="c1"></span>                <span class="n">handle</span> <span class="o">=</span> <span class="n">android_load_sphal_library</span><span class="p">(</span><span class="n">fullPath</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="n">dlMode</span><span class="p">);</span>
+<span class="ln"> 88</span><span class="cp">#endif
+</span><span class="ln"> 89</span><span class="cp"></span>            <span class="p">}</span>
+<span class="ln"> 90</span>
+<span class="ln"> 91</span>            <span class="k">if</span> <span class="p">(</span><span class="n">handle</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 92</span>                <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">error</span> <span class="o">=</span> <span class="n">dlerror</span><span class="p">();</span>
+<span class="ln"> 93</span>                <span class="n">LOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Failed to dlopen &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">lib</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;: &#34;</span>
+<span class="ln"> 94</span>                            <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">error</span> <span class="o">==</span> <span class="k">nullptr</span> <span class="o">?</span> <span class="s">&#34;unknown error&#34;</span> <span class="o">:</span> <span class="n">error</span><span class="p">);</span>
+<span class="ln"> 95</span>                <span class="k">continue</span><span class="p">;</span>
+<span class="ln"> 96</span>            <span class="p">}</span>
+<span class="ln"> 97</span>            <span class="c1">// 还记得eachLib函数吗，就是上面省略掉的lamda回调函数，下面开始分析
+</span><span class="ln"> 98</span><span class="c1"></span>            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">eachLib</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">lib</span><span class="p">,</span> <span class="n">sym</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln"> 99</span>                <span class="k">return</span><span class="p">;</span>
+<span class="ln">100</span>            <span class="p">}</span>
+<span class="ln">101</span>        <span class="p">}</span>
+<span class="ln">102</span>    <span class="p">}</span>
+<span class="ln">103</span><span class="p">}</span>
+</code></pre></div><ul>
+<li>分割传入的字符串fqName，packageAndVersion为android.hardware.camera.provider@2.4，ifaceName为ICameraProvider</li>
+<li>拼接字符串prefix为android.hardware.camera.provider@2.4-impl，sym为HIDL_FETCH_ICameraProvider</li>
+<li>查找几个目录下对应的so文件，分别为&quot;/odm/lib64/hw/&quot;, &ldquo;/vendor/lib64/hw/&rdquo;, &ldquo;/apex/com.android.vndk.v33/lib64/hw/&rdquo;</li>
+<li>打开对应的so文件，拿到对应的句柄，获取sym的变量，即为<strong>HIDL_FETCH_ICameraProvider</strong></li>
+</ul>
+<h2 id="47openlib回调匿名内部函数">4.7openLib回调匿名内部函数</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">// system/libhidl/transport/ServiceManagement.cpp
+</span><span class="ln"> 2</span><span class="c1">// fqName： android.hardware.camera.provider@2.4::ICameraProvider
+</span><span class="ln"> 3</span><span class="c1">// name:  legacy/0 
+</span><span class="ln"> 4</span><span class="c1"></span><span class="n">Return</span><span class="o">&lt;</span><span class="n">sp</span><span class="o">&lt;</span><span class="n">IBase</span><span class="o">&gt;&gt;</span> <span class="n">get</span><span class="p">(</span><span class="k">const</span> <span class="n">hidl_string</span><span class="o">&amp;</span> <span class="n">fqName</span><span class="p">,</span>
+<span class="ln"> 5</span>                      <span class="k">const</span> <span class="n">hidl_string</span><span class="o">&amp;</span> <span class="n">name</span><span class="p">)</span> <span class="k">override</span> <span class="p">{</span>
+<span class="ln"> 6</span>    <span class="n">sp</span><span class="o">&lt;</span><span class="n">IBase</span><span class="o">&gt;</span> <span class="n">ret</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="c1">// 这里的handle为dlopen /vendor/lib64/hw/android.hardware.camera.provider@2.4-impl.so后的handle
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="c1">// lib参数为android.hardware.camera.provider@2.4-impl.so
+</span><span class="ln"> 9</span><span class="c1"></span>    <span class="c1">// sym参数为HIDL_FETCH_ICameraProvider
+</span><span class="ln">10</span><span class="c1"></span>    <span class="n">openLibs</span><span class="p">(</span><span class="n">fqName</span><span class="p">,</span> <span class="p">[</span><span class="o">&amp;</span><span class="p">](</span><span class="kt">void</span><span class="o">*</span> <span class="n">handle</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="o">&amp;</span><span class="n">lib</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="o">&amp;</span><span class="n">sym</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">11</span>        <span class="n">IBase</span><span class="o">*</span> <span class="p">(</span><span class="o">*</span><span class="n">generator</span><span class="p">)(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span><span class="p">);</span>
+<span class="ln">12</span>        <span class="c1">// 通过dlsym在android.hardware.camera.provider@2.4-impl.so中找到HIDL_FETCH_ICameraProvider的地址
+</span><span class="ln">13</span><span class="c1"></span>        <span class="o">*</span><span class="p">(</span><span class="kt">void</span> <span class="o">**</span><span class="p">)(</span><span class="o">&amp;</span><span class="n">generator</span><span class="p">)</span> <span class="o">=</span> <span class="n">dlsym</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">sym</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+<span class="ln">14</span>        <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">generator</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">15</span>            <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">error</span> <span class="o">=</span> <span class="n">dlerror</span><span class="p">();</span>
+<span class="ln">16</span>            <span class="n">LOG</span><span class="p">(</span><span class="n">ERROR</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Passthrough lookup opened &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">lib</span> <span class="o">&lt;&lt;</span> <span class="s">&#34; but could not find symbol &#34;</span>
+<span class="ln">17</span>                <span class="o">&lt;&lt;</span> <span class="n">sym</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;: &#34;</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">error</span> <span class="o">==</span> <span class="k">nullptr</span> <span class="o">?</span> <span class="s">&#34;unknown error&#34;</span> <span class="o">:</span> <span class="n">error</span><span class="p">)</span>
+<span class="ln">18</span>                <span class="o">&lt;&lt;</span> <span class="s">&#34;. Keeping library open.&#34;</span><span class="p">;</span>
+<span class="ln">19</span>
+<span class="ln">20</span>            <span class="c1">// dlclose too problematic in multi-threaded environment
+</span><span class="ln">21</span><span class="c1"></span>            <span class="c1">// dlclose(handle);
+</span><span class="ln">22</span><span class="c1"></span>
+<span class="ln">23</span>            <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>  <span class="c1">// continue
+</span><span class="ln">24</span><span class="c1"></span>        <span class="p">}</span>
+<span class="ln">25</span>        <span class="c1">// 执行HIDL_FETCH_ICameraProvider函数，参数为legacy/0 
+</span><span class="ln">26</span><span class="c1"></span>        <span class="n">ret</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">generator</span><span class="p">)(</span><span class="n">name</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+<span class="ln">27</span>
+<span class="ln">28</span>        <span class="k">using</span> <span class="o">::</span><span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">details</span><span class="o">::</span><span class="n">getDescriptor</span><span class="p">;</span>
+<span class="ln">29</span>        <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">actualFqName</span> <span class="o">=</span> <span class="n">getDescriptor</span><span class="p">(</span><span class="n">ret</span><span class="p">.</span><span class="n">get</span><span class="p">());</span>
+<span class="ln">30</span>        <span class="n">CHECK</span><span class="p">(</span><span class="n">actualFqName</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">);</span>
+<span class="ln">31</span>        <span class="n">registerReference</span><span class="p">(</span><span class="n">actualFqName</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
+<span class="ln">32</span>        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="ln">33</span>    <span class="p">});</span>
+<span class="ln">34</span>
+<span class="ln">35</span>    <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+<span class="ln">36</span><span class="p">}</span>
+</code></pre></div><p>执行HIDL_FETCH_ICameraProvider函数，参数为legacy/0，并将其注册到sm服务中</p>
+<h2 id="48hidl_fetch_icameraprovider函数">4.8HIDL_FETCH_ICameraProvider函数</h2>
+<p>so调用用于获取对应ICameraProvider入口，调用CameraProvider构造函数</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">// hardware/interfaces/camera/provider/2.4/default/CameraProvider_2_4.cpp
+</span><span class="ln"> 2</span><span class="c1">// 参数name为legacy/0 
+</span><span class="ln"> 3</span><span class="c1"></span><span class="n">ICameraProvider</span><span class="o">*</span> <span class="nf">HIDL_FETCH_ICameraProvider</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="k">using</span> <span class="k">namespace</span> <span class="n">android</span><span class="o">::</span><span class="n">hardware</span><span class="o">::</span><span class="n">camera</span><span class="o">::</span><span class="n">provider</span><span class="o">::</span><span class="n">V2_4</span><span class="o">::</span><span class="n">implementation</span><span class="p">;</span>
+<span class="ln"> 5</span>    <span class="n">ICameraProvider</span><span class="o">*</span> <span class="n">provider</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">kLegacyProviderName</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 7</span>        <span class="c1">// 执行这里
+</span><span class="ln"> 8</span><span class="c1"></span>        <span class="n">provider</span> <span class="o">=</span> <span class="n">getProviderImpl</span><span class="o">&lt;</span><span class="n">LegacyCameraProviderImpl_2_4</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="ln"> 9</span>    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">kExternalProviderName</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">10</span>        <span class="n">provider</span> <span class="o">=</span> <span class="n">getProviderImpl</span><span class="o">&lt;</span><span class="n">ExternalCameraProviderImpl_2_4</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="ln">11</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">12</span>        <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;%s: unknown instance name: %s&#34;</span><span class="p">,</span> <span class="n">__FUNCTION__</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
+<span class="ln">13</span>    <span class="p">}</span>
+<span class="ln">14</span>
+<span class="ln">15</span>    <span class="k">return</span> <span class="n">provider</span><span class="p">;</span>
+<span class="ln">16</span><span class="p">}</span>
+<span class="ln">17</span>
+<span class="ln">18</span><span class="c1">// 创建CameraProvider对象并返回，在CameraProvider的构造函数中，会执行IMPL的构造函数，
+</span><span class="ln">19</span><span class="c1">// 也就是LegacyCameraProviderImpl_2_4的构造函数
+</span><span class="ln">20</span><span class="c1"></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">IMPL</span><span class="o">&gt;</span>
+<span class="ln">21</span><span class="n">CameraProvider</span><span class="o">&lt;</span><span class="n">IMPL</span><span class="o">&gt;*</span> <span class="n">getProviderImpl</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln">22</span>    <span class="n">CameraProvider</span><span class="o">&lt;</span><span class="n">IMPL</span><span class="o">&gt;</span> <span class="o">*</span><span class="n">provider</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CameraProvider</span><span class="o">&lt;</span><span class="n">IMPL</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="ln">23</span>    <span class="k">if</span> <span class="p">(</span><span class="n">provider</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">24</span>        <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;%s: cannot allocate camera provider!&#34;</span><span class="p">,</span> <span class="n">__FUNCTION__</span><span class="p">);</span>
+<span class="ln">25</span>        <span class="k">return</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln">26</span>    <span class="p">}</span>
+<span class="ln">27</span>    <span class="k">if</span> <span class="p">(</span><span class="n">provider</span><span class="o">-&gt;</span><span class="n">isInitFailed</span><span class="p">())</span> <span class="p">{</span>
+<span class="ln">28</span>        <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;%s: camera provider init failed!&#34;</span><span class="p">,</span> <span class="n">__FUNCTION__</span><span class="p">);</span>
+<span class="ln">29</span>        <span class="k">delete</span> <span class="n">provider</span><span class="p">;</span>
+<span class="ln">30</span>        <span class="k">return</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="ln">31</span>    <span class="p">}</span>
+<span class="ln">32</span>    <span class="k">return</span> <span class="n">provider</span><span class="p">;</span>
+<span class="ln">33</span><span class="p">}</span> 
+</code></pre></div><p>LegacyCameraProviderImpl_2_4的构造函数实现</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">// hardware/interfaces/camera/provider/2.4/default/CameraProvider_2_4.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">IMPL</span><span class="o">&gt;</span>
+<span class="ln"> 3</span><span class="k">struct</span> <span class="nc">CameraProvider</span> <span class="o">:</span> <span class="k">public</span> <span class="n">ICameraProvider</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="n">CameraProvider</span><span class="p">()</span> <span class="o">:</span> <span class="n">impl</span><span class="p">()</span> <span class="p">{}</span>
+<span class="ln"> 5</span><span class="p">};</span>
+<span class="ln"> 6</span><span class="c1">// hardware/interfaces/camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp
+</span><span class="ln"> 7</span><span class="c1"></span><span class="n">LegacyCameraProviderImpl_2_4</span><span class="o">::</span><span class="n">LegacyCameraProviderImpl_2_4</span><span class="p">()</span> <span class="o">:</span>
+<span class="ln"> 8</span>        <span class="n">camera_module_callbacks_t</span><span class="p">({</span><span class="n">sCameraDeviceStatusChange</span><span class="p">,</span>
+<span class="ln"> 9</span>                                   <span class="n">sTorchModeStatusChange</span><span class="p">})</span> <span class="p">{</span>
+<span class="ln">10</span>    <span class="n">mInitFailed</span> <span class="o">=</span> <span class="n">initialize</span><span class="p">();</span>
+<span class="ln">11</span><span class="p">}</span>
+</code></pre></div><p>这里开始camera provider真是实现的初始化操作</p>
+<p>上面创建了LegacyCameraProviderImpl_2_4对象，并执行了其初始化函数initialize()。</p>
+<p>总结一句其实就是CameraProvider进程启动时加载android.hardware.camera.provider@2.4-impl.so库并执行LegacyCameraProviderImpl_2_4的初始化函数。</p>
+<h2 id="49legacycameraproviderimpl初始化">4.9LegacyCameraProviderImpl初始化</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">// hardware/interfaces/camera/provider/2.4/default/LegacyCameraProviderImpl_2_4.cpp
+</span><span class="ln"> 2</span><span class="c1">// initialize()函数的实现
+</span><span class="ln"> 3</span><span class="c1"></span><span class="kt">bool</span> <span class="n">LegacyCameraProviderImpl_2_4</span><span class="o">::</span><span class="n">initialize</span><span class="p">()</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="n">camera_module_t</span> <span class="o">*</span><span class="n">rawModule</span><span class="p">;</span>
+<span class="ln"> 5</span>    <span class="c1">// 通过hw_get_module加载对应的so库，这个库是由厂商提供的，一般只以so库的方式提供，
+</span><span class="ln"> 6</span><span class="c1"></span>    <span class="c1">// 不过也有情况会提供so库的源码，不过核心的地方还是会封装在别的so库中。
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">err</span> <span class="o">=</span> <span class="n">hw_get_module</span><span class="p">(</span><span class="n">CAMERA_HARDWARE_MODULE_ID</span><span class="p">,</span>
+<span class="ln"> 8</span>            <span class="p">(</span><span class="k">const</span> <span class="n">hw_module_t</span> <span class="o">**</span><span class="p">)</span><span class="o">&amp;</span><span class="n">rawModule</span><span class="p">);</span>
+<span class="ln"> 9</span>    <span class="k">if</span> <span class="p">(</span><span class="n">err</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">10</span>        <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;Could not load camera HAL module: %d (%s)&#34;</span><span class="p">,</span> <span class="n">err</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="o">-</span><span class="n">err</span><span class="p">));</span>
+<span class="ln">11</span>        <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="ln">12</span>    <span class="p">}</span>
+<span class="ln">13</span>    <span class="p">...</span>
+<span class="ln">14</span><span class="p">}</span>
+</code></pre></div><p>上面的hw_get_module是不是比较眼熟，就是上面2小结里面的流程</p>
+<p>关于camera里面的load补充一下</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">// hardware/libhardware/include/hardware/camera_common.h
+</span><span class="ln"> 2</span><span class="c1">// 别忘了参数值：
+</span><span class="ln"> 3</span><span class="c1"></span> <span class="c1">// id: camera
+</span><span class="ln"> 4</span><span class="c1"></span> <span class="c1">// path: 上面找到的路径，假设为 /vendor/lib64/hw/
+</span><span class="ln"> 5</span><span class="c1"></span><span class="k">static</span> <span class="kt">int</span> <span class="nf">load</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">id</span><span class="p">,</span>
+<span class="ln"> 6</span>        <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">path</span><span class="p">,</span>
+<span class="ln"> 7</span>        <span class="k">const</span> <span class="k">struct</span> <span class="nc">hw_module_t</span> <span class="o">**</span><span class="n">pHmi</span><span class="p">)</span>
+<span class="ln"> 8</span><span class="p">{</span>
+<span class="ln"> 9</span>    <span class="p">...</span>
+<span class="ln">10</span>    <span class="n">handle</span> <span class="o">=</span> <span class="n">android_load_sphal_library</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">RTLD_NOW</span><span class="p">);</span>
+<span class="ln">11</span>
+<span class="ln">12</span>    <span class="c1">//这里是重中之重
+</span><span class="ln">13</span><span class="c1"></span>    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">sym</span> <span class="o">=</span> <span class="n">HAL_MODULE_INFO_SYM_AS_STR</span><span class="p">;</span>
+<span class="ln">14</span>    <span class="n">hmi</span> <span class="o">=</span> <span class="p">(</span><span class="k">struct</span> <span class="nc">hw_module_t</span> <span class="o">*</span><span class="p">)</span><span class="n">dlsym</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">sym</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="k">if</span> <span class="p">(</span><span class="n">hmi</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">16</span>        <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;load: couldn&#39;t find symbol %s&#34;</span><span class="p">,</span> <span class="n">sym</span><span class="p">);</span>
+<span class="ln">17</span>        <span class="n">status</span> <span class="o">=</span> <span class="o">-</span><span class="n">EINVAL</span><span class="p">;</span>
+<span class="ln">18</span>        <span class="k">goto</span> <span class="n">done</span><span class="p">;</span>
+<span class="ln">19</span>    <span class="p">}</span>
+<span class="ln">20</span>
+<span class="ln">21</span>    <span class="cm">/* Check that the id matches */</span>
+<span class="ln">22</span>    <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="n">hmi</span><span class="o">-&gt;</span><span class="n">id</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">23</span>        <span class="n">ALOGE</span><span class="p">(</span><span class="s">&#34;load: id=%s != hmi-&gt;id=%s&#34;</span><span class="p">,</span> <span class="n">id</span><span class="p">,</span> <span class="n">hmi</span><span class="o">-&gt;</span><span class="n">id</span><span class="p">);</span>
+<span class="ln">24</span>        <span class="n">status</span> <span class="o">=</span> <span class="o">-</span><span class="n">EINVAL</span><span class="p">;</span>
+<span class="ln">25</span>        <span class="k">goto</span> <span class="n">done</span><span class="p">;</span>
+<span class="ln">26</span>    <span class="p">}</span>
+<span class="ln">27</span>
+<span class="ln">28</span>    <span class="n">hmi</span><span class="o">-&gt;</span><span class="n">dso</span> <span class="o">=</span> <span class="n">handle</span><span class="p">;</span>
+<span class="ln">29</span>
+<span class="ln">30</span>    <span class="cm">/* success */</span>
+<span class="ln">31</span>    <span class="n">status</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">32</span>
+<span class="ln">33</span>    <span class="nl">done</span><span class="p">:</span>
+<span class="ln">34</span>    <span class="k">if</span> <span class="p">(</span><span class="n">status</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">35</span>        <span class="n">hmi</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="ln">36</span>        <span class="k">if</span> <span class="p">(</span><span class="n">handle</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">37</span>            <span class="n">dlclose</span><span class="p">(</span><span class="n">handle</span><span class="p">);</span>
+<span class="ln">38</span>            <span class="n">handle</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="ln">39</span>        <span class="p">}</span>
+<span class="ln">40</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">41</span>        <span class="n">ALOGV</span><span class="p">(</span><span class="s">&#34;loaded HAL id=%s path=%s hmi=%p handle=%p&#34;</span><span class="p">,</span>
+<span class="ln">42</span>                <span class="n">id</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">hmi</span><span class="p">,</span> <span class="n">handle</span><span class="p">);</span>
+<span class="ln">43</span>    <span class="p">}</span>
+<span class="ln">44</span>
+<span class="ln">45</span>    <span class="c1">// 返回hmi，这个是名称为“HMI”的结构体变量在so库中的地址，类型为hw_module_t
+</span><span class="ln">46</span><span class="c1"></span>    <span class="c1">// 但是结构体定义的地方却是camera_module_t类型的，那么这两者有啥关系呢
+</span><span class="ln">47</span><span class="c1"></span>    <span class="c1">// 通过查看定义就知道camera_module_t结构体的第一个成员就是hw_module_t common
+</span><span class="ln">48</span><span class="c1"></span>    <span class="c1">// 这样是为了方便直接调用.common.methods.open函数吧
+</span><span class="ln">49</span><span class="c1"></span>    <span class="o">*</span><span class="n">pHmi</span> <span class="o">=</span> <span class="n">hmi</span><span class="p">;</span>
+<span class="ln">50</span>
+<span class="ln">51</span>    <span class="k">return</span> <span class="n">status</span><span class="p">;</span>
+<span class="ln">52</span><span class="p">}</span>
+</code></pre></div><blockquote>
+<p>关于打开对应so之后</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">// 上面的无非就是load so，拿到handle,接下来就是关键之处了
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cm">/* Get the address of the struct hal_module_info. */</span>
+<span class="ln"> 3</span><span class="c1">// HAL_MODULE_INFO_SYM_AS_STR的定义如下
+</span><span class="ln"> 4</span><span class="c1">// #define HAL_MODULE_INFO_SYM_AS_STR  &#34;HMI&#34;
+</span><span class="ln"> 5</span><span class="c1">// 所以sym也为 &#34;HMI”
+</span><span class="ln"> 6</span><span class="c1">// 注意这个值是固定的，是实现hw_get_module实现的一个标准
+</span><span class="ln"> 7</span><span class="c1">// 厂商定义hal的时候，在so库里面必须定义一个结构体名称为“HMI”
+</span><span class="ln"> 8</span><span class="c1">// 这里是调用so库的入口
+</span><span class="ln"> 9</span><span class="c1">// 我们以Google的默认 camera hal so为例看下
+</span><span class="ln">10</span><span class="c1">// 这里定义了一个类型为camera_module_t，名称为HAL_MODULE_INFO_SYM的结构体
+</span><span class="ln">11</span><span class="c1">// 而HAL_MODULE_INFO_SYM的名称就是 “HMI”
+</span><span class="ln">12</span><span class="c1">// 找到这里后会调用该结构体变量的.common.methods.open函数
+</span><span class="ln">13</span><span class="c1">// 对应到这里的话就是v4l2_module_methods.open
+</span><span class="ln">14</span><span class="c1">// 最终会调用v4l2_camera_hal::open_dev，如下
+</span><span class="ln">15</span><span class="c1">// static hw_module_methods_t v4l2_module_methods = {
+</span><span class="ln">16</span><span class="c1">//     .open = v4l2_camera_hal::open_dev};
+</span><span class="ln">17</span><span class="c1">// camera_module_t HAL_MODULE_INFO_SYM __attribute__((visibility(&#34;default&#34;))) = {
+</span><span class="ln">18</span><span class="c1">//     .common =
+</span><span class="ln">19</span><span class="c1">//         {
+</span><span class="ln">20</span><span class="c1">//             .tag = HARDWARE_MODULE_TAG,
+</span><span class="ln">21</span><span class="c1">//             .module_api_version = CAMERA_MODULE_API_VERSION_2_4,
+</span><span class="ln">22</span><span class="c1">//             .hal_api_version = HARDWARE_HAL_API_VERSION,
+</span><span class="ln">23</span><span class="c1">//             .id = CAMERA_HARDWARE_MODULE_ID,
+</span><span class="ln">24</span><span class="c1">//             .name = &#34;V4L2 Camera HAL v3&#34;,
+</span><span class="ln">25</span><span class="c1">//             .author = &#34;The Android Open Source Project&#34;,
+</span><span class="ln">26</span><span class="c1">//             .methods = &amp;v4l2_module_methods,
+</span><span class="ln">27</span><span class="c1">//             .dso = nullptr,
+</span><span class="ln">28</span><span class="c1">//             .reserved = {0},
+</span><span class="ln">29</span><span class="c1">//         },
+</span><span class="ln">30</span><span class="c1">//     .get_number_of_cameras = v4l2_camera_hal::get_number_of_cameras,
+</span><span class="ln">31</span><span class="c1">//     .get_camera_info = v4l2_camera_hal::get_camera_info,
+</span><span class="ln">32</span><span class="c1">//     .set_callbacks = v4l2_camera_hal::set_callbacks,
+</span><span class="ln">33</span><span class="c1">//     .get_vendor_tag_ops = v4l2_camera_hal::get_vendor_tag_ops,
+</span><span class="ln">34</span><span class="c1">//     .open_legacy = v4l2_camera_hal::open_legacy,
+</span><span class="ln">35</span><span class="c1">//     .set_torch_mode = v4l2_camera_hal::set_torch_mode,
+</span><span class="ln">36</span><span class="c1">//     .init = nullptr,
+</span><span class="ln">37</span><span class="c1">//     .get_physical_camera_info = nullptr,
+</span><span class="ln">38</span><span class="c1">//     .reserved = {nullptr, nullptr}
+</span><span class="ln">39</span><span class="c1">//};
+</span></code></pre></div></blockquote>
+<p>可以看到对应的camera_module_t，而里面出现了一个HAL_MODULE_INFO_SYM，正好对应宏定义的HMI</p>
+<p>这个结构体除了本身熟悉的hw_module_t之后，剩下的就是<strong>camera本身的客制化的函数指针</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//hardware/libhardware/include/hardware/hardware.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#define HAL_MODULE_INFO_SYM_AS_STR  &#34;HMI&#34;
+</span><span class="ln"> 3</span><span class="cp">#define HAL_MODULE_INFO_SYM         HMI
+</span><span class="ln"> 4</span><span class="cp"></span>
+<span class="ln"> 5</span><span class="c1">// hardware/libhardware/include/hardware/camera_common.h
+</span><span class="ln"> 6</span><span class="c1"></span><span class="k">typedef</span> <span class="k">struct</span> <span class="nc">camera_module</span> <span class="p">{</span>
+<span class="ln"> 7</span>    <span class="n">hw_module_t</span> <span class="n">common</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">get_number_of_cameras</span><span class="p">)(</span><span class="kt">void</span><span class="p">);</span>
+<span class="ln"> 9</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">get_camera_info</span><span class="p">)(</span><span class="kt">int</span> <span class="n">camera_id</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">camera_info</span> <span class="o">*</span><span class="n">info</span><span class="p">);</span>
+<span class="ln">10</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">set_callbacks</span><span class="p">)(</span><span class="k">const</span> <span class="n">camera_module_callbacks_t</span> <span class="o">*</span><span class="n">callbacks</span><span class="p">);</span>
+<span class="ln">11</span>    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">get_vendor_tag_ops</span><span class="p">)(</span><span class="n">vendor_tag_ops_t</span><span class="o">*</span> <span class="n">ops</span><span class="p">);</span>
+<span class="ln">12</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">open_legacy</span><span class="p">)(</span><span class="k">const</span> <span class="k">struct</span> <span class="nc">hw_module_t</span><span class="o">*</span> <span class="n">module</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">id</span><span class="p">,</span>
+<span class="ln">13</span>            <span class="kt">uint32_t</span> <span class="n">halVersion</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">hw_device_t</span><span class="o">**</span> <span class="n">device</span><span class="p">);</span>
+<span class="ln">14</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">set_torch_mode</span><span class="p">)(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">camera_id</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">enabled</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">init</span><span class="p">)();</span>
+<span class="ln">16</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">get_physical_camera_info</span><span class="p">)(</span><span class="kt">int</span> <span class="n">physical_camera_id</span><span class="p">,</span>
+<span class="ln">17</span>            <span class="n">camera_metadata_t</span> <span class="o">**</span><span class="n">static_metadata</span><span class="p">);</span>
+<span class="ln">18</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">is_stream_combination_supported</span><span class="p">)(</span><span class="kt">int</span> <span class="n">camera_id</span><span class="p">,</span>
+<span class="ln">19</span>            <span class="k">const</span> <span class="n">camera_stream_combination_t</span> <span class="o">*</span><span class="n">streams</span><span class="p">);</span>
+<span class="ln">20</span>    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">notify_device_state_change</span><span class="p">)(</span><span class="kt">uint64_t</span> <span class="n">deviceState</span><span class="p">);</span>
+<span class="ln">21</span>    <span class="kt">void</span><span class="o">*</span> <span class="n">reserved</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+<span class="ln">22</span><span class="p">}</span> <span class="n">camera_module_t</span><span class="p">;</span>
+</code></pre></div><p>也就是so打开会找对应的HMI，即HAL_MODULE_INFO_SYM所在的实例化结构体。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/hal/provider/p3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/hal/provider/p3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="410v4l2_module_methods">4.10v4l2_module_methods</h2>
+<p>这里没有厂商现成的代码，只能先看google原生的代码，即camera.default.so</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//hardware/libhardware/modules/camera/3_4/v4l2_camera_hal.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="kt">int</span> <span class="nf">open_dev</span><span class="p">(</span><span class="k">const</span> <span class="n">hw_module_t</span><span class="o">*</span> <span class="n">module</span><span class="p">,</span>
+<span class="ln"> 3</span>                    <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span><span class="p">,</span>
+<span class="ln"> 4</span>                    <span class="n">hw_device_t</span><span class="o">**</span> <span class="n">device</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 5</span>  <span class="k">return</span> <span class="n">gCameraHAL</span><span class="p">.</span><span class="n">openDevice</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">device</span><span class="p">);</span>
+<span class="ln"> 6</span><span class="p">}</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span><span class="p">}</span>  <span class="c1">// namespace v4l2_camera_hal
+</span><span class="ln"> 9</span><span class="c1"></span>
+<span class="ln">10</span><span class="k">static</span> <span class="n">hw_module_methods_t</span> <span class="n">v4l2_module_methods</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln">11</span>    <span class="p">.</span><span class="n">open</span> <span class="o">=</span> <span class="n">v4l2_camera_hal</span><span class="o">::</span><span class="n">open_dev</span><span class="p">};</span>
+</code></pre></div><p>然后通过传入的id号，打开对应的设备，这里的设备通常是/dev/video0~/dev/video10之间的有效设备</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//hardware/libhardware/modules/camera/3_4/v4l2_camera_hal.cpp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="n">V4L2CameraHAL</span><span class="o">::</span><span class="n">openDevice</span><span class="p">(</span><span class="k">const</span> <span class="n">hw_module_t</span><span class="o">*</span> <span class="n">module</span><span class="p">,</span>
+<span class="ln"> 3</span>                              <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span><span class="p">,</span>
+<span class="ln"> 4</span>                              <span class="n">hw_device_t</span><span class="o">**</span> <span class="n">device</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 5</span>  <span class="n">HAL_LOG_ENTER</span><span class="p">();</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span>  <span class="k">if</span> <span class="p">(</span><span class="n">module</span> <span class="o">!=</span> <span class="o">&amp;</span><span class="n">HAL_MODULE_INFO_SYM</span><span class="p">.</span><span class="n">common</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 8</span>    <span class="n">HAL_LOGE</span><span class="p">(</span>
+<span class="ln"> 9</span>        <span class="s">&#34;Invalid module %p expected %p&#34;</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">HAL_MODULE_INFO_SYM</span><span class="p">.</span><span class="n">common</span><span class="p">);</span>
+<span class="ln">10</span>    <span class="k">return</span> <span class="o">-</span><span class="n">EINVAL</span><span class="p">;</span>
+<span class="ln">11</span>  <span class="p">}</span>
+<span class="ln">12</span>
+<span class="ln">13</span>  <span class="kt">int</span> <span class="n">id</span><span class="p">;</span>
+<span class="ln">14</span>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">android</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">ParseInt</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">id</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">getNumberOfCameras</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">15</span>    <span class="k">return</span> <span class="o">-</span><span class="n">EINVAL</span><span class="p">;</span>
+<span class="ln">16</span>  <span class="p">}</span>
+<span class="ln">17</span>  <span class="c1">// TODO(b/29185945): Hotplugging: return -EINVAL if unplugged.
+</span><span class="ln">18</span><span class="c1"></span>  <span class="k">return</span> <span class="n">mCameras</span><span class="p">[</span><span class="n">id</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">openDevice</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">device</span><span class="p">);</span>
+<span class="ln">19</span><span class="p">}</span>
+</code></pre></div><p>这里逻辑比较简单，主要是比对传入的module和当前so里面的对比，然后就会加载对应的camera设备</p>
+<blockquote>
+<p>补充一下V4L2CameraHAL的构造，这个构造会更早，打卡camera.default.so的时候会去加载全局变量，这个时候就会被构造</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln"> 1</span><span class="c1">//hardware/libhardware/modules/camera/3_4/v4l2_camera_hal.cpp
+</span><span class="ln"> 2</span><span class="c1">//这个是静态全局变量
+</span><span class="ln"> 3</span><span class="c1"></span><span class="k">static</span> <span class="n">V4L2CameraHAL</span> <span class="n">gCameraHAL</span><span class="p">;</span>
+<span class="ln"> 4</span><span class="n">V4L2CameraHAL</span><span class="o">::</span><span class="n">V4L2CameraHAL</span><span class="p">()</span> <span class="o">:</span> <span class="n">mCameras</span><span class="p">(),</span> <span class="n">mCallbacks</span><span class="p">(</span><span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 5</span>  <span class="n">HAL_LOG_ENTER</span><span class="p">();</span>
+<span class="ln"> 6</span>  <span class="c1">// Adds all available V4L2 devices.
+</span><span class="ln"> 7</span><span class="c1"></span>  <span class="c1">// List /dev nodes.
+</span><span class="ln"> 8</span><span class="c1"></span>  <span class="n">DIR</span><span class="o">*</span> <span class="n">dir</span> <span class="o">=</span> <span class="n">opendir</span><span class="p">(</span><span class="s">&#34;/dev&#34;</span><span class="p">);</span>
+<span class="ln"> 9</span>  <span class="k">if</span> <span class="p">(</span><span class="n">dir</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">10</span>    <span class="n">HAL_LOGE</span><span class="p">(</span><span class="s">&#34;Failed to open /dev&#34;</span><span class="p">);</span>
+<span class="ln">11</span>    <span class="k">return</span><span class="p">;</span>
+<span class="ln">12</span>  <span class="p">}</span>
+<span class="ln">13</span>  <span class="c1">// 构造函数的时候就会寻找可用的/dev/video*的设备
+</span><span class="ln">14</span><span class="c1"></span>  <span class="n">dirent</span><span class="o">*</span> <span class="n">ent</span><span class="p">;</span>
+<span class="ln">15</span>  <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">nodes</span><span class="p">;</span>
+<span class="ln">16</span>  <span class="k">while</span> <span class="p">((</span><span class="n">ent</span> <span class="o">=</span> <span class="n">readdir</span><span class="p">(</span><span class="n">dir</span><span class="p">)))</span> <span class="p">{</span>
+<span class="ln">17</span>    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">desired</span> <span class="o">=</span> <span class="s">&#34;video&#34;</span><span class="p">;</span>
+<span class="ln">18</span>    <span class="n">size_t</span> <span class="n">len</span> <span class="o">=</span> <span class="n">desired</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
+<span class="ln">19</span>    <span class="k">if</span> <span class="p">(</span><span class="n">strncmp</span><span class="p">(</span><span class="n">desired</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="n">ent</span><span class="o">-&gt;</span><span class="n">d_name</span><span class="p">,</span> <span class="n">len</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">20</span>      <span class="k">if</span> <span class="p">(</span><span class="n">strlen</span><span class="p">(</span><span class="n">ent</span><span class="o">-&gt;</span><span class="n">d_name</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">len</span> <span class="o">&amp;&amp;</span> <span class="n">isdigit</span><span class="p">(</span><span class="n">ent</span><span class="o">-&gt;</span><span class="n">d_name</span><span class="p">[</span><span class="n">len</span><span class="p">]))</span> <span class="p">{</span>
+<span class="ln">21</span>        <span class="c1">// ent is a numbered video node.
+</span><span class="ln">22</span><span class="c1"></span>        <span class="n">nodes</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">(</span><span class="s">&#34;/dev/&#34;</span><span class="p">)</span> <span class="o">+</span> <span class="n">ent</span><span class="o">-&gt;</span><span class="n">d_name</span><span class="p">);</span>
+<span class="ln">23</span>        <span class="n">HAL_LOGV</span><span class="p">(</span><span class="s">&#34;Found video node %s.&#34;</span><span class="p">,</span> <span class="n">nodes</span><span class="p">.</span><span class="n">back</span><span class="p">().</span><span class="n">c_str</span><span class="p">());</span>
+<span class="ln">24</span>      <span class="p">}</span>
+<span class="ln">25</span>    <span class="p">}</span>
+<span class="ln">26</span>  <span class="p">}</span>
+<span class="ln">27</span>  <span class="c1">// 测试对V4L2的支持和惟一性.
+</span><span class="ln">28</span><span class="c1"></span>  <span class="n">std</span><span class="o">::</span><span class="n">unordered_set</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">buses</span><span class="p">;</span>
+<span class="ln">29</span>  <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">bus</span><span class="p">;</span>
+<span class="ln">30</span>  <span class="n">v4l2_capability</span> <span class="n">cap</span><span class="p">;</span>
+<span class="ln">31</span>  <span class="kt">int</span> <span class="n">fd</span><span class="p">;</span>
+<span class="ln">32</span>  <span class="kt">int</span> <span class="n">id</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">33</span>  <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="nl">node</span> <span class="p">:</span> <span class="n">nodes</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">34</span>    <span class="c1">// 这里会打开一次设备
+</span><span class="ln">35</span><span class="c1"></span>    <span class="n">fd</span> <span class="o">=</span> <span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">open</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="n">O_RDWR</span><span class="p">));</span>
+<span class="ln">36</span>    <span class="k">if</span> <span class="p">(</span><span class="n">fd</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">37</span>      <span class="n">HAL_LOGE</span><span class="p">(</span><span class="s">&#34;failed to open %s (%s).&#34;</span><span class="p">,</span> <span class="n">node</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">38</span>      <span class="k">continue</span><span class="p">;</span>
+<span class="ln">39</span>    <span class="p">}</span>
+<span class="ln">40</span>    <span class="c1">// Read V4L2 capabilities.
+</span><span class="ln">41</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">TEMP_FAILURE_RETRY</span><span class="p">(</span><span class="n">ioctl</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">VIDIOC_QUERYCAP</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">cap</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">42</span>      <span class="n">HAL_LOGE</span><span class="p">(</span>
+<span class="ln">43</span>          <span class="s">&#34;VIDIOC_QUERYCAP on %s fail: %s.&#34;</span><span class="p">,</span> <span class="n">node</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+<span class="ln">44</span>    <span class="p">}</span> <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="n">cap</span><span class="p">.</span><span class="n">capabilities</span> <span class="o">&amp;</span> <span class="n">V4L2_CAP_VIDEO_CAPTURE</span><span class="p">))</span> <span class="p">{</span>
+<span class="ln">45</span>      <span class="n">HAL_LOGE</span><span class="p">(</span><span class="s">&#34;%s is not a V4L2 video capture device.&#34;</span><span class="p">,</span> <span class="n">node</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+<span class="ln">46</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">47</span>      <span class="c1">// If the node is unique, add a camera for it.
+</span><span class="ln">48</span><span class="c1"></span>      <span class="n">bus</span> <span class="o">=</span> <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">cap</span><span class="p">.</span><span class="n">bus_info</span><span class="p">);</span>
+<span class="ln">49</span>      <span class="k">if</span> <span class="p">(</span><span class="n">buses</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">bus</span><span class="p">).</span><span class="n">second</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">50</span>        <span class="n">HAL_LOGV</span><span class="p">(</span><span class="s">&#34;Found unique bus at %s.&#34;</span><span class="p">,</span> <span class="n">node</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+<span class="ln">51</span>        <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">V4L2Camera</span><span class="o">&gt;</span> <span class="n">cam</span><span class="p">(</span><span class="n">V4L2Camera</span><span class="o">::</span><span class="n">NewV4L2Camera</span><span class="p">(</span><span class="n">id</span><span class="o">++</span><span class="p">,</span> <span class="n">node</span><span class="p">));</span>
+<span class="ln">52</span>        <span class="k">if</span> <span class="p">(</span><span class="n">cam</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">53</span>          <span class="n">mCameras</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">cam</span><span class="p">));</span>
+<span class="ln">54</span>        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">55</span>          <span class="n">HAL_LOGE</span><span class="p">(</span><span class="s">&#34;Failed to initialize camera at %s.&#34;</span><span class="p">,</span> <span class="n">node</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+<span class="ln">56</span>        <span class="p">}</span>
+<span class="ln">57</span>      <span class="p">}</span>
+<span class="ln">58</span>    <span class="p">}</span>
+<span class="ln">59</span>    <span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
+<span class="ln">60</span>  <span class="p">}</span>
+<span class="ln">61</span><span class="p">}</span>
+</code></pre></div><ul>
+<li>遍历/dev/videoX节点</li>
+<li>尝试open节点并查询video能力</li>
+<li>构建V4L2Camera对象，放入mCameras</li>
+</ul>
+</blockquote>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/hal/provider/p4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/hal/provider/p4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="源码下载">源码下载</h1>
+<p>本文对应的源码，</p>
+<p><strong>libhardware</strong>可以点击<a href="https://github.com/YangYang48/project/tree/master/libhardware_android14">这里</a></p>
+<p><strong>interfaces_camera</strong>可以点击<a href="https://github.com/YangYang48/project/tree/master/hardware_interfaces_camera_android14">这里</a></p>
+<h1 id="参考">参考</h1>
+<p><a href="https://zhuanlan.zhihu.com/p/634585429?utm_psn=1721848538202492928">[1] 无限无羡. Android 13 Camera HAL启动流程（1）, 2023.</a></p>
+<p><a href="https://zhuanlan.zhihu.com/p/634642013">[2] 无限无羡. Android 13 Camera HAL启动流程（2）, 2023.</a></p>
+<p><a href="https://mp.weixin.qq.com/s/W372z6owu0RZQBZJjtZxXQ">[3]  千里马. Android 经典hal开发实战-千里马android framework车载车机手机系统开发, 2023.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/hal/">hal</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/provider/">provider</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/rc/">rc</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/hmi/">HMI</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/libhardware/">libhardware</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/interfaces/">interfaces</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/v4l2/">v4l2</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/camera-%E6%B0%B4%E6%B3%A2%E7%BA%B9/" data-tooltip="camera 水波纹">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2023 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/camera-%E6%B0%B4%E6%B3%A2%E7%BA%B9/" data-tooltip="camera 水波纹">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fcamera-hal%25E4%25B9%258Bcameraprovider%25E5%2590%25AF%25E5%258A%25A8%25E6%25B5%2581%25E7%25A8%258B%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fcamera-hal%25E4%25B9%258Bcameraprovider%25E5%2590%25AF%25E5%258A%25A8%25E6%25B5%2581%25E7%25A8%258B%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fcamera-hal%25E4%25B9%258Bcameraprovider%25E5%2590%25AF%25E5%258A%25A8%25E6%25B5%2581%25E7%25A8%258B%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2023\/12\/camera-hal%E4%B9%8Bcameraprovider%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B\/';
+          
+            this.page.identifier = '\/2023\/12\/camera-hal%E4%B9%8Bcameraprovider%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
