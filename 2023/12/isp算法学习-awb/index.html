@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="本文是isp算法学习的第六篇章，主要是讲述AWB原理和算法。">
+
+
+<meta property="og:description" content="本文是isp算法学习的第六篇章，主要是讲述AWB原理和算法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="isp算法学习-AWB">
+<meta name="twitter:title" content="isp算法学习-AWB">
+<meta property="og:url" content="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-awb/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-awb/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="本文是isp算法学习的第六篇章，主要是讲述AWB原理和算法。">
+<meta name="twitter:description" content="本文是isp算法学习的第六篇章，主要是讲述AWB原理和算法。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2023-12-30T10:00:00">
+  
+  
+    <meta property="article:modified_time" content="2023-12-30T10:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="isp">
+    
+      <meta property="article:section" content="2023">
+    
+      <meta property="article:section" content="December">
+    
+  
+  
+    
+      <meta property="article:tag" content="isp">
+    
+      <meta property="article:tag" content="algorithm">
+    
+      <meta property="article:tag" content="AWB">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/algorithmlearning/awb/awb_thumb.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/algorithmlearning/awb/awb_thumb.png">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/algorithmlearning/awb/awb_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/algorithmlearning/awb/awb_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+
+
+    <title>isp算法学习-AWB</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-awb/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/camera/algorithmlearning/awb/awb_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      isp算法学习-AWB
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2023-12-30T10:00:00Z">
+        
+  十二月 30, 2023
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/isp">isp</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2023">2023</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/december">December</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">600 Words|Read in about 3 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+      
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>本文是isp算法学习的第六篇章，主要是讲述AWB原理和算法。</p>
+<div style="text-align: center;">
+<iframe 
+    frameborder="no" border="1"
+    marginwidth="0" marginheight="0"
+    width=400 height=100
+    src="//music.163.com/outchain/player?type=2&id=2055689768&auto=1&height=66"></iframe>
+</div>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/awb/awb1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/awb/awb1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>这个在某种场景下，图中左图的整体画面都发黄，图中右图稍微正常一些。AWB（自动白平衡）校正完成之后就成了右边的图。</p>
+<h1 id="1产生原因">1产生原因</h1>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/awb/awb2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/awb/awb2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>右图是一个CIE的色彩空间，其中T<!-- raw HTML omitted -->c<!-- raw HTML omitted -->(K)对应的就是黑体曲线。</p>
+<p><strong>人眼具有颜色恒常性，可以避免光源变化带来的颜色变化</strong>，但是图像传感器不具备这种特性，从而造成色偏，白平衡就是需要校正这个颜色的偏差；</p>
+<ul>
+<li>
+<p>颜色恒常性：颜色恒常是指在照度发生变化的条件下人们对物体表面颜色的知觉趋于稳定的心理倾向；</p>
+</li>
+<li>
+<p>色温的定义：色温描述的是具有一定表面温度的“黑体”(blackbody)的辐射光的光谱特性。简单的理解就是颜色随温度的变化规律，比如生铁就是黑色，加热会变成橘红色，继续加热到液态会呈现偏白的颜色，这种随温度而产生的颜色变化就光谱特性。</p>
+<blockquote>
+<p><strong>黑体</strong></p>
+<p>一个物理学中的理想化的物体，它能够吸收外来的全部电磁辐射，并且不会有任何的反射与透射。黑体对于任何波长的电磁波的吸收系数为1，透射系数为0。物理学家以此作为热辐射研究的标准物体。它能够完全吸收外来的全部电磁辐射，并且不会有任何的反射与透射，这种物体就是绝对黑体，简称黑体。黑体不是黑色的物体，例如<strong>太阳</strong>可以近似看做是一个黑体。</p>
+<p>这里的黑体不好理解，可以类比成化学中的铁，常温下是黑色，如果对其加热会变红会变黄，最后变成铁水的时候，就变成白色，这种根据温度发生颜色的变化，黑体也是类似变化的。</p>
+</blockquote>
+</li>
+</ul>
+<h1 id="2校正方法">2校正方法</h1>
+<h2 id="21基本概念">2.1基本概念</h2>
+<h3 id="211颜色空间">2.1.1颜色空间</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/awb/awb3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/awb/awb3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>颜色空间，这里介绍RGB颜色空间（左图），YUV颜色空间（右图），其中颜色空间的变化矩阵如下所示，而上面的YCbCr是YUV的其中一种表示方式。</p>
+<p>其中左图中(0,0,0)到(255,255,255)的线，是一条灰阶线，除了只有黑和白，就是各种比例的灰。</p>
+<p>其中右图，两个顶点分别为白色和黑色，这条连线即为灰阶线，跟上述一致。</p>
+<h3 id="212白平衡校正">2.1.2白平衡校正</h3>
+<ul>
+<li>手动白平衡：在拍照前通过拍摄一个18度灰的卡片，然后计算出当时环境的白平衡的gain值对后面的图片进行校正；</li>
+</ul>
+<h3 id="213校正方法">2.1.3校正方法</h3>
+<ul>
+<li>静态矫正：通常由sensor厂商在生产后进行标定，把所有坏点的坐标位置记录下来，然后矫正的时候直接通过查表得方式找到坏点进行矫正。</li>
+<li>自动白平衡：camera通过自己本身的算法，通过获取的图像自动计算出gain值对图像进行校正的方式。</li>
+</ul>
+<h2 id="22算法">2.2算法</h2>
+<h3 id="221灰度世界理论">2.2.1灰度世界理论</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/awb/awb4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/awb/awb4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>灰度世界算法基于一个假说：</p>
+<p>任一幅图像，当它有足够的色彩变化，则它的RGB分量的均值会趋于相等（<code>R==G==B</code>）。这是一个在自动白平衡方面应用极为广泛的理论。如上图一个颜色足够充足的画面里，假说RGB三个通道的均值是相同的。</p>
+<p>对此算法的流程如下：</p>
+<ul>
+<li>计算各个颜色通道的平均值；</li>
+<li>寻找一个参考值K，一般情况选取G<!-- raw HTML omitted -->mean<!-- raw HTML omitted -->;</li>
+<li>计算R<!-- raw HTML omitted -->gain<!-- raw HTML omitted --> = G<!-- raw HTML omitted -->mean<!-- raw HTML omitted -->/R<!-- raw HTML omitted -->mean<!-- raw HTML omitted -->, B<!-- raw HTML omitted -->gain<!-- raw HTML omitted --> = G<!-- raw HTML omitted -->mean<!-- raw HTML omitted -->/B<!-- raw HTML omitted -->mean<!-- raw HTML omitted -->;</li>
+<li>对图像中的每个像素都乘以对应的gain值进行校正；</li>
+</ul>
+<h3 id="222完全反射法">2.2.2完全反射法</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/awb/awb5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/awb/awb5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>完全反射也是基于一个假说：</p>
+<p>基于这样一种假设，一幅图像中最亮的像素相当于物体有光泽或镜面上的点，它传达了很多关于场景照明条件的信息。如果景物中有纯白的部分，那么就可以直接从这些像素中提取出光源信息。因为镜面或有光泽的平面本身不吸收光线，所以其反射的颜色即为光源的真实颜色，这是因为镜面或有光泽的平面的反射比函数在很长的一段波长范围内是保持不变的。</p>
+<p>完美反射法就是利用用这种特性来对图像进行调整。算法执行时，检测图像中亮度最高的像素并且将它作为参考白点。基于这种思想的方法都被称为是完美反射法，也称镜面法。通俗的意思就是整个图像中最亮的点就是白色或者镜面反射出来的，<strong>那么最亮的点就是光源的属性，但是该点本身应该是白点</strong>，以此为基础就可计算出gain值从而进行校正。</p>
+<p>具体步骤如下，以红色通道为例：</p>
+<ul>
+<li>
+<p>图像相关信息统计
+$$
+\begin{cases}
+R_{max} = max(R_{ij}) &amp;&amp;(i=1&hellip;N,j=1&hellip;M)\<br>
+G_{max} = max(G_{ij}) &amp;&amp;(i=1&hellip;N,j=1&hellip;M)\<br>
+B_{max} = max(B_{ij}) &amp;&amp;(i=1&hellip;N,j=1&hellip;M)<br>
+\end{cases}
+$$</p>
+</li>
+<li>
+<p>RGB通道增益计算
+$$
+\begin{cases}
+Gain_{Rmax} = max(R_{max},G_{max},B_{max})/R_{max} \<br>
+Gain_{Gmax} = max(R_{max},G_{max},B_{max})/G_{max} \<br>
+Gain_{Bmax} = max(R_{max},G_{max},B_{max})/B_{max}<br>
+\end{cases}
+$$</p>
+</li>
+<li>
+<p>校正(以红色通道为例)
+$$
+R_{max}^{'}=
+\begin{cases}
+R*Gain_{Rmax}&amp;&amp;&amp;R*Gain_{Rmax} &lt; 255 \<br>
+255&amp;&amp;&amp;R*Gain_{Rmax} &gt; 255
+\end{cases}
+$$</p>
+</li>
+</ul>
+<h3 id="223灰度世界和完美反射结合法qcgp">2.2.3灰度世界和完美反射结合法(QCGP)</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/awb/awb6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/awb/awb6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>就是将灰度世界和完美反射算法进行融合(这里以红色通道为例)，具体公式如下
+$$
+\begin{cases}
+u_RR_{mean}^2+v_RR_{mean} = K_{mean} &amp;&amp;其中K_{mean}=(R_{mean}+G_{mean}+B_{mean})/3\<br>
+u_RR_{max}^2+v_RR_{max} = K_{max}&amp;&amp;其中K_{mean}=(R_{max}+G_{max}+B_{max})/3<br>
+\end{cases}
+$$
+通过上面的方程组就可以解出对应的u<!-- raw HTML omitted -->R<!-- raw HTML omitted --> 和v<!-- raw HTML omitted -->R<!-- raw HTML omitted -->，</p>
+<p>那么校准之后，红色像素点的值为，R<!-- raw HTML omitted -->org<!-- raw HTML omitted -->为校准前原本的值
+$$
+R_{new}=u_{R} R_{org}^{2}+v_{R} R_{org}
+$$</p>
+<h3 id="224基于模糊逻辑的算法">2.2.4基于模糊逻辑的算法</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/awb/awb7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/awb/awb7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>如图圆圈表示该颜色本身应该在坐标系中所处的位置，箭头分别表示随色温的变化发生的偏移，这个是通过先验知识得到的，后面再通过这个进行校正。</p>
+<p>通过以上两种方式将图像分成8块，然后通过模糊逻辑的方式计算出每个块的一个权重，这个权重和亮度和色度相关，然后通过模糊逻辑方式进行确定。求得权重后就可以计算出整个图像的加权均值。</p>
+<p>计算出当前图片亮度下，根据这一块区域分布的像素，通过颜色空间转换，通过计算出每一个块区域的在CrCb坐标系上的位置。每一个块都有一个权重，每一个块乘以自己的权重，就是右图上所在的具体位置。</p>
+<p>如图10a，黑点表示八个块的分布，X表示加权后整个图像的位置。然后目的是要让加权的这个值往白点上靠，就通过调整增益的方式调试，调整完增益后，每个块儿的均值又会发生变化，然后又重新计算出每个块的权重，再通过权重计算出整个图像的均值</p>
+<p>如图10b，整个图像的均值已经靠近原点了。然后如果X和白点的差距在一个设定的范围内则认为完成白平衡，否则继续调整增益重复上述步骤进行校正。</p>
+<h3 id="225基于白点的算法">2.2.5基于白点的算法</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/awb/awb8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/awb/awb8.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="endbmatrix">将RGB颜色空间转换到YUV空间，转换公式如下：
+$$
+\begin{bmatrix}
+Y\<br>
+U\<br>
+V<br>
+\end{bmatrix}</h1>
+<p>\begin{bmatrix}
+0.3 &amp; 0.59 &amp; 0.11\<br>
+-0.15 &amp; -0.29 &amp; 0.44\<br>
+0.51 &amp; -0.52 &amp; -0.095
+\end{bmatrix}
+\begin{bmatrix}
+R\<br>
+G\<br>
+B<br>
+\end{bmatrix}
+$$
+通过限定YUV的区域来判断是否为白点，如下论文通过四个限制条件俩限制白点，满足条件的点就是白点，参与后续的计算，否则不是点直接舍弃</p>
+<p>通过以上四个限制条件找到白点集合后，就可以对白点集合运用GW（灰度世界理论法）算法或者其他算法计算gain值从而进行后续的校正</p>
+<h3 id="226基于色温的方法">2.2.6基于色温的方法</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/awb/awb10.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/awb/awb10.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>通过在不同色温的环境下拍摄灰卡可以得到上面的两个曲线，一个是gain值的关系曲线，另一个是R/G与色温T的关系，那么如果获取了一张图像知道了拍摄的色温，就可以通过第二张图获取R/G的值，然后将这个值代回图一就能计算出B/G从而获得R和B的gain值;</p>
+<p>通过一定的技术手段获取色温即可，一种方法就是通过加一个色温传感器获取环境色温，这个努比亚和oppo都有相关的专利提到，这个不是常规的方式不讲解。另一种就是通过计算求出T，下面的论文就提供了一种方式</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/awb/awb9.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/awb/awb9.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>该算法通过以下步骤迭代获取色温：</p>
+<ul>
+<li>定义Tmin=2000K，Tmax=15000K;</li>
+<li>循环结束条件。判断Tmax-Tmin是否大于10，如果小于或等于10，那么可以直接返回T，此时T可以去min,man或者二者的均值，如果满足大于10的条件，则T=(Tmin+Tmax)/2;</li>
+<li>求取二分法当前色温对应的RGB值。通过图中一些列的公式，通过T就可以计算出一个R&rsquo;G&rsquo;B'。这些公式都是通过实验拟合总结的；</li>
+<li>缩小色温二分法边界。对于原始图像可以求出各个通道的均值RGB，如果B'/R'&gt;B/R那么Tmax=T，否则Tmin=T;重复上述步骤即可迭代求出色温T。</li>
+</ul>
+<h3 id="227基于边缘的方法">2.2.7基于边缘的方法</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/awb/awb11.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/awb/awb11.png" >
+  
+    </a>
+  
+  
+</div>
+
+<ol>
+<li>先通过一定的手段，比如梯度的方式求出图像中的边缘，然后在边缘各侧各取两个点参与计算；</li>
+<li>通过上述得到的参考点集合，就可以运行灰度世界或者其他的算法求出gain值；</li>
+</ol>
+<p>该算法的有点在于，<strong>减少的大色块的干扰</strong>，因为一般认为边缘就是色块变化的的分界线，那么提取边缘两侧的样本点就可以满足颜色充分的条件，那么就可以运用灰度世界法求出gain.而且有大色块的时候计算的也是也只是选取边缘的几个点，就可以避免大色块分量太大造成白平衡异常的问题。</p>
+<h3 id="228多方法融合法">2.2.8多方法融合法</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/awb/awb12.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/awb/awb12.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>如图是一款ISP主控的白平衡tuning的图片。这个主要运用的是<strong>色温</strong>加<strong>白点</strong>算法。</p>
+<ul>
+<li>
+<p>每个蓝色的框就代表一种色温，比如9代表2000K，8代表2500K，这个是通过实验和经验值确定的。</p>
+</li>
+<li>
+<p>图中绿色的点就是通过白点算法筛选出来的白点候选点。调试的时候就是在不同色温下拍摄灰卡，然后挪动蓝色选框，使其<strong>包围绿点</strong>。</p>
+<blockquote>
+<p>右上角就是估计色温，调试的时候就是使得这个估计色温和真是色温不要相差太多。</p>
+</blockquote>
+</li>
+<li>
+<p>通过标定若干组色温之后就确定了该方案的一个<strong>色温曲线</strong>。</p>
+</li>
+<li>
+<p>后续再pipeline中通过白点检测算法筛选出白点，然后根据白点的分布，可以找到大多数白点分布的色温，那么该色温就是当前的色温</p>
+</li>
+<li>
+<p>通过色温再按照前面提到的算法就可以计算出一个gain值，再和灰度世界算法进行一个blending就可以得到最终ISP中使用的gain值。</p>
+</li>
+</ul>
+<h1 id="3方法实现">3方法实现</h1>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/awb/awb13.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/awb/awb13.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/awb/awb14.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/awb/awb14.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>分别用三种算法校正之后的图片，右上为灰度世界算法，左下为完全反射法，右下为灰度世界和完美反射结合法。</p>
+<h2 id="31分别使用三种算法">3.1分别使用三种算法</h2>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="c">% corrected by gw</span>
+<span class="ln"> 2</span><span class="n">gwImg</span> <span class="p">=</span> <span class="n">gw</span><span class="p">(</span><span class="n">img</span><span class="p">);</span>
+<span class="ln"> 3</span><span class="n">subplot</span><span class="p">(</span><span class="mi">222</span><span class="p">)</span>
+<span class="ln"> 4</span><span class="n">imshow</span><span class="p">(</span><span class="n">gwImg</span><span class="p">);</span>
+<span class="ln"> 5</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;gw&#39;</span><span class="p">);</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span><span class="c">% corrected by pr</span>
+<span class="ln"> 8</span><span class="n">gwImg</span> <span class="p">=</span> <span class="n">pr</span><span class="p">(</span><span class="n">img</span><span class="p">);</span>
+<span class="ln"> 9</span><span class="n">subplot</span><span class="p">(</span><span class="mi">223</span><span class="p">)</span>
+<span class="ln">10</span><span class="n">imshow</span><span class="p">(</span><span class="n">gwImg</span><span class="p">);</span>
+<span class="ln">11</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;pr&#39;</span><span class="p">);</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="c">% corrected by qcgp</span>
+<span class="ln">14</span><span class="n">gwImg</span> <span class="p">=</span> <span class="n">qcgp</span><span class="p">(</span><span class="n">img</span><span class="p">);</span>
+<span class="ln">15</span><span class="n">subplot</span><span class="p">(</span><span class="mi">224</span><span class="p">)</span>
+<span class="ln">16</span><span class="n">imshow</span><span class="p">(</span><span class="n">gwImg</span><span class="p">);</span>
+<span class="ln">17</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;qcgp&#39;</span><span class="p">);</span>
+</code></pre></div><h2 id="32使用灰度世界算法gw">3.2使用灰度世界算法Gw</h2>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="k">function</span><span class="w"> </span>correctedImg <span class="p">=</span><span class="w"> </span><span class="nf">gw</span><span class="p">(</span>img<span class="p">)</span><span class="w">
+</span><span class="ln"> 2</span><span class="w"></span><span class="p">[</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">ch</span><span class="p">]</span> <span class="p">=</span> <span class="nb">size</span><span class="p">(</span><span class="n">img</span><span class="p">);</span>
+<span class="ln"> 3</span><span class="n">r</span> <span class="p">=</span> <span class="n">img</span><span class="p">(:,:,</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln"> 4</span><span class="n">g</span> <span class="p">=</span> <span class="n">img</span><span class="p">(:,:,</span><span class="mi">2</span><span class="p">);</span>
+<span class="ln"> 5</span><span class="n">b</span> <span class="p">=</span> <span class="n">img</span><span class="p">(:,:,</span><span class="mi">3</span><span class="p">);</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span><span class="c">% get the mean of three channels</span>
+<span class="ln"> 8</span><span class="n">rMean</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">mean</span><span class="p">(</span><span class="n">mean</span><span class="p">(</span><span class="n">r</span><span class="p">)));</span>
+<span class="ln"> 9</span><span class="n">gMean</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">mean</span><span class="p">(</span><span class="n">mean</span><span class="p">(</span><span class="n">g</span><span class="p">)));</span>
+<span class="ln">10</span><span class="n">bMean</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">mean</span><span class="p">(</span><span class="n">mean</span><span class="p">(</span><span class="n">b</span><span class="p">)));</span>
+<span class="ln">11</span>
+<span class="ln">12</span><span class="c">% get the rGain and bGain based on gMean to make sure that </span>
+<span class="ln">13</span><span class="c">% the mean of the three channels are the same value after correcting,;</span>
+<span class="ln">14</span><span class="n">rGain</span> <span class="p">=</span> <span class="n">gMean</span> <span class="o">/</span> <span class="n">rMean</span><span class="p">;</span>
+<span class="ln">15</span><span class="n">bGain</span> <span class="p">=</span> <span class="n">gMean</span> <span class="o">/</span> <span class="n">bMean</span><span class="p">;</span>
+<span class="ln">16</span>
+<span class="ln">17</span><span class="n">correctedImg</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">ch</span><span class="p">);</span>
+<span class="ln">18</span><span class="n">correctedImg</span><span class="p">(:,:,</span><span class="mi">1</span><span class="p">)</span> <span class="p">=</span> <span class="n">r</span> <span class="o">*</span> <span class="n">rGain</span><span class="p">;</span>
+<span class="ln">19</span><span class="n">correctedImg</span><span class="p">(:,:,</span><span class="mi">2</span><span class="p">)</span> <span class="p">=</span> <span class="n">g</span><span class="p">;</span>
+<span class="ln">20</span><span class="n">correctedImg</span><span class="p">(:,:,</span><span class="mi">3</span><span class="p">)</span> <span class="p">=</span> <span class="n">b</span> <span class="o">*</span> <span class="n">bGain</span><span class="p">;</span>
+<span class="ln">21</span><span class="c">% make sure there is no overflow</span>
+<span class="ln">22</span><span class="n">correctedImg</span><span class="p">(</span><span class="n">correctedImg</span><span class="o">&gt;</span><span class="mi">255</span><span class="p">)</span> <span class="p">=</span> <span class="mi">255</span><span class="p">;</span>
+<span class="ln">23</span><span class="n">correctedImg</span> <span class="p">=</span> <span class="n">uint8</span><span class="p">(</span><span class="n">correctedImg</span><span class="p">);</span>
+<span class="ln">24</span><span class="k">end</span>
+</code></pre></div><h2 id="33使用完全反射法pr">3.3使用完全反射法Pr</h2>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="k">function</span><span class="w"> </span>correctedImg <span class="p">=</span><span class="w"> </span><span class="nf">pr</span><span class="p">(</span>img<span class="p">)</span><span class="w"> 
+</span><span class="ln"> 2</span><span class="w"></span><span class="p">[</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">ch</span><span class="p">]</span> <span class="p">=</span> <span class="nb">size</span><span class="p">(</span><span class="n">img</span><span class="p">);</span>
+<span class="ln"> 3</span><span class="n">r</span> <span class="p">=</span> <span class="n">img</span><span class="p">(:,:,</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln"> 4</span><span class="n">g</span> <span class="p">=</span> <span class="n">img</span><span class="p">(:,:,</span><span class="mi">2</span><span class="p">);</span>
+<span class="ln"> 5</span><span class="n">b</span> <span class="p">=</span> <span class="n">img</span><span class="p">(:,:,</span><span class="mi">3</span><span class="p">);</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span><span class="n">rMax</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">r</span><span class="p">)));</span>
+<span class="ln"> 8</span><span class="n">gMax</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">g</span><span class="p">)));</span>
+<span class="ln"> 9</span><span class="n">bMax</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">b</span><span class="p">)));</span>
+<span class="ln">10</span>
+<span class="ln">11</span><span class="n">rGain</span> <span class="p">=</span> <span class="n">gMax</span> <span class="o">/</span> <span class="n">rMax</span><span class="p">;</span>
+<span class="ln">12</span><span class="n">bGain</span> <span class="p">=</span> <span class="n">gMax</span> <span class="o">/</span> <span class="n">bMax</span><span class="p">;</span>
+<span class="ln">13</span>
+<span class="ln">14</span><span class="n">correctedImg</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">ch</span><span class="p">);</span>
+<span class="ln">15</span><span class="n">correctedImg</span><span class="p">(:,:,</span><span class="mi">1</span><span class="p">)</span> <span class="p">=</span> <span class="n">r</span> <span class="o">*</span> <span class="n">rGain</span><span class="p">;</span>
+<span class="ln">16</span><span class="n">correctedImg</span><span class="p">(:,:,</span><span class="mi">2</span><span class="p">)</span> <span class="p">=</span> <span class="n">g</span><span class="p">;</span>
+<span class="ln">17</span><span class="n">correctedImg</span><span class="p">(:,:,</span><span class="mi">3</span><span class="p">)</span> <span class="p">=</span> <span class="n">b</span> <span class="o">*</span> <span class="n">bGain</span><span class="p">;</span>
+<span class="ln">18</span><span class="c">% make sure there is no overflow</span>
+<span class="ln">19</span><span class="n">correctedImg</span><span class="p">(</span><span class="n">correctedImg</span><span class="o">&gt;</span><span class="mi">255</span><span class="p">)</span> <span class="p">=</span> <span class="mi">255</span><span class="p">;</span>
+<span class="ln">20</span><span class="n">correctedImg</span> <span class="p">=</span> <span class="n">uint8</span><span class="p">(</span><span class="n">correctedImg</span><span class="p">);</span>
+<span class="ln">21</span>
+<span class="ln">22</span><span class="k">end</span>
+</code></pre></div><h2 id="34使用灰度世界和完美反射结合法qcgp">3.4使用灰度世界和完美反射结合法Qcgp</h2>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="k">function</span><span class="w"> </span>correctedImg <span class="p">=</span><span class="w"> </span><span class="nf">qcgp</span><span class="p">(</span>img<span class="p">)</span><span class="w"> 
+</span><span class="ln"> 2</span><span class="w"></span><span class="n">I</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">img</span><span class="p">);</span>
+<span class="ln"> 3</span><span class="p">[</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">ch</span><span class="p">]</span> <span class="p">=</span> <span class="nb">size</span><span class="p">(</span><span class="n">img</span><span class="p">);</span>
+<span class="ln"> 4</span><span class="n">r</span> <span class="p">=</span> <span class="n">I</span><span class="p">(:,:,</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln"> 5</span><span class="n">g</span> <span class="p">=</span> <span class="n">I</span><span class="p">(:,:,</span><span class="mi">2</span><span class="p">);</span>
+<span class="ln"> 6</span><span class="n">b</span> <span class="p">=</span> <span class="n">I</span><span class="p">(:,:,</span><span class="mi">3</span><span class="p">);</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span><span class="c">% get the mean and max of three channels</span>
+<span class="ln"> 9</span><span class="n">rMean</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">mean</span><span class="p">(</span><span class="n">mean</span><span class="p">(</span><span class="n">r</span><span class="p">)));</span>
+<span class="ln">10</span><span class="n">gMean</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">mean</span><span class="p">(</span><span class="n">mean</span><span class="p">(</span><span class="n">g</span><span class="p">)));</span>
+<span class="ln">11</span><span class="n">bMean</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">mean</span><span class="p">(</span><span class="n">mean</span><span class="p">(</span><span class="n">b</span><span class="p">)));</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="n">rMax</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">r</span><span class="p">)));</span>
+<span class="ln">14</span><span class="n">gMax</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">g</span><span class="p">)));</span>
+<span class="ln">15</span><span class="n">bMax</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">b</span><span class="p">)));</span>
+<span class="ln">16</span>
+<span class="ln">17</span><span class="n">kMean</span> <span class="p">=</span> <span class="n">mean</span><span class="p">([</span><span class="n">rMean</span><span class="p">,</span> <span class="n">gMean</span><span class="p">,</span> <span class="n">bMean</span><span class="p">]);</span>
+<span class="ln">18</span><span class="n">kMax</span> <span class="p">=</span> <span class="n">mean</span><span class="p">([</span><span class="n">rMax</span><span class="p">,</span> <span class="n">gMax</span><span class="p">,</span> <span class="n">bMax</span><span class="p">]);</span>
+<span class="ln">19</span>
+<span class="ln">20</span><span class="n">correctedImg</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">ch</span><span class="p">);</span>
+<span class="ln">21</span>
+<span class="ln">22</span><span class="c">% calculate the coefficient</span>
+<span class="ln">23</span><span class="n">a</span> <span class="p">=</span> <span class="p">[</span><span class="n">rMean</span><span class="o">.*</span><span class="n">rMean</span><span class="p">,</span> <span class="n">rMean</span><span class="p">;</span> <span class="n">rMax</span><span class="o">.*</span><span class="n">rMax</span><span class="p">,</span> <span class="n">rMax</span><span class="p">];</span>
+<span class="ln">24</span><span class="n">p</span> <span class="p">=</span> <span class="n">a</span> <span class="o">\</span> <span class="p">[</span><span class="n">kMean</span><span class="p">;</span> <span class="n">kMax</span><span class="p">];</span>
+<span class="ln">25</span><span class="n">correctedImg</span><span class="p">(:,:,</span><span class="mi">1</span><span class="p">)</span> <span class="p">=</span> <span class="n">p</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">r</span><span class="o">.*</span><span class="n">r</span><span class="p">)</span> <span class="o">+</span> <span class="n">p</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span><span class="p">;</span>
+<span class="ln">26</span>
+<span class="ln">27</span><span class="n">a</span> <span class="p">=</span> <span class="p">[</span><span class="n">gMean</span><span class="o">.*</span><span class="n">gMean</span><span class="p">,</span> <span class="n">gMean</span><span class="p">;</span> <span class="n">gMax</span><span class="o">.*</span><span class="n">gMax</span><span class="p">,</span> <span class="n">gMax</span><span class="p">];</span>
+<span class="ln">28</span><span class="n">p</span> <span class="p">=</span> <span class="n">a</span> <span class="o">\</span> <span class="p">[</span><span class="n">kMean</span><span class="p">;</span> <span class="n">kMax</span><span class="p">];</span>
+<span class="ln">29</span><span class="n">correctedImg</span><span class="p">(:,:,</span><span class="mi">2</span><span class="p">)</span> <span class="p">=</span> <span class="n">p</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">g</span><span class="o">.*</span><span class="n">g</span><span class="p">)</span> <span class="o">+</span> <span class="n">p</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">g</span><span class="p">;</span>
+<span class="ln">30</span>
+<span class="ln">31</span>
+<span class="ln">32</span><span class="n">a</span> <span class="p">=</span> <span class="p">[</span><span class="n">bMean</span><span class="o">.*</span><span class="n">bMean</span><span class="p">,</span> <span class="n">bMean</span><span class="p">;</span> <span class="n">bMax</span><span class="o">.*</span><span class="n">bMax</span><span class="p">,</span> <span class="n">bMax</span><span class="p">];</span>
+<span class="ln">33</span><span class="n">p</span> <span class="p">=</span> <span class="n">a</span> <span class="o">\</span> <span class="p">[</span><span class="n">kMean</span><span class="p">;</span> <span class="n">kMax</span><span class="p">];</span>
+<span class="ln">34</span><span class="n">correctedImg</span><span class="p">(:,:,</span><span class="mi">3</span><span class="p">)</span> <span class="p">=</span> <span class="n">p</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">b</span><span class="o">.*</span><span class="n">b</span><span class="p">)</span> <span class="o">+</span> <span class="n">p</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">b</span><span class="p">;</span>
+<span class="ln">35</span>
+<span class="ln">36</span><span class="c">% make sure there is no overflow</span>
+<span class="ln">37</span><span class="n">correctedImg</span><span class="p">(</span><span class="n">correctedImg</span><span class="o">&gt;</span><span class="mi">255</span><span class="p">)</span> <span class="p">=</span> <span class="mi">255</span><span class="p">;</span>
+<span class="ln">38</span><span class="n">correctedImg</span> <span class="p">=</span> <span class="n">uint8</span><span class="p">(</span><span class="n">correctedImg</span><span class="p">);</span>
+<span class="ln">39</span><span class="k">end</span>
+</code></pre></div>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/isp/">isp</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/algorithm/">algorithm</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/awb/">AWB</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-gamma-correction/" data-tooltip="isp算法学习-GAMMA CORRECTION">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-dpc/" data-tooltip="isp算法学习-DPC">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2023 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-gamma-correction/" data-tooltip="isp算法学习-GAMMA CORRECTION">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-dpc/" data-tooltip="isp算法学习-DPC">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-awb%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-awb%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-awb%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2023\/12\/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-awb\/';
+          
+            this.page.identifier = '\/2023\/12\/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-awb\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+  <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_CHTML-full" integrity="sha256-GhM+5JHb6QUzOQPXSJLEWP7R73CbkisjzK5Eyij4U9w=" crossorigin="anonymous"></script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      CommonHTML: { linebreaks: { automatic: true } },
+      tex2jax: { inlineMath: [ ['$', '$'], ['\\(','\\)'] ], displayMath: [ ['$$','$$'], ['\\[', '\\]'] ], processEscapes: false },
+      messageStyle: 'none'
+    });
+  </script>
+
+
+
+    
+  </body>
+</html>
+

@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="本文是isp算法学习的第九篇章，主要是讲述NR原理和算法。">
+
+
+<meta property="og:description" content="本文是isp算法学习的第九篇章，主要是讲述NR原理和算法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="isp算法学习-NR（Noise Reduce）">
+<meta name="twitter:title" content="isp算法学习-NR（Noise Reduce）">
+<meta property="og:url" content="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-nrnoise-reduce/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-nrnoise-reduce/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="本文是isp算法学习的第九篇章，主要是讲述NR原理和算法。">
+<meta name="twitter:description" content="本文是isp算法学习的第九篇章，主要是讲述NR原理和算法。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2023-12-30T13:00:00">
+  
+  
+    <meta property="article:modified_time" content="2023-12-30T13:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="isp">
+    
+      <meta property="article:section" content="2023">
+    
+      <meta property="article:section" content="December">
+    
+  
+  
+    
+      <meta property="article:tag" content="isp">
+    
+      <meta property="article:tag" content="algorithm">
+    
+      <meta property="article:tag" content="NR">
+    
+      <meta property="article:tag" content="空域滤波">
+    
+      <meta property="article:tag" content="均值滤波">
+    
+      <meta property="article:tag" content="中值滤波">
+    
+      <meta property="article:tag" content="变换域滤波">
+    
+      <meta property="article:tag" content="时域滤波">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/algorithmlearning/nr/nr_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/algorithmlearning/nr/nr_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/algorithmlearning/nr/nr_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/algorithmlearning/nr/nr_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+
+
+    <title>isp算法学习-NR（Noise Reduce）</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-nrnoise-reduce/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/camera/algorithmlearning/nr/nr_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      isp算法学习-NR（Noise Reduce）
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2023-12-30T13:00:00Z">
+        
+  十二月 30, 2023
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/isp">isp</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2023">2023</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/december">December</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">1200 Words|Read in about 6 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+      
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>本文是isp算法学习的第九篇章，主要是讲述NR原理和算法。</p>
+<div style="text-align: center;">
+<iframe 
+    frameborder="no" border="1"
+    marginwidth="0" marginheight="0"
+    width=400 height=100
+    src="//music.163.com/outchain/player?type=2&id=1440570723&auto=1&height=66"></iframe>
+</div>
+<p>人类的世界就是一个信号传输的世界，所以噪声无处不在，图像作为一种信号传输的方式当然也无法幸免。为了尽量减少噪声对图像质量的影响，还原物体的本来状态就提出了一系列降噪的方法，本文就简单介绍几种常见的降噪滤波算法。</p>
+<h1 id="1产生原因">1产生原因</h1>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/nr/nr1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/nr/nr1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>噪声原因</p>
+<h2 id="11图像获取过程中">1.1图像获取过程中</h2>
+<p>由于受传感器材料属性、工作环境、电子元器件和电路结构等影响，会引入各种噪声，如电阻引起的热噪声、场效应管的沟道热噪声、电子噪声、暗电流噪声、光响应非均匀性噪声。</p>
+<h2 id="12信号传输过程中">1.2信号传输过程中</h2>
+<p>由于传输介质和记录设备等的不完善，数字图像在其传输记录过程中往往受到各种噪声的污染，在图像处理的某些环节当输入的对象并不如预想时也会在结果图像中引入噪声。</p>
+<h1 id="2校正方法">2校正方法</h1>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/nr/nr2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/nr/nr2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>图像去噪的算法大致分位这么几类，包括硬件去噪，从源头降低噪声，常见的方式有<strong>CDS</strong>(cor related double sampling)，但是这种硬件的方式不是ISP涉及的范围所以不做过多介绍。</p>
+<p>大致分位空域滤波、变换域滤波和时域滤波，当然还有一些其他方式比如空域和变换域相结合的方式</p>
+<h2 id="21空域滤波-均值滤波">2.1空域滤波-均值滤波</h2>
+<h3 id="211均值滤波">2.1.1均值滤波</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/nr/nr3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/nr/nr3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>如图是一个信号和噪声的分布图像，<strong>黑色曲线是真实信号</strong>，彩色的是多次采集的信号，会发现采集的信号是在真实信号上下波动，这个波动就是<strong>噪声</strong>对信号带来的影响。</p>
+<p>最早为了消除这种噪声有人就提出采用<strong>多张同一场景的图片求和取平均</strong>来消除，因为噪声是随机的，每张图中的噪声使得信号的偏移是不固定的，多次求平均后就能使得信号接近真实信号。</p>
+<p>就像上图中，对彩色的信号求平均相当于黑色曲线上下的值求平均，结果自然就接近黑色曲线从而达到去噪的效果。从多张叠加求平均的想法中有人就提出了从一张图里求平均来到达降噪的效果，也就是这里提到的均值滤波。</p>
+<p>其实整个算法的思想很简单，就是假设图像在一个很小的邻域范围内像素的变化不会太大，那么就可以在一个<strong>很小的邻域范围内求一个平均值</strong>来取代当前的像素值从而达到降噪的效果。</p>
+<p>典型的应用就是在图像中取一个3X3的邻域，然后每个像素给权重1，最后求和取平均。然后让这个邻域遍历整个图像。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/nr/nr4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/nr/nr4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>公式如下：
+$$
+f(i, j) = \frac{1}{9} * [f(i-1, j-1)+f(i-1, j)+f(i-1, j+1)+f(i, j-1)+f(i, j)+f(i, j+1)+f(i+1, j-1)+f(i+1, j)+f(i+1, j+1))]
+$$</p>
+<h3 id="212高斯滤波">2.1.2高斯滤波</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/nr/nr6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/nr/nr6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>为了更好的保留边缘信息，就提出了<strong>加权平均</strong>的方法，就是平均之前每每个数的权重不一样。</p>
+<p>其实在图形中更好理解，某一个点的值肯定和本身的像素值关系最大，所以对应的本身哪个点的权重就会更大些，通过以下公式计算
+$$
+\begin{aligned} 
+f(i, j)&amp; = \frac{1}{16} * [f(i-1, j-1) *1 +f(i-1, j) * 2+f(i-1, j+1)*1\&amp;
++f(i, j-1)*2+f(i, j)*4+f(i, j+1)*2\&amp;
++f(i+1, j-1)*1+f(i+1, j)*2+f(i+1, j+1)*1)] \end{aligned}
+$$
+上面这幅图就是典型的高斯分布的图像，自然中很多分布都是满足高斯分布的，那么如果噪声也是高斯分布我们就可以通过高斯分布来进行加权。高斯滤波的具体思路如下：</p>
+<ul>
+<li>使用与中心像素的距离，通过高斯函数来计算该点的权重；</li>
+<li>将所有点的权重求出来后对权重进行归一化处理；</li>
+<li>利用加权平均的方式计算滤波后的像素值；</li>
+<li>邻域窗口遍历图像，重复上述操作。</li>
+</ul>
+<p>整体思路和均值滤波没有太大区别，这里代码实现就不做过多叙述。</p>
+<h3 id="213双边滤波">2.1.3双边滤波</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/nr/nr7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/nr/nr7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>虽然高斯滤波相对于普通均值滤波而言性能有所提升，但是依然<strong>对边缘滤波严重</strong>，为了进一步保留边缘信息，就需要对边缘做进一步处理。</p>
+<p>于是就有人提出在高斯分布的基础上再加一个权重，这个权重和<strong>像素值的差别</strong>挂上联系，这个算法就是双边滤波算法。</p>
+<p>如图是原始论文中的公式，从中可以看出双边滤波有两个高斯权重叠加而来。前面||p-q||就是高斯滤波中使用的距离权重，后面的|I<!-- raw HTML omitted -->p<!-- raw HTML omitted -->-I<!-- raw HTML omitted -->q<!-- raw HTML omitted -->|就是像素值的高斯分布的权重。</p>
+<ul>
+<li>去噪的时候肯定需要<strong>相似的区域有更大的贡献</strong>，<strong>不相同的给小的权重</strong></li>
+<li>对于边缘而言，那么<strong>两侧的像素值的差距</strong>肯定很大，也就会导致离边缘另一侧不同的会分配一个小权重</li>
+<li>同侧相差小就会有一个很大的权重，这样就不会由于取平均的时候将边缘两侧的大差异变小导致边缘变弱了，从而起到保留边缘的目的。</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/nr/nr8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/nr/nr8.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>如图是双边滤波的示意图，当对白点位置进行滤波操作的时候，同侧像素差别较小会有一个大权重，而另一侧差别很大权重也就很小，二者结合后就相当于高斯滤波取一侧，然后利用这个核进行滤波操作。</p>
+<h3 id="214nlmnon-local-mean">2.1.4NLM（<strong>non-local mean</strong>）</h3>
+<p>这个是一种非局部均值算法。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/nr/nr11.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/nr/nr11.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>前面的几种都是在邻域范围内对局部图像进行平均滤波，NLM则是<strong>利用整个图像的信息</strong>来进行降噪滤波处理。</p>
+<p>对于p点而言，q1和q2点所在的邻域和p所在的邻域更相似，那么就给q1和q2较大的权重，而q3邻域和p邻域差别较大，就赋予一个较小的权重。具体权重的赋予方式其实也是高斯的一种方式，只不过e的对数是通过邻域简单欧拉距离来计算。</p>
+<p>$$
+w(i,j)=\frac{1}{Z(i)}e
+^{-\frac{||v(N_i-v(N_j))||_2^2,a}{h^2}}\<br>
+Z(i)=\sum_je^{-\frac{||v(N_i-v(N_j))||_2^2,a}{h^2}}
+$$</p>
+<p>相当于求了几邻域中对应位置像素差的平方和来当作分配权重的依据。当邻域相似时，这个方差就小，权重也就大，而差异很大时方差就很大，权重也就很小，满足了算法的需求。理论上每一个点进行去噪的时候会利用整个图像的信息来计算，但是为了降低运算量，一般不会用整个图像的信息来计算，而是在整个图像中先选择一个大的范围，然后用这个范围内的点的信息进行降噪处理。</p>
+<p>具体算法思路如下：</p>
+<ol>
+<li>遍历整幅图像；</li>
+<li>针对每一个点定义一个滑动窗口，降噪的时候利用该窗口中的所有点的信息计算；</li>
+<li>定义一个邻域范围，用来计算像素块的差异；</li>
+<li>遍历滑动窗口中的点，求每个点的邻域范围和当前点的邻域范围的像素差值的平方和，并利用该值计算一个权重；</li>
+<li>遍历完滑动窗口中的所有点后，滑动窗口中的每个点都有一个权重，对权重进行归一化处理；</li>
+<li>得到归一化处理后的权重通过加权平均的方式计算出当前点的新的像素值；</li>
+</ol>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/nr/nr13.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/nr/nr13.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>简化为图形就是如图的方式，最中间的黑色框的范围就是实际图像大小，外面蓝色范围时为扩充的图像（为了处理边缘领域不够的问题）。</p>
+<p>计算黑色点的时候，就是定义一个红色框，然后黄色点在红色框中遍历，每次都计算出两个小黑色框对应位置像素的差值的平方从而求出一个权重，当红色框遍历完了之后对权重机型归一化，然后加权平均就能求出黑色点的值。</p>
+<p>接着黑色点在图像中遍历，同时红色框随着黑点移动，然后黄色点又在红色框中移动，以此循环即可完成整幅图像的去噪操作。</p>
+<h2 id="22空域滤波-中值滤波">2.2空域滤波-中值滤波</h2>
+<p>均值滤波作为一种线性滤波器，在滤除噪声的同时也会导致边缘模糊问题。而且均值滤波对高斯噪声的效果很好，但是对于椒盐噪声的效果就很一般。</p>
+<p>但是中值滤波作为一种顺序滤波器，对于椒盐噪声的效果很好，而且保边能力很强</p>
+<h3 id="221中值滤波">2.2.1中值滤波</h3>
+<p>中值滤波很好理解，均值滤波就是在一个小窗口中求均值来取代当前像素值，而中值滤波就是通过求小窗口中的中位值来取代当前位置的方式来滤波。</p>
+<p>如图绿色窗口就是当前的滤波窗口，在一个3X3的邻域窗口中进行滤波。那么中值滤波做的就是：</p>
+<ol>
+<li>对这个邻域中的像素值进行排序：[45, 50, 52, 60, 75, 80, 90, 200, 255];</li>
+<li>从排序后的数据中找出中位值：75；</li>
+<li>用中位值取代当前位置的像素值，所以就可以得到右侧的滤波后的数据。</li>
+</ol>
+<h3 id="222多级中值滤波">2.2.2多级中值滤波</h3>
+<p>简单的中值滤波器滤波效果有限，于是就有人提出了将多个中值滤波进行多级级联实现更好的滤波效果。</p>
+<p>如图就是一种多级级联的方式，先在窗口中定义一个'+&lsquo;和&rsquo;X&rsquo;形的窗口，然后分别求出这两个窗口的中位值，然后结合当前窗口的中心点就有3个候选值，再从这三个值中求出一个中位值作为滤波后的结果。</p>
+<p>这种方式也可以直接应用到RAW图中做BNR，需要修改的就是窗口设置为5X5，然后在做滤波的时候需要区分G和RB通道，因为这个前面已经讲过，RAW图中的RGB分布是不均匀的，G占50%，R和B各占25%。</p>
+<p>左侧就是针对G通道的滤波器，右侧是R和B通道的滤波器，都是定义了一个&rsquo;+&lsquo;和&rsquo;X&rsquo;形的窗口，不同的只是取的点的位置不同。</p>
+<h3 id="223多级中值混合滤波">2.2.3多级中值混合滤波</h3>
+<p>前面介绍过中值滤波和均值滤波各自有各自的优点和缺点，所以就可以考虑将两者结合起来，相互弥补实现更好的滤波效果，于是就有人提出了这种多级混合滤波的方式。</p>
+<p>算法流程：</p>
+<ol>
+<li>求出竖直方向相邻三个点的均值和水平方向相邻三个点的均值，再结合当前点，用这三个点再求一个中位值；</li>
+<li>求出45°和135°方向上的均值，然后结合当前点求出一个中位值；</li>
+<li>两个中位值结合当前点组成新的数组，最后求一个中位值作为当前点的值完成滤波。</li>
+</ol>
+<p>这样就巧妙的将均值滤波和中位值滤波结合了。然后如果应用在RAW图上，只需要对滤波器稍作改善即可。</p>
+<h3 id="224多级中值有理混合滤波">2.2.4多级中值有理混合滤波</h3>
+<p>加权中值滤波也很好理解，和加权均值滤波差不多，就是在原始数据的基础上给每个点分别赋予一个权重，然后在加权后的数据中取出中位值作为滤波后的值。</p>
+<h4 id="算法流程">算法流程</h4>
+<ol>
+<li>
+<p>求出&rsquo;+&lsquo;形和&rsquo;X&rsquo;形的窗口的中位值；</p>
+</li>
+<li>
+<p>对&rsquo;+&lsquo;形窗口再利用CWMF求出一个值，CWMF是WMF的一种特殊情况，就是只对中心点进行加权；</p>
+</li>
+<li>
+<p>对以上求出的三个参数用一下公式计算出一个新的值作为滤波后的值 
+$$
+y(m, n)=\phi 2(m, n)+\frac{\phi 1(m, n)-2 * \phi 2(m, n)+\phi 3(m, n)}{h+k(\phi 1(m, n)-\phi 3(m, n))}
+$$</p>
+</li>
+</ol>
+<p>一样的，稍作改动该算法就可以用于raw格式图像</p>
+<h1 id="3方法实现">3方法实现</h1>
+<h2 id="31均值滤波算法实现">3.1均值滤波算法实现</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/nr/nr5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/nr/nr5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>第三幅图就是经过均值滤波处理后的效果，和第一幅图比起来变得更模糊。通过原始图像和新图像最差就能得到最后的图像，新清晰的看到边缘和部分噪点是被滤除掉了。所以这种降噪的方法有个致命的缺点就是会<strong>损失图像的边缘细节</strong>。</p>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="n">clear</span><span class="p">;</span>
+<span class="ln"> 2</span><span class="n">clc</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="n">close</span> <span class="n">all</span><span class="p">;</span>
+<span class="ln"> 4</span><span class="n">img</span> <span class="p">=</span> <span class="n">imread</span><span class="p">(</span><span class="s">&#39;./images/test_pattern_blurring_orig.tif&#39;</span><span class="p">);</span>
+<span class="ln"> 5</span><span class="p">[</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span> <span class="p">=</span> <span class="nb">size</span><span class="p">(</span><span class="n">img</span><span class="p">);</span>
+<span class="ln"> 6</span><span class="n">figure</span><span class="p">;</span><span class="n">subplot</span><span class="p">(</span><span class="mi">221</span><span class="p">);</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">);</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;original image&#39;</span><span class="p">);</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span><span class="c">%% 运算的时候需要对边缘进行扩展</span>
+<span class="ln"> 9</span><span class="c">% 需要特殊处理四周最外圈的行和列，本算法中将其向外扩展一圈，用最外圈的值填充</span>
+<span class="ln">10</span><span class="n">headRowMat</span> <span class="p">=</span> <span class="n">img</span><span class="p">(</span><span class="mi">1</span><span class="p">,:);</span><span class="c">%取f的第1行</span>
+<span class="ln">11</span><span class="n">tailRowMat</span> <span class="p">=</span> <span class="n">img</span><span class="p">(</span><span class="n">m</span><span class="p">,:);</span><span class="c">%取f的第m行</span>
+<span class="ln">12</span><span class="c">% 行扩展后，列扩展时需要注意四个角需要单独扩展进去，不然就成了十字架形的</span>
+<span class="ln">13</span><span class="n">headColumnMat</span> <span class="p">=</span> <span class="p">[</span><span class="n">img</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">img</span><span class="p">(:,</span><span class="mi">1</span><span class="p">)</span><span class="o">&#39;</span><span class="p">,</span> <span class="n">img</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="mi">1</span><span class="p">)];</span>
+<span class="ln">14</span><span class="n">tailColumnMat</span> <span class="p">=</span> <span class="p">[</span><span class="n">img</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">n</span><span class="p">),</span> <span class="n">img</span><span class="p">(:,</span><span class="n">n</span><span class="p">)</span><span class="o">&#39;</span><span class="p">,</span> <span class="n">img</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">)];</span>
+<span class="ln">15</span><span class="n">expandImage</span> <span class="p">=</span> <span class="p">[</span><span class="n">headRowMat</span><span class="p">;</span> <span class="n">img</span><span class="p">;</span> <span class="n">tailRowMat</span><span class="p">];</span>
+<span class="ln">16</span><span class="n">expandImage</span> <span class="p">=</span> <span class="p">[</span><span class="n">headColumnMat</span><span class="p">;</span> <span class="n">expandImage</span><span class="o">&#39;</span><span class="p">;</span> <span class="n">tailColumnMat</span><span class="p">];</span>
+<span class="ln">17</span><span class="n">expandImage</span> <span class="p">=</span> <span class="n">uint8</span><span class="p">(</span><span class="n">expandImage</span><span class="o">&#39;</span><span class="p">);</span>
+<span class="ln">18</span><span class="n">subplot</span><span class="p">(</span><span class="mi">222</span><span class="p">);</span><span class="n">imshow</span><span class="p">(</span><span class="n">expandImage</span><span class="p">);</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;expand image&#39;</span><span class="p">);</span>
+<span class="ln">19</span>
+<span class="ln">20</span><span class="c">% 创建新的图像</span>
+<span class="ln">21</span><span class="n">newImg</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+<span class="ln">22</span><span class="c">% 定义模板</span>
+<span class="ln">23</span><span class="n">meanKernal</span> <span class="p">=</span> <span class="n">uint8</span><span class="p">([</span><span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">24</span>                    <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span>
+<span class="ln">25</span>                    <span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span><span class="p">]);</span>
+<span class="ln">26</span><span class="c">% 遍历图像进行均值滤波</span>
+<span class="ln">27</span><span class="c">% 1.首先提取图像中待操作的ROI</span>
+<span class="ln">28</span><span class="c">% 2.利用模板对提取的ROI进行运算并赋值给新的图像</span>
+<span class="ln">29</span><span class="k">for</span> <span class="nb">i</span> <span class="p">=</span><span class="mi">2</span><span class="p">:</span> <span class="n">m</span><span class="o">+</span><span class="mi">1</span>
+<span class="ln">30</span>    <span class="k">for</span> <span class="nb">j</span> <span class="p">=</span><span class="mi">2</span><span class="p">:</span> <span class="n">n</span><span class="o">+</span><span class="mi">1</span>
+<span class="ln">31</span>       <span class="n">imgRoi</span> <span class="p">=</span> <span class="p">[</span><span class="n">expandImage</span><span class="p">(</span><span class="nb">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="nb">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="nb">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln">32</span>                 <span class="n">expandImage</span><span class="p">(</span><span class="nb">i</span>  <span class="p">,</span> <span class="nb">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="nb">i</span>  <span class="p">,</span> <span class="nb">j</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="nb">i</span>  <span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln">33</span>                 <span class="n">expandImage</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)];</span>
+<span class="ln">34</span>       <span class="n">newImg</span><span class="p">(</span><span class="nb">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">=</span> <span class="n">uint8</span><span class="p">(</span><span class="n">sum</span><span class="p">(</span><span class="n">sum</span><span class="p">(</span><span class="n">imgRoi</span><span class="o">.*</span><span class="n">meanKernal</span><span class="p">))</span><span class="o">/</span><span class="mi">9</span><span class="p">);</span>
+<span class="ln">35</span>    <span class="k">end</span>
+<span class="ln">36</span><span class="k">end</span>
+<span class="ln">37</span><span class="n">newImg</span> <span class="p">=</span> <span class="n">uint8</span><span class="p">(</span><span class="n">newImg</span><span class="p">);</span>
+<span class="ln">38</span><span class="n">subplot</span><span class="p">(</span><span class="mi">223</span><span class="p">);</span><span class="n">imshow</span><span class="p">(</span><span class="n">newImg</span><span class="p">);</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;new image&#39;</span><span class="p">);</span>
+<span class="ln">39</span><span class="n">subplot</span><span class="p">(</span><span class="mi">224</span><span class="p">);</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="o">-</span><span class="n">newImg</span><span class="p">);</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;newImg-img&#39;</span><span class="p">);</span>
+</code></pre></div><h2 id="32双边滤波算法">3.2双边滤波算法</h2>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="n">clc</span><span class="p">;</span><span class="n">clear</span><span class="p">;</span><span class="n">close</span> <span class="n">all</span><span class="p">;</span>
+<span class="ln"> 2</span>​
+<span class="ln"> 3</span><span class="c">% gaussian filter</span>
+<span class="ln"> 4</span><span class="c">% the weight is only related to distance</span>
+<span class="ln"> 5</span><span class="n">x</span> <span class="p">=</span> <span class="mi">1</span><span class="p">:</span><span class="mi">200</span><span class="p">;</span>
+<span class="ln"> 6</span><span class="n">y</span> <span class="p">=</span> <span class="mi">1</span><span class="p">:</span><span class="mi">200</span><span class="p">;</span>
+<span class="ln"> 7</span><span class="p">[</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">]</span> <span class="p">=</span> <span class="nb">meshgrid</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">);</span>
+<span class="ln"> 8</span><span class="n">D</span> <span class="p">=</span> <span class="p">(</span><span class="n">X</span><span class="o">-</span><span class="mi">100</span><span class="p">)</span><span class="o">.^</span><span class="mi">2</span><span class="o">+</span><span class="p">(</span><span class="n">Y</span><span class="o">-</span><span class="mi">100</span><span class="p">)</span><span class="o">.^</span><span class="mi">2</span><span class="p">;</span>
+<span class="ln"> 9</span><span class="n">z1</span> <span class="p">=</span> <span class="nb">exp</span><span class="p">(</span><span class="o">-</span><span class="n">D</span><span class="o">/</span><span class="mi">2000</span><span class="p">);</span>
+<span class="ln">10</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln">11</span><span class="n">mesh</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z1</span><span class="p">)</span>
+<span class="ln">12</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;高斯模型&#39;</span><span class="p">)</span>
+<span class="ln">13</span>​
+<span class="ln">14</span><span class="c">% add pixel value weight;</span>
+<span class="ln">15</span><span class="n">a</span> <span class="p">=</span> <span class="nb">ones</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span><span class="o">*</span><span class="mi">220</span><span class="p">;</span>
+<span class="ln">16</span><span class="n">a</span><span class="p">(:,</span><span class="mi">1</span><span class="p">:</span><span class="mi">100</span><span class="p">)</span> <span class="p">=</span> <span class="mi">20</span><span class="p">;</span>
+<span class="ln">17</span><span class="n">a</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">100</span><span class="p">,:)</span> <span class="p">=</span> <span class="mi">20</span><span class="p">;</span>
+<span class="ln">18</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln">19</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">a</span><span class="p">));</span>
+<span class="ln">20</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;图像&#39;</span><span class="p">)</span>
+<span class="ln">21</span><span class="n">z2</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="mi">200</span><span class="p">);</span>
+<span class="ln">22</span><span class="k">for</span> <span class="nb">i</span><span class="p">=</span><span class="mi">1</span><span class="p">:</span><span class="mi">200</span>
+<span class="ln">23</span>    <span class="k">for</span> <span class="nb">j</span><span class="p">=</span><span class="mi">1</span><span class="p">:</span><span class="mi">200</span>
+<span class="ln">24</span>        <span class="n">z2</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="p">)</span> <span class="p">=</span> <span class="nb">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">a</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="p">)</span><span class="o">-</span><span class="mi">220</span><span class="p">)</span>^<span class="mi">2</span><span class="o">/</span><span class="mi">1800</span><span class="p">);</span>
+<span class="ln">25</span>    <span class="k">end</span>
+<span class="ln">26</span><span class="k">end</span>
+<span class="ln">27</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln">28</span><span class="n">mesh</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z2</span><span class="p">);</span>
+<span class="ln">29</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;像素权重&#39;</span><span class="p">);</span>
+<span class="ln">30</span><span class="n">z</span> <span class="p">=</span> <span class="n">z1</span><span class="o">.*</span><span class="n">z2</span><span class="p">;</span>
+<span class="ln">31</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln">32</span><span class="n">mesh</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+<span class="ln">33</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;双边模型&#39;</span><span class="p">)</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/nr/nr9.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/nr/nr9.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>高斯滤波的图形，根据像素差异通过高斯分布也很容易得到一个分布图像</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/nr/nr10.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/nr/nr10.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>图像中同侧像素是一样的，那么相当于权重都是1，另一侧相差接近最大位数控制，权重就很小接近0，所以才边缘的时候权重就会有一个阶跃的效果，然后把这两个权重相结合就可以得到一完整的滤波器。只对同一侧的像素进行一个高斯滤波，而另一侧则保留为原来的值，这样就能起到很好的<strong>保边效果</strong>。</p>
+<h2 id="33nlm非局部均值算法">3.3NLM(非局部均值)算法</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/nr/nr12.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/nr/nr12.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>滤波之后会把噪点去除，但是帽子上的细节和头发细节会丢失</p>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="n">close</span> <span class="n">all</span><span class="p">;</span>
+<span class="ln"> 2</span><span class="n">clear</span> <span class="n">all</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="n">clc</span>
+<span class="ln"> 4</span><span class="n">img</span> <span class="p">=</span> <span class="n">imread</span><span class="p">(</span><span class="s">&#39;./images/lena.bmp&#39;</span><span class="p">);</span>
+<span class="ln"> 5</span><span class="n">I</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">img</span><span class="p">);</span>
+<span class="ln"> 6</span><span class="c">% I = double(imresize(img, [64, 64]));</span>
+<span class="ln"> 7</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln"> 8</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">I</span><span class="p">));</span>
+<span class="ln"> 9</span><span class="n">I_noise</span> <span class="p">=</span> <span class="n">I</span> <span class="o">+</span> <span class="mi">10</span> <span class="o">*</span> <span class="nb">randn</span><span class="p">(</span><span class="nb">size</span><span class="p">(</span><span class="n">I</span><span class="p">));</span>
+<span class="ln">10</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln">11</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">I_noise</span><span class="p">));</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="c">% -----------------------------------</span>
+<span class="ln">14</span><span class="n">ds</span> <span class="p">=</span> <span class="mi">2</span><span class="p">;</span>
+<span class="ln">15</span><span class="n">Ds</span> <span class="p">=</span> <span class="mi">5</span><span class="p">;</span>
+<span class="ln">16</span><span class="n">h</span> <span class="p">=</span> <span class="mi">10</span><span class="p">;</span>
+<span class="ln">17</span><span class="c">% -----------------------------------</span>
+<span class="ln">18</span>
+<span class="ln">19</span><span class="p">[</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">]</span> <span class="p">=</span> <span class="nb">size</span><span class="p">(</span><span class="n">I_noise</span><span class="p">);</span>
+<span class="ln">20</span><span class="n">DenoisedImg</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">);</span>
+<span class="ln">21</span><span class="n">PaddedImg</span> <span class="p">=</span> <span class="n">padarray</span><span class="p">(</span><span class="n">I</span><span class="p">,[</span><span class="n">ds</span><span class="o">+</span><span class="n">Ds</span><span class="p">,</span><span class="n">ds</span><span class="o">+</span><span class="n">Ds</span><span class="p">],</span><span class="s">&#39;symmetric&#39;</span><span class="p">,</span><span class="s">&#39;both&#39;</span><span class="p">);</span>
+<span class="ln">22</span>
+<span class="ln">23</span><span class="n">kernel</span> <span class="p">=</span> <span class="nb">ones</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">ds</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="n">ds</span><span class="o">+</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln">24</span><span class="n">kernel</span> <span class="p">=</span> <span class="n">kernel</span><span class="o">./</span><span class="p">((</span><span class="mi">2</span><span class="o">*</span><span class="n">ds</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">ds</span><span class="o">+</span><span class="mi">1</span><span class="p">));</span>
+<span class="ln">25</span><span class="n">h2</span><span class="p">=</span><span class="n">h</span><span class="o">*</span><span class="n">h</span><span class="p">;</span>
+<span class="ln">26</span>
+<span class="ln">27</span><span class="n">tic</span>
+<span class="ln">28</span><span class="k">for</span> <span class="nb">i</span><span class="p">=</span><span class="mi">1</span><span class="p">:</span><span class="n">m</span>
+<span class="ln">29</span>    <span class="k">for</span> <span class="nb">j</span><span class="p">=</span><span class="mi">1</span><span class="p">:</span><span class="n">n</span>
+<span class="ln">30</span>        <span class="n">num</span> <span class="p">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">31</span>        <span class="n">i1</span><span class="p">=</span><span class="nb">i</span><span class="o">+</span><span class="n">ds</span><span class="o">+</span><span class="n">Ds</span><span class="p">;</span>
+<span class="ln">32</span>        <span class="n">j1</span><span class="p">=</span><span class="nb">j</span><span class="o">+</span><span class="n">ds</span><span class="o">+</span><span class="n">Ds</span><span class="p">;</span>
+<span class="ln">33</span>        <span class="n">W1</span><span class="p">=</span><span class="n">PaddedImg</span><span class="p">(</span><span class="n">i1</span><span class="o">-</span><span class="n">ds</span><span class="p">:</span><span class="n">i1</span><span class="o">+</span><span class="n">ds</span><span class="p">,</span><span class="n">j1</span><span class="o">-</span><span class="n">ds</span><span class="p">:</span><span class="n">j1</span><span class="o">+</span><span class="n">ds</span><span class="p">);</span>  <span class="c">% current window</span>
+<span class="ln">34</span>        <span class="n">fprintf</span><span class="p">(</span><span class="s">&#39;=======current point: (%d, %d)\n&#39;</span><span class="p">,</span> <span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="p">);</span>
+<span class="ln">35</span>        <span class="n">wmax</span><span class="p">=</span><span class="mi">0</span><span class="p">;</span>
+<span class="ln">36</span>        <span class="n">average</span><span class="p">=</span><span class="mi">0</span><span class="p">;</span>
+<span class="ln">37</span>        <span class="n">sweight</span><span class="p">=</span><span class="mi">0</span><span class="p">;</span>
+<span class="ln">38</span>        
+<span class="ln">39</span>        <span class="c">% search window</span>
+<span class="ln">40</span>        <span class="c">% This window is not a fixed size, </span>
+<span class="ln">41</span>        <span class="c">% it shrinks when it&#39;s in the corner or border</span>
+<span class="ln">42</span>        <span class="n">swmin</span> <span class="p">=</span> <span class="n">i1</span> <span class="o">-</span> <span class="n">Ds</span><span class="p">;</span>
+<span class="ln">43</span>        <span class="n">swmax</span> <span class="p">=</span> <span class="n">i1</span> <span class="o">+</span> <span class="n">Ds</span><span class="p">;</span>
+<span class="ln">44</span>        <span class="n">shmin</span> <span class="p">=</span> <span class="n">j1</span> <span class="o">-</span> <span class="n">Ds</span><span class="p">;</span>
+<span class="ln">45</span>        <span class="n">shmax</span> <span class="p">=</span> <span class="n">j1</span> <span class="o">+</span> <span class="n">Ds</span><span class="p">;</span>
+<span class="ln">46</span>        
+<span class="ln">47</span>        <span class="k">for</span> <span class="n">r</span> <span class="p">=</span> <span class="n">swmin</span><span class="p">:</span> <span class="n">swmax</span>
+<span class="ln">48</span>            <span class="k">for</span> <span class="n">s</span> <span class="p">=</span> <span class="n">shmin</span><span class="p">:</span> <span class="n">shmax</span>
+<span class="ln">49</span>                <span class="k">if</span><span class="p">(</span><span class="n">r</span><span class="o">==</span><span class="n">i1</span> <span class="o">&amp;&amp;</span> <span class="n">s</span><span class="o">==</span><span class="n">j1</span><span class="p">)</span>
+<span class="ln">50</span>                    <span class="k">continue</span><span class="p">;</span>
+<span class="ln">51</span>                <span class="k">end</span>
+<span class="ln">52</span>                <span class="n">W2</span> <span class="p">=</span> <span class="n">PaddedImg</span><span class="p">(</span><span class="n">r</span><span class="o">-</span><span class="n">ds</span><span class="p">:</span><span class="n">r</span><span class="o">+</span><span class="n">ds</span><span class="p">,</span><span class="n">s</span><span class="o">-</span><span class="n">ds</span><span class="p">:</span><span class="n">s</span><span class="o">+</span><span class="n">ds</span><span class="p">);</span> <span class="c">% the window is to be compared with current window</span>
+<span class="ln">53</span>                <span class="n">num</span> <span class="p">=</span> <span class="n">num</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">54</span>                <span class="c">% Use the mean directly in order to simplify the calculate</span>
+<span class="ln">55</span>                <span class="n">Dist2</span> <span class="p">=</span> <span class="n">sum</span><span class="p">(</span><span class="n">sum</span><span class="p">(</span><span class="n">kernel</span><span class="o">.*</span><span class="p">(</span><span class="n">W1</span><span class="o">-</span><span class="n">W2</span><span class="p">)</span><span class="o">.*</span><span class="p">(</span><span class="n">W1</span><span class="o">-</span><span class="n">W2</span><span class="p">)));</span>	
+<span class="ln">56</span>                <span class="n">w</span> <span class="p">=</span> <span class="nb">exp</span><span class="p">(</span><span class="o">-</span><span class="n">Dist2</span><span class="o">/</span><span class="n">h2</span><span class="p">);</span>   <span class="c">% the weight of the compared window</span>
+<span class="ln">57</span>                <span class="k">if</span><span class="p">(</span><span class="n">w</span> <span class="o">&gt;</span> <span class="n">wmax</span><span class="p">)</span>
+<span class="ln">58</span>                    <span class="n">wmax</span> <span class="p">=</span> <span class="n">w</span><span class="p">;</span>
+<span class="ln">59</span>                <span class="k">end</span>
+<span class="ln">60</span>                <span class="n">sweight</span> <span class="p">=</span> <span class="n">sweight</span> <span class="o">+</span> <span class="n">w</span><span class="p">;</span>  <span class="c">% sum the weight to normalize</span>
+<span class="ln">61</span>                <span class="n">average</span> <span class="p">=</span> <span class="n">average</span> <span class="o">+</span> <span class="n">w</span><span class="o">*</span><span class="n">PaddedImg</span><span class="p">(</span><span class="n">r</span><span class="p">,</span><span class="n">s</span><span class="p">);</span>
+<span class="ln">62</span>            <span class="k">end</span>
+<span class="ln">63</span>        <span class="k">end</span>
+<span class="ln">64</span>        <span class="n">fprintf</span><span class="p">(</span><span class="s">&#39;num of win: %d\n&#39;</span><span class="p">,</span> <span class="n">num</span><span class="p">);</span>
+<span class="ln">65</span>        <span class="n">average</span> <span class="p">=</span> <span class="n">average</span> <span class="o">+</span> <span class="n">wmax</span><span class="o">*</span><span class="n">PaddedImg</span><span class="p">(</span><span class="n">i1</span><span class="p">,</span><span class="n">j1</span><span class="p">);</span>
+<span class="ln">66</span>        <span class="n">sweight</span> <span class="p">=</span> <span class="n">sweight</span><span class="o">+</span><span class="n">wmax</span><span class="p">;</span>
+<span class="ln">67</span>        <span class="n">DenoisedImg</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span><span class="nb">j</span><span class="p">)</span> <span class="p">=</span> <span class="n">average</span><span class="o">/</span><span class="n">sweight</span><span class="p">;</span>
+<span class="ln">68</span>    <span class="k">end</span>
+<span class="ln">69</span><span class="k">end</span>
+<span class="ln">70</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln">71</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">DenoisedImg</span><span class="p">));</span>
+<span class="ln">72</span><span class="n">toc</span>
+</code></pre></div><h2 id="34中值滤波算法">3.4中值滤波算法</h2>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="n">clear</span><span class="p">;</span>
+<span class="ln"> 2</span><span class="n">clc</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="n">close</span> <span class="n">all</span><span class="p">;</span>
+<span class="ln"> 4</span><span class="n">img</span> <span class="p">=</span> <span class="n">imread</span><span class="p">(</span><span class="s">&#39;./images/test_pattern_blurring_orig.tif&#39;</span><span class="p">);</span>
+<span class="ln"> 5</span><span class="p">[</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span> <span class="p">=</span> <span class="nb">size</span><span class="p">(</span><span class="n">img</span><span class="p">);</span>
+<span class="ln"> 6</span><span class="n">figure</span><span class="p">;</span><span class="n">subplot</span><span class="p">(</span><span class="mi">221</span><span class="p">);</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">);</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;original image&#39;</span><span class="p">);</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span><span class="c">%% 运算的时候需要对边缘进行扩展</span>
+<span class="ln"> 9</span><span class="c">% 需要特殊处理四周最外圈的行和列，本算法中将其向外扩展一圈，用最外圈的值填充</span>
+<span class="ln">10</span><span class="n">headRowMat</span> <span class="p">=</span> <span class="n">img</span><span class="p">(</span><span class="mi">1</span><span class="p">,:);</span><span class="c">%取f的第1行</span>
+<span class="ln">11</span><span class="n">tailRowMat</span> <span class="p">=</span> <span class="n">img</span><span class="p">(</span><span class="n">m</span><span class="p">,:);</span><span class="c">%取f的第m行</span>
+<span class="ln">12</span><span class="c">% 行扩展后，列扩展时需要注意四个角需要单独扩展进去，不然就成了十字架形的</span>
+<span class="ln">13</span><span class="n">headColumnMat</span> <span class="p">=</span> <span class="p">[</span><span class="n">img</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">img</span><span class="p">(:,</span><span class="mi">1</span><span class="p">)</span><span class="o">&#39;</span><span class="p">,</span> <span class="n">img</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="mi">1</span><span class="p">)];</span>
+<span class="ln">14</span><span class="n">tailColumnMat</span> <span class="p">=</span> <span class="p">[</span><span class="n">img</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">n</span><span class="p">),</span> <span class="n">img</span><span class="p">(:,</span><span class="n">n</span><span class="p">)</span><span class="o">&#39;</span><span class="p">,</span> <span class="n">img</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">)];</span>
+<span class="ln">15</span><span class="n">expandImage</span> <span class="p">=</span> <span class="p">[</span><span class="n">headRowMat</span><span class="p">;</span> <span class="n">img</span><span class="p">;</span> <span class="n">tailRowMat</span><span class="p">];</span>
+<span class="ln">16</span><span class="n">expandImage</span> <span class="p">=</span> <span class="p">[</span><span class="n">headColumnMat</span><span class="p">;</span> <span class="n">expandImage</span><span class="o">&#39;</span><span class="p">;</span> <span class="n">tailColumnMat</span><span class="p">];</span>
+<span class="ln">17</span><span class="n">expandImage</span> <span class="p">=</span> <span class="n">uint8</span><span class="p">(</span><span class="n">expandImage</span><span class="o">&#39;</span><span class="p">);</span>
+<span class="ln">18</span><span class="n">subplot</span><span class="p">(</span><span class="mi">222</span><span class="p">);</span><span class="n">imshow</span><span class="p">(</span><span class="n">expandImage</span><span class="p">);</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;expand image&#39;</span><span class="p">);</span>
+<span class="ln">19</span>
+<span class="ln">20</span><span class="n">newImg</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+<span class="ln">21</span><span class="k">for</span> <span class="nb">i</span> <span class="p">=</span><span class="mi">2</span><span class="p">:</span> <span class="n">m</span><span class="o">+</span><span class="mi">1</span>
+<span class="ln">22</span>    <span class="k">for</span> <span class="nb">j</span> <span class="p">=</span><span class="mi">2</span><span class="p">:</span> <span class="n">n</span><span class="o">+</span><span class="mi">1</span>
+<span class="ln">23</span>       <span class="n">imgRoi</span> <span class="p">=</span> <span class="p">[</span><span class="n">expandImage</span><span class="p">(</span><span class="nb">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="nb">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="nb">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="c">...</span>
+<span class="ln">24</span>                 <span class="n">expandImage</span><span class="p">(</span><span class="nb">i</span>  <span class="p">,</span> <span class="nb">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="nb">i</span>  <span class="p">,</span> <span class="nb">j</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="nb">i</span>  <span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="c">...</span>
+<span class="ln">25</span>                 <span class="n">expandImage</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)];</span>
+<span class="ln">26</span>       <span class="n">orderedList</span> <span class="p">=</span> <span class="n">sort</span><span class="p">(</span><span class="n">imgRoi</span><span class="p">);</span>
+<span class="ln">27</span>       <span class="n">sizeRoi</span> <span class="p">=</span> <span class="nb">size</span><span class="p">(</span><span class="n">imgRoi</span><span class="p">);</span>
+<span class="ln">28</span>       <span class="n">newImg</span><span class="p">(</span><span class="nb">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">=</span> <span class="n">orderedList</span><span class="p">((</span><span class="n">sizeRoi</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">);</span>
+<span class="ln">29</span>    <span class="k">end</span>
+<span class="ln">30</span><span class="k">end</span>
+<span class="ln">31</span><span class="n">newImg</span> <span class="p">=</span> <span class="n">uint8</span><span class="p">(</span><span class="n">newImg</span><span class="p">);</span>
+<span class="ln">32</span><span class="n">subplot</span><span class="p">(</span><span class="mi">223</span><span class="p">);</span><span class="n">imshow</span><span class="p">(</span><span class="n">newImg</span><span class="p">);</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;new image&#39;</span><span class="p">);</span>
+<span class="ln">33</span><span class="n">subplot</span><span class="p">(</span><span class="mi">224</span><span class="p">);</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">newImg</span><span class="o">-</span><span class="n">img</span><span class="p">));</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;newImg-img&#39;</span><span class="p">);</span>
+</code></pre></div><p>从滤波效果图中可以看出去噪能力还可以，白块中的噪点去除了很多，而且边缘信息保留得也很好。</p>
+<h2 id="35多级中值滤波算法">3.5多级中值滤波算法</h2>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="n">close</span> <span class="n">all</span><span class="p">;</span>
+<span class="ln"> 2</span><span class="n">clear</span> <span class="n">all</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="n">clc</span>
+<span class="ln"> 4</span><span class="n">img</span> <span class="p">=</span> <span class="n">imread</span><span class="p">(</span><span class="s">&#39;./images/lena.bmp&#39;</span><span class="p">);</span>
+<span class="ln"> 5</span><span class="n">I</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">img</span><span class="p">);</span>
+<span class="ln"> 6</span><span class="c">% I = double(imresize(img, [64, 64]));</span>
+<span class="ln"> 7</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln"> 8</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">I</span><span class="p">));</span>
+<span class="ln"> 9</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;org file&#39;</span><span class="p">);</span>
+<span class="ln">10</span>
+<span class="ln">11</span><span class="n">I_noise</span> <span class="p">=</span> <span class="n">I</span> <span class="o">+</span> <span class="mi">10</span> <span class="o">*</span> <span class="nb">randn</span><span class="p">(</span><span class="nb">size</span><span class="p">(</span><span class="n">I</span><span class="p">));</span>
+<span class="ln">12</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln">13</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">I_noise</span><span class="p">));</span>
+<span class="ln">14</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;noise file&#39;</span><span class="p">);</span>
+<span class="ln">15</span><span class="p">[</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">]</span> <span class="p">=</span> <span class="nb">size</span><span class="p">(</span><span class="n">I_noise</span><span class="p">);</span>
+<span class="ln">16</span>
+<span class="ln">17</span><span class="n">DenoisedImg</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">);</span>
+<span class="ln">18</span><span class="n">PaddedImg</span> <span class="p">=</span> <span class="n">padarray</span><span class="p">(</span><span class="n">I</span><span class="p">,[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span><span class="s">&#39;symmetric&#39;</span><span class="p">,</span><span class="s">&#39;both&#39;</span><span class="p">);</span>
+<span class="ln">19</span>
+<span class="ln">20</span><span class="n">tic</span>
+<span class="ln">21</span><span class="k">for</span> <span class="nb">i</span> <span class="p">=</span> <span class="mi">1</span><span class="p">:</span> <span class="n">m</span>
+<span class="ln">22</span>    <span class="k">for</span> <span class="nb">j</span> <span class="p">=</span> <span class="mi">1</span><span class="p">:</span> <span class="n">n</span>
+<span class="ln">23</span>        <span class="n">roi</span> <span class="p">=</span> <span class="n">PaddedImg</span><span class="p">(</span><span class="nb">i</span><span class="p">:</span><span class="nb">i</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="nb">j</span><span class="p">:</span><span class="nb">j</span><span class="o">+</span><span class="mi">2</span><span class="p">);</span>
+<span class="ln">24</span>        <span class="c">% first stage</span>
+<span class="ln">25</span>        <span class="n">median_HV</span> <span class="p">=</span> <span class="n">median</span><span class="p">([</span><span class="n">roi</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">roi</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">roi</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">roi</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span> <span class="n">roi</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">)]);</span>
+<span class="ln">26</span>        <span class="n">median_diag</span> <span class="p">=</span> <span class="n">median</span><span class="p">([</span><span class="n">roi</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">roi</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span> <span class="n">roi</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">roi</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">roi</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)]);</span>
+<span class="ln">27</span>        <span class="c">% second stage</span>
+<span class="ln">28</span>        <span class="n">DenoisedImg</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="p">)</span> <span class="p">=</span> <span class="n">median</span><span class="p">([</span><span class="n">median_HV</span><span class="p">,</span> <span class="n">roi</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">median_diag</span><span class="p">]);</span>
+<span class="ln">29</span>    <span class="k">end</span>
+<span class="ln">30</span><span class="k">end</span>
+<span class="ln">31</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln">32</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">DenoisedImg</span><span class="p">));</span>
+<span class="ln">33</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;denoise file&#39;</span><span class="p">);</span>
+<span class="ln">34</span><span class="n">toc</span>
+<span class="ln">35</span>
+<span class="ln">36</span><span class="n">b</span> <span class="p">=</span> <span class="n">medfilt2</span><span class="p">(</span><span class="n">I_noise</span><span class="p">,[</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">]);</span>
+<span class="ln">37</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln">38</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">b</span><span class="p">));</span>
+<span class="ln">39</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;median filter of matlab denoise file&#39;</span><span class="p">);</span>
+</code></pre></div><h2 id="36多级中值混合滤波算法">3.6多级中值混合滤波算法</h2>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="n">close</span> <span class="n">all</span><span class="p">;</span>
+<span class="ln"> 2</span><span class="n">clear</span> <span class="n">all</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="n">clc</span>
+<span class="ln"> 4</span><span class="n">img</span> <span class="p">=</span> <span class="n">imread</span><span class="p">(</span><span class="s">&#39;./images/lena.bmp&#39;</span><span class="p">);</span>
+<span class="ln"> 5</span><span class="n">I</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">img</span><span class="p">);</span>
+<span class="ln"> 6</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln"> 7</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">I</span><span class="p">));</span>
+<span class="ln"> 8</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;org file&#39;</span><span class="p">);</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span><span class="n">I_noise</span> <span class="p">=</span> <span class="n">I</span> <span class="o">+</span> <span class="mi">10</span> <span class="o">*</span> <span class="nb">randn</span><span class="p">(</span><span class="nb">size</span><span class="p">(</span><span class="n">I</span><span class="p">));</span>
+<span class="ln">11</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln">12</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">I_noise</span><span class="p">));</span>
+<span class="ln">13</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;noise file&#39;</span><span class="p">);</span>
+<span class="ln">14</span><span class="p">[</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">]</span> <span class="p">=</span> <span class="nb">size</span><span class="p">(</span><span class="n">I_noise</span><span class="p">);</span>
+<span class="ln">15</span>
+<span class="ln">16</span><span class="n">DenoisedImg</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">);</span>
+<span class="ln">17</span><span class="n">PaddedImg</span> <span class="p">=</span> <span class="n">padarray</span><span class="p">(</span><span class="n">I</span><span class="p">,[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span><span class="s">&#39;symmetric&#39;</span><span class="p">,</span><span class="s">&#39;both&#39;</span><span class="p">);</span>
+<span class="ln">18</span>
+<span class="ln">19</span><span class="n">tic</span>
+<span class="ln">20</span><span class="k">for</span> <span class="nb">i</span> <span class="p">=</span> <span class="mi">1</span><span class="p">:</span> <span class="n">m</span>
+<span class="ln">21</span>    <span class="k">for</span> <span class="nb">j</span> <span class="p">=</span> <span class="mi">1</span><span class="p">:</span> <span class="n">n</span>
+<span class="ln">22</span>        <span class="n">roi</span> <span class="p">=</span> <span class="n">PaddedImg</span><span class="p">(</span><span class="nb">i</span><span class="p">:</span><span class="nb">i</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="nb">j</span><span class="p">:</span><span class="nb">j</span><span class="o">+</span><span class="mi">2</span><span class="p">);</span>
+<span class="ln">23</span>        <span class="c">% first stage: average and median</span>
+<span class="ln">24</span>        <span class="n">mean_V</span> <span class="p">=</span> <span class="n">mean</span><span class="p">(</span><span class="n">roi</span><span class="p">(:,</span><span class="mi">2</span><span class="p">));</span>
+<span class="ln">25</span>        <span class="n">mean_H</span> <span class="p">=</span> <span class="n">mean</span><span class="p">(</span><span class="n">roi</span><span class="p">(</span><span class="mi">2</span><span class="p">,:));</span>
+<span class="ln">26</span>        <span class="n">median_HV</span> <span class="p">=</span> <span class="n">median</span><span class="p">([</span><span class="n">mean_V</span><span class="p">,</span> <span class="n">roi</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)],</span> <span class="n">mean_H</span><span class="p">);</span>
+<span class="ln">27</span>        
+<span class="ln">28</span>        <span class="n">mean45</span> <span class="p">=</span> <span class="n">mean</span><span class="p">([</span><span class="n">roi</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">roi</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">roi</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]);</span>
+<span class="ln">29</span>        <span class="n">mean135</span> <span class="p">=</span> <span class="n">mean</span><span class="p">([</span><span class="n">roi</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">roi</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">roi</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)]);</span>
+<span class="ln">30</span>        <span class="n">median_diag</span> <span class="p">=</span> <span class="n">median</span><span class="p">([</span><span class="n">mean45</span><span class="p">,</span> <span class="n">roi</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)],</span> <span class="n">mean135</span><span class="p">);</span>
+<span class="ln">31</span>        
+<span class="ln">32</span>        <span class="c">% second stage</span>
+<span class="ln">33</span>        <span class="n">DenoisedImg</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="p">)</span> <span class="p">=</span> <span class="n">median</span><span class="p">([</span><span class="n">median_HV</span><span class="p">,</span> <span class="n">roi</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">median_diag</span><span class="p">]);</span>
+<span class="ln">34</span>    <span class="k">end</span>
+<span class="ln">35</span><span class="k">end</span>
+<span class="ln">36</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln">37</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">DenoisedImg</span><span class="p">));</span>
+<span class="ln">38</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;denoise file&#39;</span><span class="p">);</span>
+<span class="ln">39</span><span class="n">toc</span>
+<span class="ln">40</span>
+<span class="ln">41</span><span class="n">b</span> <span class="p">=</span> <span class="n">medfilt2</span><span class="p">(</span><span class="n">I_noise</span><span class="p">,[</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">]);</span>
+<span class="ln">42</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln">43</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">b</span><span class="p">));</span>
+<span class="ln">44</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;median filter of matlab denoise file&#39;</span><span class="p">);</span>
+</code></pre></div><h2 id="37多级中值有理混合滤波算法">3.7多级中值有理混合滤波算法</h2>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="n">close</span> <span class="n">all</span><span class="p">;</span>
+<span class="ln"> 2</span><span class="n">clear</span> <span class="n">all</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="n">clc</span>
+<span class="ln"> 4</span><span class="n">img</span> <span class="p">=</span> <span class="n">imread</span><span class="p">(</span><span class="s">&#39;./images/lena.bmp&#39;</span><span class="p">);</span>
+<span class="ln"> 5</span><span class="n">I</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">img</span><span class="p">);</span>
+<span class="ln"> 6</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln"> 7</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">I</span><span class="p">));</span>
+<span class="ln"> 8</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;org file&#39;</span><span class="p">);</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span><span class="n">I_noise</span> <span class="p">=</span> <span class="n">I</span> <span class="o">+</span> <span class="mi">10</span> <span class="o">*</span> <span class="nb">randn</span><span class="p">(</span><span class="nb">size</span><span class="p">(</span><span class="n">I</span><span class="p">));</span>
+<span class="ln">11</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln">12</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">I_noise</span><span class="p">));</span>
+<span class="ln">13</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;noise file&#39;</span><span class="p">);</span>
+<span class="ln">14</span><span class="p">[</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">]</span> <span class="p">=</span> <span class="nb">size</span><span class="p">(</span><span class="n">I_noise</span><span class="p">);</span>
+<span class="ln">15</span>
+<span class="ln">16</span><span class="n">DenoisedImg</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">);</span>
+<span class="ln">17</span><span class="n">PaddedImg</span> <span class="p">=</span> <span class="n">padarray</span><span class="p">(</span><span class="n">I</span><span class="p">,[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span><span class="s">&#39;symmetric&#39;</span><span class="p">,</span><span class="s">&#39;both&#39;</span><span class="p">);</span>
+<span class="ln">18</span>
+<span class="ln">19</span><span class="n">h</span> <span class="p">=</span> <span class="mi">2</span><span class="p">;</span>
+<span class="ln">20</span><span class="n">k</span> <span class="p">=</span> <span class="mf">0.01</span><span class="p">;</span>
+<span class="ln">21</span>
+<span class="ln">22</span><span class="n">tic</span>
+<span class="ln">23</span><span class="k">for</span> <span class="nb">i</span> <span class="p">=</span> <span class="mi">1</span><span class="p">:</span> <span class="n">m</span>
+<span class="ln">24</span>    <span class="k">for</span> <span class="nb">j</span> <span class="p">=</span> <span class="mi">1</span><span class="p">:</span> <span class="n">n</span>
+<span class="ln">25</span>        <span class="n">roi</span> <span class="p">=</span> <span class="n">PaddedImg</span><span class="p">(</span><span class="nb">i</span><span class="p">:</span><span class="nb">i</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="nb">j</span><span class="p">:</span><span class="nb">j</span><span class="o">+</span><span class="mi">2</span><span class="p">);</span>
+<span class="ln">26</span>        <span class="n">median_HV</span> <span class="p">=</span> <span class="n">median</span><span class="p">([</span><span class="n">roi</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">roi</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">roi</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">roi</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span> <span class="n">roi</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">)]);</span>
+<span class="ln">27</span>        <span class="n">median_diag</span> <span class="p">=</span> <span class="n">median</span><span class="p">([</span><span class="n">roi</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">roi</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span> <span class="n">roi</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">roi</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">roi</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)]);</span>
+<span class="ln">28</span>        <span class="n">CWMF</span> <span class="p">=</span> <span class="n">median</span><span class="p">([</span><span class="n">roi</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">roi</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">roi</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="mi">3</span><span class="p">,</span> <span class="n">roi</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span> <span class="n">roi</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">)]);</span>
+<span class="ln">29</span>        
+<span class="ln">30</span>        <span class="n">DenoisedImg</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="p">)</span> <span class="p">=</span> <span class="n">CWMF</span> <span class="o">+</span> <span class="p">(</span><span class="n">median_HV</span> <span class="o">+</span> <span class="n">median_diag</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">CWMF</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">h</span> <span class="o">+</span> <span class="n">k</span> <span class="o">*</span> <span class="p">(</span><span class="n">median_HV</span> <span class="o">-</span> <span class="n">median_diag</span><span class="p">));</span>
+<span class="ln">31</span>    <span class="k">end</span>
+<span class="ln">32</span><span class="k">end</span>
+<span class="ln">33</span><span class="n">toc</span>
+<span class="ln">34</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln">35</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">DenoisedImg</span><span class="p">));</span>
+<span class="ln">36</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;denoise file&#39;</span><span class="p">);</span>
+<span class="ln">37</span><span class="n">b</span> <span class="p">=</span> <span class="n">medfilt2</span><span class="p">(</span><span class="n">I_noise</span><span class="p">,[</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">]);</span>
+<span class="ln">38</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln">39</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">b</span><span class="p">));</span>
+<span class="ln">40</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;median filter of matlab denoise file&#39;</span><span class="p">);</span>
+</code></pre></div>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/isp/">isp</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/algorithm/">algorithm</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/nr/">NR</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E7%A9%BA%E5%9F%9F%E6%BB%A4%E6%B3%A2/">空域滤波</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E5%9D%87%E5%80%BC%E6%BB%A4%E6%B3%A2/">均值滤波</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E4%B8%AD%E5%80%BC%E6%BB%A4%E6%B3%A2/">中值滤波</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E5%8F%98%E6%8D%A2%E5%9F%9F%E6%BB%A4%E6%B3%A2/">变换域滤波</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%97%B6%E5%9F%9F%E6%BB%A4%E6%B3%A2/">时域滤波</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-hvshuman-vision-system/" data-tooltip="isp算法学习-HVS（Human Vision System）">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2023 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-hvshuman-vision-system/" data-tooltip="isp算法学习-HVS（Human Vision System）">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-nrnoise-reduce%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-nrnoise-reduce%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-nrnoise-reduce%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2023\/12\/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-nrnoise-reduce\/';
+          
+            this.page.identifier = '\/2023\/12\/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-nrnoise-reduce\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+  <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_CHTML-full" integrity="sha256-GhM+5JHb6QUzOQPXSJLEWP7R73CbkisjzK5Eyij4U9w=" crossorigin="anonymous"></script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      CommonHTML: { linebreaks: { automatic: true } },
+      tex2jax: { inlineMath: [ ['$', '$'], ['\\(','\\)'] ], displayMath: [ ['$$','$$'], ['\\[', '\\]'] ], processEscapes: false },
+      messageStyle: 'none'
+    });
+  </script>
+
+
+
+    
+  </body>
+</html>
+

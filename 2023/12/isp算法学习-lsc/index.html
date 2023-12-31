@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="本文是isp算法学习的第三篇章，主要是讲述LSC原理和算法。">
+
+
+<meta property="og:description" content="本文是isp算法学习的第三篇章，主要是讲述LSC原理和算法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="isp算法学习-LSC">
+<meta name="twitter:title" content="isp算法学习-LSC">
+<meta property="og:url" content="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-lsc/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-lsc/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="本文是isp算法学习的第三篇章，主要是讲述LSC原理和算法。">
+<meta name="twitter:description" content="本文是isp算法学习的第三篇章，主要是讲述LSC原理和算法。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2023-12-27T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2023-12-27T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="isp">
+    
+      <meta property="article:section" content="2023">
+    
+      <meta property="article:section" content="December">
+    
+  
+  
+    
+      <meta property="article:tag" content="isp">
+    
+      <meta property="article:tag" content="algorithm">
+    
+      <meta property="article:tag" content="lsc">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc_thumb.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc_thumb.png">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+
+
+    <title>isp算法学习-LSC</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-lsc/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/camera/algorithmlearning/lsc/lsc_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      isp算法学习-LSC
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2023-12-27T00:00:00Z">
+        
+  十二月 27, 2023
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/isp">isp</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2023">2023</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/december">December</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">700 Words|Read in about 4 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+      
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>本文是isp算法学习的第三篇章，主要是讲述LSC原理和算法。</p>
+<div style="text-align: center;">
+<iframe 
+    frameborder="no" border="1"
+    marginwidth="0" marginheight="0"
+    width=400 height=100
+    src="//music.163.com/outchain/player?type=2&id=488249475&auto=1&height=66"></iframe>
+</div>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="1产生原因">1产生原因</h1>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>shading分成Luma shading和Color shading两种。</p>
+<h2 id="11luma-shading">1.1Luma shading</h2>
+<p>影响亮度shading的主要跟镜头有关。用通俗易懂的方式解释，以左边的图为例，蓝色和绿色有相同的能量的光，通过一些列的透镜，蓝色的中心光能量会聚焦到中心，且能量衰减较小，而边缘有一定角度绿色的光会聚焦到边缘，且能量衰减较大。</p>
+<p>通常能量衰减公式为</p>
+<p>$$
+cos^{4}(\theta)
+$$</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>可以看到中间零度的时候，能量几乎没有衰减；四周角度大的时候，根据上述公式，发现能量会比中间衰减来的大。</p>
+<h2 id="12color-shading">1.2Color shading</h2>
+<p>光线过来，经过一个棱镜，不同颜色的光，折射率的不同，光会发生色散现象。</p>
+<p>经过透镜后有一个平面的话，在平面上就会看到不同颜色的分离，由于颜色的分离，导致中间和四周的颜色会不一致。中心颜色会偏红，四周颜色会偏暗绿。</p>
+<h1 id="2校正方法">2校正方法</h1>
+<h2 id="21lut显示查找表">2.1LUT（显示查找表）</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>因为镜头和光线折射率的原因，中心点的值为255，那么四周的值可能就只有200，那么需要用一种算法将四周的值乘以一个增益值，是所有的画面像素点的值都能够归一化。通常会取中心像素值最大的点（或者取中心区域的一些点取平均）为目标值。</p>
+<p>如果一张图片的像素是800w，如果使用每一个点那么对于芯片整体的内存或者是性能要求会特别高。这个时候我们采取将整个图形分成若干块，存储若干块的顶点即可，这种方式就是查找表方法。</p>
+<p>查找表的方式有两种<strong>网格法</strong>和<strong>半径法</strong>。</p>
+<h3 id="211网格法">2.1.1网格法</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>我们对整个图形采用网格法来替代所有像素点的方法，只需要存储网格上的顶点即可。举例以17*17的网格，来存储对应的顶点增益数据，对于800w的数据来说，会大大减轻计算量。</p>
+<p>如果说需要求出每一个网格内某一个像素对应的增益值，采用插值的方法来求其增益值即可，不需要再逐个点求增益值。</p>
+<h3 id="212半径法">2.1.2半径法</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>根据上面公式得出，每个方向都符合cos<!-- raw HTML omitted -->4<!-- raw HTML omitted -->(θ)。</p>
+<p>相同半径，θ不变，这半径所在的一圈增益也都是相同的。</p>
+<p>我取一条线上不同半径的点，每个不同半径上的点保存到对应的表格中。</p>
+<p>如果不同半径对应一种增益值，那么任意再图上的点到中心举例
+$$
+d=\sqrt{(x - x_{c})^2 + (y - y_{c})^2}
+$$
+但是这种方法实际中很少用到，比较理想化。不能保证镜头安装，工艺生产等方面是否会出现偏差，导致镜头中心并非是画面中心，那么校正会越来越错。</p>
+<h2 id="22多项式拟合法">2.2多项式拟合法</h2>
+<h3 id="221以图像中心为标定中心">2.2.1以图像中心为标定中心</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>通过拉格朗日插值法，进行高次曲线拟合的增益曲线。</p>
+<h3 id="222不以图像中心为标定中心">2.2.2不以图像中心为标定中心</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc8.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>镜头安装，工艺生产等方面是否会出现偏差，图像中心并不是我们认为的最亮的点，所以不能简单的以图像中心为标定点。</p>
+<p>利用迭代的方式，先垂直的找然后水平的找。定义一个范围TH，在这个范围里面定义一个gain1，超过这个范围的定义gain2，得到两个二项式的拟合曲线，尽可能把真实的gain曲线包住。</p>
+<h1 id="3方法实现">3方法实现</h1>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc9.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc9.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>可以看到，图像左下角是对应的亮度曲线图，右下角是对应的gain值曲线图，何如对应的gain值后，LSC后的图像就为右上角所示。</p>
+<h2 id="31标定">3.1标定</h2>
+<p>均匀光下，采集一张灰色（18%的灰）图像或者滤光片即可。</p>
+<p>每个像素都除以整个像素中最大值的80%作为增益</p>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln">1</span><span class="k">function</span><span class="w"> </span><span class="nf">LSCCalibrationM</span><span class="p">(</span>path<span class="p">)</span><span class="w">
+</span><span class="ln">2</span><span class="w"></span><span class="n">lscRefImg</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">imread</span><span class="p">(</span><span class="n">path</span><span class="p">));</span>
+<span class="ln">3</span><span class="n">tmp</span> <span class="p">=</span> <span class="nb">ones</span><span class="p">(</span><span class="nb">size</span><span class="p">(</span><span class="n">lscRefImg</span><span class="p">));</span>
+<span class="ln">4</span><span class="n">corTab</span> <span class="p">=</span> <span class="p">(</span><span class="n">tmp</span><span class="o">./</span><span class="n">lscRefImg</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.8</span> <span class="o">*</span> <span class="n">max</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">lscRefImg</span><span class="p">));</span>
+<span class="ln">5</span><span class="n">save</span><span class="p">(</span><span class="s">&#39;src/corTab.mat&#39;</span><span class="p">,</span> <span class="s">&#39;corTab&#39;</span><span class="p">);</span>
+<span class="ln">6</span><span class="k">end</span>
+</code></pre></div><h2 id="32直接校正">3.2直接校正</h2>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln">1</span><span class="c">%% --------------------------------</span>
+<span class="ln">2</span><span class="n">lscRefImg</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">imread</span><span class="p">(</span><span class="s">&#39;images/lscRefImg.jpg&#39;</span><span class="p">));</span>
+<span class="ln">3</span><span class="n">load</span><span class="p">(</span><span class="s">&#39;src/data/corTab.mat&#39;</span><span class="p">)</span>
+<span class="ln">4</span><span class="n">corImg</span> <span class="p">=</span> <span class="n">uint8</span><span class="p">(</span><span class="n">lscRefImg</span> <span class="o">.*</span> <span class="n">corTab</span><span class="p">);</span>
+<span class="ln">5</span><span class="n">figure</span><span class="p">;</span>
+<span class="ln">6</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">);</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">lscRefImg</span><span class="p">));</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;org&#39;</span><span class="p">);</span>
+<span class="ln">7</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">);</span><span class="n">imshow</span><span class="p">(</span><span class="n">corImg</span><span class="p">);</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;corrected&#39;</span><span class="p">);</span>
+</code></pre></div><h2 id="33划分网格校正">3.3划分网格校正</h2>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="c">% --------parameters of correction------------</span>
+<span class="ln"> 2</span><span class="n">filePath</span> <span class="p">=</span> <span class="s">&#39;images/lscRefImg.jpg&#39;</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="n">side_num</span> <span class="p">=</span> <span class="mi">17</span><span class="p">;</span>
+<span class="ln"> 4</span><span class="c">% --------------------------------------------</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span><span class="c">% --------load data---------------------------</span>
+<span class="ln"> 7</span><span class="c">% load org image</span>
+<span class="ln"> 8</span><span class="n">image</span> <span class="p">=</span> <span class="n">imread</span><span class="p">(</span><span class="n">filePath</span><span class="p">);</span>
+<span class="ln"> 9</span><span class="p">[</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">]</span> <span class="p">=</span> <span class="nb">size</span><span class="p">(</span><span class="n">image</span><span class="p">);</span>
+<span class="ln">10</span><span class="n">sideX</span> <span class="p">=</span> <span class="nb">floor</span><span class="p">(</span><span class="n">height</span><span class="o">/</span><span class="n">side_num</span><span class="p">);</span>
+<span class="ln">11</span><span class="n">sideY</span> <span class="p">=</span> <span class="nb">floor</span><span class="p">(</span><span class="n">width</span><span class="o">/</span><span class="n">side_num</span><span class="p">);</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="c">% load gain of each channel</span>
+<span class="ln">14</span><span class="n">load</span><span class="p">(</span><span class="s">&#39;./src/data/Gain.mat&#39;</span><span class="p">);</span>
+<span class="ln">15</span>
+<span class="ln">16</span><span class="c">% --------------correction-------------------</span>
+<span class="ln">17</span><span class="n">disImg</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="nb">size</span><span class="p">(</span><span class="n">image</span><span class="p">));</span>
+<span class="ln">18</span><span class="n">gainStepX</span> <span class="p">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">19</span><span class="n">gainStepY</span> <span class="p">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">20</span><span class="n">gainTab</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="nb">size</span><span class="p">(</span><span class="n">image</span><span class="p">));</span>
+<span class="ln">21</span><span class="k">for</span> <span class="nb">i</span> <span class="p">=</span> <span class="mi">1</span><span class="p">:</span><span class="n">height</span>
+<span class="ln">22</span>    <span class="k">for</span> <span class="nb">j</span> <span class="p">=</span> <span class="mi">1</span><span class="p">:</span><span class="n">width</span>
+<span class="ln">23</span>        <span class="n">gainStepX</span> <span class="p">=</span> <span class="nb">floor</span><span class="p">(</span><span class="nb">i</span> <span class="o">/</span> <span class="n">sideX</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">24</span>        <span class="k">if</span> <span class="n">gainStepX</span> <span class="o">&gt;</span> <span class="mi">16</span>
+<span class="ln">25</span>            <span class="n">gainStepX</span> <span class="p">=</span> <span class="mi">16</span><span class="p">;</span>
+<span class="ln">26</span>        <span class="k">end</span>
+<span class="ln">27</span>        <span class="n">gainStepY</span> <span class="p">=</span> <span class="nb">floor</span><span class="p">(</span><span class="nb">j</span> <span class="o">/</span> <span class="n">sideY</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">28</span>        <span class="k">if</span> <span class="n">gainStepY</span> <span class="o">&gt;</span> <span class="mi">16</span>
+<span class="ln">29</span>            <span class="n">gainStepY</span> <span class="p">=</span> <span class="mi">16</span><span class="p">;</span>
+<span class="ln">30</span>        <span class="k">end</span>
+<span class="ln">31</span>        <span class="c">% get tht gain of the point by interpolation(Bilinear interpolation)</span>
+<span class="ln">32</span>        <span class="c">% f(x,y) = [f(1,0)-f(0,0)]*x+[f(0,1)-f(0,0)]*y+[f(1,1)+f(0,0)-f(1,0)-f(0,1)]*xy+f(0,0)</span>
+<span class="ln">33</span>        <span class="n">gainTab</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="p">)</span> <span class="p">=</span> <span class="p">(</span><span class="n">Gain</span><span class="p">(</span><span class="n">gainStepX</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">)</span> <span class="o">-</span> <span class="n">Gain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="nb">i</span> <span class="o">-</span> <span class="p">(</span><span class="n">gainStepX</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">sideX</span><span class="p">)</span><span class="o">/</span><span class="n">sideX</span> <span class="o">+</span><span class="c">...</span>
+<span class="ln">34</span>                        <span class="p">(</span><span class="n">Gain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">Gain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="nb">j</span> <span class="o">-</span> <span class="p">(</span><span class="n">gainStepY</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">sideY</span><span class="p">)</span><span class="o">/</span><span class="n">sideY</span> <span class="o">+</span><span class="c">...</span>
+<span class="ln">35</span>                        <span class="p">(</span><span class="n">Gain</span><span class="p">(</span><span class="n">gainStepX</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">gainStepY</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">Gain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">)</span> <span class="o">-</span> <span class="n">Gain</span><span class="p">(</span><span class="n">gainStepX</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">)</span><span class="o">-</span> <span class="n">Gain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="o">*</span><span class="c">...</span>
+<span class="ln">36</span>                        <span class="p">(</span><span class="nb">i</span> <span class="o">-</span> <span class="p">(</span><span class="n">gainStepX</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">sideX</span><span class="p">)</span><span class="o">/</span><span class="n">sideX</span> <span class="o">*</span> <span class="p">(</span><span class="nb">j</span> <span class="o">-</span> <span class="p">(</span><span class="n">gainStepY</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">sideY</span><span class="p">)</span><span class="o">/</span><span class="n">sideY</span> <span class="o">+</span> <span class="n">Gain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">);</span>
+<span class="ln">37</span>    <span class="k">end</span>
+<span class="ln">38</span><span class="k">end</span>
+<span class="ln">39</span><span class="n">disImg</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">image</span><span class="p">)</span> <span class="o">.*</span> <span class="n">gainTab</span><span class="p">;</span>
+<span class="ln">40</span>
+<span class="ln">41</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln">42</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">);</span><span class="n">imshow</span><span class="p">(</span><span class="n">image</span><span class="p">);</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;org image&#39;</span><span class="p">);</span>
+<span class="ln">43</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">);</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">disImg</span><span class="p">));</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;corrected image&#39;</span><span class="p">);</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc10.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/lsc/lsc10.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="34rgb三通道划分">3.4RGB三通道划分</h2>
+<p>正式版本应该是bayer格式，四通道，改成四通道即可。</p>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="c">% --------parameters of correction------------</span>
+<span class="ln"> 2</span><span class="n">filePath</span> <span class="p">=</span> <span class="s">&#39;images/lsc.bmp&#39;</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="n">side_num</span> <span class="p">=</span> <span class="mi">16</span><span class="p">;</span>
+<span class="ln"> 4</span><span class="c">% --------------------------------------------</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span><span class="c">% --------load data---------------------------</span>
+<span class="ln"> 7</span><span class="c">% load org image</span>
+<span class="ln"> 8</span><span class="n">image</span> <span class="p">=</span> <span class="n">imread</span><span class="p">(</span><span class="n">filePath</span><span class="p">);</span>
+<span class="ln"> 9</span><span class="p">[</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">channel</span><span class="p">]</span> <span class="p">=</span> <span class="nb">size</span><span class="p">(</span><span class="n">image</span><span class="p">);</span>
+<span class="ln">10</span><span class="n">sideX</span> <span class="p">=</span> <span class="nb">floor</span><span class="p">(</span><span class="n">height</span><span class="o">/</span><span class="n">side_num</span><span class="p">);</span>
+<span class="ln">11</span><span class="n">sideY</span> <span class="p">=</span> <span class="nb">floor</span><span class="p">(</span><span class="n">width</span><span class="o">/</span><span class="n">side_num</span><span class="p">);</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="n">image_r</span> <span class="p">=</span> <span class="n">image</span><span class="p">(:,:,</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln">14</span><span class="n">image_g</span> <span class="p">=</span> <span class="n">image</span><span class="p">(:,:,</span><span class="mi">2</span><span class="p">);</span>
+<span class="ln">15</span><span class="n">image_b</span> <span class="p">=</span> <span class="n">image</span><span class="p">(:,:,</span><span class="mi">3</span><span class="p">);</span>
+<span class="ln">16</span>
+<span class="ln">17</span><span class="c">% load gain of each channel</span>
+<span class="ln">18</span><span class="n">load</span><span class="p">(</span><span class="s">&#39;./src/data/rGain.mat&#39;</span><span class="p">);</span>
+<span class="ln">19</span><span class="n">load</span><span class="p">(</span><span class="s">&#39;./src/data/gGain.mat&#39;</span><span class="p">);</span>
+<span class="ln">20</span><span class="n">load</span><span class="p">(</span><span class="s">&#39;./src/data/bGain.mat&#39;</span><span class="p">);</span>
+<span class="ln">21</span><span class="c">% --------------correction-------------------</span>
+<span class="ln">22</span><span class="n">disImg</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="nb">size</span><span class="p">(</span><span class="n">image</span><span class="p">));</span>
+<span class="ln">23</span><span class="n">gainStepX</span> <span class="p">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">24</span><span class="n">gainStepY</span> <span class="p">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">25</span><span class="k">for</span> <span class="nb">i</span> <span class="p">=</span> <span class="mi">1</span><span class="p">:</span><span class="n">height</span>
+<span class="ln">26</span>    <span class="k">for</span> <span class="nb">j</span> <span class="p">=</span> <span class="mi">1</span><span class="p">:</span><span class="n">width</span>
+<span class="ln">27</span>        <span class="n">gainStepX</span> <span class="p">=</span> <span class="nb">floor</span><span class="p">(</span><span class="nb">i</span> <span class="o">/</span> <span class="n">sideX</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">28</span>        <span class="k">if</span> <span class="n">gainStepX</span> <span class="o">&gt;</span> <span class="mi">16</span>
+<span class="ln">29</span>            <span class="n">gainStepX</span> <span class="p">=</span> <span class="mi">16</span><span class="p">;</span>
+<span class="ln">30</span>        <span class="k">end</span>
+<span class="ln">31</span>        <span class="n">gainStepY</span> <span class="p">=</span> <span class="nb">floor</span><span class="p">(</span><span class="nb">j</span> <span class="o">/</span> <span class="n">sideY</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">32</span>        <span class="k">if</span> <span class="n">gainStepY</span> <span class="o">&gt;</span> <span class="mi">16</span>
+<span class="ln">33</span>            <span class="n">gainStepY</span> <span class="p">=</span> <span class="mi">16</span><span class="p">;</span>
+<span class="ln">34</span>        <span class="k">end</span>
+<span class="ln">35</span>        <span class="c">% get tht gain of the point by interpolation(Bilinear interpolation)</span>
+<span class="ln">36</span>        <span class="c">% f(x,y) = [f(1,0)-f(0,0)]*x+[f(0,1)-f(0,0)]*y+[f(1,1)+f(0,0)-f(1,0)-f(0,1)]*xy+f(0,0)</span>
+<span class="ln">37</span>        <span class="n">rGainTmp</span> <span class="p">=</span> <span class="p">(</span><span class="n">rGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">)</span> <span class="o">-</span> <span class="n">rGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="nb">i</span> <span class="o">-</span> <span class="p">(</span><span class="n">gainStepX</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">sideX</span><span class="p">)</span><span class="o">/</span><span class="n">sideX</span> <span class="o">+</span><span class="c">...</span>
+<span class="ln">38</span>                         <span class="p">(</span><span class="n">rGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">rGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="nb">j</span> <span class="o">-</span> <span class="p">(</span><span class="n">gainStepY</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">sideY</span><span class="p">)</span><span class="o">/</span><span class="n">sideY</span> <span class="o">+</span><span class="c">...</span>
+<span class="ln">39</span>                         <span class="p">(</span><span class="n">rGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">gainStepY</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">rGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">)</span> <span class="o">-</span> <span class="n">rGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">)</span><span class="o">-</span> <span class="n">rGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="o">*</span><span class="c">...</span>
+<span class="ln">40</span>                         <span class="p">(</span><span class="nb">i</span> <span class="o">-</span> <span class="p">(</span><span class="n">gainStepX</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">sideX</span><span class="p">)</span><span class="o">/</span><span class="n">sideX</span> <span class="o">*</span> <span class="p">(</span><span class="nb">j</span> <span class="o">-</span> <span class="p">(</span><span class="n">gainStepY</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">sideY</span><span class="p">)</span><span class="o">/</span><span class="n">sideY</span> <span class="o">+</span> <span class="n">rGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">);</span>
+<span class="ln">41</span>                     
+<span class="ln">42</span>        <span class="n">gGainTmp</span> <span class="p">=</span> <span class="p">(</span><span class="n">gGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">)</span> <span class="o">-</span> <span class="n">gGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="nb">i</span> <span class="o">-</span> <span class="p">(</span><span class="n">gainStepX</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">sideX</span><span class="p">)</span><span class="o">/</span><span class="n">sideX</span> <span class="o">+</span><span class="c">...</span>
+<span class="ln">43</span>                         <span class="p">(</span><span class="n">gGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">gGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="nb">j</span> <span class="o">-</span> <span class="p">(</span><span class="n">gainStepY</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">sideY</span><span class="p">)</span><span class="o">/</span><span class="n">sideY</span> <span class="o">+</span><span class="c">...</span>
+<span class="ln">44</span>                         <span class="p">(</span><span class="n">gGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">gainStepY</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">gGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">)</span> <span class="o">-</span> <span class="n">gGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">)</span><span class="o">-</span> <span class="n">gGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="o">*</span><span class="c">...</span>
+<span class="ln">45</span>                         <span class="p">(</span><span class="nb">i</span> <span class="o">-</span> <span class="p">(</span><span class="n">gainStepX</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">sideX</span><span class="p">)</span><span class="o">/</span><span class="n">sideX</span> <span class="o">*</span> <span class="p">(</span><span class="nb">j</span> <span class="o">-</span> <span class="p">(</span><span class="n">gainStepY</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">sideY</span><span class="p">)</span><span class="o">/</span><span class="n">sideY</span> <span class="o">+</span> <span class="n">gGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">);</span>
+<span class="ln">46</span>                     
+<span class="ln">47</span>        <span class="n">bGainTmp</span> <span class="p">=</span> <span class="p">(</span><span class="n">bGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">)</span> <span class="o">-</span> <span class="n">bGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="nb">i</span> <span class="o">-</span> <span class="p">(</span><span class="n">gainStepX</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">sideX</span><span class="p">)</span><span class="o">/</span><span class="n">sideX</span> <span class="o">+</span><span class="c">...</span>
+<span class="ln">48</span>                         <span class="p">(</span><span class="n">bGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">bGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="nb">j</span> <span class="o">-</span> <span class="p">(</span><span class="n">gainStepY</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">sideY</span><span class="p">)</span><span class="o">/</span><span class="n">sideY</span> <span class="o">+</span><span class="c">...</span>
+<span class="ln">49</span>                         <span class="p">(</span><span class="n">bGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">gainStepY</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">bGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">)</span> <span class="o">-</span> <span class="n">bGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">)</span><span class="o">-</span> <span class="n">rGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="o">*</span><span class="c">...</span>
+<span class="ln">50</span>                         <span class="p">(</span><span class="nb">i</span> <span class="o">-</span> <span class="p">(</span><span class="n">gainStepX</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">sideX</span><span class="p">)</span><span class="o">/</span><span class="n">sideX</span> <span class="o">*</span> <span class="p">(</span><span class="nb">j</span> <span class="o">-</span> <span class="p">(</span><span class="n">gainStepY</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">sideY</span><span class="p">)</span><span class="o">/</span><span class="n">sideY</span> <span class="o">+</span> <span class="n">bGain</span><span class="p">(</span><span class="n">gainStepX</span><span class="p">,</span> <span class="n">gainStepY</span><span class="p">);</span>
+<span class="ln">51</span>        
+<span class="ln">52</span>        <span class="n">disImg</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span><span class="nb">j</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">image_r</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="p">))</span> <span class="o">*</span> <span class="n">rGainTmp</span><span class="p">;</span>
+<span class="ln">53</span>        <span class="n">disImg</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span><span class="nb">j</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">image_g</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="p">))</span> <span class="o">*</span> <span class="n">gGainTmp</span><span class="p">;</span>
+<span class="ln">54</span>        <span class="n">disImg</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span><span class="nb">j</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">image_b</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="p">))</span> <span class="o">*</span> <span class="n">bGainTmp</span><span class="p">;</span>
+<span class="ln">55</span>    <span class="k">end</span>
+<span class="ln">56</span><span class="k">end</span>
+<span class="ln">57</span>
+<span class="ln">58</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln">59</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">);</span><span class="n">imshow</span><span class="p">(</span><span class="n">image</span><span class="p">);</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;org image&#39;</span><span class="p">);</span>
+<span class="ln">60</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">);</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">disImg</span><span class="p">));</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;corrected image&#39;</span><span class="p">);</span>
+</code></pre></div>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/isp/">isp</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/algorithm/">algorithm</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/lsc/">lsc</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-%E6%8F%92%E5%80%BC/" data-tooltip="isp算法学习-插值">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-blc/" data-tooltip="isp算法学习-BLC">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2023 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-%E6%8F%92%E5%80%BC/" data-tooltip="isp算法学习-插值">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-blc/" data-tooltip="isp算法学习-BLC">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-lsc%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-lsc%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-lsc%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2023\/12\/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-lsc\/';
+          
+            this.page.identifier = '\/2023\/12\/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-lsc\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+  <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_CHTML-full" integrity="sha256-GhM+5JHb6QUzOQPXSJLEWP7R73CbkisjzK5Eyij4U9w=" crossorigin="anonymous"></script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      CommonHTML: { linebreaks: { automatic: true } },
+      tex2jax: { inlineMath: [ ['$', '$'], ['\\(','\\)'] ], displayMath: [ ['$$','$$'], ['\\[', '\\]'] ], processEscapes: false },
+      messageStyle: 'none'
+    });
+  </script>
+
+
+
+    
+  </body>
+</html>
+

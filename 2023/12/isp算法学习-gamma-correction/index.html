@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="本文是isp算法学习的第七篇章，主要是讲述GAMMA CORRECTION原理和算法。">
+
+
+<meta property="og:description" content="本文是isp算法学习的第七篇章，主要是讲述GAMMA CORRECTION原理和算法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="isp算法学习-GAMMA CORRECTION">
+<meta name="twitter:title" content="isp算法学习-GAMMA CORRECTION">
+<meta property="og:url" content="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-gamma-correction/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-gamma-correction/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="本文是isp算法学习的第七篇章，主要是讲述GAMMA CORRECTION原理和算法。">
+<meta name="twitter:description" content="本文是isp算法学习的第七篇章，主要是讲述GAMMA CORRECTION原理和算法。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2023-12-30T11:00:00">
+  
+  
+    <meta property="article:modified_time" content="2023-12-30T11:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="isp">
+    
+      <meta property="article:section" content="2023">
+    
+      <meta property="article:section" content="December">
+    
+  
+  
+    
+      <meta property="article:tag" content="isp">
+    
+      <meta property="article:tag" content="algorithm">
+    
+      <meta property="article:tag" content="GAMMA CORRECTION">
+    
+      <meta property="article:tag" content="韦伯定律">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma_thumb.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma_thumb.png">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+
+
+    <title>isp算法学习-GAMMA CORRECTION</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-gamma-correction/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/camera/algorithmlearning/gamma/gamma_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      isp算法学习-GAMMA CORRECTION
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2023-12-30T11:00:00Z">
+        
+  十二月 30, 2023
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/isp">isp</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2023">2023</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/december">December</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">200 Words|Read in about 1 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+      
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>本文是isp算法学习的第七篇章，主要是讲述GAMMA CORRECTION原理和算法。</p>
+<div style="text-align: center;">
+<iframe 
+    frameborder="no" border="1"
+    marginwidth="0" marginheight="0"
+    width=400 height=100
+    src="//music.163.com/outchain/player?type=2&id=2049529248&auto=1&height=66"></iframe>
+</div>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>gamma调节，可以调节对比度，提高动态范围。</p>
+<p>这张图能很好的看出不同gamma曲线带给人的直观感受的变化。从上往下看左侧黑色块黑得越来越严重，对比度也在逐渐加深。但是需要注意的时这幅图时一个反伽马曲线的特性，和ISP中的gamma表现时反的，这个具体后面回介绍。这个给这张图主要是对gamma有一个直观的理解。</p>
+<blockquote>
+<p>补充关于gamma基础</p>
+<p><strong>1：人眼对暗部细节比较敏感。</strong></p>
+<p>**2：图片文件的色阶很有限。**图像的来龙去脉：自然界捕获的图像-&gt;图像存储和处理-&gt;显示器输出，两头的颜色数量都是非常丰富的，但是中间的存储和处理出于存储容量和渲染时带宽的限制，4位色图片每个通道只有2<!-- raw HTML omitted -->8<!-- raw HTML omitted -->个色阶，总共只能显示2<!-- raw HTML omitted -->24<!-- raw HTML omitted -->种颜色。</p>
+<p>**基于以上两点，我们需要在整个图像来龙去脉中尽可能保留暗部细节，亮部细节丢掉一些也无所谓。**因此有了pow(color, 1/2.2)这个gamma encoding操作，使暗部细节也分到更多色阶。得到一张比较“亮”的图片存储起来。这张图片虽然暗部细节都保留下来了，但是不能直接看这张“亮”的图片，那只是一个中间产物而已。我们需要显示器做一个pow(color, 2.2)的gamma decoding操作把它压暗，<strong>因为显示器(特别是高端显示器)的颜色数是远大于2<!-- raw HTML omitted -->24<!-- raw HTML omitted -->的，这个操作并不会在压暗的过程中丢失暗部细节。</strong></p>
+<p>总结一下，**gamma校正存在的本质原因是：是受限于有限存储空间及渲染带宽，需要在整个图像的流转各级转换中尽可能保留暗部细节，以满足人眼对暗部敏感的需求。**人最终看到显示器显示图像和最初从自然界捕获的图像大体是无差别的，只是暗部细节损失少，亮部细节损失多罢了</p>
+</blockquote>
+<h1 id="1产生原因">1产生原因</h1>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>这个是32位图中的数值，反应的就是自然界的物理量（按照反射率分布），所以这个色带对应的其实是现实中的<strong>反射率</strong>。左边五分之一20%处是<strong>中灰色</strong>，中间的像素表现的是反射率为白色50%的物体看起来的灰度，这个灰度是0.5^0.454=73%灰。也就是8位下的186灰。具象的说，如果我有一支蜡笔反射率是50%，看起来就是中间这个灰度。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>这个是人眼感觉均匀的灰的渐变。其中左端的色彩值是0，中间的色彩值是128（0.5），右边是1.0的纯白。屏幕要以什么样的亮度显示这些像素呢？最左边像素关灯不显示，是黑色，中间以白色21.8%的亮度（反射率）显示，右边像素全开，显示100%白色。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>假设光照适宜的场景中有一个中灰色的物体，反射率是白纸的0.2，我们采样到它的时候，应当把0.2的物理能量用0.454的Gamma放大到0.5的灰阶地位记录下来，这样一来，暗部区域就分配到128个灰阶了。我们充分地利用了存储空间。</p>
+<p>如果在拍照的时候不进行Gamma校正，那么中灰物体会被映射为0.2记录下来，那么此时，暗部仅分配到50个灰阶，暗部采样严重不足，高光采样冗余。</p>
+<blockquote>
+<p>知乎关于gamma的描述</p>
+<ol>
+<li>
+<p>2.2怎么来的</p>
+<p>实践中目测调整出来并最终确定的，其实说良心话，只要是0.5中灰对应白色的20%左右，画面看起来都是靠谱的，所以当年的Gamma特别多种多样，在2.2上下浮动（1.8-2.5）。</p>
+<p><strong>凡是说Gamma 2.2来自于老式CRT显示器物理特性的解释，都是误解。<strong>跟显示器发展史没关系，完全是视觉效果决定的。一切都因为</strong>韦伯定律</strong>。</p>
+</li>
+<li>
+<p>为什么一直强调低动态图像</p>
+<p>在低动态范围的语境下，我可以安全的定义，中灰蜡笔的反射率是<strong>白色蜡笔</strong>的20%左右，中灰像素的亮度是<strong>白像素</strong>亮度的20%左右，而不是现实场景中最亮物体的20%。这一点是很关键的。</p>
+</li>
+<li>
+<p>如果灰阶预算不紧张，会怎么样</p>
+<p><strong>灰阶有限的前提下，因为人眼对自然的非线性感知特性，我们才需要Gamma校正。</strong></p>
+<p>具体到生活中的现象就是：因为我们硬盘太贵，网线太细，所以地球人<strong>目前主流使用8位每通道的sRGB色彩描述体系</strong>，它灰阶有限，中灰的地位必须在所有灰阶的中间，记录值为128，而不能是其物理值0.218，把物理量0.218换算成0.5灰阶编号的过程，就是编码端的Gamma校正，Gamma值为1/2.2=0.454。屏幕读取到128显示成21.8%的亮度的过程，就是解码端的Gamma校正，Gamma值为2.2。整个系统Gamma为1。若是有朝一日，<strong>32位每通道文件成为主流格式，Gamma校正就会消失</strong>。自然数据不经校正直接记录为文件数据，再不经校正直接显示。</p>
+</li>
+</ol>
+</blockquote>
+<h1 id="2校正方法">2校正方法</h1>
+<h2 id="21lut法查表法">2.1LUT法（查表法）</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>如图的论文中提到了一种LUT法的实现方式。</p>
+<p>理解起来很简单，就是提前把每个像素值经gamma矫正后对应的值求出来，然后把这些数据直接存储到一个数中，到矫正的时候根据输入的值就能直接通过数组下标就能找到对应的矫正后的值，这种方式最大的有点就时快，几乎不消耗硬件资源，因为几乎不用做任何计算的处理，但是这种方式的弊端在于需要<strong>大量的内存来存储</strong>这么这个表。但是现在随着技术的发展内存对于硬件也不是什么限制了，一个手机动辄就8G的内存了，可以通过加DDR来提高内存，所以现在很多方案在用这种查表得方式做gamma矫正（输入10bit，输出12bit，为了保留高亮区域的信息）。</p>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln">1</span><span class="n">clc</span><span class="p">;</span><span class="n">clear</span><span class="p">;</span> <span class="n">close</span> <span class="n">all</span><span class="p">;</span>
+<span class="ln">2</span><span class="n">data</span> <span class="p">=</span> <span class="n">csvread</span><span class="p">(</span><span class="s">&#39;data/Gamma_Data_DEC_20210804103309.csv&#39;</span><span class="p">);</span>
+<span class="ln">3</span><span class="n">plot</span><span class="p">(</span><span class="n">data</span><span class="p">);</span>
+<span class="ln">4</span><span class="n">xlim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1024</span><span class="p">]);</span>
+<span class="ln">5</span><span class="n">ylim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4098</span><span class="p">]);</span>
+<span class="ln">6</span><span class="n">hold</span> <span class="n">on</span><span class="p">;</span>
+<span class="ln">7</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1024</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4098</span><span class="p">],</span> <span class="s">&#39;r&#39;</span><span class="p">);</span>
+</code></pre></div><p>对应的图像如下图所示</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma8.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>海思平台也是类似</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma12.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma12.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="22线性插值">2.2线性插值</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma9.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma9.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>这种方式在一些<strong>廉价的方案</strong>里面会用到</p>
+<p>线性插值法也很好理解，就是在gamma曲线上提取一些采样点</p>
+<ul>
+<li>
+<p>把采样点的输入输出作为xy存储起来</p>
+</li>
+<li>
+<p>矫正的时候如果在采样点上就接直接输入矫正值</p>
+</li>
+<li>
+<p>如果不在，那么肯定在某两个采样点之间，那么就可以就可以通过这两个采样点的线性方程求解出该点的校正值
+$$
+p(x)=\frac{f(x_n)-f(x_{n-1})}{x_n-x_{n-1}}(x_n-x)
+$$</p>
+</li>
+</ul>
+<p>但是这种方式会有一定的误差，因为线性方程并布恩那个完全拟合gamma曲线。</p>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="n">clc</span><span class="p">;</span><span class="n">clear</span><span class="p">;</span><span class="n">close</span> <span class="n">all</span><span class="p">;</span>
+<span class="ln"> 2</span><span class="n">data</span> <span class="p">=</span> <span class="n">textread</span><span class="p">(</span><span class="s">&#39;data\gamma.txt&#39;</span><span class="p">,</span> <span class="s">&#39;%s&#39;</span><span class="p">);</span>
+<span class="ln"> 3</span><span class="n">xStr</span> <span class="p">=</span> <span class="n">char</span><span class="p">(</span><span class="n">data</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span>
+<span class="ln"> 4</span><span class="n">yStr</span> <span class="p">=</span> <span class="n">char</span><span class="p">(</span><span class="n">data</span><span class="p">(</span><span class="mi">2</span><span class="p">));</span>
+<span class="ln"> 5</span><span class="n">xC</span> <span class="p">=</span> <span class="n">strsplit</span><span class="p">(</span><span class="n">xStr</span><span class="p">,</span> <span class="s">&#39;,&#39;</span><span class="p">);</span>
+<span class="ln"> 6</span><span class="n">yC</span> <span class="p">=</span> <span class="n">strsplit</span><span class="p">(</span><span class="n">yStr</span><span class="p">,</span> <span class="s">&#39;,&#39;</span><span class="p">);</span>
+<span class="ln"> 7</span><span class="n">x</span> <span class="p">=</span> <span class="n">hex0x2Dec</span><span class="p">(</span><span class="n">xC</span><span class="p">);</span>
+<span class="ln"> 8</span><span class="n">y</span> <span class="p">=</span> <span class="n">hex0x2Dec</span><span class="p">(</span><span class="n">yC</span><span class="p">);</span>
+<span class="ln"> 9</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">);</span>
+<span class="ln">10</span><span class="n">hold</span> <span class="n">on</span><span class="p">;</span>
+<span class="ln">11</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span> <span class="mi">255</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span> <span class="mi">1023</span><span class="p">],</span> <span class="s">&#39;r&#39;</span><span class="p">)</span>
+<span class="ln">12</span><span class="n">xlim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">256</span><span class="p">]);</span>
+<span class="ln">13</span><span class="n">ylim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1024</span><span class="p">]);</span>
+</code></pre></div><p>如下图所示</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma10.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma10.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="23模拟gamma">2.3模拟gamma</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma11.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma11.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>还有一种方式就是通过模拟的方式来做gamma矫正，但是这种方式不输入ISP PIPELINE中的算法，因为不属于ISP算法，属于Sensor端的控制，所以只是简单提一下。</p>
+<p>这种方法的大概思路就是AD转换的时候经过一定的处理使其呈现非线性的特性。如上图定义V<!-- raw HTML omitted -->ramp<!-- raw HTML omitted -->和V<!-- raw HTML omitted -->sig<!-- raw HTML omitted -->，当电压达到V<!-- raw HTML omitted -->ramp<!-- raw HTML omitted -->时产生一个斜坡信号，同时始终信号开始工作并计数，然后当电压到达V<!-- raw HTML omitted -->sig<!-- raw HTML omitted -->时latch信号发生一个跳变使得始终信号停止基数，然后这个电压值就会和这种始终信号有一个非线性特性，人后根据这个特性进行gamma矫正。</p>
+<h1 id="3补充说明">3补充说明</h1>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma13.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/gamma/gamma13.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>有的ISP除了有Ygamma还有RGBgamma，其实这个RGBgamma也很好理解，RGBgamma就是针对RGB三个通道分别有一条gamma曲线进行调整，这样就可以分别控制RGB三色通道从而对颜色产生控制。</p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/isp/">isp</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/algorithm/">algorithm</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/gamma-correction/">GAMMA CORRECTION</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E9%9F%A6%E4%BC%AF%E5%AE%9A%E5%BE%8B/">韦伯定律</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-hvshuman-vision-system/" data-tooltip="isp算法学习-HVS（Human Vision System）">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-awb/" data-tooltip="isp算法学习-AWB">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2023 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-hvshuman-vision-system/" data-tooltip="isp算法学习-HVS（Human Vision System）">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-awb/" data-tooltip="isp算法学习-AWB">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-gamma-correction%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-gamma-correction%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-gamma-correction%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2023\/12\/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-gamma-correction\/';
+          
+            this.page.identifier = '\/2023\/12\/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-gamma-correction\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+  <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_CHTML-full" integrity="sha256-GhM+5JHb6QUzOQPXSJLEWP7R73CbkisjzK5Eyij4U9w=" crossorigin="anonymous"></script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      CommonHTML: { linebreaks: { automatic: true } },
+      tex2jax: { inlineMath: [ ['$', '$'], ['\\(','\\)'] ], displayMath: [ ['$$','$$'], ['\\[', '\\]'] ], processEscapes: false },
+      messageStyle: 'none'
+    });
+  </script>
+
+
+
+    
+  </body>
+</html>
+

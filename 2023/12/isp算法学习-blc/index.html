@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="本文是isp算法学习的第二篇章，主要是讲述BLC原理和算法。">
+
+
+<meta property="og:description" content="本文是isp算法学习的第二篇章，主要是讲述BLC原理和算法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="isp算法学习-BLC">
+<meta name="twitter:title" content="isp算法学习-BLC">
+<meta property="og:url" content="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-blc/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-blc/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="本文是isp算法学习的第二篇章，主要是讲述BLC原理和算法。">
+<meta name="twitter:description" content="本文是isp算法学习的第二篇章，主要是讲述BLC原理和算法。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2023-12-26T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2023-12-26T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="isp">
+    
+      <meta property="article:section" content="2023">
+    
+      <meta property="article:section" content="December">
+    
+  
+  
+    
+      <meta property="article:tag" content="isp">
+    
+      <meta property="article:tag" content="algorithm">
+    
+      <meta property="article:tag" content="blc">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/algorithmlearning/blc/blc_thumb.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/algorithmlearning/blc/blc_thumb.png">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/algorithmlearning/blc/blc_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/algorithmlearning/blc/blc_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+
+
+    <title>isp算法学习-BLC</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-blc/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/camera/algorithmlearning/blc/blc_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      isp算法学习-BLC
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2023-12-26T00:00:00Z">
+        
+  十二月 26, 2023
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/isp">isp</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2023">2023</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/december">December</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">700 Words|Read in about 3 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+      
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>本文是isp算法学习的第二篇章，主要是讲述BLC原理和算法。</p>
+<div style="text-align: center;">
+<iframe 
+    frameborder="no" border="1"
+    marginwidth="0" marginheight="0"
+    width=400 height=100
+    src="//music.163.com/outchain/player?type=2&id=2071935674&auto=1&height=66"></iframe>
+</div>
+<h1 id="1产生原因">1产生原因</h1>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/blc/blc1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/blc/blc1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>通常使用的CMOS或者CCD的Sensor。而CMOS就是MOS管，学过模拟电路的应该知道，MOS管（光电管）本质就是PN结。</p>
+<h2 id="11暗电流">1.1暗电流</h2>
+<p>左边的图是二极管的图，CMOS的PN结工作范围是反向，即UB到O的这段。在反向截止的区域里面，没有光照，依然存在电压，虽然电压的值非常小。这段区域就会产生暗电流，暗电流一般跟载流子的扩散和制造工艺相关。</p>
+<p>理论上应该是0,0,0的输出，但是由于暗电流的存在，经过光电转换之后就会存在类似5,5,6的输出。</p>
+<h2 id="12ad前增加一个固定值">1.2AD前增加一个固定值</h2>
+<p>另外，由于AD模数转换前，会在模拟信号前加上一个固定的电压值，保证AD转换在精度范围内。</p>
+<h1 id="2校正方法">2校正方法</h1>
+<p>当前的主流方法有两种，sensor端和isp段。</p>
+<h2 id="21sensor端">2.1Sensor端</h2>
+<p>sensor端主要跟芯片相关</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/blc/blc2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/blc/blc2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>上图可以看到，有效的像素区域是3280*2464，底下灰色的区域为OB区域（Sensor预留了一些完全没有曝光的像素）。当整个Sensor处理完全黑暗环境，OB区域每个像素也会有一个值。</p>
+<p>最简单的方法，就是对OB区取个平均值，然后让所有有效像素区减去这个值（模拟信号的值）即可。</p>
+<p>其他算法可以查看这个专利。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/blc/blc3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/blc/blc3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="22isp端">2.2isp端</h2>
+<h3 id="221固定值">2.2.1固定值</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/blc/blc4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/blc/blc4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>本身有四个通道GR，GB，R，B通道。由于开始会在AD前增加一个固定值，这个时候把这个减掉即可。相当于区域往下平移C（C指的是固定值的偏移量），但是发现区域往下移动，整个区域就为0~（255-C）。我们这个时候会对两个G通道进行运算处理
+$$
+G_{in} = \frac{255}{255 - \Delta{C}}
+$$
+校正完成后，就能恢复到0~255的范围。</p>
+<p>这里不对R和B通道处理，后面pipeline的AWB内容，会对其进行R<!-- raw HTML omitted -->Gain<!-- raw HTML omitted -->和B<!-- raw HTML omitted -->Gain<!-- raw HTML omitted -->的操作。</p>
+<h3 id="222iso联动">2.2.2ISO联动</h3>
+<p>黑电平直接和曝光增益相关联。（RK目前用的也是这个方式）</p>
+<p>本身曝光增益跟曝光时间有关，曝光时间会影响温度，而温度也会间接影响到暗电流。通过曝光的倍数来减去对应的数值取平均也可以对其进行校正。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/blc/blc6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/blc/blc6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="223曲线拟合">2.2.3曲线拟合</h3>
+<p>到isp端的RAW图，每个像素点的值都不是相同的值，选取一定数量的样本点，每个样本点需要包含四个通道GR，GB，R，B，然后对样本点的周围进行拟合。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/blc/blc5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/blc/blc5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="23总结">2.3总结</h2>
+<p>目前固定值的方式是最普遍的，代价也是最小的。</p>
+<p>其余两种方式或是存表或是联动，都需要一定的内存开销。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/blc/blc7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/blc/blc7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="3方法实现">3方法实现</h1>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/blc/blc8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/blc/blc8.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>盖上镜头盖或者处于全黑的环境下，抓取Raw图，四个通道的值因为存在暗电流和固定值，所以必定存在一个值。</p>
+<p>1）分成四个通道</p>
+<p>2）每个通道求mean值（或者中位值），求得△R，△GR，△GB，△B</p>
+<p>3）RAW图上的每个像素点所在的通道，减去对应通道的平均值即可，就能大致恢复到RGB（0，0，0）</p>
+<p>上面的左边那张图，显示有一定的值，经过BLC之后，就是最右的图，显示的值都趋于为0，且图片颜色会更加黑。</p>
+<h2 id="31效果展示">3.1效果展示</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/blc/blc9.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/blc/blc9.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="32raw图信息">3.2Raw图信息</h2>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln">1</span><span class="c">% ------------Raw Format----------------</span>
+<span class="ln">2</span><span class="n">filePath</span> <span class="p">=</span> <span class="s">&#39;images/HisiRAW_4208x3120_8bits_RGGB.raw&#39;</span><span class="p">;</span>
+<span class="ln">3</span><span class="n">bayerFormat</span> <span class="p">=</span> <span class="s">&#39;RGGB&#39;</span><span class="p">;</span>
+<span class="ln">4</span><span class="n">row</span> <span class="p">=</span> <span class="mi">4208</span><span class="p">;</span>
+<span class="ln">5</span><span class="n">col</span> <span class="p">=</span> <span class="mi">3120</span><span class="p">;</span>
+<span class="ln">6</span><span class="n">bits</span> <span class="p">=</span> <span class="mi">8</span><span class="p">;</span>
+<span class="ln">7</span><span class="c">% --------------------------------------</span>
+</code></pre></div><h2 id="33-读取raw矩阵">3.3 读取Raw矩阵</h2>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln">1</span><span class="c">%  I(1:2:end, 1:2:end) = R(1:1:end, 1:1:end);</span>
+<span class="ln">2</span>
+<span class="ln">3</span><span class="n">data</span> <span class="p">=</span> <span class="n">readRaw</span><span class="p">(</span><span class="n">filePath</span><span class="p">,</span> <span class="n">bits</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">);</span>
+</code></pre></div><p>readRaw</p>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="k">function</span><span class="w"> </span>rawData <span class="p">=</span><span class="w"> </span><span class="nf">readRaw</span><span class="p">(</span>fileName, bitsNum, row, col<span class="p">)</span><span class="w">
+</span><span class="ln"> 2</span><span class="w"></span><span class="c">% readRaw.m    get rawData from HiRawImage</span>
+<span class="ln"> 3</span><span class="c">%   Input:</span>
+<span class="ln"> 4</span><span class="c">%       fileName    the path of HiRawImage </span>
+<span class="ln"> 5</span><span class="c">%       bitsNum      the number of bits of raw image</span>
+<span class="ln"> 6</span><span class="c">%       row         the row of the raw image</span>
+<span class="ln"> 7</span><span class="c">%       col         the column of the raw image</span>
+<span class="ln"> 8</span><span class="c">%   Output:</span>
+<span class="ln"> 9</span><span class="c">%       rawData     the matrix of raw image data</span>
+<span class="ln">10</span><span class="c">%   Instructions:</span>
+<span class="ln">11</span><span class="c">%       author:     wtzhu</span>
+<span class="ln">12</span><span class="c">%       e-mail:     wtzhu_13@163.com</span>
+<span class="ln">13</span><span class="c">% Last Modified by wtzhu v1.0 2021-06-29</span>
+<span class="ln">14</span><span class="c">% Note: </span>
+<span class="ln">15</span>
+<span class="ln">16</span><span class="c">% get fileID</span>
+<span class="ln">17</span><span class="n">fin</span> <span class="p">=</span> <span class="n">fopen</span><span class="p">(</span><span class="n">fileName</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">);</span>
+<span class="ln">18</span><span class="c">% format precision</span>
+<span class="ln">19</span><span class="k">switch</span> <span class="n">bitsNum</span>
+<span class="ln">20</span>    <span class="k">case</span> <span class="mi">8</span>
+<span class="ln">21</span>        <span class="nb">disp</span><span class="p">(</span><span class="s">&#39;bits: 8&#39;</span><span class="p">);</span>
+<span class="ln">22</span>        <span class="n">format</span> <span class="p">=</span> <span class="n">sprintf</span><span class="p">(</span><span class="s">&#39;uint8=&gt;uint8&#39;</span><span class="p">);</span>
+<span class="ln">23</span>    <span class="k">case</span> <span class="mi">10</span>
+<span class="ln">24</span>        <span class="nb">disp</span><span class="p">(</span><span class="s">&#39;bits: 10&#39;</span><span class="p">);</span>
+<span class="ln">25</span>        <span class="n">format</span> <span class="p">=</span> <span class="n">sprintf</span><span class="p">(</span><span class="s">&#39;uint16=&gt;uint16&#39;</span><span class="p">);</span>
+<span class="ln">26</span>    <span class="k">case</span> <span class="mi">12</span>
+<span class="ln">27</span>        <span class="nb">disp</span><span class="p">(</span><span class="s">&#39;bits: 12&#39;</span><span class="p">);</span>
+<span class="ln">28</span>        <span class="n">format</span> <span class="p">=</span> <span class="n">sprintf</span><span class="p">(</span><span class="s">&#39;uint16=&gt;uint16&#39;</span><span class="p">);</span>
+<span class="ln">29</span>    <span class="k">case</span> <span class="mi">16</span>
+<span class="ln">30</span>        <span class="nb">disp</span><span class="p">(</span><span class="s">&#39;bits: 16&#39;</span><span class="p">);</span>
+<span class="ln">31</span>        <span class="n">format</span> <span class="p">=</span> <span class="n">sprintf</span><span class="p">(</span><span class="s">&#39;uint16=&gt;uint16&#39;</span><span class="p">);</span>
+<span class="ln">32</span><span class="k">end</span>
+<span class="ln">33</span><span class="c">% 转换成列向量</span>
+<span class="ln">34</span><span class="n">I</span> <span class="p">=</span> <span class="n">fread</span><span class="p">(</span><span class="n">fin</span><span class="p">,</span> <span class="n">row</span><span class="o">*</span><span class="n">col</span><span class="p">,</span> <span class="n">format</span><span class="p">);</span>
+<span class="ln">35</span><span class="c">%转换成1维矩阵</span>
+<span class="ln">36</span><span class="c">% plot(I, &#39;.&#39;);</span>
+<span class="ln">37</span><span class="n">z</span> <span class="p">=</span> <span class="nb">reshape</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">);</span>
+<span class="ln">38</span><span class="n">z</span> <span class="p">=</span> <span class="n">z</span><span class="o">&#39;</span><span class="p">;</span>
+<span class="ln">39</span><span class="n">rawData</span> <span class="p">=</span> <span class="n">z</span><span class="p">;</span>
+<span class="ln">40</span><span class="c">% imshow(z);</span>
+<span class="ln">41</span><span class="k">end</span>
+</code></pre></div><ul>
+<li>判断是8bit，10bit，12bit还是16bit的值</li>
+<li>转换成列向量</li>
+<li>转换成一维矩阵</li>
+</ul>
+<h2 id="34分成四个通道">3.4分成四个通道</h2>
+<p>根据R|GR|GB|B的排布方式，分成四个通道</p>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="c">% get the four channels by bayerFormat</span>
+<span class="ln"> 2</span><span class="k">switch</span> <span class="n">bayerFormat</span>
+<span class="ln"> 3</span>    <span class="k">case</span> <span class="s">&#39;RGGB&#39;</span>
+<span class="ln"> 4</span>        <span class="nb">disp</span><span class="p">(</span><span class="s">&#39;bayerFormat: RGGB&#39;</span><span class="p">);</span>
+<span class="ln"> 5</span>        <span class="n">R</span> <span class="p">=</span> <span class="n">data</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln"> 6</span>        <span class="n">Gr</span> <span class="p">=</span> <span class="n">data</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln"> 7</span>        <span class="n">Gb</span> <span class="p">=</span> <span class="n">data</span><span class="p">(</span><span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln"> 8</span>        <span class="n">B</span> <span class="p">=</span> <span class="n">data</span><span class="p">(</span><span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln"> 9</span>    <span class="k">case</span> <span class="s">&#39;GRBG&#39;</span>
+<span class="ln">10</span>        <span class="nb">disp</span><span class="p">(</span><span class="s">&#39;bayerFormat: GRBG&#39;</span><span class="p">);</span>
+<span class="ln">11</span>        <span class="n">Gr</span> <span class="p">=</span> <span class="n">data</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">12</span>        <span class="n">R</span> <span class="p">=</span> <span class="n">data</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">13</span>        <span class="n">B</span> <span class="p">=</span> <span class="n">data</span><span class="p">(</span><span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">14</span>        <span class="n">Gb</span> <span class="p">=</span> <span class="n">data</span><span class="p">(</span><span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="k">case</span> <span class="s">&#39;GBRG&#39;</span>
+<span class="ln">16</span>        <span class="nb">disp</span><span class="p">(</span><span class="s">&#39;bayerFormat: GBRG&#39;</span><span class="p">);</span>
+<span class="ln">17</span>        <span class="n">Gb</span> <span class="p">=</span> <span class="n">data</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">18</span>        <span class="n">B</span> <span class="p">=</span> <span class="n">data</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">19</span>        <span class="n">R</span> <span class="p">=</span> <span class="n">data</span><span class="p">(</span><span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">20</span>        <span class="n">Gr</span> <span class="p">=</span> <span class="n">data</span><span class="p">(</span><span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">21</span>    <span class="k">case</span> <span class="s">&#39;BGGR&#39;</span>
+<span class="ln">22</span>        <span class="nb">disp</span><span class="p">(</span><span class="s">&#39;bayerFormat: BGGR&#39;</span><span class="p">);</span>
+<span class="ln">23</span>        <span class="n">B</span> <span class="p">=</span> <span class="n">data</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">24</span>        <span class="n">Gb</span> <span class="p">=</span> <span class="n">data</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">25</span>        <span class="n">Gr</span> <span class="p">=</span> <span class="n">data</span><span class="p">(</span><span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">26</span>        <span class="n">R</span> <span class="p">=</span> <span class="n">data</span><span class="p">(</span><span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">27</span><span class="k">end</span>
+</code></pre></div><h2 id="35计算每个通道均值">3.5计算每个通道均值</h2>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="c">% calculate the Correction coefficient of every channel</span>
+<span class="ln"> 2</span><span class="n">R_mean</span> <span class="p">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">mean</span><span class="p">(</span><span class="n">mean</span><span class="p">(</span><span class="n">R</span><span class="p">)));</span>
+<span class="ln"> 3</span><span class="n">Gr_mean</span> <span class="p">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">mean</span><span class="p">(</span><span class="n">mean</span><span class="p">(</span><span class="n">Gr</span><span class="p">)));</span>
+<span class="ln"> 4</span><span class="n">Gb_mean</span> <span class="p">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">mean</span><span class="p">(</span><span class="n">mean</span><span class="p">(</span><span class="n">Gb</span><span class="p">)));</span>
+<span class="ln"> 5</span><span class="n">B_mean</span> <span class="p">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">mean</span><span class="p">(</span><span class="n">mean</span><span class="p">(</span><span class="n">B</span><span class="p">)));</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span><span class="c">% Correct each channel separately</span>
+<span class="ln"> 8</span><span class="n">cR</span> <span class="p">=</span> <span class="n">R</span><span class="o">-</span><span class="n">R_mean</span><span class="p">;</span>
+<span class="ln"> 9</span><span class="n">cGr</span> <span class="p">=</span> <span class="n">Gr</span><span class="o">-</span><span class="n">Gr_mean</span><span class="p">;</span>
+<span class="ln">10</span><span class="n">cGb</span> <span class="p">=</span> <span class="n">Gb</span><span class="o">-</span><span class="n">Gb_mean</span><span class="p">;</span>
+<span class="ln">11</span><span class="n">cB</span> <span class="p">=</span> <span class="n">B</span><span class="o">-</span><span class="n">B_mean</span><span class="p">;</span>
+<span class="ln">12</span><span class="n">fprintf</span><span class="p">(</span><span class="s">&#39;R:%d Gr:%d Gb:%d B:%d\n&#39;</span><span class="p">,</span> <span class="n">R_mean</span><span class="p">,</span> <span class="n">Gr_mean</span><span class="p">,</span> <span class="n">Gb_mean</span><span class="p">,</span> <span class="n">B_mean</span><span class="p">);</span>
+<span class="ln">13</span>
+<span class="ln">14</span><span class="n">cData</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="nb">size</span><span class="p">(</span><span class="n">data</span><span class="p">));</span>
+</code></pre></div><h2 id="36四个通道还原到raw图">3.6四个通道还原到Raw图</h2>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="c">% Restore the image with four channels</span>
+<span class="ln"> 2</span><span class="k">switch</span> <span class="n">bayerFormat</span>
+<span class="ln"> 3</span>    <span class="k">case</span> <span class="s">&#39;RGGB&#39;</span>
+<span class="ln"> 4</span>        <span class="nb">disp</span><span class="p">(</span><span class="s">&#39;bayerFormat: RGGB&#39;</span><span class="p">);</span>
+<span class="ln"> 5</span>        <span class="n">cData</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">)</span> <span class="p">=</span> <span class="n">cR</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln"> 6</span>        <span class="n">cData</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">)</span> <span class="p">=</span> <span class="n">cGr</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln"> 7</span>        <span class="n">cData</span><span class="p">(</span><span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">)</span> <span class="p">=</span> <span class="n">cGb</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln"> 8</span>        <span class="n">cData</span><span class="p">(</span><span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">)</span> <span class="p">=</span> <span class="n">cB</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln"> 9</span>    <span class="k">case</span> <span class="s">&#39;GRBG&#39;</span>
+<span class="ln">10</span>        <span class="nb">disp</span><span class="p">(</span><span class="s">&#39;bayerFormat: GRBG&#39;</span><span class="p">);</span>
+<span class="ln">11</span>        <span class="n">cData</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">)</span> <span class="p">=</span> <span class="n">cGr</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">12</span>        <span class="n">cData</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">)</span> <span class="p">=</span> <span class="n">cR</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">13</span>        <span class="n">cData</span><span class="p">(</span><span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">)</span> <span class="p">=</span> <span class="n">cB</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">14</span>        <span class="n">data</span><span class="p">(</span><span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">)</span> <span class="p">=</span> <span class="n">cGb</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="k">case</span> <span class="s">&#39;GBRG&#39;</span>
+<span class="ln">16</span>        <span class="nb">disp</span><span class="p">(</span><span class="s">&#39;bayerFormat: GBRG&#39;</span><span class="p">);</span>
+<span class="ln">17</span>        <span class="n">cData</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">)</span> <span class="p">=</span> <span class="n">cGb</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">18</span>        <span class="n">cData</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">)</span> <span class="p">=</span> <span class="n">cB</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">19</span>        <span class="n">cData</span><span class="p">(</span><span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">)</span> <span class="p">=</span> <span class="n">cR</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">20</span>        <span class="n">cData</span><span class="p">(</span><span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">)</span> <span class="p">=</span> <span class="n">cGr</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">21</span>    <span class="k">case</span> <span class="s">&#39;BGGR&#39;</span>
+<span class="ln">22</span>        <span class="nb">disp</span><span class="p">(</span><span class="s">&#39;bayerFormat: BGGR&#39;</span><span class="p">);</span>
+<span class="ln">23</span>        <span class="n">cData</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">)</span> <span class="p">=</span> <span class="n">cB</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">24</span>        <span class="n">cData</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">)</span> <span class="p">=</span> <span class="n">cGb</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">25</span>        <span class="n">cData</span><span class="p">(</span><span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">)</span> <span class="p">=</span> <span class="n">cGr</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">26</span>        <span class="n">cData</span><span class="p">(</span><span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">)</span> <span class="p">=</span> <span class="n">cR</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">27</span><span class="k">end</span>
+</code></pre></div><h2 id="37展示效果">3.7展示效果</h2>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="k">function</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span>orgData, corData, bitsNum, mean<span class="p">)</span><span class="w">
+</span><span class="ln"> 2</span><span class="w"></span><span class="c">% show.m    Data visualization</span>
+<span class="ln"> 3</span><span class="c">%   Input:</span>
+<span class="ln"> 4</span><span class="c">%       orgData     the org img data 	 </span>
+<span class="ln"> 5</span><span class="c">%       corData     the corrected data of img</span>
+<span class="ln"> 6</span><span class="c">%       bitsNum      the count of bits</span>
+<span class="ln"> 7</span><span class="c">%   Output:</span>
+<span class="ln"> 8</span><span class="c">%   Instructions:</span>
+<span class="ln"> 9</span><span class="c">%       author:     wtzhu</span>
+<span class="ln">10</span><span class="c">%       e-mail:     wtzhu_13@163.com</span>
+<span class="ln">11</span><span class="c">% Last Modified by wtzhu v1.0 2021-06-30</span>
+<span class="ln">12</span><span class="c">% Note: </span>
+<span class="ln">13</span>    <span class="n">yMax</span> <span class="p">=</span> <span class="mi">2</span>^<span class="n">bitsNum</span><span class="p">;</span>
+<span class="ln">14</span>    <span class="n">listOrgData</span> <span class="p">=</span> <span class="n">orgData</span><span class="p">(:);</span>
+<span class="ln">15</span>    <span class="n">listCorData</span> <span class="p">=</span> <span class="n">corData</span><span class="p">(:);</span>
+<span class="ln">16</span>    <span class="n">figure</span><span class="p">;</span>
+<span class="ln">17</span>    <span class="n">subplot</span><span class="p">(</span><span class="mi">221</span><span class="p">);</span>
+<span class="ln">18</span>    
+<span class="ln">19</span>    <span class="n">imshow</span><span class="p">(</span><span class="n">orgData</span><span class="p">);</span>
+<span class="ln">20</span>    <span class="n">title</span><span class="p">(</span><span class="s">&#39;orgDta&#39;</span><span class="p">);</span>
+<span class="ln">21</span>    <span class="n">subplot</span><span class="p">(</span><span class="mi">222</span><span class="p">);</span>
+<span class="ln">22</span>    
+<span class="ln">23</span>    <span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">corData</span><span class="p">));</span>
+<span class="ln">24</span>    <span class="n">title</span><span class="p">(</span><span class="s">&#39;corData&#39;</span><span class="p">);</span>
+<span class="ln">25</span>    <span class="n">subplot</span><span class="p">(</span><span class="mi">223</span><span class="p">)</span>
+<span class="ln">26</span>    
+<span class="ln">27</span>    <span class="n">plot</span><span class="p">(</span><span class="n">listOrgData</span><span class="p">(</span><span class="n">listOrgData</span><span class="o">&lt;</span><span class="p">(</span><span class="n">mean</span><span class="o">+</span><span class="mi">10</span><span class="p">)))</span>
+<span class="ln">28</span>    <span class="n">title</span><span class="p">(</span><span class="s">&#39;org pixel value&#39;</span><span class="p">);</span>
+<span class="ln">29</span>    <span class="n">ylim</span><span class="p">([</span><span class="o">-</span><span class="mi">10</span> <span class="n">yMax</span><span class="p">]);</span>
+<span class="ln">30</span>    <span class="n">subplot</span><span class="p">(</span><span class="mi">224</span><span class="p">);</span>
+<span class="ln">31</span>    
+<span class="ln">32</span>    <span class="n">plot</span><span class="p">(</span><span class="n">listCorData</span><span class="p">(</span><span class="n">listCorData</span><span class="o">&lt;</span><span class="p">(</span><span class="n">yMax</span><span class="o">*</span><span class="mi">10</span><span class="o">/</span><span class="mi">255</span><span class="p">)));</span>
+<span class="ln">33</span>    <span class="n">title</span><span class="p">(</span><span class="s">&#39;cor pixel value&#39;</span><span class="p">);</span>
+<span class="ln">34</span>    <span class="n">ylim</span><span class="p">([</span><span class="o">-</span><span class="mi">10</span> <span class="n">yMax</span><span class="p">]);</span>
+<span class="ln">35</span><span class="k">end</span>
+</code></pre></div><h1 id="源码查看">源码查看</h1>
+<p>可以点击<a href="https://github.com/YangYang48/ISPAlgorithm/blob/master/BLC/BLC.md">这里</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/isp/">isp</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/algorithm/">algorithm</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/blc/">blc</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-lsc/" data-tooltip="isp算法学习-LSC">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-isppipeline/" data-tooltip="isp算法学习-ISPPipeline">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2023 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-lsc/" data-tooltip="isp算法学习-LSC">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-isppipeline/" data-tooltip="isp算法学习-ISPPipeline">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-blc%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-blc%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-blc%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2023\/12\/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-blc\/';
+          
+            this.page.identifier = '\/2023\/12\/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-blc\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+  <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_CHTML-full" integrity="sha256-GhM+5JHb6QUzOQPXSJLEWP7R73CbkisjzK5Eyij4U9w=" crossorigin="anonymous"></script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      CommonHTML: { linebreaks: { automatic: true } },
+      tex2jax: { inlineMath: [ ['$', '$'], ['\\(','\\)'] ], displayMath: [ ['$$','$$'], ['\\[', '\\]'] ], processEscapes: false },
+      messageStyle: 'none'
+    });
+  </script>
+
+
+
+    
+  </body>
+</html>
+

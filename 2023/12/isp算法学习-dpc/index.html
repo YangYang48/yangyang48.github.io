@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="本文是isp算法学习的第五篇章，主要是讲述DPC原理和算法。">
+
+
+<meta property="og:description" content="本文是isp算法学习的第五篇章，主要是讲述DPC原理和算法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="isp算法学习-DPC">
+<meta name="twitter:title" content="isp算法学习-DPC">
+<meta property="og:url" content="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-dpc/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-dpc/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="本文是isp算法学习的第五篇章，主要是讲述DPC原理和算法。">
+<meta name="twitter:description" content="本文是isp算法学习的第五篇章，主要是讲述DPC原理和算法。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2023-12-29T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2023-12-29T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="isp">
+    
+      <meta property="article:section" content="2023">
+    
+      <meta property="article:section" content="December">
+    
+  
+  
+    
+      <meta property="article:tag" content="isp">
+    
+      <meta property="article:tag" content="algorithm">
+    
+      <meta property="article:tag" content="DPC">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/algorithmlearning/dpc/dpc_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/algorithmlearning/dpc/dpc_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/algorithmlearning/dpc/dpc_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/algorithmlearning/dpc/dpc_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+
+
+    <title>isp算法学习-DPC</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-dpc/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/camera/algorithmlearning/dpc/dpc_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      isp算法学习-DPC
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2023-12-29T00:00:00Z">
+        
+  十二月 29, 2023
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/isp">isp</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2023">2023</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/december">December</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">600 Words|Read in about 3 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+      
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>本文是isp算法学习的第五篇章，主要是讲述DPC原理和算法。</p>
+<div style="text-align: center;">
+<iframe 
+    frameborder="no" border="1"
+    marginwidth="0" marginheight="0"
+    width=400 height=100
+    src="//music.163.com/outchain/player?type=2&id=1867217766&auto=1&height=66"></iframe>
+</div>
+<p>DPC-Defect Pixel Correction，即为坏点检测</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/dpc/dpc1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/dpc/dpc1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>比较便宜的Sensor，暗处拍摄，亮点会比较多。</p>
+<h1 id="1产生原因">1产生原因</h1>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/dpc/dpc2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/dpc/dpc2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>通常都会是工艺方面为主，使用时间较长也会使得像素点异常</p>
+<ul>
+<li>感光元件芯片自身工艺技术瑕疵造成</li>
+<li>光线采集存在缺陷</li>
+<li>制造商产品差异</li>
+</ul>
+<h1 id="2校正方法">2校正方法</h1>
+<h2 id="21离线方式">2.1离线方式</h2>
+<p>静态校正</p>
+<p>通常由Sensor产商在生产后进行标定，把所有坏点的坐标位置记录下来，然后校正的时候直接通过查表方式找到坏点进行校正。</p>
+<h2 id="22在线校正">2.2在线校正</h2>
+<p>动态校正</p>
+<p>在ISP算法中通过特殊算法判断一个点是否为坏点，如果是坏点就进行校正处理，其他不做处理。</p>
+<h2 id="23关于静态校正局限性">2.3关于静态校正局限性</h2>
+<ul>
+<li>这种标定方式需要消耗人力物力，而且存储这些数据对硬件也有一定要求</li>
+<li>随着产品使用时间地增加，坏点地数目会增加，而厂商地数据没法标定这些新增地坏点</li>
+<li>有些坏点表现为正常情况下的光电特性正常，只是在长时间使用或者高ISO的情况下才会变为坏点，这部分坏点正常使用时不用当作坏点处理，毕竟插值的数据和真是数据还是有一定的差异</li>
+</ul>
+<p>基于以上几点，静态坏点检测方法不进行讨论，而且实际应用的时候很多时候静态坏点检测也是disable了。以下讨论几种常见的检测算法。</p>
+<h1 id="3方法实现">3方法实现</h1>
+<h2 id="31pinto算法">3.1PINTO算法</h2>
+<p>主要思想是坏点往往是在一个邻域中的极亮或极暗点，所以以一个5x5的邻域为检测区域</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/dpc/dpc4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/dpc/dpc4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>如图所示5x5的邻域内同意颜色通道相对于中心像素都有8个临近像素。那么矫正按以下步骤操作：</p>
+<ol>
+<li>计算中心像素与周围八个像素值的差；</li>
+<li>判断八个差值是否都为正值或者都为负值；</li>
+<li>如果有的为正有的为负，那么就为正常值，否则进行下一步；</li>
+<li>设置一个阈值，如果八个差值的绝对值都查过阈值，那么就判断为坏点；</li>
+<li>判断为坏点后就用八个临近的像素值的<strong>中位值</strong>来替换当前的像素值；</li>
+</ol>
+<h2 id="32梯度法">3.2梯度法</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/dpc/dpc5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/dpc/dpc5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>针对三个通道都使用这一种窗口进行检测，具体步骤如下：</p>
+<ol>
+<li>
+<p>计算四个方向的梯度：</p>
+<p>水平方向三个二阶梯度：</p>
+<p>D<!-- raw HTML omitted -->h1<!-- raw HTML omitted --> = |P<!-- raw HTML omitted -->1<!-- raw HTML omitted -->+P<!-- raw HTML omitted -->3<!-- raw HTML omitted -->-2<em>P<!-- raw HTML omitted -->2<!-- raw HTML omitted -->|</em></p>
+<p>D<!-- raw HTML omitted -->h2<!-- raw HTML omitted --> = |P<!-- raw HTML omitted -->4<!-- raw HTML omitted -->+P<!-- raw HTML omitted -->5<!-- raw HTML omitted -->-2<em>P<!-- raw HTML omitted -->c<!-- raw HTML omitted -->|</em></p>
+<p>D<!-- raw HTML omitted -->h3<!-- raw HTML omitted --> = |P<!-- raw HTML omitted -->6<!-- raw HTML omitted -->+P<!-- raw HTML omitted -->8<!-- raw HTML omitted -->-2P<!-- raw HTML omitted -->7<!-- raw HTML omitted -->|</p>
+<p>竖直方向三个二阶梯度：</p>
+<p>D<!-- raw HTML omitted -->v1<!-- raw HTML omitted --> = |P<!-- raw HTML omitted -->1<!-- raw HTML omitted -->+P<!-- raw HTML omitted -->6<!-- raw HTML omitted -->-2P<!-- raw HTML omitted -->4<!-- raw HTML omitted -->|</p>
+<p>D<!-- raw HTML omitted -->v2<!-- raw HTML omitted --> = |P<!-- raw HTML omitted -->2<!-- raw HTML omitted -->+P<!-- raw HTML omitted -->7<!-- raw HTML omitted -->-2P<!-- raw HTML omitted -->c<!-- raw HTML omitted -->|</p>
+<p>D<!-- raw HTML omitted -->v3<!-- raw HTML omitted --> = |P<!-- raw HTML omitted -->3<!-- raw HTML omitted -->+P<!-- raw HTML omitted -->8<!-- raw HTML omitted -->-2P<!-- raw HTML omitted -->5<!-- raw HTML omitted -->|</p>
+<p>45°三个二阶梯度：</p>
+<p>D<!-- raw HTML omitted -->45_1<!-- raw HTML omitted --> = 2|P<!-- raw HTML omitted -->4<!-- raw HTML omitted -->-P<!-- raw HTML omitted -->2<!-- raw HTML omitted -->|</p>
+<p>D<!-- raw HTML omitted -->45_2<!-- raw HTML omitted --> =|P<!-- raw HTML omitted -->3<!-- raw HTML omitted -->+P<!-- raw HTML omitted -->6<!-- raw HTML omitted -->-2P<!-- raw HTML omitted -->c<!-- raw HTML omitted -->|</p>
+<p>D<!-- raw HTML omitted -->45_3<!-- raw HTML omitted --> = 2|P<!-- raw HTML omitted -->7<!-- raw HTML omitted -->-P<!-- raw HTML omitted -->5<!-- raw HTML omitted -->|;</p>
+<p>135°三个二阶梯度</p>
+<p>D<!-- raw HTML omitted -->135_1<!-- raw HTML omitted --> = 2|P<!-- raw HTML omitted -->2<!-- raw HTML omitted -->-P<!-- raw HTML omitted -->5<!-- raw HTML omitted -->|</p>
+<p>D<!-- raw HTML omitted -->135_2 <!-- raw HTML omitted -->=|P<!-- raw HTML omitted -->1<!-- raw HTML omitted -->+P<!-- raw HTML omitted -->8<!-- raw HTML omitted -->-2P<!-- raw HTML omitted -->c<!-- raw HTML omitted -->|</p>
+<p>D<!-- raw HTML omitted -->135_3<!-- raw HTML omitted --> = 2|P<!-- raw HTML omitted -->7<!-- raw HTML omitted -->-P<!-- raw HTML omitted -->4<!-- raw HTML omitted -->|</p>
+</li>
+<li>
+<p>取出各个方向梯度绝对值的中值
+$$
+median_D_h = median(D_{h1},D_{h2},D_{h3})
+$$
+同理求出其他三个方向的中值
+$$
+median_D_v = median(D_{v1},D_{v2},D_{v3}) \<br>
+median_D_{45} = median(D_{45_1},D_{45_2},D_{45_3}) \<br>
+median_D_{135} = median(D_{135_1},D_{135_2},D_{135_3})<br>
+$$</p>
+</li>
+<li>
+<p>求出四个中值的最小值作为边缘方向：
+$$
+min_{grad} = min(median_D_h,median_D_v,median_D_{45},median_D_{135});
+$$</p>
+</li>
+<li>
+<p><strong>坏点判定方法1（水平和竖直方向）</strong>。</p>
+<p>如果最小梯度方向为水平或者竖直，若过P<!-- raw HTML omitted -->c<!-- raw HTML omitted -->那个梯度的绝对值大于同方向的另外两个梯度绝对值和的4倍，则P<!-- raw HTML omitted -->c<!-- raw HTML omitted -->为坏点；</p>
+<p>如果是水平方向
+$$
+|D_{h2}| &gt; 4(|D_{h1}|+|D_{h3}|)
+$$
+如果是竖直方向
+$$
+|D_{v2}| &gt; 4(|D_{v1}|+|D_{v3}|)
+$$</p>
+</li>
+<li>
+<p><strong>坏点判定方法2（45°和135°方向）</strong></p>
+<p>如果是45°方向，则计算135°三个梯度绝对值两两之差的绝对值的和
+$$
+D_{135_sum} = |D_{135_1} - D_{135_2}| \+ |D_{135_1} - D_{135_3}| + |D_{135_2} - D_{135_3}|
+$$
+1）如果D<!-- raw HTML omitted -->135_sum<!-- raw HTML omitted -->小于100，P<!-- raw HTML omitted -->c<!-- raw HTML omitted -->为坏点
+$$
+D_{45_2}&gt;3(D_{45_1}+D_{45_3}) &amp;&amp; \ D_{135_2}&gt;3(D_{135_1}+D_{135_3})
+$$
+2）如果D<!-- raw HTML omitted -->135_sum<!-- raw HTML omitted -->大于100，P<!-- raw HTML omitted -->c<!-- raw HTML omitted -->为坏点
+$$
+D_{45_2}&gt;3(D_{45_1}+D_{45_3})
+$$</p>
+</li>
+<li>
+<p>135°方向和45°相反的方向计算和判断即可；</p>
+</li>
+<li>
+<p><strong>坏点判定方法3</strong>。</p>
+<p>为减少漏判，当P<!-- raw HTML omitted -->c<!-- raw HTML omitted -->小于15且周围点都大于P<!-- raw HTML omitted -->c<!-- raw HTML omitted -->40以上，则Pc为坏点。如果P<!-- raw HTML omitted -->c<!-- raw HTML omitted -->大于230，且周围的点都小于P<!-- raw HTML omitted -->c<!-- raw HTML omitted -->30以下，则该点为坏点</p>
+</li>
+<li>
+<p><strong>水平竖直校正</strong>。边缘为水平方向，且判断为坏点，如过|P<!-- raw HTML omitted -->4<!-- raw HTML omitted -->-P<!-- raw HTML omitted -->c<!-- raw HTML omitted -->|&lt;|P<!-- raw HTML omitted -->c<!-- raw HTML omitted -->-P<!-- raw HTML omitted -->5<!-- raw HTML omitted -->|则P<!-- raw HTML omitted -->c<!-- raw HTML omitted -->更靠近P<!-- raw HTML omitted -->4<!-- raw HTML omitted -->，根据同一颜色通道亮度的渐变性可以推导出
+$$
+ouput=P_4+(P_2+P_7-P_1-P_6)/2
+$$</p>
+<p>否则
+$$
+ouput=P_6+(P_2+P_7-P_3-P_9)/2
+$$</p>
+</li>
+<li>
+<p>如果为竖直方向可以参考水平方向求出</p>
+</li>
+<li>
+<p><strong>45°和135°校正</strong>。边缘为45°，如果|P<!-- raw HTML omitted -->3<!-- raw HTML omitted -->-P<!-- raw HTML omitted -->c<!-- raw HTML omitted -->|&lt;|P<!-- raw HTML omitted -->6<!-- raw HTML omitted -->-P<!-- raw HTML omitted -->c<!-- raw HTML omitted -->|则根据同一原则
+$$
+output=P_3+(P_4+P_7-P_2-P_5)/2
+$$</p>
+<p>否则为
+$$
+output=P_7+(P_2+P_5-P_7-P_3)/2
+$$</p>
+</li>
+<li>
+<p>边缘为135°则按照45°的方式反过来计算即可。</p>
+</li>
+</ol>
+<h2 id="33dpc和demosaic结合法">3.3DPC和demosaic结合法</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/dpc/dpc6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/dpc/dpc6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>这种方法就是将DPC算法和去马赛则算法融合到一块而</p>
+<p>思路</p>
+<ul>
+<li>
+<p>先对bayer图像插值成全彩图像</p>
+</li>
+<li>
+<p>对每个点进行坏点检测，检测的时候只用同一同到的像素检测，而且每个像素点用的颜色通道即为该点raw图对应的颜色通道</p>
+<blockquote>
+<p>换句话说就是RGGB图像，对于这四个点，第一个点我只通过周围插值出的R来检测R是否为坏点，其他两个同样这么处理，这样就保证和raw处理的时候一样，只用处理MxN个像素点就行，</p>
+</blockquote>
+</li>
+<li>
+<p>如果该点是坏点就对其进行矫正并重新对齐进行颜色插值，那么执行完这整个流程，坏点被矫正了而且直接输出了全彩图，</p>
+</li>
+</ul>
+<h2 id="34行检测法">3.4行检测法</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/dpc/dpc7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/dpc/dpc7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>上图第一行保存的是上一行的信息点，是否为候选点；第二行为当前的信息点。</p>
+<p>这类算法检测和矫正的时候<strong>并不使用整帧图像</strong>，而是通过几行数据来处理，这样对硬件的buffer要求就没那么高，而且CMOS也是行扫面的，一次正好手机一行数据。具体的操作如下：</p>
+<ul>
+<li>缓存一行数据，在同一行中通过比较同一通道相邻的数据的插值，如果待检测的点同时大于相邻点一个<strong>阈值</strong>，或者同时小于相邻点一个<strong>阈值</strong>，那么这个点就是候选坏点；</li>
+<li>有的算法还会利用buffer缓存上一行的数据，然后判断这个坏点在当前行周围有没有候选坏点，并判断上一行对应位置的点是否为候选坏点，如果都不是，那么当前点就是真实坏点，就通过<strong>周围点矫正</strong>，如果周围有候选坏点，那么就判断为非真是坏点，不用矫正；</li>
+<li>在上一条提到的缓存的上一行数据，有的算法中不是缓存上一行每个像素的信息，而是上一行经过判断后的属性值，比如上一行存储的是每个点是否为候选坏点或者坏点，那么每个点就可以用0或者1来表示，那么上一行每个像素只需要1bit的数据量来存储，这样就能进一步降低对硬件的要求了。</li>
+</ul>
+<h1 id="4代码">4代码</h1>
+<h2 id="41文件信息配置并读取">4.1文件信息配置并读取</h2>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="c">% --------raw parameters-------</span>
+<span class="ln"> 2</span><span class="n">filePath</span> <span class="p">=</span> <span class="s">&#39;images/HisiRAW_4208x3120_8bits_RGGB.raw&#39;</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="n">bayerFormat</span> <span class="p">=</span> <span class="s">&#39;RGGB&#39;</span><span class="p">;</span>
+<span class="ln"> 4</span><span class="n">bayerBits</span> <span class="p">=</span> <span class="mi">8</span><span class="p">;</span>
+<span class="ln"> 5</span><span class="n">row</span> <span class="p">=</span> <span class="mi">4208</span><span class="p">;</span>
+<span class="ln"> 6</span><span class="n">col</span> <span class="p">=</span> <span class="mi">3120</span><span class="p">;</span>
+<span class="ln"> 7</span><span class="c">% -----------------------------</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span><span class="n">rawData</span> <span class="p">=</span> <span class="n">readRaw</span><span class="p">(</span><span class="n">filePath</span><span class="p">,</span> <span class="n">bayerBits</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">);</span>
+<span class="ln">10</span><span class="p">[</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">channel</span><span class="p">]</span> <span class="p">=</span> <span class="nb">size</span><span class="p">(</span><span class="n">rawData</span><span class="p">);</span>
+</code></pre></div><h2 id="42对边缘进行处理">4.2对边缘进行处理</h2>
+<p>因为处理边缘的时候没有邻域了，需要将图片扩充一下，以便对边缘进行处理</p>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln">1</span><span class="n">img_expand</span> <span class="p">=</span> <span class="n">expandRaw</span><span class="p">(</span><span class="n">rawData</span><span class="p">,</span> <span class="n">expandNum</span><span class="p">);</span>
+</code></pre></div><h2 id="43判断坏点">4.3判断坏点</h2>
+<p>判断周边8个点差值的绝对值是否大于阈值T<!-- raw HTML omitted -->H<!-- raw HTML omitted -->，则为坏点，用八个点中位值校正。</p>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="k">function</span><span class="w"> </span>correctP <span class="p">=</span><span class="w"> </span><span class="nf">judgeDefectPixel</span><span class="p">(</span>aroundP, currentP, Th<span class="p">)</span><span class="w">
+</span><span class="ln"> 2</span><span class="w"></span><span class="c">% judgeDefectPixel.m    correct the curren pixel</span>
+<span class="ln"> 3</span><span class="c">%   Input:</span>
+<span class="ln"> 4</span><span class="c">%       aroundP    	the pixel around the current pixel </span>
+<span class="ln"> 5</span><span class="c">%       currentP    the value of current pixel</span>
+<span class="ln"> 6</span><span class="c">%       Th          the threshold of the defect pixel</span>
+<span class="ln"> 7</span><span class="c">%   Output:</span>
+<span class="ln"> 8</span><span class="c">%       correctP    the corrected value of the pixel</span>
+<span class="ln"> 9</span><span class="c">%   Instructions:</span>
+<span class="ln">10</span><span class="c">%       author:     wtzhu</span>
+<span class="ln">11</span><span class="c">%       e-mail:     wtzhu_13@163.com</span>
+<span class="ln">12</span><span class="c">% Last Modified by wtzhu v1.0 2021-07-16</span>
+<span class="ln">13</span><span class="c">% Note: </span>
+<span class="ln">14</span>    <span class="c">% get the median value of the around list</span>
+<span class="ln">15</span>    <span class="n">medianV</span> <span class="p">=</span> <span class="n">median</span><span class="p">(</span><span class="n">aroundP</span><span class="p">);</span>
+<span class="ln">16</span>    <span class="c">% get the difference between the around pixel and the current pixel</span>
+<span class="ln">17</span>    <span class="n">diff</span> <span class="p">=</span> <span class="n">aroundP</span> <span class="o">-</span> <span class="nb">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">numel</span><span class="p">(</span><span class="n">aroundP</span><span class="p">))</span> <span class="o">*</span> <span class="n">currentP</span><span class="p">;</span>
+<span class="ln">18</span>    <span class="c">% if all difference bigger than 0 or all smaller than 0 and all abs of the diff are bigger than Th, that pixel is</span>
+<span class="ln">19</span>    <span class="c">% a defect pixel and replace it with the median;</span>
+<span class="ln">20</span>    <span class="k">if</span> <span class="p">(</span><span class="n">nnz</span><span class="p">(</span><span class="n">diff</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">==</span>  <span class="nb">numel</span><span class="p">(</span><span class="n">aroundP</span><span class="p">))</span> <span class="o">||</span> <span class="p">(</span><span class="n">nnz</span><span class="p">(</span><span class="n">diff</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">==</span>  <span class="nb">numel</span><span class="p">(</span><span class="n">aroundP</span><span class="p">))</span>
+<span class="ln">21</span>        <span class="k">if</span> <span class="nb">length</span><span class="p">(</span><span class="nb">find</span><span class="p">((</span><span class="nb">abs</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span><span class="o">&gt;</span><span class="n">Th</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">))</span> <span class="o">==</span> <span class="nb">numel</span><span class="p">(</span><span class="n">aroundP</span><span class="p">)</span>
+<span class="ln">22</span>            <span class="n">correctP</span> <span class="p">=</span> <span class="n">medianV</span><span class="p">;</span>
+<span class="ln">23</span>        <span class="k">else</span>
+<span class="ln">24</span>            <span class="n">correctP</span> <span class="p">=</span> <span class="n">currentP</span><span class="p">;</span>
+<span class="ln">25</span>        <span class="k">end</span>
+<span class="ln">26</span>    <span class="k">else</span>
+<span class="ln">27</span>        <span class="n">correctP</span> <span class="p">=</span> <span class="n">currentP</span><span class="p">;</span>
+<span class="ln">28</span>    <span class="k">end</span>
+<span class="ln">29</span><span class="k">end</span>
+</code></pre></div><h2 id="44归一化四通道遍历">4.4归一化四通道遍历</h2>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="n">disImg</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">);</span>
+<span class="ln"> 2</span><span class="k">for</span> <span class="nb">i</span> <span class="p">=</span> <span class="n">expandNum</span><span class="o">+</span><span class="mi">1</span> <span class="p">:</span> <span class="mi">2</span> <span class="p">:</span> <span class="n">height</span><span class="o">+</span><span class="n">expandNum</span>
+<span class="ln"> 3</span>    <span class="k">for</span> <span class="nb">j</span> <span class="p">=</span> <span class="n">expandNum</span><span class="o">+</span><span class="mi">1</span> <span class="p">:</span> <span class="mi">2</span> <span class="p">:</span> <span class="n">width</span><span class="o">+</span><span class="n">expandNum</span>
+<span class="ln"> 4</span>        <span class="c">% R</span>
+<span class="ln"> 5</span>        <span class="c">% get the pixel around the current R pixel</span>
+<span class="ln"> 6</span>        <span class="n">around_R_pixel</span> <span class="p">=</span> <span class="p">[</span><span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="nb">j</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="nb">j</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="nb">j</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="nb">j</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">2</span><span class="p">)];</span>
+<span class="ln"> 7</span>        <span class="n">disImg</span><span class="p">(</span><span class="nb">i</span><span class="o">-</span><span class="n">expandNum</span><span class="p">,</span> <span class="nb">j</span><span class="o">-</span><span class="n">expandNum</span><span class="p">)</span> <span class="p">=</span> <span class="n">judgeDefectPixel</span><span class="p">(</span><span class="n">around_R_pixel</span><span class="p">,</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="p">),</span> <span class="n">Th</span><span class="p">);</span>
+<span class="ln"> 8</span>        <span class="c">% Gr</span>
+<span class="ln"> 9</span>        <span class="c">% get the pixel around the current Gr pixel</span>
+<span class="ln">10</span>        <span class="n">around_Gr_pixel</span> <span class="p">=</span> <span class="p">[</span><span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span>  <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">2</span><span class="p">)];</span>
+<span class="ln">11</span>        <span class="n">disImg</span><span class="p">(</span><span class="nb">i</span><span class="o">-</span><span class="n">expandNum</span><span class="p">,</span> <span class="nb">j</span><span class="o">-</span><span class="n">expandNum</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="p">=</span> <span class="n">judgeDefectPixel</span><span class="p">(</span><span class="n">around_Gr_pixel</span><span class="p">,</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="n">Th</span><span class="p">);</span>
+<span class="ln">12</span>        <span class="c">% B</span>
+<span class="ln">13</span>        <span class="c">% get the pixel around the current B pixel</span>
+<span class="ln">14</span>        <span class="n">around_B_pixel</span> <span class="p">=</span> <span class="p">[</span><span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">3</span><span class="p">,</span> <span class="nb">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">3</span><span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">3</span><span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">3</span><span class="p">)];</span>
+<span class="ln">15</span>        <span class="n">disImg</span><span class="p">(</span><span class="nb">i</span><span class="o">-</span><span class="n">expandNum</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="o">-</span><span class="n">expandNum</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="p">=</span> <span class="n">judgeDefectPixel</span><span class="p">(</span><span class="n">around_B_pixel</span><span class="p">,</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="n">Th</span><span class="p">);</span>
+<span class="ln">16</span>        <span class="c">% Gb</span>
+<span class="ln">17</span>        <span class="c">% get the pixel around the current Gb pixel</span>
+<span class="ln">18</span>        <span class="n">around_Gb_pixel</span> <span class="p">=</span> <span class="p">[</span><span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="nb">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">3</span><span class="p">,</span> <span class="nb">j</span><span class="p">)</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="nb">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)];</span>
+<span class="ln">19</span>        <span class="n">disImg</span><span class="p">(</span><span class="nb">i</span><span class="o">-</span><span class="n">expandNum</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="o">-</span><span class="n">expandNum</span><span class="p">)</span> <span class="p">=</span> <span class="n">judgeDefectPixel</span><span class="p">(</span><span class="n">around_Gb_pixel</span><span class="p">,</span> <span class="n">img_expand</span><span class="p">(</span><span class="nb">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">j</span><span class="p">),</span> <span class="n">Th</span><span class="p">);</span>
+<span class="ln">20</span>    <span class="k">end</span>
+<span class="ln">21</span><span class="k">end</span>
+<span class="ln">22</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln">23</span><span class="n">imshow</span><span class="p">(</span><span class="n">rawData</span><span class="p">);</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;org&#39;</span><span class="p">);</span>
+<span class="ln">24</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln">25</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">disImg</span><span class="p">));</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;corrected&#39;</span><span class="p">);</span>
+<span class="ln">26</span><span class="nb">disp</span><span class="p">([</span><span class="s">&#39;cost time£º&#39;</span><span class="p">,</span><span class="n">num2str</span><span class="p">(</span><span class="n">toc</span><span class="p">)])</span>
+</code></pre></div>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/isp/">isp</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/algorithm/">algorithm</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/dpc/">DPC</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-awb/" data-tooltip="isp算法学习-AWB">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-%E6%8F%92%E5%80%BC/" data-tooltip="isp算法学习-插值">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2023 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-awb/" data-tooltip="isp算法学习-AWB">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-%E6%8F%92%E5%80%BC/" data-tooltip="isp算法学习-插值">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-dpc%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-dpc%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-dpc%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2023\/12\/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-dpc\/';
+          
+            this.page.identifier = '\/2023\/12\/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-dpc\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+  <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_CHTML-full" integrity="sha256-GhM+5JHb6QUzOQPXSJLEWP7R73CbkisjzK5Eyij4U9w=" crossorigin="anonymous"></script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      CommonHTML: { linebreaks: { automatic: true } },
+      tex2jax: { inlineMath: [ ['$', '$'], ['\\(','\\)'] ], displayMath: [ ['$$','$$'], ['\\[', '\\]'] ], processEscapes: false },
+      messageStyle: 'none'
+    });
+  </script>
+
+
+
+    
+  </body>
+</html>
+

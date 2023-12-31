@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="本文是isp算法学习的第四篇章，主要是讲述插值原理和算法。">
+
+
+<meta property="og:description" content="本文是isp算法学习的第四篇章，主要是讲述插值原理和算法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="isp算法学习-插值">
+<meta name="twitter:title" content="isp算法学习-插值">
+<meta property="og:url" content="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-%E6%8F%92%E5%80%BC/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-%E6%8F%92%E5%80%BC/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="本文是isp算法学习的第四篇章，主要是讲述插值原理和算法。">
+<meta name="twitter:description" content="本文是isp算法学习的第四篇章，主要是讲述插值原理和算法。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2023-12-28T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2023-12-28T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="isp">
+    
+      <meta property="article:section" content="2023">
+    
+      <meta property="article:section" content="December">
+    
+  
+  
+    
+      <meta property="article:tag" content="isp">
+    
+      <meta property="article:tag" content="algorithm">
+    
+      <meta property="article:tag" content="interpolation">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/algorithmlearning/interpolation/interpolation_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/algorithmlearning/interpolation/interpolation_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/algorithmlearning/interpolation/interpolation_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/algorithmlearning/interpolation/interpolation_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+
+
+    <title>isp算法学习-插值</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-%E6%8F%92%E5%80%BC/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/camera/algorithmlearning/interpolation/interpolation_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      isp算法学习-插值
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2023-12-28T00:00:00Z">
+        
+  十二月 28, 2023
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/isp">isp</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2023">2023</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/december">December</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">800 Words|Read in about 4 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+      
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>本文是isp算法学习的第四篇章，主要是讲述插值原理和算法。</p>
+<div style="text-align: center;">
+<iframe 
+    frameborder="no" border="1"
+    marginwidth="0" marginheight="0"
+    width=400 height=100
+    src="//music.163.com/outchain/player?type=2&id=1330348068&auto=1&height=66"></iframe>
+</div>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/interpolation/interpolation1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/interpolation/interpolation1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="1插值方法">1插值方法</h1>
+<h2 id="11邻域插值">1.1邻域插值</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/interpolation/interpolation2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/interpolation/interpolation2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>这个时候落点P不在区域四个顶点上，那么求其P距离区域顶点的值
+$$
+min = {r_1, r_2, r_3,r_4}
+$$
+把整个区域分成几个小区域，然后判断点落在那个区域，就意味着P点离对应的点最近，然后就令P点等于最近的点。</p>
+<p>上图中P离区域顶点A最近，所以选择A点作为P的值。</p>
+<blockquote>
+<p>通常在代码中不会使用求距离公式，比较复杂
+$$
+d = \sqrt{(x-x_0)^2 + (y-y_0)^2}
+$$
+首先对整个区域归一化处理，然后在matlab会使用建坐标系来简化运算量和步骤。</p>
+<p>以区域中心建立xy坐标系，P点通过在四个象限落点来判断P点最近的点。</p>
+</blockquote>
+<h2 id="12线性插值">1.2线性插值</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/interpolation/interpolation3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/interpolation/interpolation3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>线性插值，就是利用两个点，进行插值，得到一个近似的点，让P等于这个点。</p>
+<p>以上图为例，可以选择用A<!-- raw HTML omitted -->1<!-- raw HTML omitted -->和A<!-- raw HTML omitted -->2<!-- raw HTML omitted -->点来插值，也可以使用A<!-- raw HTML omitted -->1<!-- raw HTML omitted -->和A<!-- raw HTML omitted -->3<!-- raw HTML omitted -->点来插值，也可以用A<!-- raw HTML omitted -->1<!-- raw HTML omitted -->和A<!-- raw HTML omitted -->4<!-- raw HTML omitted -->点来插值。</p>
+<p>相对于邻域插值来演，用两个点插值会更加精确。</p>
+<h2 id="13双线性插值">1.3双线性插值</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/interpolation/interpolation4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/interpolation/interpolation4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>双线性就是，先进行两次线性插值，然后再利先前两次插值的结果再进行一次线性插值，最终得到P</p>
+<p>以上图为例，第一次插值，选择用A<!-- raw HTML omitted -->1<!-- raw HTML omitted -->和A<!-- raw HTML omitted -->2<!-- raw HTML omitted -->点来插值求得B<!-- raw HTML omitted -->1<!-- raw HTML omitted -->，第二次插值，选择用A<!-- raw HTML omitted -->3<!-- raw HTML omitted -->和A<!-- raw HTML omitted -->4<!-- raw HTML omitted -->点来插值求得B<!-- raw HTML omitted -->2<!-- raw HTML omitted -->。第三次插值，选择用B<!-- raw HTML omitted -->1<!-- raw HTML omitted -->和B<!-- raw HTML omitted -->2<!-- raw HTML omitted -->点来插值求得P</p>
+<p>相对于单次线性插值来演，双线性插值用四个点插值会更加精确。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/interpolation/interpolation5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/interpolation/interpolation5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>进一步的，可以列出公式，归一化之后以左下角为原点建立xyz坐标
+$$
+\begin{cases}
+\frac{Z_b-Z_a}{Y_1-Y_0} = \frac{Z_n-Z_a}{Y-Y_0}&amp;(1)\<br>
+\frac{Z_c-Z_d}{Y_1-Y_0} = \frac{Z_m-Z_a}{Y-Y_0}&amp;(2)\<br>
+\frac{Z_m-Z_n}{X_1-X_0} = \frac{Z-Z_0}{X-X_0}&amp;(3)<br>
+\end{cases}
+$$
+得到最终z的值
+$$
+Z = (Z_d-Z_a)* X + (Z_b -Z_a)*Y+(Z_c+Z_a-Z_b-Z_d)*X*Y + Z_a
+$$</p>
+<h2 id="14双三次插值">1.4双三次插值</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/interpolation/interpolation6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/interpolation/interpolation6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>因为连续信号在采样的过程中会变成离散信号，离散信号变成连续信号的公式，如下所示
+$$
+x(t) = \sum_{i=-\infty}^{+\infty}{x(nT_s)sinc(
+\frac{\pi}{T_s}(t-nT_s)
+)}
+$$
+转变成连续信号后，对连续信号处理，sin函数比较复杂，取上述公式的[-2,2]区间对应的值，如右图所示，那么简化分成三段
+$$
+S(x) =
+\begin{cases}
+1-2|x|^2+|x|^3 &amp;|x|&lt;1\<br>
+1-2|x|^2+|x|^3 &amp;1\leq|x|\leq2\<br>
+0 &amp;|x|&gt;2<br>
+\end{cases}
+$$</p>
+<h1 id="2算法">2算法</h1>
+<h2 id="21邻域插值">2.1邻域插值</h2>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="n">clc</span><span class="p">,</span><span class="n">clear</span><span class="p">,</span><span class="n">close</span> <span class="n">all</span><span class="p">;</span>
+<span class="ln"> 2</span><span class="c">% 读取图片</span>
+<span class="ln"> 3</span><span class="n">orgImage</span> <span class="p">=</span> <span class="n">imread</span><span class="p">(</span><span class="s">&#39;./images/lena.bmp&#39;</span><span class="p">);</span>
+<span class="ln"> 4</span><span class="n">figure</span><span class="p">;</span><span class="n">imshow</span><span class="p">(</span><span class="n">orgImage</span><span class="p">);</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;org image&#39;</span><span class="p">);</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span><span class="c">% 获取长宽</span>
+<span class="ln"> 7</span><span class="p">[</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">]</span> <span class="p">=</span> <span class="nb">size</span><span class="p">(</span><span class="n">orgImage</span><span class="p">);</span>
+<span class="ln"> 8</span><span class="n">m</span> <span class="p">=</span> <span class="n">width</span> <span class="o">/</span> <span class="mi">2</span><span class="p">;</span>
+<span class="ln"> 9</span><span class="n">n</span> <span class="p">=</span>  <span class="n">height</span> <span class="o">/</span> <span class="mi">2</span><span class="p">;</span>
+<span class="ln">10</span><span class="n">smallImage</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">);</span>
+<span class="ln">11</span><span class="c">% 降采样，将原图缩减为原来的1/2</span>
+<span class="ln">12</span><span class="k">for</span> <span class="nb">i</span><span class="p">=</span><span class="mi">1</span><span class="p">:</span><span class="n">m</span>
+<span class="ln">13</span>    <span class="k">for</span> <span class="nb">j</span><span class="p">=</span><span class="mi">1</span><span class="p">:</span><span class="n">n</span>
+<span class="ln">14</span>        <span class="n">smallImage</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span><span class="nb">j</span><span class="p">)</span> <span class="p">=</span> <span class="n">orgImage</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="nb">i</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="nb">j</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="k">end</span>
+<span class="ln">16</span><span class="k">end</span>
+<span class="ln">17</span><span class="n">figure</span><span class="p">;</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">smallImage</span><span class="p">));</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;small image&#39;</span><span class="p">);</span>
+<span class="ln">18</span>
+<span class="ln">19</span><span class="c">% 插值时需要特殊处理四周最外圈的行和列，本算法中将其向外扩展一圈，用最外圈的值填充</span>
+<span class="ln">20</span><span class="n">headRowMat</span> <span class="p">=</span> <span class="n">smallImage</span><span class="p">(</span><span class="mi">1</span><span class="p">,:);</span><span class="c">%取f的第1行</span>
+<span class="ln">21</span><span class="n">tailRowMat</span> <span class="p">=</span> <span class="n">smallImage</span><span class="p">(</span><span class="n">m</span><span class="p">,:);</span><span class="c">%取f的第m行</span>
+<span class="ln">22</span><span class="c">% 行扩展后，列扩展时需要注意四个角需要单独扩展进去，不然就成了十字架形的</span>
+<span class="ln">23</span><span class="n">headColumnMat</span> <span class="p">=</span> <span class="p">[</span><span class="n">smallImage</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">smallImage</span><span class="p">(:,</span><span class="mi">1</span><span class="p">)</span><span class="o">&#39;</span><span class="p">,</span> <span class="n">smallImage</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="mi">1</span><span class="p">)];</span>
+<span class="ln">24</span><span class="n">tailColumnMat</span> <span class="p">=</span> <span class="p">[</span><span class="n">smallImage</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">n</span><span class="p">),</span> <span class="n">smallImage</span><span class="p">(:,</span><span class="n">n</span><span class="p">)</span><span class="o">&#39;</span><span class="p">,</span> <span class="n">smallImage</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">)];</span>
+<span class="ln">25</span><span class="n">expandImage</span> <span class="p">=</span> <span class="p">[</span><span class="n">headRowMat</span><span class="p">;</span> <span class="n">smallImage</span><span class="p">;</span> <span class="n">tailRowMat</span><span class="p">];</span>
+<span class="ln">26</span><span class="n">expandImage</span> <span class="p">=</span> <span class="p">[</span><span class="n">headColumnMat</span><span class="p">;</span> <span class="n">expandImage</span><span class="o">&#39;</span><span class="p">;</span> <span class="n">tailColumnMat</span><span class="p">];</span>
+<span class="ln">27</span><span class="n">expandImage</span> <span class="p">=</span> <span class="n">uint8</span><span class="p">(</span><span class="n">expandImage</span><span class="o">&#39;</span><span class="p">);</span>
+<span class="ln">28</span><span class="n">figure</span><span class="p">;</span><span class="n">imshow</span><span class="p">(</span><span class="n">expandImage</span><span class="p">);</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;expand image&#39;</span><span class="p">);</span>
+<span class="ln">29</span>
+<span class="ln">30</span><span class="c">% 按比例放大</span>
+<span class="ln">31</span><span class="p">[</span><span class="n">smallWidth</span><span class="p">,</span> <span class="n">smallHeight</span><span class="p">]</span> <span class="p">=</span> <span class="nb">size</span><span class="p">(</span><span class="n">smallImage</span><span class="p">);</span>
+<span class="ln">32</span><span class="c">% 设置放大系数</span>
+<span class="ln">33</span><span class="n">magnification</span> <span class="p">=</span> <span class="mi">2</span><span class="p">;</span>
+<span class="ln">34</span><span class="n">newWidth</span> <span class="p">=</span> <span class="n">magnification</span> <span class="o">*</span> <span class="n">smallWidth</span><span class="p">;</span>
+<span class="ln">35</span><span class="n">newHeight</span> <span class="p">=</span> <span class="n">magnification</span> <span class="o">*</span> <span class="n">smallHeight</span><span class="p">;</span>
+<span class="ln">36</span><span class="c">% 创建一个新的矩阵，用于承接变换后的图像</span>
+<span class="ln">37</span><span class="n">newImage</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="n">newWidth</span><span class="p">,</span> <span class="n">newHeight</span><span class="p">);</span>
+<span class="ln">38</span>
+<span class="ln">39</span><span class="c">% 循环计算出新图像的像素值</span>
+<span class="ln">40</span><span class="k">for</span> <span class="nb">i</span> <span class="p">=</span> <span class="mi">1</span> <span class="p">:</span> <span class="n">newWidth</span>
+<span class="ln">41</span>   <span class="k">for</span> <span class="nb">j</span> <span class="p">=</span> <span class="mi">1</span><span class="p">:</span> <span class="n">newHeight</span>
+<span class="ln">42</span>       <span class="n">detaX</span> <span class="p">=</span> <span class="nb">rem</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="n">magnification</span><span class="p">)</span> <span class="o">/</span> <span class="n">magnification</span><span class="p">;</span>
+<span class="ln">43</span>       <span class="n">floorX</span> <span class="p">=</span> <span class="nb">floor</span><span class="p">(</span><span class="nb">i</span> <span class="o">/</span> <span class="n">magnification</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">44</span>       <span class="n">detaY</span> <span class="p">=</span> <span class="nb">rem</span><span class="p">(</span><span class="nb">j</span><span class="p">,</span> <span class="n">magnification</span><span class="p">)</span> <span class="o">/</span> <span class="n">magnification</span><span class="p">;</span>
+<span class="ln">45</span>       <span class="n">floorY</span> <span class="p">=</span> <span class="nb">floor</span><span class="p">(</span><span class="nb">j</span> <span class="o">/</span> <span class="n">magnification</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">46</span>       <span class="k">if</span> <span class="n">detaX</span> <span class="o">&lt;</span> <span class="mf">0.5</span> <span class="o">&amp;&amp;</span> <span class="n">detaY</span> <span class="o">&lt;</span> <span class="mf">0.5</span>
+<span class="ln">47</span>            <span class="n">newImage</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="p">)</span> <span class="p">=</span> <span class="n">expandImage</span><span class="p">(</span><span class="n">floorX</span><span class="p">,</span> <span class="n">floorY</span><span class="p">);</span>
+<span class="ln">48</span>       <span class="k">elseif</span> <span class="n">detaX</span> <span class="o">&lt;</span> <span class="mf">0.5</span> <span class="o">&amp;&amp;</span> <span class="n">detaY</span> <span class="o">&gt;</span><span class="p">=</span> <span class="mf">0.5</span>
+<span class="ln">49</span>            <span class="n">newImage</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="p">)</span> <span class="p">=</span> <span class="n">expandImage</span><span class="p">(</span><span class="n">floorX</span><span class="p">,</span> <span class="n">floorY</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+<span class="ln">50</span>       <span class="k">elseif</span> <span class="n">detaX</span> <span class="o">&gt;</span><span class="p">=</span> <span class="mf">0.5</span> <span class="o">&amp;&amp;</span> <span class="n">detaY</span> <span class="o">&lt;</span> <span class="mf">0.5</span>
+<span class="ln">51</span>            <span class="n">newImage</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="p">)</span> <span class="p">=</span> <span class="n">expandImage</span><span class="p">(</span><span class="n">floorX</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">floorY</span><span class="p">);</span>
+<span class="ln">52</span>       <span class="k">else</span>
+<span class="ln">53</span>            <span class="n">newImage</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="p">)</span> <span class="p">=</span> <span class="n">expandImage</span><span class="p">(</span><span class="n">floorX</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">floorY</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+<span class="ln">54</span>       <span class="k">end</span>
+<span class="ln">55</span>   <span class="k">end</span>
+<span class="ln">56</span><span class="k">end</span>
+<span class="ln">57</span><span class="n">figure</span><span class="p">;</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">newImage</span><span class="p">));</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;NeighborhoodInterpolation&#39;</span><span class="p">);</span>
+<span class="ln">58</span><span class="n">figure</span><span class="p">;</span>
+<span class="ln">59</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">);</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">smallImage</span><span class="p">));</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;small img&#39;</span><span class="p">);</span>
+<span class="ln">60</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">);</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">newImage</span><span class="p">));</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;NeighborhoodInterpolation img&#39;</span><span class="p">);</span>
+</code></pre></div><h2 id="22双线性插值">2.2双线性插值</h2>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="n">clc</span><span class="p">,</span><span class="n">clear</span><span class="p">,</span><span class="n">close</span> <span class="n">all</span><span class="p">;</span>
+<span class="ln"> 2</span><span class="c">% 读取图片</span>
+<span class="ln"> 3</span><span class="n">orgImage</span> <span class="p">=</span> <span class="n">imread</span><span class="p">(</span><span class="s">&#39;./images/lena.bmp&#39;</span><span class="p">);</span>
+<span class="ln"> 4</span><span class="n">figure</span><span class="p">;</span><span class="n">imshow</span><span class="p">(</span><span class="n">orgImage</span><span class="p">);</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;org image&#39;</span><span class="p">);</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span><span class="c">% 获取长宽</span>
+<span class="ln"> 7</span><span class="p">[</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">]</span> <span class="p">=</span> <span class="nb">size</span><span class="p">(</span><span class="n">orgImage</span><span class="p">);</span>
+<span class="ln"> 8</span><span class="n">m</span> <span class="p">=</span> <span class="n">width</span> <span class="o">/</span> <span class="mi">2</span><span class="p">;</span>
+<span class="ln"> 9</span><span class="n">n</span> <span class="p">=</span>  <span class="n">height</span> <span class="o">/</span> <span class="mi">2</span><span class="p">;</span>
+<span class="ln">10</span><span class="n">smallImage</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">);</span>
+<span class="ln">11</span><span class="c">% 降采样，将原图缩减为原来的1/2</span>
+<span class="ln">12</span><span class="k">for</span> <span class="nb">i</span><span class="p">=</span><span class="mi">1</span><span class="p">:</span><span class="n">m</span>
+<span class="ln">13</span>    <span class="k">for</span> <span class="nb">j</span><span class="p">=</span><span class="mi">1</span><span class="p">:</span><span class="n">n</span>
+<span class="ln">14</span>        <span class="n">smallImage</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span><span class="nb">j</span><span class="p">)</span> <span class="p">=</span> <span class="n">orgImage</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="nb">i</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="nb">j</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="k">end</span>
+<span class="ln">16</span><span class="k">end</span>
+<span class="ln">17</span><span class="n">figure</span><span class="p">;</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">smallImage</span><span class="p">));</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;small image&#39;</span><span class="p">);</span>
+<span class="ln">18</span>
+<span class="ln">19</span><span class="c">% 插值时需要特殊处理四周最外圈的行和列，本算法中将其向外扩展一圈，用最外圈的值填充</span>
+<span class="ln">20</span><span class="n">headRowMat</span> <span class="p">=</span> <span class="n">smallImage</span><span class="p">(</span><span class="mi">1</span><span class="p">,:);</span><span class="c">%取f的第1行</span>
+<span class="ln">21</span><span class="n">tailRowMat</span> <span class="p">=</span> <span class="n">smallImage</span><span class="p">(</span><span class="n">m</span><span class="p">,:);</span><span class="c">%取f的第m行</span>
+<span class="ln">22</span><span class="c">% 行扩展后，列扩展时需要注意四个角需要单独扩展进去，不然就成了十字架形的</span>
+<span class="ln">23</span><span class="n">headColumnMat</span> <span class="p">=</span> <span class="p">[</span><span class="n">smallImage</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">smallImage</span><span class="p">(:,</span><span class="mi">1</span><span class="p">)</span><span class="o">&#39;</span><span class="p">,</span> <span class="n">smallImage</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="mi">1</span><span class="p">)];</span>
+<span class="ln">24</span><span class="n">tailColumnMat</span> <span class="p">=</span> <span class="p">[</span><span class="n">smallImage</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">n</span><span class="p">),</span> <span class="n">smallImage</span><span class="p">(:,</span><span class="n">n</span><span class="p">)</span><span class="o">&#39;</span><span class="p">,</span> <span class="n">smallImage</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">)];</span>
+<span class="ln">25</span><span class="n">expandImage</span> <span class="p">=</span> <span class="p">[</span><span class="n">headRowMat</span><span class="p">;</span> <span class="n">smallImage</span><span class="p">;</span> <span class="n">tailRowMat</span><span class="p">];</span>
+<span class="ln">26</span><span class="n">expandImage</span> <span class="p">=</span> <span class="p">[</span><span class="n">headColumnMat</span><span class="p">;</span> <span class="n">expandImage</span><span class="o">&#39;</span><span class="p">;</span> <span class="n">tailColumnMat</span><span class="p">];</span>
+<span class="ln">27</span><span class="n">expandImage</span> <span class="p">=</span> <span class="n">uint8</span><span class="p">(</span><span class="n">expandImage</span><span class="o">&#39;</span><span class="p">);</span>
+<span class="ln">28</span><span class="n">figure</span><span class="p">;</span><span class="n">imshow</span><span class="p">(</span><span class="n">expandImage</span><span class="p">);</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;expand image&#39;</span><span class="p">);</span>
+<span class="ln">29</span>
+<span class="ln">30</span><span class="c">% 按比例放大</span>
+<span class="ln">31</span><span class="p">[</span><span class="n">smallWidth</span><span class="p">,</span> <span class="n">smallHeight</span><span class="p">]</span> <span class="p">=</span> <span class="nb">size</span><span class="p">(</span><span class="n">smallImage</span><span class="p">);</span>
+<span class="ln">32</span><span class="c">% 设置放大系数</span>
+<span class="ln">33</span><span class="n">magnification</span> <span class="p">=</span> <span class="mi">2</span><span class="p">;</span>
+<span class="ln">34</span><span class="n">newWidth</span> <span class="p">=</span> <span class="n">magnification</span> <span class="o">*</span> <span class="n">smallWidth</span><span class="p">;</span>
+<span class="ln">35</span><span class="n">newHeight</span> <span class="p">=</span> <span class="n">magnification</span> <span class="o">*</span> <span class="n">smallHeight</span><span class="p">;</span>
+<span class="ln">36</span><span class="c">% 创建一个新的矩阵，用于承接变换后的图像</span>
+<span class="ln">37</span><span class="n">newImage</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="n">newWidth</span><span class="p">,</span> <span class="n">newHeight</span><span class="p">);</span>
+<span class="ln">38</span>
+<span class="ln">39</span><span class="c">% f(x,y) = [f(1,0)-f(0,0)]*x+[f(0,1)-f(0,0)]*y+[f(1,1)+f(0,0)-f(1,0)-f(0,1)]*xy+f(0,0)</span>
+<span class="ln">40</span><span class="k">for</span> <span class="nb">i</span> <span class="p">=</span> <span class="mi">1</span> <span class="p">:</span> <span class="n">newWidth</span>
+<span class="ln">41</span>   <span class="k">for</span> <span class="nb">j</span> <span class="p">=</span> <span class="mi">1</span><span class="p">:</span> <span class="n">newHeight</span>
+<span class="ln">42</span>       <span class="n">detaX</span> <span class="p">=</span> <span class="nb">rem</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="n">magnification</span><span class="p">)</span> <span class="o">/</span> <span class="n">magnification</span><span class="p">;</span>
+<span class="ln">43</span>       <span class="n">floorX</span> <span class="p">=</span> <span class="nb">floor</span><span class="p">(</span><span class="nb">i</span> <span class="o">/</span> <span class="n">magnification</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">44</span>       <span class="n">detaY</span> <span class="p">=</span> <span class="nb">rem</span><span class="p">(</span><span class="nb">j</span><span class="p">,</span> <span class="n">magnification</span><span class="p">)</span> <span class="o">/</span> <span class="n">magnification</span><span class="p">;</span>
+<span class="ln">45</span>       <span class="n">floorY</span> <span class="p">=</span> <span class="nb">floor</span><span class="p">(</span><span class="nb">j</span> <span class="o">/</span> <span class="n">magnification</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">46</span>       <span class="n">newImage</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="p">)</span> <span class="p">=</span> <span class="p">(</span><span class="n">expandImage</span><span class="p">(</span><span class="n">floorX</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span><span class="n">floorY</span><span class="p">)</span> <span class="o">-</span> <span class="n">expandImage</span><span class="p">(</span><span class="n">floorX</span><span class="p">,</span><span class="n">floorY</span><span class="p">))</span> <span class="o">*</span> <span class="n">detaX</span> <span class="o">+</span> <span class="c">... </span>
+<span class="ln">47</span>                        <span class="p">(</span><span class="n">expandImage</span><span class="p">(</span><span class="n">floorX</span><span class="p">,</span> <span class="n">floorY</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">expandImage</span><span class="p">(</span><span class="n">floorX</span><span class="p">,</span> <span class="n">floorY</span><span class="p">))</span> <span class="o">*</span> <span class="n">detaY</span> <span class="o">+</span> <span class="c">...</span>
+<span class="ln">48</span>                        <span class="p">(</span><span class="n">expandImage</span><span class="p">(</span><span class="n">floorX</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">floorY</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">expandImage</span><span class="p">(</span><span class="n">floorX</span><span class="p">,</span> <span class="n">floorY</span><span class="p">)</span> <span class="o">-</span> <span class="c">...</span>
+<span class="ln">49</span>                            <span class="n">expandImage</span><span class="p">(</span><span class="n">floorX</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">floorY</span><span class="p">)</span> <span class="o">-</span> <span class="n">expandImage</span><span class="p">(</span><span class="n">floorX</span><span class="p">,</span> <span class="n">floorY</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span> <span class="o">*</span> <span class="n">detaX</span> <span class="o">*</span> <span class="n">detaY</span> <span class="o">+</span> <span class="c">...</span>
+<span class="ln">50</span>                        <span class="n">expandImage</span><span class="p">(</span><span class="n">floorX</span><span class="p">,</span> <span class="n">floorY</span><span class="p">);</span>
+<span class="ln">51</span>   <span class="k">end</span>
+<span class="ln">52</span><span class="k">end</span>
+<span class="ln">53</span><span class="n">figure</span><span class="p">;</span>
+<span class="ln">54</span><span class="c">% subplot(121);imshow(uint8(smallImage));title(&#39;small image&#39;);</span>
+<span class="ln">55</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">newImage</span><span class="p">));</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;BilinearInterpolation&#39;</span><span class="p">);</span>
+</code></pre></div><h2 id="23双三次内插">2.3双三次内插</h2>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="n">clc</span><span class="p">,</span><span class="n">clear</span><span class="p">,</span><span class="n">close</span> <span class="n">all</span><span class="p">;</span>
+<span class="ln"> 2</span><span class="n">orgImage</span> <span class="p">=</span> <span class="n">imread</span><span class="p">(</span><span class="s">&#39;./images/lena.bmp&#39;</span><span class="p">);</span>
+<span class="ln"> 3</span><span class="p">[</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">]</span> <span class="p">=</span> <span class="nb">size</span><span class="p">(</span><span class="n">orgImage</span><span class="p">);</span><span class="c">%将图像隔行隔列抽取元素，得到缩小的图像f</span>
+<span class="ln"> 4</span><span class="n">figure</span><span class="p">;</span> <span class="n">imshow</span><span class="p">(</span><span class="n">orgImage</span><span class="p">);</span> <span class="n">title</span><span class="p">(</span><span class="s">&#39;org image&#39;</span><span class="p">);</span><span class="c">%显示原图像</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span><span class="n">m</span> <span class="p">=</span> <span class="n">width</span><span class="o">/</span><span class="mi">2</span><span class="p">;</span>
+<span class="ln"> 7</span><span class="n">n</span> <span class="p">=</span> <span class="n">height</span><span class="o">/</span><span class="mi">2</span><span class="p">;</span>
+<span class="ln"> 8</span><span class="n">smallImage</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+<span class="ln"> 9</span><span class="k">for</span> <span class="nb">i</span> <span class="p">=</span> <span class="mi">1</span><span class="p">:</span> <span class="n">m</span>
+<span class="ln">10</span>    <span class="k">for</span> <span class="nb">j</span> <span class="p">=</span> <span class="mi">1</span><span class="p">:</span> <span class="n">n</span>
+<span class="ln">11</span>        <span class="n">smallImage</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="nb">j</span><span class="p">)</span> <span class="p">=</span> <span class="n">orgImage</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="nb">i</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="nb">j</span><span class="p">);</span>
+<span class="ln">12</span>    <span class="k">end</span>
+<span class="ln">13</span><span class="k">end</span>
+<span class="ln">14</span><span class="n">figure</span><span class="p">;</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">smallImage</span><span class="p">));</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;small image&#39;</span><span class="p">);</span><span class="c">%显示缩小的图像</span>
+<span class="ln">15</span>
+<span class="ln">16</span>
+<span class="ln">17</span><span class="n">magnification</span> <span class="p">=</span> <span class="mi">2</span><span class="p">;</span><span class="c">%设置放大倍数</span>
+<span class="ln">18</span><span class="n">a</span> <span class="p">=</span> <span class="n">smallImage</span><span class="p">(</span><span class="mi">1</span><span class="p">,:);</span><span class="c">%取f的第1行</span>
+<span class="ln">19</span><span class="n">c</span> <span class="p">=</span> <span class="n">smallImage</span><span class="p">(</span><span class="n">m</span><span class="p">,:);</span><span class="c">%取f的第m行</span>
+<span class="ln">20</span><span class="c">%将待插值图像矩阵前后各扩展两行两列,共扩展四行四列到f1</span>
+<span class="ln">21</span><span class="n">b</span> <span class="p">=</span> <span class="p">[</span><span class="n">smallImage</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">smallImage</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">smallImage</span><span class="p">(:,</span><span class="mi">1</span><span class="p">)</span><span class="o">&#39;</span><span class="p">,</span> <span class="n">smallImage</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">smallImage</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="mi">1</span><span class="p">)];</span>
+<span class="ln">22</span><span class="n">d</span> <span class="p">=</span> <span class="p">[</span><span class="n">smallImage</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">n</span><span class="p">),</span> <span class="n">smallImage</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">n</span><span class="p">),</span> <span class="n">smallImage</span><span class="p">(:,</span><span class="n">n</span><span class="p">)</span><span class="o">&#39;</span><span class="p">,</span> <span class="n">smallImage</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">),</span> <span class="n">smallImage</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">)];</span>
+<span class="ln">23</span><span class="n">a1</span> <span class="p">=</span> <span class="p">[</span><span class="n">a</span><span class="p">;</span> <span class="n">a</span><span class="p">;</span> <span class="n">smallImage</span><span class="p">;</span> <span class="n">c</span><span class="p">;</span> <span class="n">c</span><span class="p">];</span>
+<span class="ln">24</span><span class="n">b1</span> <span class="p">=</span> <span class="p">[</span><span class="n">b</span><span class="p">;</span> <span class="n">b</span><span class="p">;</span> <span class="n">a1</span><span class="o">&#39;</span><span class="p">;</span> <span class="n">d</span><span class="p">;</span> <span class="n">d</span><span class="p">];</span>
+<span class="ln">25</span><span class="n">expandImage</span> <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">b1</span><span class="o">&#39;</span><span class="p">);</span>
+<span class="ln">26</span>
+<span class="ln">27</span><span class="n">newImage</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="n">magnification</span><span class="o">*</span><span class="n">m</span><span class="p">,</span><span class="n">magnification</span><span class="o">*</span><span class="n">n</span><span class="p">);</span>
+<span class="ln">28</span><span class="k">for</span> <span class="nb">i</span> <span class="p">=</span> <span class="mi">1</span><span class="p">:</span><span class="n">magnification</span> <span class="o">*</span> <span class="n">m</span><span class="c">%利用双三次插值公式对新图象所有像素赋值</span>
+<span class="ln">29</span>    <span class="n">u</span> <span class="p">=</span> <span class="nb">rem</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span> <span class="n">magnification</span><span class="p">)</span><span class="o">/</span><span class="n">magnification</span><span class="p">;</span>
+<span class="ln">30</span>    <span class="n">i1</span> <span class="p">=</span> <span class="nb">floor</span><span class="p">(</span><span class="nb">i</span><span class="o">/</span><span class="n">magnification</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span><span class="p">;</span><span class="c">%floor()向左取整，floor(1.3)=floor(1.7)=1</span>
+<span class="ln">31</span>    <span class="n">A</span> <span class="p">=</span> <span class="p">[</span><span class="n">sw</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">u</span><span class="p">)</span> <span class="n">sw</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="n">sw</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">u</span><span class="p">)</span> <span class="n">sw</span><span class="p">(</span><span class="mi">2</span><span class="o">-</span><span class="n">u</span><span class="p">)];</span>
+<span class="ln">32</span>    <span class="k">for</span> <span class="nb">j</span> <span class="p">=</span> <span class="mi">1</span><span class="p">:</span><span class="n">magnification</span><span class="o">*</span><span class="n">n</span>
+<span class="ln">33</span>        <span class="n">v</span> <span class="p">=</span> <span class="nb">rem</span><span class="p">(</span><span class="nb">j</span><span class="p">,</span> <span class="n">magnification</span><span class="p">)</span><span class="o">/</span><span class="n">magnification</span><span class="p">;</span> <span class="n">j1</span><span class="p">=</span><span class="nb">floor</span><span class="p">(</span><span class="nb">j</span><span class="o">/</span><span class="n">magnification</span><span class="p">)</span><span class="o">+</span><span class="mi">2</span><span class="p">;</span>
+<span class="ln">34</span>        <span class="n">C</span> <span class="p">=</span> <span class="p">[</span><span class="n">sw</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">v</span><span class="p">);</span> <span class="n">sw</span><span class="p">(</span><span class="n">v</span><span class="p">);</span>  <span class="n">sw</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">v</span><span class="p">);</span> <span class="n">sw</span><span class="p">(</span><span class="mi">2</span><span class="o">-</span><span class="n">v</span><span class="p">)];</span>
+<span class="ln">35</span>        <span class="n">B</span> <span class="p">=</span> <span class="p">[</span><span class="n">expandImage</span><span class="p">(</span><span class="n">i1</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">j1</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="n">i1</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">j1</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="n">i1</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">j1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="n">i1</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">j1</span><span class="o">+</span><span class="mi">2</span><span class="p">);</span> 
+<span class="ln">36</span>             <span class="n">expandImage</span><span class="p">(</span><span class="n">i1</span><span class="p">,</span><span class="n">j1</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="n">i1</span><span class="p">,</span><span class="n">j1</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="n">i1</span><span class="p">,</span><span class="n">j1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="n">i1</span><span class="p">,</span><span class="n">j1</span><span class="o">+</span><span class="mi">2</span><span class="p">);</span>
+<span class="ln">37</span>             <span class="n">expandImage</span><span class="p">(</span><span class="n">i1</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">j1</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="n">i1</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">j1</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="n">i1</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">j1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="n">i1</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">j1</span><span class="o">+</span><span class="mi">2</span><span class="p">);</span>
+<span class="ln">38</span>             <span class="n">expandImage</span><span class="p">(</span><span class="n">i1</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span><span class="n">j1</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="n">i1</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span><span class="n">j1</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="n">i1</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span><span class="n">j1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="n">expandImage</span><span class="p">(</span><span class="n">i1</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span><span class="n">j1</span><span class="o">+</span><span class="mi">2</span><span class="p">)];</span>
+<span class="ln">39</span>        <span class="n">newImage</span><span class="p">(</span><span class="nb">i</span><span class="p">,</span><span class="nb">j</span><span class="p">)</span> <span class="p">=</span> <span class="p">(</span><span class="n">A</span><span class="o">*</span><span class="n">B</span><span class="o">*</span><span class="n">C</span><span class="p">);</span>
+<span class="ln">40</span>    <span class="k">end</span>
+<span class="ln">41</span><span class="k">end</span>
+<span class="ln">42</span><span class="c">%显示插值后的图像</span>
+<span class="ln">43</span><span class="n">figure</span><span class="p">,</span>
+<span class="ln">44</span><span class="c">% subplot(121);imshow(uint8(smallImage));title(&#39;small image&#39;);%显示缩小的图像</span>
+<span class="ln">45</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">newImage</span><span class="p">));</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;BicubicInterpolation&#39;</span><span class="p">);</span>
+</code></pre></div><p>其中函数sw是双三次插值算法sin函数的拟合函数</p>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln">1</span><span class="k">function</span><span class="w"> </span>A <span class="p">=</span><span class="w"> </span><span class="nf">sw</span><span class="p">(</span>w1<span class="p">)</span><span class="w">
+</span><span class="ln">2</span><span class="w"></span><span class="n">w</span> <span class="p">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">w1</span><span class="p">);</span>
+<span class="ln">3</span><span class="k">if</span> <span class="n">w</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="n">w</span> <span class="o">&gt;</span><span class="p">=</span> <span class="mi">0</span>
+<span class="ln">4</span>   <span class="n">A</span> <span class="p">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">w</span>^<span class="mi">2</span> <span class="o">+</span> <span class="n">w</span>^<span class="mi">3</span><span class="p">;</span>  
+<span class="ln">5</span><span class="k">elseif</span> <span class="n">w</span> <span class="o">&gt;</span><span class="p">=</span> <span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="n">w</span> <span class="o">&lt;</span> <span class="mi">2</span>
+<span class="ln">6</span>   <span class="n">A</span> <span class="p">=</span> <span class="mi">4</span> <span class="o">-</span> <span class="mi">8</span> <span class="o">*</span> <span class="n">w</span> <span class="o">+</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">w</span>^<span class="mi">2</span> <span class="o">-</span> <span class="n">w</span>^<span class="mi">3</span><span class="p">;</span>
+<span class="ln">7</span><span class="k">else</span>
+<span class="ln">8</span>   <span class="n">A</span> <span class="p">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln">9</span><span class="k">end</span>
+</code></pre></div>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/isp/">isp</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/algorithm/">algorithm</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/interpolation/">interpolation</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-dpc/" data-tooltip="isp算法学习-DPC">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-lsc/" data-tooltip="isp算法学习-LSC">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2023 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-dpc/" data-tooltip="isp算法学习-DPC">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2023/12/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-lsc/" data-tooltip="isp算法学习-LSC">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-%25E6%258F%2592%25E5%2580%25BC%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-%25E6%258F%2592%25E5%2580%25BC%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2023%2F12%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-%25E6%258F%2592%25E5%2580%25BC%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2023\/12\/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-%E6%8F%92%E5%80%BC\/';
+          
+            this.page.identifier = '\/2023\/12\/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-%E6%8F%92%E5%80%BC\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+  <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_CHTML-full" integrity="sha256-GhM+5JHb6QUzOQPXSJLEWP7R73CbkisjzK5Eyij4U9w=" crossorigin="anonymous"></script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      CommonHTML: { linebreaks: { automatic: true } },
+      tex2jax: { inlineMath: [ ['$', '$'], ['\\(','\\)'] ], displayMath: [ ['$$','$$'], ['\\[', '\\]'] ], processEscapes: false },
+      messageStyle: 'none'
+    });
+  </script>
+
+
+
+    
+  </body>
+</html>
+
