@@ -1,0 +1,2027 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="camera metadata内存模型学习。">
+
+
+<meta property="og:description" content="camera metadata内存模型学习。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="camera metadata内存模型">
+<meta name="twitter:title" content="camera metadata内存模型">
+<meta property="og:url" content="https://yangyang48.github.io/2024/01/camera-metadata%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2024/01/camera-metadata%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="camera metadata内存模型学习。">
+<meta name="twitter:description" content="camera metadata内存模型学习。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2024-01-21T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2024-01-21T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="2024">
+    
+      <meta property="article:section" content="January">
+    
+      <meta property="article:section" content="camera">
+    
+  
+  
+    
+      <meta property="article:tag" content="metadata">
+    
+      <meta property="article:tag" content="characteristic">
+    
+      <meta property="article:tag" content="request">
+    
+      <meta property="article:tag" content="result">
+    
+      <meta property="article:tag" content="Header区">
+    
+      <meta property="article:tag" content="Entry区">
+    
+      <meta property="article:tag" content="Data区">
+    
+      <meta property="article:tag" content="tag">
+    
+      <meta property="article:tag" content="section">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/metadata/m_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/metadata/m_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/metadata/m_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/metadata/m_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+
+
+    <title>camera metadata内存模型</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2024/01/camera-metadata%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/camera/metadata/m_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      camera metadata内存模型
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2024-01-21T00:00:00Z">
+        
+  一月 21, 2024
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2024">2024</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/january">January</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/camera">camera</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">3600 Words|Read in about 17 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+      
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>camera metadata内存模型学习。</p>
+<div style="text-align: center;">
+<iframe 
+    frameborder="no" border="1"
+    marginwidth="0" marginheight="0"
+    width=400 height=100
+    src="//music.163.com/outchain/player?type=2&id=1344038671&auto=1&height=66"></iframe>
+</div>
+<h1 id="1简介">1简介</h1>
+<p>简单来说，Camera 设置参数，以前都是调用 SetParameter()/Paramters() 来实现下发或获取参数。
+而现在新的 Camera API2 / HAL3 架构，则修改为使用 Camera MetaData 的形式来下发或获取参数。</p>
+<p>Camera MetaData 就是将参数以<strong>共享内存</strong>的形式，将所有的Camera 参数以<strong>有序的结构体的形式</strong> 保存在一块连接的内存中。</p>
+<p>在API2 中，Java层中直接对参数进行设置并将其封装到Capture_Request即可，而兼容 API1 ，则在 API1中的 SetParameter()/Paramters() 方法中进行转换，最终以 MetaData 的形式传递下去。本文基于android14代码来说明。</p>
+<h2 id="11metadata机制">1.1metadata机制</h2>
+<p>Camera API2/HAL3的核心为per-frame control，为了达成这个目标产生了metadata的机制，metadata一共分成了三类：static，control，dynamic。</p>
+<p>对应的camera过程是：</p>
+<ol>
+<li>
+<p><strong>Static（characteristic）</strong></p>
+<p>描述device的规格与具备的能力，可以称为静态能力。</p>
+</li>
+<li>
+<p><strong>Control（request）</strong></p>
+<p>当APK获取到static metadata后，可以做出想要的控制，即下发请求。</p>
+</li>
+<li>
+<p><strong>Dynamic（result）</strong></p>
+<p>当HAL收到control metadata后，设定给ISP，然后产生对应的结果。</p>
+</li>
+</ol>
+<p>Metadata 贯穿了 Camera 的<strong>Application、Framework 和 vendor HAL</strong>，实现了去耦合的参数传递方式，是所有的APP层下发、hal层更新参数（如ISO、EV等）的接口实现。</p>
+<p>简单来说，camera metadata就是一块用来存储camera相关参数的内存。比如拍照时的闪光灯，是打开还是关闭还是自动，这个参数就是存储在这块内存当中的。当然，camera的参数有很多，其类型有很多。camera metadata以一定的规则将这些信息全部存储起来，然后再用相同的规则取出。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/metadata/m1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/metadata/m1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="2metadata定义">2Metadata定义</h1>
+<ul>
+<li><strong>编译产物</strong>：libcamera_metadata.so</li>
+<li><strong>系统位置</strong>：/system/lib64/，/system/lib/</li>
+<li><strong>源代码位置</strong>：/system/media/camera/</li>
+</ul>
+<p>Camera MetaData 的定义，其主要集中在 <code>/system/media/camera/</code> 目录，
+从 Android.bp 中可以看出，最终是编译成 libcamera_metadata.so库。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/metadata/m2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/metadata/m2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="ln"> 1</span><span class="c1">// system/media/camera/Android.bp
+</span><span class="ln"> 2</span><span class="c1"></span><span class="nx">subdirs</span> <span class="p">=</span> <span class="p">[</span><span class="s">&#34;tests&#34;</span><span class="p">]</span>
+<span class="ln"> 3</span>
+<span class="ln"> 4</span><span class="nx">cc_library_shared</span> <span class="p">{</span>
+<span class="ln"> 5</span>    <span class="nx">name</span><span class="p">:</span> <span class="s">&#34;libcamera_metadata&#34;</span><span class="p">,</span>
+<span class="ln"> 6</span>    <span class="nx">vendor_available</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+<span class="ln"> 7</span>    <span class="nx">vndk</span><span class="p">:</span> <span class="p">{</span>
+<span class="ln"> 8</span>        <span class="nx">enabled</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+<span class="ln"> 9</span>    <span class="p">},</span>
+<span class="ln">10</span>    <span class="nx">srcs</span><span class="p">:</span> <span class="p">[</span><span class="s">&#34;src/camera_metadata.c&#34;</span><span class="p">],</span>
+<span class="ln">11</span>
+<span class="ln">12</span>    <span class="nx">include_dirs</span><span class="p">:</span> <span class="p">[</span><span class="s">&#34;system/media/private/camera/include&#34;</span><span class="p">],</span>
+<span class="ln">13</span>    <span class="nx">local_include_dirs</span><span class="p">:</span> <span class="p">[</span><span class="s">&#34;include&#34;</span><span class="p">],</span>
+<span class="ln">14</span>    <span class="nx">export_include_dirs</span><span class="p">:</span> <span class="p">[</span><span class="s">&#34;include&#34;</span><span class="p">],</span>
+<span class="ln">15</span>
+<span class="ln">16</span>    <span class="nx">shared_libs</span><span class="p">:</span> <span class="p">[</span>
+<span class="ln">17</span>        <span class="s">&#34;libcutils&#34;</span><span class="p">,</span>
+<span class="ln">18</span>        <span class="s">&#34;liblog&#34;</span><span class="p">,</span>
+<span class="ln">19</span>    <span class="p">],</span>
+<span class="ln">20</span><span class="p">}</span>
+</code></pre></div><p>Camera MetaData 头文件定义在如下几个文件中：</p>
+<ol>
+<li>
+<p><strong>MetaData 层次结构定义及 基本宏定义</strong></p>
+<p>/system/media/camera/include/system/camera_metadata_tags.h</p>
+</li>
+<li>
+<p><strong>MetaData 枚举定义及常用API 定义</strong></p>
+<p>/system/media/camera/include/system/camera_metadata.h</p>
+</li>
+<li>
+<p><strong>MetaData 基本函数操作结构体定义</strong></p>
+<p>/system/media/camera/include/system/camera_vendor_tags.h</p>
+</li>
+<li>
+<p><strong>MetaData 宏定义与字符串绑定</strong></p>
+<p>/system/media/camera/src/camera_metadata_tag_info.c</p>
+</li>
+<li>
+<p><strong>MetaData 核心代码实现</strong></p>
+<p>/system/media/camera/src/camera_metadata.c</p>
+</li>
+</ol>
+<h1 id="3代码跟读">3代码跟读</h1>
+<h2 id="21metadata内存分布">2.1Metadata内存分布</h2>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//system/media/camera/src/camera_metadata.c
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#define METADATA_ALIGNMENT ((size_t) 4)
+</span><span class="ln"> 3</span><span class="cp"></span><span class="k">struct</span> <span class="n">camera_metadata</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="n">metadata_size_t</span>          <span class="n">size</span><span class="p">;</span>
+<span class="ln"> 5</span>    <span class="kt">uint32_t</span>                 <span class="n">version</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="kt">uint32_t</span>                 <span class="n">flags</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="n">metadata_size_t</span>          <span class="n">entry_count</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="n">metadata_size_t</span>          <span class="n">entry_capacity</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="n">metadata_uptrdiff_t</span>      <span class="n">entries_start</span><span class="p">;</span> <span class="c1">// Offset from camera_metadata
+</span><span class="ln">10</span><span class="c1"></span>    <span class="n">metadata_size_t</span>          <span class="n">data_count</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="n">metadata_size_t</span>          <span class="n">data_capacity</span><span class="p">;</span>
+<span class="ln">12</span>    <span class="n">metadata_uptrdiff_t</span>      <span class="n">data_start</span><span class="p">;</span> <span class="c1">// Offset from camera_metadata
+</span><span class="ln">13</span><span class="c1"></span>    <span class="kt">uint32_t</span>                 <span class="n">padding</span><span class="p">;</span>    <span class="c1">// padding to 8 bytes boundary
+</span><span class="ln">14</span><span class="c1"></span>    <span class="n">metadata_vendor_id_t</span>     <span class="n">vendor_id</span><span class="p">;</span>
+<span class="ln">15</span><span class="p">};</span>
+</code></pre></div><table>
+<thead>
+<tr>
+<th style="text-align:center">结构体成员名</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">size</td>
+<td>该包metadata所占的总的字节数</td>
+</tr>
+<tr>
+<td style="text-align:center">version</td>
+<td>版本号</td>
+</tr>
+<tr>
+<td style="text-align:center">flags</td>
+<td>标记当前是否有对entry进行排序</td>
+</tr>
+<tr>
+<td style="text-align:center">entry_count</td>
+<td>entry数量，初始值为0</td>
+</tr>
+<tr>
+<td style="text-align:center">entry_capacity</td>
+<td>该包metadata能存储的最大的entry数量</td>
+</tr>
+<tr>
+<td style="text-align:center">entries_start</td>
+<td>entry相对于camera_metadata_t起始地址的偏移量，即从camera_metadata_t的起始地址再偏移entries_start就到了开始存储entry的位置了</td>
+</tr>
+<tr>
+<td style="text-align:center">data_count</td>
+<td>data数量，初始值为0</td>
+</tr>
+<tr>
+<td style="text-align:center">data_capacity</td>
+<td>该包metadata能存储的最大的data数量</td>
+</tr>
+<tr>
+<td style="text-align:center">data_start</td>
+<td>data相对于camera_metadata_t起始地址的偏移量，即从camera_metadata_t的起始地址再偏移data_start就到了开始存储data的位置了</td>
+</tr>
+<tr>
+<td style="text-align:center">vendor_id</td>
+<td>跟当前这个手机上的CameraDeviceProvider相关，每个CameraDeviceProvider都有自己对应的vendor_id</td>
+</tr>
+</tbody>
+</table>
+<p>具体对整个结构体划分，可以划分成6各区域</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/metadata/m3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/metadata/m3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<ol>
+<li>区域一 ： 何存camera_metadata_t 结构体定义，<strong>占用内存 96 Byte</strong></li>
+<li>区域二 ： 保留区，供未来使用</li>
+<li>区域三 ： 何存所有 Tag 结构体定义，TAG[0]、TAG[1]、…、TAG[entry_count-1]</li>
+<li>区域四 ： 剩余未使用的 Tag 结构体的内存保留，该区域大小为 (entry_capacity - entry_count) 个TAG</li>
+<li>区域五 ： 所有 Tag对应的具体 metadata 数据</li>
+<li>区域六 ： 剩余未使用的 Tag 占用的内存</li>
+</ol>
+<p>可以简化记作三个分区：Header区、Entry区、Data区。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/metadata/m7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/metadata/m7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="211联合体camera_metadata_data">2.1.1联合体camera_metadata_data</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//system/media/camera/src/camera_metadata.c
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#define DATA_ALIGNMENT ((size_t) 8)
+</span><span class="ln"> 3</span><span class="cp"></span><span class="k">typedef</span> <span class="k">union</span> <span class="n">camera_metadata_data</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="kt">uint8_t</span> <span class="n">u8</span><span class="p">;</span>
+<span class="ln"> 5</span>    <span class="kt">int32_t</span> <span class="n">i32</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="kt">float</span>   <span class="n">f</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="kt">int64_t</span> <span class="n">i64</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="kt">double</span>  <span class="n">d</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="n">camera_metadata_rational_t</span> <span class="n">r</span><span class="p">;</span>
+<span class="ln">10</span><span class="p">}</span> <span class="n">camera_metadata_data_t</span><span class="p">;</span>
+</code></pre></div><h3 id="212结构体camera_metadata_buffer_entry">2.1.2结构体camera_metadata_buffer_entry</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//system/media/camera/src/camera_metadata.c
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#define ENTRY_ALIGNMENT ((size_t) 4)
+</span><span class="ln"> 3</span><span class="cp"></span><span class="k">typedef</span> <span class="k">struct</span> <span class="n">camera_metadata_buffer_entry</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">;</span>
+<span class="ln"> 5</span>    <span class="kt">uint32_t</span> <span class="n">count</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="k">union</span> <span class="p">{</span>
+<span class="ln"> 7</span>        <span class="kt">uint32_t</span> <span class="n">offset</span><span class="p">;</span>
+<span class="ln"> 8</span>        <span class="kt">uint8_t</span>  <span class="n">value</span><span class="p">[</span><span class="mi">4</span><span class="p">];</span>
+<span class="ln"> 9</span>    <span class="p">}</span> <span class="n">data</span><span class="p">;</span>
+<span class="ln">10</span>    <span class="kt">uint8_t</span>  <span class="n">type</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="kt">uint8_t</span>  <span class="n">reserved</span><span class="p">[</span><span class="mi">3</span><span class="p">];</span>
+<span class="ln">12</span><span class="p">}</span> <span class="n">camera_metadata_buffer_entry_t</span><span class="p">;</span>
+</code></pre></div><blockquote>
+<p>这里在详细说明下：</p>
+<p>结构体metadata内存中的entry指的是camera_metadata_buffer_entry里面的<strong>tag</strong>，就是区分每个metadata的条目。</p>
+<p><strong>另外这里的data用于存储少量的数据，不大于4字节</strong>，超过4字节的数据会存储在<strong>data区域</strong>。（详见2.1Metadata内存分布）</p>
+</blockquote>
+<h3 id="213枚举类camera_metadata_section">2.1.3枚举类camera_metadata_section</h3>
+<p>关于camera_metadata_buffer_entry里面的tag有可以拆分成section区域，类似section为猫科动物，但是猫科动物又有很多种，其中包括猎豹属，猫属，兔狲属，豹猫属等等.</p>
+<p>为了保证每一个section能容纳足够的tag，系统给每个section预留了<strong>64K</strong>的空间，从前面我们可以知道tag的类型是<code>uint32_t</code>，也就是32位4字节。</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//system/media/camera/include/system/camera_metadata_tags.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">typedef</span> <span class="k">enum</span> <span class="n">camera_metadata_section</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="n">ANDROID_COLOR_CORRECTION</span><span class="p">,</span>
+<span class="ln"> 4</span>    <span class="n">ANDROID_CONTROL</span><span class="p">,</span>
+<span class="ln"> 5</span>    <span class="n">ANDROID_DEMOSAIC</span><span class="p">,</span>
+<span class="ln"> 6</span>    <span class="n">ANDROID_EDGE</span><span class="p">,</span>
+<span class="ln"> 7</span>    <span class="n">ANDROID_FLASH</span><span class="p">,</span>
+<span class="ln"> 8</span>    <span class="n">ANDROID_FLASH_INFO</span><span class="p">,</span>
+<span class="ln"> 9</span>    <span class="n">ANDROID_HOT_PIXEL</span><span class="p">,</span>
+<span class="ln">10</span>    <span class="n">ANDROID_JPEG</span><span class="p">,</span>
+<span class="ln">11</span>    <span class="n">ANDROID_LENS</span><span class="p">,</span>
+<span class="ln">12</span>    <span class="n">ANDROID_LENS_INFO</span><span class="p">,</span>
+<span class="ln">13</span>    <span class="n">ANDROID_NOISE_REDUCTION</span><span class="p">,</span>
+<span class="ln">14</span>    <span class="n">ANDROID_QUIRKS</span><span class="p">,</span>
+<span class="ln">15</span>    <span class="n">ANDROID_REQUEST</span><span class="p">,</span>
+<span class="ln">16</span>    <span class="n">ANDROID_SCALER</span><span class="p">,</span>
+<span class="ln">17</span>    <span class="n">ANDROID_SENSOR</span><span class="p">,</span>
+<span class="ln">18</span>    <span class="n">ANDROID_SENSOR_INFO</span><span class="p">,</span>
+<span class="ln">19</span>    <span class="n">ANDROID_SHADING</span><span class="p">,</span>
+<span class="ln">20</span>    <span class="n">ANDROID_STATISTICS</span><span class="p">,</span>
+<span class="ln">21</span>    <span class="n">ANDROID_STATISTICS_INFO</span><span class="p">,</span>
+<span class="ln">22</span>    <span class="n">ANDROID_TONEMAP</span><span class="p">,</span>
+<span class="ln">23</span>    <span class="n">ANDROID_LED</span><span class="p">,</span>
+<span class="ln">24</span>    <span class="n">ANDROID_INFO</span><span class="p">,</span>
+<span class="ln">25</span>    <span class="n">ANDROID_BLACK_LEVEL</span><span class="p">,</span>
+<span class="ln">26</span>    <span class="n">ANDROID_SYNC</span><span class="p">,</span>
+<span class="ln">27</span>    <span class="n">ANDROID_REPROCESS</span><span class="p">,</span>
+<span class="ln">28</span>    <span class="n">ANDROID_DEPTH</span><span class="p">,</span>
+<span class="ln">29</span>    <span class="n">ANDROID_LOGICAL_MULTI_CAMERA</span><span class="p">,</span>
+<span class="ln">30</span>    <span class="n">ANDROID_DISTORTION_CORRECTION</span><span class="p">,</span>
+<span class="ln">31</span>    <span class="n">ANDROID_HEIC</span><span class="p">,</span>
+<span class="ln">32</span>    <span class="n">ANDROID_HEIC_INFO</span><span class="p">,</span>
+<span class="ln">33</span>    <span class="n">ANDROID_AUTOMOTIVE</span><span class="p">,</span>
+<span class="ln">34</span>    <span class="n">ANDROID_AUTOMOTIVE_LENS</span><span class="p">,</span>
+<span class="ln">35</span>    <span class="n">ANDROID_EXTENSION</span><span class="p">,</span>
+<span class="ln">36</span>    <span class="n">ANDROID_JPEGR</span><span class="p">,</span>
+<span class="ln">37</span>    <span class="n">ANDROID_SECTION_COUNT</span><span class="p">,</span>
+<span class="ln">38</span>
+<span class="ln">39</span>    <span class="n">VENDOR_SECTION</span> <span class="o">=</span> <span class="mh">0x8000</span>
+<span class="ln">40</span><span class="p">}</span> <span class="n">camera_metadata_section_t</span><span class="p">;</span>
+</code></pre></div><h3 id="214层次结构位置camera_metadata_section_start">2.1.4层次结构位置camera_metadata_section_start</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//system/media/camera/include/system/camera_metadata_tags.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">typedef</span> <span class="k">enum</span> <span class="n">camera_metadata_section_start</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="n">ANDROID_COLOR_CORRECTION_START</span> <span class="o">=</span> <span class="n">ANDROID_COLOR_CORRECTION</span>  <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln"> 4</span>    <span class="n">ANDROID_CONTROL_START</span>          <span class="o">=</span> <span class="n">ANDROID_CONTROL</span>           <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln"> 5</span>    <span class="n">ANDROID_DEMOSAIC_START</span>         <span class="o">=</span> <span class="n">ANDROID_DEMOSAIC</span>          <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln"> 6</span>    <span class="n">ANDROID_EDGE_START</span>             <span class="o">=</span> <span class="n">ANDROID_EDGE</span>              <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln"> 7</span>    <span class="n">ANDROID_FLASH_START</span>            <span class="o">=</span> <span class="n">ANDROID_FLASH</span>             <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln"> 8</span>    <span class="n">ANDROID_FLASH_INFO_START</span>       <span class="o">=</span> <span class="n">ANDROID_FLASH_INFO</span>        <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln"> 9</span>    <span class="n">ANDROID_HOT_PIXEL_START</span>        <span class="o">=</span> <span class="n">ANDROID_HOT_PIXEL</span>         <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln">10</span>    <span class="n">ANDROID_JPEG_START</span>             <span class="o">=</span> <span class="n">ANDROID_JPEG</span>              <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln">11</span>    <span class="n">ANDROID_LENS_START</span>             <span class="o">=</span> <span class="n">ANDROID_LENS</span>              <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln">12</span>    <span class="n">ANDROID_LENS_INFO_START</span>        <span class="o">=</span> <span class="n">ANDROID_LENS_INFO</span>         <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln">13</span>    <span class="n">ANDROID_NOISE_REDUCTION_START</span>  <span class="o">=</span> <span class="n">ANDROID_NOISE_REDUCTION</span>   <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln">14</span>    <span class="n">ANDROID_QUIRKS_START</span>           <span class="o">=</span> <span class="n">ANDROID_QUIRKS</span>            <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln">15</span>    <span class="n">ANDROID_REQUEST_START</span>          <span class="o">=</span> <span class="n">ANDROID_REQUEST</span>           <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln">16</span>    <span class="n">ANDROID_SCALER_START</span>           <span class="o">=</span> <span class="n">ANDROID_SCALER</span>            <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln">17</span>    <span class="n">ANDROID_SENSOR_START</span>           <span class="o">=</span> <span class="n">ANDROID_SENSOR</span>            <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln">18</span>    <span class="n">ANDROID_SENSOR_INFO_START</span>      <span class="o">=</span> <span class="n">ANDROID_SENSOR_INFO</span>       <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln">19</span>    <span class="n">ANDROID_SHADING_START</span>          <span class="o">=</span> <span class="n">ANDROID_SHADING</span>           <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln">20</span>    <span class="n">ANDROID_STATISTICS_START</span>       <span class="o">=</span> <span class="n">ANDROID_STATISTICS</span>        <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln">21</span>    <span class="n">ANDROID_STATISTICS_INFO_START</span>  <span class="o">=</span> <span class="n">ANDROID_STATISTICS_INFO</span>   <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln">22</span>    <span class="n">ANDROID_TONEMAP_START</span>          <span class="o">=</span> <span class="n">ANDROID_TONEMAP</span>           <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln">23</span>    <span class="n">ANDROID_LED_START</span>              <span class="o">=</span> <span class="n">ANDROID_LED</span>               <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln">24</span>    <span class="n">ANDROID_INFO_START</span>             <span class="o">=</span> <span class="n">ANDROID_INFO</span>              <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln">25</span>    <span class="n">ANDROID_BLACK_LEVEL_START</span>      <span class="o">=</span> <span class="n">ANDROID_BLACK_LEVEL</span>       <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln">26</span>    <span class="n">ANDROID_SYNC_START</span>             <span class="o">=</span> <span class="n">ANDROID_SYNC</span>              <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln">27</span>    <span class="n">ANDROID_REPROCESS_START</span>        <span class="o">=</span> <span class="n">ANDROID_REPROCESS</span>         <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln">28</span>    <span class="n">ANDROID_DEPTH_START</span>            <span class="o">=</span> <span class="n">ANDROID_DEPTH</span>             <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">,</span>
+<span class="ln">29</span>    <span class="n">VENDOR_SECTION_START</span>           <span class="o">=</span> <span class="n">VENDOR_SECTION</span>            <span class="o">&lt;&lt;</span> <span class="mi">16</span>
+<span class="ln">30</span><span class="p">}</span> <span class="n">camera_metadata_section_start_t</span><span class="p">;</span>
+</code></pre></div><h3 id="215tag详细的参数camera_metadata_tag">2.1.5TAG详细的参数camera_metadata_tag</h3>
+<p>每个 <code>TAG 以 ##TAG##_START</code> 和 <code>##TAG##_END</code> 结束</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//system/media/camera/include/system/camera_metadata_tags.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">typedef</span> <span class="k">enum</span> <span class="n">camera_metadata_tag</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="n">ANDROID_COLOR_CORRECTION_MODE</span> <span class="o">=</span>                   <span class="c1">// enum         | public
+</span><span class="ln"> 4</span><span class="c1"></span>           <span class="n">ANDROID_COLOR_CORRECTION_START</span><span class="p">,</span>
+<span class="ln"> 5</span>    <span class="n">ANDROID_COLOR_CORRECTION_TRANSFORM</span><span class="p">,</span>               <span class="c1">// rational[]   | public
+</span><span class="ln"> 6</span><span class="c1"></span>    <span class="n">ANDROID_COLOR_CORRECTION_GAINS</span><span class="p">,</span>                   <span class="c1">// float[]      | public
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="n">ANDROID_COLOR_CORRECTION_ABERRATION_MODE</span><span class="p">,</span>         <span class="c1">// enum         | public
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="n">ANDROID_COLOR_CORRECTION_AVAILABLE_ABERRATION_MODES</span><span class="p">,</span>
+<span class="ln"> 9</span>                                                      <span class="c1">// byte[]       | public
+</span><span class="ln">10</span><span class="c1"></span>    <span class="n">ANDROID_COLOR_CORRECTION_END</span><span class="p">,</span>
+<span class="ln">11</span>
+<span class="ln">12</span>    <span class="n">ANDROID_CONTROL_AE_ANTIBANDING_MODE</span> <span class="o">=</span>             <span class="c1">// enum         | public
+</span><span class="ln">13</span><span class="c1"></span>            <span class="n">ANDROID_CONTROL_START</span><span class="p">,</span>
+<span class="ln">14</span>    <span class="n">ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION</span><span class="p">,</span>         <span class="c1">// int32        | public
+</span><span class="ln">15</span><span class="c1"></span>    <span class="n">ANDROID_CONTROL_AE_LOCK</span><span class="p">,</span>                          <span class="c1">// enum         | public
+</span><span class="ln">16</span><span class="c1"></span>    <span class="n">ANDROID_CONTROL_AE_MODE</span><span class="p">,</span>                          <span class="c1">// enum         | public
+</span><span class="ln">17</span><span class="c1"></span>	<span class="p">......</span>
+<span class="ln">18</span>	<span class="n">ANDROID_CONTROL_END</span><span class="p">,</span>
+<span class="ln">19</span>	<span class="p">......</span>
+<span class="ln">20</span>    <span class="n">ANDROID_JPEGR_AVAILABLE_JPEG_R_STREAM_CONFIGURATIONS</span> <span class="o">=</span> 
+<span class="ln">21</span>                                                      <span class="c1">// enum[]       | ndk_public   | HIDL v3.9
+</span><span class="ln">22</span><span class="c1"></span>            <span class="n">ANDROID_JPEGR_START</span><span class="p">,</span>
+<span class="ln">23</span>    <span class="n">ANDROID_JPEGR_AVAILABLE_JPEG_R_MIN_FRAME_DURATIONS</span><span class="p">,</span>
+<span class="ln">24</span>                                                      <span class="c1">// int64[]      | ndk_public   | HIDL v3.9
+</span><span class="ln">25</span><span class="c1"></span>    <span class="n">ANDROID_JPEGR_AVAILABLE_JPEG_R_STALL_DURATIONS</span><span class="p">,</span>   <span class="c1">// int64[]      | ndk_public   | HIDL v3.9
+</span><span class="ln">26</span><span class="c1"></span>    <span class="n">ANDROID_JPEGR_AVAILABLE_JPEG_R_STREAM_CONFIGURATIONS_MAXIMUM_RESOLUTION</span><span class="p">,</span>
+<span class="ln">27</span>                                                      <span class="c1">// enum[]       | ndk_public   | HIDL v3.9
+</span><span class="ln">28</span><span class="c1"></span>    <span class="n">ANDROID_JPEGR_AVAILABLE_JPEG_R_MIN_FRAME_DURATIONS_MAXIMUM_RESOLUTION</span><span class="p">,</span>
+<span class="ln">29</span>                                                      <span class="c1">// int64[]      | ndk_public   | HIDL v3.9
+</span><span class="ln">30</span><span class="c1"></span>    <span class="n">ANDROID_JPEGR_AVAILABLE_JPEG_R_STALL_DURATIONS_MAXIMUM_RESOLUTION</span><span class="p">,</span>
+<span class="ln">31</span>                                                      <span class="c1">// int64[]      | ndk_public   | HIDL v3.9
+</span><span class="ln">32</span><span class="c1"></span>    <span class="n">ANDROID_JPEGR_END</span><span class="p">,</span>
+<span class="ln">33</span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/metadata/m5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/metadata/m5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="216-结构体camera_metadata_entry">2.1.6 结构体camera_metadata_entry</h3>
+<p>每个 Tag 的数据结构体定义</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//system/media/camera/include/system/camera_metadata.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">typedef</span> <span class="k">struct</span> <span class="n">camera_metadata_entry</span> <span class="p">{</span>
+<span class="ln"> 3</span>    <span class="n">size_t</span>   <span class="n">index</span><span class="p">;</span>
+<span class="ln"> 4</span>    <span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">;</span>
+<span class="ln"> 5</span>    <span class="kt">uint8_t</span>  <span class="n">type</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="n">size_t</span>   <span class="n">count</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="k">union</span> <span class="p">{</span>
+<span class="ln"> 8</span>        <span class="kt">uint8_t</span> <span class="o">*</span><span class="n">u8</span><span class="p">;</span>
+<span class="ln"> 9</span>        <span class="kt">int32_t</span> <span class="o">*</span><span class="n">i32</span><span class="p">;</span>
+<span class="ln">10</span>        <span class="kt">float</span>   <span class="o">*</span><span class="n">f</span><span class="p">;</span>
+<span class="ln">11</span>        <span class="kt">int64_t</span> <span class="o">*</span><span class="n">i64</span><span class="p">;</span>
+<span class="ln">12</span>        <span class="kt">double</span>  <span class="o">*</span><span class="n">d</span><span class="p">;</span>
+<span class="ln">13</span>        <span class="n">camera_metadata_rational_t</span> <span class="o">*</span><span class="n">r</span><span class="p">;</span>
+<span class="ln">14</span>    <span class="p">}</span> <span class="n">data</span><span class="p">;</span>
+<span class="ln">15</span><span class="p">}</span> <span class="n">camera_metadata_entry_t</span><span class="p">;</span>
+</code></pre></div><p>camera_metadata_entry 需要和上面的camera_metadata_buffer_entry 区别开</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/metadata/m4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/metadata/m4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="217数组camera_metadata_section_bounds">2.1.7数组camera_metadata_section_bounds</h3>
+<p>定义了metadata数组每个tag的范围，可以找到对应tag的起点和终点</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//system/media/camera/src/camera_metadata_tag_info.c
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">ANDROID_API</span>
+<span class="ln"> 3</span><span class="k">extern</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">camera_metadata_section_bounds</span><span class="p">[</span><span class="n">ANDROID_SECTION_COUNT</span><span class="p">][</span><span class="mi">2</span><span class="p">];</span>
+<span class="ln"> 4</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">camera_metadata_section_bounds</span><span class="p">[</span><span class="n">ANDROID_SECTION_COUNT</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln"> 5</span>    <span class="p">[</span><span class="n">ANDROID_COLOR_CORRECTION</span><span class="p">]</span>     <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_COLOR_CORRECTION_START</span><span class="p">,</span>
+<span class="ln"> 6</span>                                       <span class="n">ANDROID_COLOR_CORRECTION_END</span> <span class="p">},</span>
+<span class="ln"> 7</span>    <span class="p">[</span><span class="n">ANDROID_CONTROL</span><span class="p">]</span>              <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_CONTROL_START</span><span class="p">,</span>
+<span class="ln"> 8</span>                                       <span class="n">ANDROID_CONTROL_END</span> <span class="p">},</span>
+<span class="ln"> 9</span>    <span class="p">[</span><span class="n">ANDROID_DEMOSAIC</span><span class="p">]</span>             <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_DEMOSAIC_START</span><span class="p">,</span>
+<span class="ln">10</span>                                       <span class="n">ANDROID_DEMOSAIC_END</span> <span class="p">},</span>
+<span class="ln">11</span>    <span class="p">[</span><span class="n">ANDROID_EDGE</span><span class="p">]</span>                 <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_EDGE_START</span><span class="p">,</span>
+<span class="ln">12</span>                                       <span class="n">ANDROID_EDGE_END</span> <span class="p">},</span>
+<span class="ln">13</span>    <span class="p">[</span><span class="n">ANDROID_FLASH</span><span class="p">]</span>                <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_FLASH_START</span><span class="p">,</span>
+<span class="ln">14</span>                                       <span class="n">ANDROID_FLASH_END</span> <span class="p">},</span>
+<span class="ln">15</span>    <span class="p">[</span><span class="n">ANDROID_FLASH_INFO</span><span class="p">]</span>           <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_FLASH_INFO_START</span><span class="p">,</span>
+<span class="ln">16</span>                                       <span class="n">ANDROID_FLASH_INFO_END</span> <span class="p">},</span>
+<span class="ln">17</span>    <span class="p">[</span><span class="n">ANDROID_HOT_PIXEL</span><span class="p">]</span>            <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_HOT_PIXEL_START</span><span class="p">,</span>
+<span class="ln">18</span>                                       <span class="n">ANDROID_HOT_PIXEL_END</span> <span class="p">},</span>
+<span class="ln">19</span>    <span class="p">[</span><span class="n">ANDROID_JPEG</span><span class="p">]</span>                 <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_JPEG_START</span><span class="p">,</span>
+<span class="ln">20</span>                                       <span class="n">ANDROID_JPEG_END</span> <span class="p">},</span>
+<span class="ln">21</span>    <span class="p">[</span><span class="n">ANDROID_LENS</span><span class="p">]</span>                 <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_LENS_START</span><span class="p">,</span>
+<span class="ln">22</span>                                       <span class="n">ANDROID_LENS_END</span> <span class="p">},</span>
+<span class="ln">23</span>    <span class="p">[</span><span class="n">ANDROID_LENS_INFO</span><span class="p">]</span>            <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_LENS_INFO_START</span><span class="p">,</span>
+<span class="ln">24</span>                                       <span class="n">ANDROID_LENS_INFO_END</span> <span class="p">},</span>
+<span class="ln">25</span>    <span class="p">[</span><span class="n">ANDROID_NOISE_REDUCTION</span><span class="p">]</span>      <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_NOISE_REDUCTION_START</span><span class="p">,</span>
+<span class="ln">26</span>                                       <span class="n">ANDROID_NOISE_REDUCTION_END</span> <span class="p">},</span>
+<span class="ln">27</span>    <span class="p">[</span><span class="n">ANDROID_QUIRKS</span><span class="p">]</span>               <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_QUIRKS_START</span><span class="p">,</span>
+<span class="ln">28</span>                                       <span class="n">ANDROID_QUIRKS_END</span> <span class="p">},</span>
+<span class="ln">29</span>    <span class="p">[</span><span class="n">ANDROID_REQUEST</span><span class="p">]</span>              <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_REQUEST_START</span><span class="p">,</span>
+<span class="ln">30</span>                                       <span class="n">ANDROID_REQUEST_END</span> <span class="p">},</span>
+<span class="ln">31</span>    <span class="p">[</span><span class="n">ANDROID_SCALER</span><span class="p">]</span>               <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_SCALER_START</span><span class="p">,</span>
+<span class="ln">32</span>                                       <span class="n">ANDROID_SCALER_END</span> <span class="p">},</span>
+<span class="ln">33</span>    <span class="p">[</span><span class="n">ANDROID_SENSOR</span><span class="p">]</span>               <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_SENSOR_START</span><span class="p">,</span>
+<span class="ln">34</span>                                       <span class="n">ANDROID_SENSOR_END</span> <span class="p">},</span>
+<span class="ln">35</span>    <span class="p">[</span><span class="n">ANDROID_SENSOR_INFO</span><span class="p">]</span>          <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_SENSOR_INFO_START</span><span class="p">,</span>
+<span class="ln">36</span>                                       <span class="n">ANDROID_SENSOR_INFO_END</span> <span class="p">},</span>
+<span class="ln">37</span>    <span class="p">[</span><span class="n">ANDROID_SHADING</span><span class="p">]</span>              <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_SHADING_START</span><span class="p">,</span>
+<span class="ln">38</span>                                       <span class="n">ANDROID_SHADING_END</span> <span class="p">},</span>
+<span class="ln">39</span>    <span class="p">[</span><span class="n">ANDROID_STATISTICS</span><span class="p">]</span>           <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_STATISTICS_START</span><span class="p">,</span>
+<span class="ln">40</span>                                       <span class="n">ANDROID_STATISTICS_END</span> <span class="p">},</span>
+<span class="ln">41</span>    <span class="p">[</span><span class="n">ANDROID_STATISTICS_INFO</span><span class="p">]</span>      <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_STATISTICS_INFO_START</span><span class="p">,</span>
+<span class="ln">42</span>                                       <span class="n">ANDROID_STATISTICS_INFO_END</span> <span class="p">},</span>
+<span class="ln">43</span>    <span class="p">[</span><span class="n">ANDROID_TONEMAP</span><span class="p">]</span>              <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_TONEMAP_START</span><span class="p">,</span>
+<span class="ln">44</span>                                       <span class="n">ANDROID_TONEMAP_END</span> <span class="p">},</span>
+<span class="ln">45</span>    <span class="p">[</span><span class="n">ANDROID_LED</span><span class="p">]</span>                  <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_LED_START</span><span class="p">,</span>
+<span class="ln">46</span>                                       <span class="n">ANDROID_LED_END</span> <span class="p">},</span>
+<span class="ln">47</span>    <span class="p">[</span><span class="n">ANDROID_INFO</span><span class="p">]</span>                 <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_INFO_START</span><span class="p">,</span>
+<span class="ln">48</span>                                       <span class="n">ANDROID_INFO_END</span> <span class="p">},</span>
+<span class="ln">49</span>    <span class="p">[</span><span class="n">ANDROID_BLACK_LEVEL</span><span class="p">]</span>          <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_BLACK_LEVEL_START</span><span class="p">,</span>
+<span class="ln">50</span>                                       <span class="n">ANDROID_BLACK_LEVEL_END</span> <span class="p">},</span>
+<span class="ln">51</span>    <span class="p">[</span><span class="n">ANDROID_SYNC</span><span class="p">]</span>                 <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_SYNC_START</span><span class="p">,</span>
+<span class="ln">52</span>                                       <span class="n">ANDROID_SYNC_END</span> <span class="p">},</span>
+<span class="ln">53</span>    <span class="p">[</span><span class="n">ANDROID_REPROCESS</span><span class="p">]</span>            <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_REPROCESS_START</span><span class="p">,</span>
+<span class="ln">54</span>                                       <span class="n">ANDROID_REPROCESS_END</span> <span class="p">},</span>
+<span class="ln">55</span>    <span class="p">[</span><span class="n">ANDROID_DEPTH</span><span class="p">]</span>                <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_DEPTH_START</span><span class="p">,</span>
+<span class="ln">56</span>                                       <span class="n">ANDROID_DEPTH_END</span> <span class="p">},</span>
+<span class="ln">57</span>    <span class="p">[</span><span class="n">ANDROID_LOGICAL_MULTI_CAMERA</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_LOGICAL_MULTI_CAMERA_START</span><span class="p">,</span>
+<span class="ln">58</span>                                       <span class="n">ANDROID_LOGICAL_MULTI_CAMERA_END</span> <span class="p">},</span>
+<span class="ln">59</span>    <span class="p">[</span><span class="n">ANDROID_DISTORTION_CORRECTION</span><span class="p">]</span>
+<span class="ln">60</span>                                    <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_DISTORTION_CORRECTION_START</span><span class="p">,</span>
+<span class="ln">61</span>                                       <span class="n">ANDROID_DISTORTION_CORRECTION_END</span> <span class="p">},</span>
+<span class="ln">62</span>    <span class="p">[</span><span class="n">ANDROID_HEIC</span><span class="p">]</span>                 <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_HEIC_START</span><span class="p">,</span>
+<span class="ln">63</span>                                       <span class="n">ANDROID_HEIC_END</span> <span class="p">},</span>
+<span class="ln">64</span>    <span class="p">[</span><span class="n">ANDROID_HEIC_INFO</span><span class="p">]</span>            <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_HEIC_INFO_START</span><span class="p">,</span>
+<span class="ln">65</span>                                       <span class="n">ANDROID_HEIC_INFO_END</span> <span class="p">},</span>
+<span class="ln">66</span>    <span class="p">[</span><span class="n">ANDROID_AUTOMOTIVE</span><span class="p">]</span>           <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_AUTOMOTIVE_START</span><span class="p">,</span>
+<span class="ln">67</span>                                       <span class="n">ANDROID_AUTOMOTIVE_END</span> <span class="p">},</span>
+<span class="ln">68</span>    <span class="p">[</span><span class="n">ANDROID_AUTOMOTIVE_LENS</span><span class="p">]</span>      <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_AUTOMOTIVE_LENS_START</span><span class="p">,</span>
+<span class="ln">69</span>                                       <span class="n">ANDROID_AUTOMOTIVE_LENS_END</span> <span class="p">},</span>
+<span class="ln">70</span>    <span class="p">[</span><span class="n">ANDROID_EXTENSION</span><span class="p">]</span>            <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_EXTENSION_START</span><span class="p">,</span>
+<span class="ln">71</span>                                       <span class="n">ANDROID_EXTENSION_END</span> <span class="p">},</span>
+<span class="ln">72</span>    <span class="p">[</span><span class="n">ANDROID_JPEGR</span><span class="p">]</span>                <span class="o">=</span> <span class="p">{</span> <span class="n">ANDROID_JPEGR_START</span><span class="p">,</span>
+<span class="ln">73</span>                                       <span class="n">ANDROID_JPEGR_END</span> <span class="p">},</span>
+<span class="ln">74</span><span class="p">};</span>
+</code></pre></div><h3 id="218数组camera_metadata_section_names">2.1.8数组camera_metadata_section_names</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//system/media/camera/src/camera_metadata_tag_info.c
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">ANDROID_API</span>
+<span class="ln"> 3</span><span class="k">extern</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">camera_metadata_section_names</span><span class="p">[</span><span class="n">ANDROID_SECTION_COUNT</span><span class="p">];</span>
+<span class="ln"> 4</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">camera_metadata_section_names</span><span class="p">[</span><span class="n">ANDROID_SECTION_COUNT</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln"> 5</span>    <span class="p">[</span><span class="n">ANDROID_COLOR_CORRECTION</span><span class="p">]</span>     <span class="o">=</span> <span class="s">&#34;android.colorCorrection&#34;</span><span class="p">,</span>
+<span class="ln"> 6</span>    <span class="p">[</span><span class="n">ANDROID_CONTROL</span><span class="p">]</span>              <span class="o">=</span> <span class="s">&#34;android.control&#34;</span><span class="p">,</span>
+<span class="ln"> 7</span>    <span class="p">[</span><span class="n">ANDROID_DEMOSAIC</span><span class="p">]</span>             <span class="o">=</span> <span class="s">&#34;android.demosaic&#34;</span><span class="p">,</span>
+<span class="ln"> 8</span>    <span class="p">[</span><span class="n">ANDROID_EDGE</span><span class="p">]</span>                 <span class="o">=</span> <span class="s">&#34;android.edge&#34;</span><span class="p">,</span>
+<span class="ln"> 9</span>    <span class="p">[</span><span class="n">ANDROID_FLASH</span><span class="p">]</span>                <span class="o">=</span> <span class="s">&#34;android.flash&#34;</span><span class="p">,</span>
+<span class="ln">10</span>    <span class="p">[</span><span class="n">ANDROID_FLASH_INFO</span><span class="p">]</span>           <span class="o">=</span> <span class="s">&#34;android.flash.info&#34;</span><span class="p">,</span>
+<span class="ln">11</span>    <span class="p">[</span><span class="n">ANDROID_HOT_PIXEL</span><span class="p">]</span>            <span class="o">=</span> <span class="s">&#34;android.hotPixel&#34;</span><span class="p">,</span>
+<span class="ln">12</span>    <span class="p">[</span><span class="n">ANDROID_JPEG</span><span class="p">]</span>                 <span class="o">=</span> <span class="s">&#34;android.jpeg&#34;</span><span class="p">,</span>
+<span class="ln">13</span>    <span class="p">[</span><span class="n">ANDROID_LENS</span><span class="p">]</span>                 <span class="o">=</span> <span class="s">&#34;android.lens&#34;</span><span class="p">,</span>
+<span class="ln">14</span>    <span class="p">[</span><span class="n">ANDROID_LENS_INFO</span><span class="p">]</span>            <span class="o">=</span> <span class="s">&#34;android.lens.info&#34;</span><span class="p">,</span>
+<span class="ln">15</span>    <span class="p">[</span><span class="n">ANDROID_NOISE_REDUCTION</span><span class="p">]</span>      <span class="o">=</span> <span class="s">&#34;android.noiseReduction&#34;</span><span class="p">,</span>
+<span class="ln">16</span>    <span class="p">[</span><span class="n">ANDROID_QUIRKS</span><span class="p">]</span>               <span class="o">=</span> <span class="s">&#34;android.quirks&#34;</span><span class="p">,</span>
+<span class="ln">17</span>    <span class="p">[</span><span class="n">ANDROID_REQUEST</span><span class="p">]</span>              <span class="o">=</span> <span class="s">&#34;android.request&#34;</span><span class="p">,</span>
+<span class="ln">18</span>    <span class="p">[</span><span class="n">ANDROID_SCALER</span><span class="p">]</span>               <span class="o">=</span> <span class="s">&#34;android.scaler&#34;</span><span class="p">,</span>
+<span class="ln">19</span>    <span class="p">[</span><span class="n">ANDROID_SENSOR</span><span class="p">]</span>               <span class="o">=</span> <span class="s">&#34;android.sensor&#34;</span><span class="p">,</span>
+<span class="ln">20</span>    <span class="p">[</span><span class="n">ANDROID_SENSOR_INFO</span><span class="p">]</span>          <span class="o">=</span> <span class="s">&#34;android.sensor.info&#34;</span><span class="p">,</span>
+<span class="ln">21</span>    <span class="p">[</span><span class="n">ANDROID_SHADING</span><span class="p">]</span>              <span class="o">=</span> <span class="s">&#34;android.shading&#34;</span><span class="p">,</span>
+<span class="ln">22</span>    <span class="p">[</span><span class="n">ANDROID_STATISTICS</span><span class="p">]</span>           <span class="o">=</span> <span class="s">&#34;android.statistics&#34;</span><span class="p">,</span>
+<span class="ln">23</span>    <span class="p">[</span><span class="n">ANDROID_STATISTICS_INFO</span><span class="p">]</span>      <span class="o">=</span> <span class="s">&#34;android.statistics.info&#34;</span><span class="p">,</span>
+<span class="ln">24</span>    <span class="p">[</span><span class="n">ANDROID_TONEMAP</span><span class="p">]</span>              <span class="o">=</span> <span class="s">&#34;android.tonemap&#34;</span><span class="p">,</span>
+<span class="ln">25</span>    <span class="p">[</span><span class="n">ANDROID_LED</span><span class="p">]</span>                  <span class="o">=</span> <span class="s">&#34;android.led&#34;</span><span class="p">,</span>
+<span class="ln">26</span>    <span class="p">[</span><span class="n">ANDROID_INFO</span><span class="p">]</span>                 <span class="o">=</span> <span class="s">&#34;android.info&#34;</span><span class="p">,</span>
+<span class="ln">27</span>    <span class="p">[</span><span class="n">ANDROID_BLACK_LEVEL</span><span class="p">]</span>          <span class="o">=</span> <span class="s">&#34;android.blackLevel&#34;</span><span class="p">,</span>
+<span class="ln">28</span>    <span class="p">[</span><span class="n">ANDROID_SYNC</span><span class="p">]</span>                 <span class="o">=</span> <span class="s">&#34;android.sync&#34;</span><span class="p">,</span>
+<span class="ln">29</span>    <span class="p">[</span><span class="n">ANDROID_REPROCESS</span><span class="p">]</span>            <span class="o">=</span> <span class="s">&#34;android.reprocess&#34;</span><span class="p">,</span>
+<span class="ln">30</span>    <span class="p">[</span><span class="n">ANDROID_DEPTH</span><span class="p">]</span>                <span class="o">=</span> <span class="s">&#34;android.depth&#34;</span><span class="p">,</span>
+<span class="ln">31</span>    <span class="p">[</span><span class="n">ANDROID_LOGICAL_MULTI_CAMERA</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#34;android.logicalMultiCamera&#34;</span><span class="p">,</span>
+<span class="ln">32</span>    <span class="p">[</span><span class="n">ANDROID_DISTORTION_CORRECTION</span><span class="p">]</span>
+<span class="ln">33</span>                                    <span class="o">=</span> <span class="s">&#34;android.distortionCorrection&#34;</span><span class="p">,</span>
+<span class="ln">34</span>    <span class="p">[</span><span class="n">ANDROID_HEIC</span><span class="p">]</span>                 <span class="o">=</span> <span class="s">&#34;android.heic&#34;</span><span class="p">,</span>
+<span class="ln">35</span>    <span class="p">[</span><span class="n">ANDROID_HEIC_INFO</span><span class="p">]</span>            <span class="o">=</span> <span class="s">&#34;android.heic.info&#34;</span><span class="p">,</span>
+<span class="ln">36</span>    <span class="p">[</span><span class="n">ANDROID_AUTOMOTIVE</span><span class="p">]</span>           <span class="o">=</span> <span class="s">&#34;android.automotive&#34;</span><span class="p">,</span>
+<span class="ln">37</span>    <span class="p">[</span><span class="n">ANDROID_AUTOMOTIVE_LENS</span><span class="p">]</span>      <span class="o">=</span> <span class="s">&#34;android.automotive.lens&#34;</span><span class="p">,</span>
+<span class="ln">38</span>    <span class="p">[</span><span class="n">ANDROID_EXTENSION</span><span class="p">]</span>            <span class="o">=</span> <span class="s">&#34;android.extension&#34;</span><span class="p">,</span>
+<span class="ln">39</span>    <span class="p">[</span><span class="n">ANDROID_JPEGR</span><span class="p">]</span>                <span class="o">=</span> <span class="s">&#34;android.jpegr&#34;</span><span class="p">,</span>
+<span class="ln">40</span><span class="p">};</span>
+</code></pre></div><p>以颜色校正为例，颜色校正数组大小为5，对应info分别有mode、transform、gains、aberrationMode和availableAberrationModes</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/metadata/m6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/metadata/m6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//system/media/camera/src/camera_metadata_tag_info.c
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="n">tag_info_t</span> <span class="n">android_color_correction</span><span class="p">[</span><span class="n">ANDROID_COLOR_CORRECTION_END</span> <span class="o">-</span>
+<span class="ln"> 3</span>        <span class="n">ANDROID_COLOR_CORRECTION_START</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="p">[</span> <span class="n">ANDROID_COLOR_CORRECTION_MODE</span> <span class="o">-</span> <span class="n">ANDROID_COLOR_CORRECTION_START</span> <span class="p">]</span> <span class="o">=</span>
+<span class="ln"> 5</span>    <span class="p">{</span> <span class="s">&#34;mode&#34;</span><span class="p">,</span>                          <span class="n">TYPE_BYTE</span>   <span class="p">},</span>
+<span class="ln"> 6</span>    <span class="p">[</span> <span class="n">ANDROID_COLOR_CORRECTION_TRANSFORM</span> <span class="o">-</span> <span class="n">ANDROID_COLOR_CORRECTION_START</span> <span class="p">]</span> <span class="o">=</span>
+<span class="ln"> 7</span>    <span class="p">{</span> <span class="s">&#34;transform&#34;</span><span class="p">,</span>                     <span class="n">TYPE_RATIONAL</span>
+<span class="ln"> 8</span>                <span class="p">},</span>
+<span class="ln"> 9</span>    <span class="p">[</span> <span class="n">ANDROID_COLOR_CORRECTION_GAINS</span> <span class="o">-</span> <span class="n">ANDROID_COLOR_CORRECTION_START</span> <span class="p">]</span> <span class="o">=</span>
+<span class="ln">10</span>    <span class="p">{</span> <span class="s">&#34;gains&#34;</span><span class="p">,</span>                         <span class="n">TYPE_FLOAT</span>  <span class="p">},</span>
+<span class="ln">11</span>    <span class="p">[</span> <span class="n">ANDROID_COLOR_CORRECTION_ABERRATION_MODE</span> <span class="o">-</span> <span class="n">ANDROID_COLOR_CORRECTION_START</span> <span class="p">]</span> <span class="o">=</span>
+<span class="ln">12</span>    <span class="p">{</span> <span class="s">&#34;aberrationMode&#34;</span><span class="p">,</span>                <span class="n">TYPE_BYTE</span>   <span class="p">},</span>
+<span class="ln">13</span>    <span class="p">[</span> <span class="n">ANDROID_COLOR_CORRECTION_AVAILABLE_ABERRATION_MODES</span> <span class="o">-</span> <span class="n">ANDROID_COLOR_CORRECTION_START</span> <span class="p">]</span> <span class="o">=</span>
+<span class="ln">14</span>    <span class="p">{</span> <span class="s">&#34;availableAberrationModes&#34;</span><span class="p">,</span>      <span class="n">TYPE_BYTE</span>   <span class="p">},</span>
+<span class="ln">15</span><span class="p">};</span>
+<span class="ln">16</span><span class="c1">//每个section中有很多tag，而每个tag所存储的数据类型却不一定是相同的，所以我们必须指定，同时，每个tag都有自己的name
+</span><span class="ln">17</span><span class="c1"></span><span class="k">typedef</span> <span class="k">struct</span> <span class="n">tag_info</span> <span class="p">{</span>
+<span class="ln">18</span>    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">tag_name</span><span class="p">;</span>
+<span class="ln">19</span>    <span class="kt">uint8_t</span>     <span class="n">tag_type</span><span class="p">;</span>
+<span class="ln">20</span><span class="p">}</span> <span class="n">tag_info_t</span><span class="p">;</span>
+</code></pre></div><h3 id="219供产商自定义-metadata-及查询的方法">2.1.9供产商自定义 metadata 及查询的方法</h3>
+<p>主要定义了一些函数指针和缺省数组，缺省数组用来后续产商自定义一些数据结构</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//system/media/camera/include/system/camera_vendor_tags.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">typedef</span> <span class="k">struct</span> <span class="n">vendor_tag_ops</span> <span class="n">vendor_tag_ops_t</span><span class="p">;</span>
+<span class="ln"> 3</span><span class="k">struct</span> <span class="n">vendor_tag_ops</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">get_tag_count</span><span class="p">)(</span><span class="k">const</span> <span class="n">vendor_tag_ops_t</span> <span class="o">*</span><span class="n">v</span><span class="p">);</span>
+<span class="ln"> 5</span>    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">get_all_tags</span><span class="p">)(</span><span class="k">const</span> <span class="n">vendor_tag_ops_t</span> <span class="o">*</span><span class="n">v</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="o">*</span><span class="n">tag_array</span><span class="p">);</span>
+<span class="ln"> 6</span>    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">get_section_name</span><span class="p">)(</span><span class="k">const</span> <span class="n">vendor_tag_ops_t</span> <span class="o">*</span><span class="n">v</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">);</span>
+<span class="ln"> 7</span>    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">get_tag_name</span><span class="p">)(</span><span class="k">const</span> <span class="n">vendor_tag_ops_t</span> <span class="o">*</span><span class="n">v</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">);</span>
+<span class="ln"> 8</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">get_tag_type</span><span class="p">)(</span><span class="k">const</span> <span class="n">vendor_tag_ops_t</span> <span class="o">*</span><span class="n">v</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">);</span>
+<span class="ln"> 9</span>    <span class="kt">void</span><span class="o">*</span> <span class="n">reserved</span><span class="p">[</span><span class="mi">8</span><span class="p">];</span>
+<span class="ln">10</span><span class="p">};</span>
+<span class="ln">11</span>
+<span class="ln">12</span><span class="k">struct</span> <span class="n">vendor_tag_cache_ops</span> <span class="p">{</span>
+<span class="ln">13</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">get_tag_count</span><span class="p">)(</span><span class="n">metadata_vendor_id_t</span> <span class="n">id</span><span class="p">);</span>
+<span class="ln">14</span>    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">get_all_tags</span><span class="p">)(</span><span class="kt">uint32_t</span> <span class="o">*</span><span class="n">tag_array</span><span class="p">,</span> <span class="n">metadata_vendor_id_t</span> <span class="n">id</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">get_section_name</span><span class="p">)(</span><span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">,</span> <span class="n">metadata_vendor_id_t</span> <span class="n">id</span><span class="p">);</span>
+<span class="ln">16</span>    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">get_tag_name</span><span class="p">)(</span><span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">,</span> <span class="n">metadata_vendor_id_t</span> <span class="n">id</span><span class="p">);</span>
+<span class="ln">17</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">get_tag_type</span><span class="p">)(</span><span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">,</span> <span class="n">metadata_vendor_id_t</span> <span class="n">id</span><span class="p">);</span>
+<span class="ln">18</span>    <span class="kt">void</span><span class="o">*</span> <span class="n">reserved</span><span class="p">[</span><span class="mi">8</span><span class="p">];</span>
+<span class="ln">19</span><span class="p">};</span>
+</code></pre></div><h2 id="22分配内存allocate_camera_metadata">2.2分配内存<strong>allocate_camera_metadata</strong></h2>
+<p>这里会在堆区里面开辟一个内存区域，这片内存用于存放camera_metadata结构体数据</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">// system/media/camera/include/system/camera_metadata.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">ANDROID_API</span>
+<span class="ln"> 3</span><span class="n">camera_metadata_t</span> <span class="o">*</span><span class="nf">allocate_camera_metadata</span><span class="p">(</span><span class="n">size_t</span> <span class="n">entry_capacity</span><span class="p">,</span>
+<span class="ln"> 4</span>        <span class="n">size_t</span> <span class="n">data_capacity</span><span class="p">);</span>
+<span class="ln"> 5</span><span class="c1">// system/media/camera/src/camera_metadata.c
+</span><span class="ln"> 6</span><span class="c1"></span><span class="n">camera_metadata_t</span> <span class="o">*</span><span class="nf">allocate_camera_metadata</span><span class="p">(</span><span class="n">size_t</span> <span class="n">entry_capacity</span><span class="p">,</span>
+<span class="ln"> 7</span>                                            <span class="n">size_t</span> <span class="n">data_capacity</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 8</span>	<span class="c1">//应该是通过这个调用计算出了需要分配内存的大小
+</span><span class="ln"> 9</span><span class="c1"></span>    <span class="n">size_t</span> <span class="n">memory_needed</span> <span class="o">=</span> <span class="n">calculate_camera_metadata_size</span><span class="p">(</span><span class="n">entry_capacity</span><span class="p">,</span><span class="n">data_capacity</span><span class="p">);</span>
+<span class="ln">10</span>    <span class="c1">// 调用calloc函数进行内存分配，分配1块大小为memory_needed的连续内存并且初始化为0 
+</span><span class="ln">11</span><span class="c1"></span>    <span class="kt">void</span> <span class="o">*</span><span class="n">buffer</span> <span class="o">=</span> <span class="n">calloc</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">memory_needed</span><span class="p">);</span>
+<span class="ln">12</span>    <span class="c1">// 这里是将分配的内存地址赋值给一个camera_metadata_t的指针，然后对其中的一些参数进行初始化
+</span><span class="ln">13</span><span class="c1"></span>    <span class="n">camera_metadata_t</span> <span class="o">*</span><span class="n">metadata</span> <span class="o">=</span> <span class="n">place_camera_metadata</span><span class="p">(</span>
+<span class="ln">14</span>        <span class="n">buffer</span><span class="p">,</span> <span class="n">memory_needed</span><span class="p">,</span> <span class="n">entry_capacity</span><span class="p">,</span> <span class="n">data_capacity</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="k">return</span> <span class="n">metadata</span><span class="p">;</span>
+<span class="ln">16</span><span class="p">}</span>
+</code></pre></div><p>这里有两个方法，一个计算分配内存大小，另一个是将分配的内存地址进行初始化操作。</p>
+<h3 id="221calculate_camera_metadata_size">2.2.1calculate_camera_metadata_size</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">// system/media/camera/src/camera_metadata.c
+</span><span class="ln"> 2</span><span class="c1"></span><span class="cp">#define ALIGN_TO(val, alignment) \
+</span><span class="ln"> 3</span><span class="cp">    (((uintptr_t)(val) + ((alignment) - 1)) &amp; ~((alignment) - 1))</span><span class="c1">//这个用于结构体内存对齐的
+</span><span class="ln"> 4</span><span class="c1"></span><span class="cp">#define ENTRY_ALIGNMENT ((size_t) 4)
+</span><span class="ln"> 5</span><span class="cp">#define METADATA_ALIGNMENT ((size_t) 4)
+</span><span class="ln"> 6</span><span class="cp">#define DATA_ALIGNMENT ((size_t) 8)
+</span><span class="ln"> 7</span><span class="cp">#define MAX_ALIGNMENT(A, B) (((A) &gt; (B)) ? (A) : (B))
+</span><span class="ln"> 8</span><span class="cp">#define METADATA_PACKET_ALIGNMENT \
+</span><span class="ln"> 9</span><span class="cp">    MAX_ALIGNMENT(MAX_ALIGNMENT(DATA_ALIGNMENT, METADATA_ALIGNMENT), ENTRY_ALIGNMENT)
+</span><span class="ln">10</span><span class="cp"></span>
+<span class="ln">11</span><span class="n">size_t</span> <span class="nf">calculate_camera_metadata_size</span><span class="p">(</span><span class="n">size_t</span> <span class="n">entry_count</span><span class="p">,</span>
+<span class="ln">12</span>                                      <span class="n">size_t</span> <span class="n">data_count</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">13</span>    <span class="c1">// 先拿到camera_metadata_t的大小，大小为44个字节
+</span><span class="ln">14</span><span class="c1"></span>    <span class="n">size_t</span> <span class="n">memory_needed</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">camera_metadata_t</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="c1">// 作4字节对齐
+</span><span class="ln">16</span><span class="c1"></span>    <span class="n">memory_needed</span> <span class="o">=</span> <span class="n">ALIGN_TO</span><span class="p">(</span><span class="n">memory_needed</span><span class="p">,</span> <span class="n">ENTRY_ALIGNMENT</span><span class="p">);</span>
+<span class="ln">17</span>    <span class="c1">// 再加上entry * entry_count的大小，注意这里entry_count实际是entry_capacity
+</span><span class="ln">18</span><span class="c1"></span>    <span class="n">memory_needed</span> <span class="o">+=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">camera_metadata_buffer_entry_t</span><span class="p">[</span><span class="n">entry_count</span><span class="p">]);</span>
+<span class="ln">19</span>    <span class="c1">// 作8字节对齐
+</span><span class="ln">20</span><span class="c1"></span>    <span class="n">memory_needed</span> <span class="o">=</span> <span class="n">ALIGN_TO</span><span class="p">(</span><span class="n">memory_needed</span><span class="p">,</span> <span class="n">DATA_ALIGNMENT</span><span class="p">);</span>
+<span class="ln">21</span>    <span class="c1">// 加上data_count， 因为data就是以字节为单位的，所以直接加data_count
+</span><span class="ln">22</span><span class="c1"></span>    <span class="c1">// 同样，这里data_count是data_capacity
+</span><span class="ln">23</span><span class="c1"></span>    <span class="n">memory_needed</span> <span class="o">+=</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">uint8_t</span><span class="p">[</span><span class="n">data_count</span><span class="p">]);</span>
+<span class="ln">24</span>    <span class="c1">// 8字节对齐
+</span><span class="ln">25</span><span class="c1"></span>    <span class="n">memory_needed</span> <span class="o">=</span> <span class="n">ALIGN_TO</span><span class="p">(</span><span class="n">memory_needed</span><span class="p">,</span> <span class="n">METADATA_PACKET_ALIGNMENT</span><span class="p">);</span>
+<span class="ln">26</span>    <span class="k">return</span> <span class="n">memory_needed</span><span class="p">;</span>
+<span class="ln">27</span><span class="p">}</span>
+</code></pre></div><ol>
+<li>首先对默认结构体数据进行四字节对齐</li>
+<li>其次对传进来的entry数组数据进行4字节对齐</li>
+<li>然后对传进来的data数组数据进行8字节对齐</li>
+<li>最后将所有数据进行8字节对齐</li>
+</ol>
+<h3 id="222place_camera_metadata">2.2.2place_camera_metadata</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">// system/media/camera/src/camera_metadata.c
+</span><span class="ln"> 2</span><span class="c1">// dst: 使用calloc分配的内存地址
+</span><span class="ln"> 3</span><span class="c1">// dst_size: 上面计算出的memory_needed
+</span><span class="ln"> 4</span><span class="c1"></span><span class="n">camera_metadata_t</span> <span class="o">*</span><span class="nf">place_camera_metadata</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">dst</span><span class="p">,</span>
+<span class="ln"> 5</span>                                         <span class="n">size_t</span> <span class="n">dst_size</span><span class="p">,</span>
+<span class="ln"> 6</span>                                         <span class="n">size_t</span> <span class="n">entry_capacity</span><span class="p">,</span>
+<span class="ln"> 7</span>                                         <span class="n">size_t</span> <span class="n">data_capacity</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 8</span>    <span class="k">if</span> <span class="p">(</span><span class="n">dst</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span>    <span class="c1">// 又计算了一次内存大小，原因是拷贝函数copy_camera_metadata中也调用了place_camera_metadata
+</span><span class="ln">11</span><span class="c1"></span>    <span class="c1">// 拷贝时，src size是不能大于dst size的，所以下面我们会看到有个比较
+</span><span class="ln">12</span><span class="c1"></span>    <span class="n">size_t</span> <span class="n">memory_needed</span> <span class="o">=</span> <span class="n">calculate_camera_metadata_size</span><span class="p">(</span><span class="n">entry_capacity</span><span class="p">,</span>
+<span class="ln">13</span>                                                          <span class="n">data_capacity</span><span class="p">);</span>
+<span class="ln">14</span>
+<span class="ln">15</span>    <span class="c1">// 对camera_metadata_t进行初始化，将dst地址赋值给metadata地址，
+</span><span class="ln">16</span><span class="c1"></span>    <span class="n">camera_metadata_t</span> <span class="o">*</span><span class="n">metadata</span> <span class="o">=</span> <span class="p">(</span><span class="n">camera_metadata_t</span><span class="o">*</span><span class="p">)</span><span class="n">dst</span><span class="p">;</span>
+<span class="ln">17</span>    <span class="n">metadata</span><span class="o">-&gt;</span><span class="n">version</span> <span class="o">=</span> <span class="n">CURRENT_METADATA_VERSION</span><span class="p">;</span> <span class="c1">// 版本号为1
+</span><span class="ln">18</span><span class="c1"></span>    <span class="n">metadata</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">// 0表示不对entry进行排序
+</span><span class="ln">19</span><span class="c1"></span>    <span class="n">metadata</span><span class="o">-&gt;</span><span class="n">entry_count</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">// 初始大小都为0，data也一样，后面有插入时递增
+</span><span class="ln">20</span><span class="c1"></span>    <span class="n">metadata</span><span class="o">-&gt;</span><span class="n">entry_capacity</span> <span class="o">=</span> <span class="n">entry_capacity</span><span class="p">;</span> <span class="c1">// 最大容量entry
+</span><span class="ln">21</span><span class="c1"></span>    <span class="n">metadata</span><span class="o">-&gt;</span><span class="n">entries_start</span> <span class="o">=</span> <span class="c1">// entry的起始地址，在camera_metadata_t后面做字节对齐后就是entry_start
+</span><span class="ln">22</span><span class="c1"></span>            <span class="n">ALIGN_TO</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">camera_metadata_t</span><span class="p">),</span> <span class="n">ENTRY_ALIGNMENT</span><span class="p">);</span>
+<span class="ln">23</span>    <span class="n">metadata</span><span class="o">-&gt;</span><span class="n">data_count</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">// 初始value为0
+</span><span class="ln">24</span><span class="c1"></span>    <span class="n">metadata</span><span class="o">-&gt;</span><span class="n">data_capacity</span> <span class="o">=</span> <span class="n">data_capacity</span><span class="p">;</span> <span class="c1">// 最大value字节数
+</span><span class="ln">25</span><span class="c1"></span>    <span class="n">metadata</span><span class="o">-&gt;</span><span class="n">size</span> <span class="o">=</span> <span class="n">memory_needed</span><span class="p">;</span> <span class="c1">// 申请的内存大小
+</span><span class="ln">26</span><span class="c1"></span>    <span class="c1">// entry_start + entry_capacity的大小
+</span><span class="ln">27</span><span class="c1"></span>    <span class="n">size_t</span> <span class="n">data_unaligned</span> <span class="o">=</span> <span class="p">(</span><span class="kt">uint8_t</span><span class="o">*</span><span class="p">)(</span><span class="n">get_entries</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span> <span class="o">+</span>
+<span class="ln">28</span>            <span class="n">metadata</span><span class="o">-&gt;</span><span class="n">entry_capacity</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="kt">uint8_t</span><span class="o">*</span><span class="p">)</span><span class="n">metadata</span><span class="p">;</span>
+<span class="ln">29</span>    <span class="c1">// entry_start + entry_capacity作8字节对齐后，就是data_start在metadata中的相对地址
+</span><span class="ln">30</span><span class="c1"></span>    <span class="n">metadata</span><span class="o">-&gt;</span><span class="n">data_start</span> <span class="o">=</span> <span class="n">ALIGN_TO</span><span class="p">(</span><span class="n">data_unaligned</span><span class="p">,</span> <span class="n">DATA_ALIGNMENT</span><span class="p">);</span>
+<span class="ln">31</span>    <span class="c1">// vendor_id有api可以设置，我们放到下个章节详细讲解vendor metadata
+</span><span class="ln">32</span><span class="c1"></span>    <span class="n">metadata</span><span class="o">-&gt;</span><span class="n">vendor_id</span> <span class="o">=</span> <span class="n">CAMERA_METADATA_INVALID_VENDOR_ID</span><span class="p">;</span>
+<span class="ln">33</span>    <span class="k">return</span> <span class="n">metadata</span><span class="p">;</span>
+<span class="ln">34</span><span class="p">}</span>
+</code></pre></div><p>这个函数其实就是初始化了分配的内存中的头部部分，也就是camera_metadata_t所占用的内存，剩余未分配的内存里面现在全是0</p>
+<p>data_unaligned就是entry_start + entry_capacity的大小</p>
+<p>这里的(uint8_t*)metadata为内存camera_metadata_t的首地址，那么get_entries就是获取到entry_start + entry_capacity的地址</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="c1">// system/media/camera/src/camera_metadata.c
+</span><span class="ln">2</span><span class="c1"></span><span class="k">static</span> <span class="n">camera_metadata_buffer_entry_t</span> <span class="o">*</span><span class="nf">get_entries</span><span class="p">(</span>
+<span class="ln">3</span>        <span class="k">const</span> <span class="n">camera_metadata_t</span> <span class="o">*</span><span class="n">metadata</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">4</span>    <span class="k">return</span> <span class="p">(</span><span class="n">camera_metadata_buffer_entry_t</span><span class="o">*</span><span class="p">)</span>
+<span class="ln">5</span>            <span class="p">((</span><span class="kt">uint8_t</span><span class="o">*</span><span class="p">)</span><span class="n">metadata</span> <span class="o">+</span> <span class="n">metadata</span><span class="o">-&gt;</span><span class="n">entries_start</span><span class="p">);</span>
+<span class="ln">6</span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/metadata/m8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/metadata/m8.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="23增加add_camera_metadata_entry">2.3增加<strong>add_camera_metadata_entry</strong></h2>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">// system/media/camera/include/system/camera_metadata.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">ANDROID_API</span>
+<span class="ln"> 3</span><span class="kt">int</span> <span class="nf">add_camera_metadata_entry</span><span class="p">(</span><span class="n">camera_metadata_t</span> <span class="o">*</span><span class="n">dst</span><span class="p">,</span>
+<span class="ln"> 4</span>        <span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">,</span>
+<span class="ln"> 5</span>        <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span>
+<span class="ln"> 6</span>        <span class="n">size_t</span> <span class="n">data_count</span><span class="p">);</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span><span class="c1">// system/media/camera/src/camera_metadata.c
+</span><span class="ln"> 9</span><span class="c1"></span><span class="kt">int</span> <span class="nf">add_camera_metadata_entry</span><span class="p">(</span><span class="n">camera_metadata_t</span> <span class="o">*</span><span class="n">dst</span><span class="p">,</span>
+<span class="ln">10</span>        <span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">,</span>
+<span class="ln">11</span>        <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span>
+<span class="ln">12</span>        <span class="n">size_t</span> <span class="n">data_count</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">13</span>    <span class="c1">// 很简单，根据tag拿到其存储的value的type，也就是这个type其实是一开始就定义好的
+</span><span class="ln">14</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">type</span> <span class="o">=</span> <span class="n">get_local_camera_metadata_tag_type</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">dst</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="c1">// 拿到type之后再继续调用这个函数，其中多了一个type参数
+</span><span class="ln">16</span><span class="c1"></span>    <span class="k">return</span> <span class="n">add_camera_metadata_entry_raw</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span>
+<span class="ln">17</span>            <span class="n">tag</span><span class="p">,</span>
+<span class="ln">18</span>            <span class="n">type</span><span class="p">,</span>
+<span class="ln">19</span>            <span class="n">data</span><span class="p">,</span>
+<span class="ln">20</span>            <span class="n">data_count</span><span class="p">);</span>
+<span class="ln">21</span><span class="p">}</span>
+</code></pre></div><ol>
+<li>
+<p>根据tag拿到其存储的value的type</p>
+<p>能够根据tag拿到type，说明一开始有些东西是初始化好的，或者说有地方去定义好的，到这里我们有必要再多了解一下这里的tag了。tag分为<strong>系统原生的tag</strong>和<strong>厂商自己定义的tag</strong>（vendor tag），tag是分组的，每一组tag表示同一功能的不同属性，每一个分组我们又叫一个section。</p>
+</li>
+<li>
+<p>拿到type之后再继续调用add_camera_metadata_entry_raw这个函数</p>
+</li>
+</ol>
+<h3 id="231get_local_camera_metadata_tag_type">2.3.1get_local_camera_metadata_tag_type</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">// system/media/camera/src/camera_metadata.c
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="nf">get_local_camera_metadata_tag_type</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">,</span>
+<span class="ln"> 3</span>        <span class="k">const</span> <span class="n">camera_metadata_t</span> <span class="o">*</span><span class="n">meta</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="c1">// meta不为NULL，所以id为meta-&gt;vendor_id的值
+</span><span class="ln"> 5</span><span class="c1"></span>    <span class="n">metadata_vendor_id_t</span> <span class="n">id</span> <span class="o">=</span> <span class="p">(</span><span class="nb">NULL</span> <span class="o">==</span> <span class="n">meta</span><span class="p">)</span> <span class="o">?</span> <span class="nl">CAMERA_METADATA_INVALID_VENDOR_ID</span> <span class="p">:</span>
+<span class="ln"> 6</span>            <span class="n">meta</span><span class="o">-&gt;</span><span class="n">vendor_id</span><span class="p">;</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span>    <span class="k">return</span> <span class="n">get_local_camera_metadata_tag_type_vendor_id</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">id</span><span class="p">);</span>
+<span class="ln"> 9</span><span class="p">}</span>
+<span class="ln">10</span>
+<span class="ln">11</span><span class="c1">// system/media/camera/src/camera_metadata.c
+</span><span class="ln">12</span><span class="c1">// 这里假设我们添加的是系统section，非vendor_section
+</span><span class="ln">13</span><span class="c1"></span><span class="kt">int</span> <span class="nf">get_local_camera_metadata_tag_type_vendor_id</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">,</span>
+<span class="ln">14</span>        <span class="n">metadata_vendor_id_t</span> <span class="n">id</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">15</span>    <span class="c1">// tag右移16位得到的是tag所在的section
+</span><span class="ln">16</span><span class="c1"></span>    <span class="kt">uint32_t</span> <span class="n">tag_section</span> <span class="o">=</span> <span class="n">tag</span> <span class="o">&gt;&gt;</span> <span class="mi">16</span><span class="p">;</span>
+<span class="ln">17</span>    <span class="p">...</span>
+<span class="ln">18</span>    <span class="c1">// 这里注意，0xFFFF的高16位全为0，低16位全为1，进行按位与运算后，
+</span><span class="ln">19</span><span class="c1"></span>    <span class="c1">// 就得到了低16位的值，也就是每个tag相对于其section_start的偏移
+</span><span class="ln">20</span><span class="c1"></span>    <span class="kt">uint32_t</span> <span class="n">tag_index</span> <span class="o">=</span> <span class="n">tag</span> <span class="o">&amp;</span> <span class="mh">0xFFFF</span><span class="p">;</span>
+<span class="ln">21</span>    <span class="c1">// tag_section的第tag_index个tag
+</span><span class="ln">22</span><span class="c1"></span>    <span class="k">return</span> <span class="n">tag_info</span><span class="p">[</span><span class="n">tag_section</span><span class="p">][</span><span class="n">tag_index</span><span class="p">].</span><span class="n">tag_type</span><span class="p">;</span>
+<span class="ln">23</span><span class="p">}</span>
+</code></pre></div><ol>
+<li>meta不为NULL，所以id为meta-&gt;vendor_id的值</li>
+<li>然后先获取tag的section值（前16位）</li>
+<li>获取tag的偏移index（后16位）</li>
+<li>tag_section和tag_index获取到真实的tag_info中的tag_info_t结构体，最后返回对应tag_info_t结构体的tag_type</li>
+</ol>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/metadata/m9.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/metadata/m9.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="232add_camera_metadata_entry_raw">2.3.2add_camera_metadata_entry_raw</h3>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">// system/media/camera/src/camera_metadata.c
+</span><span class="ln"> 2</span><span class="c1"></span><span class="k">static</span> <span class="kt">int</span> <span class="nf">add_camera_metadata_entry_raw</span><span class="p">(</span><span class="n">camera_metadata_t</span> <span class="o">*</span><span class="n">dst</span><span class="p">,</span>
+<span class="ln"> 3</span>        <span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">,</span>
+<span class="ln"> 4</span>        <span class="kt">uint8_t</span>  <span class="n">type</span><span class="p">,</span>
+<span class="ln"> 5</span>        <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span>
+<span class="ln"> 6</span>        <span class="n">size_t</span> <span class="n">data_count</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 7</span>    <span class="c1">// 拿到需要存储的value所占用的字节数
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="c1">//这里也存在为0，0存在到时候存储在data.value里面，否则存在data区中
+</span><span class="ln"> 9</span><span class="c1"></span>    <span class="n">size_t</span> <span class="n">data_bytes</span> <span class="o">=</span>
+<span class="ln">10</span>            <span class="n">calculate_camera_metadata_entry_data_size</span><span class="p">(</span><span class="n">type</span><span class="p">,</span> <span class="n">data_count</span><span class="p">);</span>
+<span class="ln">11</span>
+<span class="ln">12</span>    <span class="c1">// calculate_camera_metadata_entry_data_size end
+</span><span class="ln">13</span><span class="c1"></span>    <span class="c1">// data占用的空间超出了分配的最大空间，返回错误
+</span><span class="ln">14</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">data_bytes</span> <span class="o">+</span> <span class="n">dst</span><span class="o">-&gt;</span><span class="n">data_count</span> <span class="o">&gt;</span> <span class="n">dst</span><span class="o">-&gt;</span><span class="n">data_capacity</span><span class="p">)</span> <span class="k">return</span> <span class="n">ERROR</span><span class="p">;</span>
+<span class="ln">15</span>
+<span class="ln">16</span>    <span class="c1">// value真正占用的字节数
+</span><span class="ln">17</span><span class="c1"></span>    <span class="n">size_t</span> <span class="n">data_payload_bytes</span> <span class="o">=</span>
+<span class="ln">18</span>            <span class="n">data_count</span> <span class="o">*</span> <span class="n">camera_metadata_type_size</span><span class="p">[</span><span class="n">type</span><span class="p">];</span>
+<span class="ln">19</span>    <span class="c1">// 新的entry的地址
+</span><span class="ln">20</span><span class="c1"></span>    <span class="n">camera_metadata_buffer_entry_t</span> <span class="o">*</span><span class="n">entry</span> <span class="o">=</span> <span class="n">get_entries</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span> <span class="o">+</span> <span class="n">dst</span><span class="o">-&gt;</span><span class="n">entry_count</span><span class="p">;</span>
+<span class="ln">21</span>    <span class="c1">// 初始化为0
+</span><span class="ln">22</span><span class="c1"></span>    <span class="n">memset</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">camera_metadata_buffer_entry_t</span><span class="p">));</span>
+<span class="ln">23</span>    <span class="c1">// 赋值
+</span><span class="ln">24</span><span class="c1"></span>    <span class="n">entry</span><span class="o">-&gt;</span><span class="n">tag</span> <span class="o">=</span> <span class="n">tag</span><span class="p">;</span>
+<span class="ln">25</span>    <span class="n">entry</span><span class="o">-&gt;</span><span class="n">type</span> <span class="o">=</span> <span class="n">type</span><span class="p">;</span>
+<span class="ln">26</span>    <span class="n">entry</span><span class="o">-&gt;</span><span class="n">count</span> <span class="o">=</span> <span class="n">data_count</span><span class="p">;</span>
+<span class="ln">27</span>
+<span class="ln">28</span>    <span class="k">if</span> <span class="p">(</span><span class="n">data_bytes</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">29</span>        <span class="c1">// value小于等于4字节，存储到data.value
+</span><span class="ln">30</span><span class="c1"></span>        <span class="n">memcpy</span><span class="p">(</span><span class="n">entry</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">value</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span>
+<span class="ln">31</span>                <span class="n">data_payload_bytes</span><span class="p">);</span>
+<span class="ln">32</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">33</span>        <span class="c1">// value大于4字节，在data区末尾添加value
+</span><span class="ln">34</span><span class="c1"></span>        <span class="n">entry</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">offset</span> <span class="o">=</span> <span class="n">dst</span><span class="o">-&gt;</span><span class="n">data_count</span><span class="p">;</span>
+<span class="ln">35</span>        <span class="n">memcpy</span><span class="p">(</span><span class="n">get_data</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span> <span class="o">+</span> <span class="n">entry</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">offset</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span>
+<span class="ln">36</span>                <span class="n">data_payload_bytes</span><span class="p">);</span>
+<span class="ln">37</span>        <span class="c1">// 更新data_count,这里的data_bytes大于等于data_payload_bytes，
+</span><span class="ln">38</span><span class="c1"></span>        <span class="c1">// 因为做了8字节对齐
+</span><span class="ln">39</span><span class="c1"></span>        <span class="n">dst</span><span class="o">-&gt;</span><span class="n">data_count</span> <span class="o">+=</span> <span class="n">data_bytes</span><span class="p">;</span>
+<span class="ln">40</span>    <span class="p">}</span>
+<span class="ln">41</span>    <span class="c1">// entry_count递增
+</span><span class="ln">42</span><span class="c1"></span>    <span class="n">dst</span><span class="o">-&gt;</span><span class="n">entry_count</span><span class="o">++</span><span class="p">;</span>
+<span class="ln">43</span>    <span class="c1">// 不排序
+</span><span class="ln">44</span><span class="c1"></span>    <span class="n">dst</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;=</span> <span class="o">~</span><span class="n">FLAG_SORTED</span><span class="p">;</span>
+<span class="ln">45</span>    <span class="c1">// 对齐检查，整个内存必须保证METADATA_ALIGNMENT，ENTRY_ALIGNMENT，
+</span><span class="ln">46</span><span class="c1"></span>    <span class="c1">// DATA_ALIGNMENT都能对齐，否则抛出异常。
+</span><span class="ln">47</span><span class="c1"></span>    <span class="n">assert</span><span class="p">(</span><span class="n">validate_camera_metadata_structure</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">)</span> <span class="o">==</span> <span class="n">OK</span><span class="p">);</span>
+<span class="ln">48</span>    <span class="k">return</span> <span class="n">OK</span><span class="p">;</span>
+<span class="ln">49</span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/metadata/m10.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/metadata/m10.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="233calculate_camera_metadata_entry_data_size">2.3.3calculate_camera_metadata_entry_data_size</h3>
+<p>拿到需要存储的value所占用的字节数</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">// calculate_camera_metadata_entry_data_size start
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">size_t</span> <span class="nf">calculate_camera_metadata_entry_data_size</span><span class="p">(</span><span class="kt">uint8_t</span> <span class="n">type</span><span class="p">,</span>
+<span class="ln"> 3</span>                                                 <span class="n">size_t</span> <span class="n">data_count</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 4</span>    <span class="c1">// 不再定义的类型范围内，也就是不支持此类型
+</span><span class="ln"> 5</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">type</span> <span class="o">&gt;=</span> <span class="n">NUM_TYPES</span><span class="p">)</span> <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="c1">// data_count乘以type占用的字节数就是整个value占用的字节数
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="n">size_t</span> <span class="n">data_bytes</span> <span class="o">=</span> <span class="n">data_count</span> <span class="o">*</span>
+<span class="ln"> 8</span>        <span class="n">camera_metadata_type_size</span><span class="p">[</span><span class="n">type</span><span class="p">];</span>
+<span class="ln"> 9</span>    <span class="c1">// value所需字节数小于4返回0，到时候存储在data.value里面，否则按8字节对齐返回，
+</span><span class="ln">10</span><span class="c1"></span>    <span class="c1">// 保存在偏移量为offset的data区，
+</span><span class="ln">11</span><span class="c1"></span>    <span class="k">return</span> <span class="n">data_bytes</span> <span class="o">&lt;=</span> <span class="mi">4</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="n">ALIGN_TO</span><span class="p">(</span><span class="n">data_bytes</span><span class="p">,</span> <span class="n">DATA_ALIGNMENT</span><span class="p">);</span>
+<span class="ln">12</span><span class="p">}</span>
+<span class="ln">13</span><span class="c1">// system/media/camera/include/system/camera_metadata.h
+</span><span class="ln">14</span><span class="c1"></span><span class="k">enum</span> <span class="p">{</span>
+<span class="ln">15</span>    <span class="c1">// Unsigned 8-bit integer (uint8_t)
+</span><span class="ln">16</span><span class="c1"></span>    <span class="n">TYPE_BYTE</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="ln">17</span>    <span class="c1">// Signed 32-bit integer (int32_t)
+</span><span class="ln">18</span><span class="c1"></span>    <span class="n">TYPE_INT32</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+<span class="ln">19</span>    <span class="c1">// 32-bit float (float)
+</span><span class="ln">20</span><span class="c1"></span>    <span class="n">TYPE_FLOAT</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+<span class="ln">21</span>    <span class="c1">// Signed 64-bit integer (int64_t)
+</span><span class="ln">22</span><span class="c1"></span>    <span class="n">TYPE_INT64</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+<span class="ln">23</span>    <span class="c1">// 64-bit float (double)
+</span><span class="ln">24</span><span class="c1"></span>    <span class="n">TYPE_DOUBLE</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+<span class="ln">25</span>    <span class="c1">// A 64-bit fraction (camera_metadata_rational_t)
+</span><span class="ln">26</span><span class="c1"></span>    <span class="n">TYPE_RATIONAL</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+<span class="ln">27</span>    <span class="c1">// Number of type fields
+</span><span class="ln">28</span><span class="c1"></span>    <span class="n">NUM_TYPES</span>
+<span class="ln">29</span><span class="p">};</span>
+<span class="ln">30</span><span class="c1">// system/media/camera/src/camera_metadata.c
+</span><span class="ln">31</span><span class="c1"></span><span class="k">const</span> <span class="n">size_t</span> <span class="n">camera_metadata_type_size</span><span class="p">[</span><span class="n">NUM_TYPES</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="ln">32</span>    <span class="p">[</span><span class="n">TYPE_BYTE</span><span class="p">]</span>     <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">uint8_t</span><span class="p">),</span>
+<span class="ln">33</span>    <span class="p">[</span><span class="n">TYPE_INT32</span><span class="p">]</span>    <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">int32_t</span><span class="p">),</span>
+<span class="ln">34</span>    <span class="p">[</span><span class="n">TYPE_FLOAT</span><span class="p">]</span>    <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">),</span>
+<span class="ln">35</span>    <span class="p">[</span><span class="n">TYPE_INT64</span><span class="p">]</span>    <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">int64_t</span><span class="p">),</span>
+<span class="ln">36</span>    <span class="p">[</span><span class="n">TYPE_DOUBLE</span><span class="p">]</span>   <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">double</span><span class="p">),</span>
+<span class="ln">37</span>    <span class="p">[</span><span class="n">TYPE_RATIONAL</span><span class="p">]</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">camera_metadata_rational_t</span><span class="p">)</span>
+<span class="ln">38</span><span class="p">};</span>
+</code></pre></div><ul>
+<li>根据传入的type数据类型，来得到对应的真实数据量data_bytes</li>
+<li>value所需字节数小于4返回0，到时候存储在data.value里面，否则按8字节对齐返回</li>
+</ul>
+<h2 id="24删除delete_camera_metadata_entry">2.4删除<strong>delete_camera_metadata_entry</strong></h2>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">// system/media/camera/include/system/camera_metadata.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">ANDROID_API</span>
+<span class="ln"> 3</span><span class="kt">int</span> <span class="nf">delete_camera_metadata_entry</span><span class="p">(</span><span class="n">camera_metadata_t</span> <span class="o">*</span><span class="n">dst</span><span class="p">,</span>
+<span class="ln"> 4</span>        <span class="n">size_t</span> <span class="n">index</span><span class="p">);</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span><span class="c1">// system/media/camera/src/camera_metadata.c
+</span><span class="ln"> 7</span><span class="c1">// 参数index表示要查询的entry是第几个，也就是从entry_start开始的第几个entry
+</span><span class="ln"> 8</span><span class="c1"></span><span class="kt">int</span> <span class="nf">delete_camera_metadata_entry</span><span class="p">(</span><span class="n">camera_metadata_t</span> <span class="o">*</span><span class="n">dst</span><span class="p">,</span>
+<span class="ln"> 9</span>        <span class="n">size_t</span> <span class="n">index</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">10</span>    <span class="c1">// 得到要删除的entry地址
+</span><span class="ln">11</span><span class="c1"></span>    <span class="n">camera_metadata_buffer_entry_t</span> <span class="o">*</span><span class="n">entry</span> <span class="o">=</span> <span class="n">get_entries</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span> <span class="o">+</span> <span class="n">index</span><span class="p">;</span>
+<span class="ln">12</span>    <span class="c1">// 拿到该entry中的value占用的字节数，这个函数我们前面已经分析过
+</span><span class="ln">13</span><span class="c1"></span>    <span class="n">size_t</span> <span class="n">data_bytes</span> <span class="o">=</span> <span class="n">calculate_camera_metadata_entry_data_size</span><span class="p">(</span><span class="n">entry</span><span class="o">-&gt;</span><span class="n">type</span><span class="p">,</span>
+<span class="ln">14</span>            <span class="n">entry</span><span class="o">-&gt;</span><span class="n">count</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="c1">// 大于0，说明字节数是大于4的，存储在data区段
+</span><span class="ln">16</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">data_bytes</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">17</span>        <span class="c1">// Shift data buffer to overwrite deleted data
+</span><span class="ln">18</span><span class="c1"></span>        <span class="c1">// 拿到data的地址
+</span><span class="ln">19</span><span class="c1"></span>        <span class="kt">uint8_t</span> <span class="o">*</span><span class="n">start</span> <span class="o">=</span> <span class="n">get_data</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span> <span class="o">+</span> <span class="n">entry</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">offset</span><span class="p">;</span>
+<span class="ln">20</span>        <span class="c1">// data结束的地址
+</span><span class="ln">21</span><span class="c1"></span>        <span class="kt">uint8_t</span> <span class="o">*</span><span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">data_bytes</span><span class="p">;</span>
+<span class="ln">22</span>        <span class="c1">// length为data区段中去除要删除的entry data后剩余的data value占用的字节数
+</span><span class="ln">23</span><span class="c1"></span>        <span class="n">size_t</span> <span class="n">length</span> <span class="o">=</span> <span class="n">dst</span><span class="o">-&gt;</span><span class="n">data_count</span> <span class="o">-</span> <span class="n">entry</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">offset</span> <span class="o">-</span> <span class="n">data_bytes</span><span class="p">;</span>
+<span class="ln">24</span>        <span class="c1">// 剩余的data区段向上移动到要删除的entry的offset处，也就是将要删除的entry data
+</span><span class="ln">25</span><span class="c1"></span>        <span class="c1">// 进行了覆盖
+</span><span class="ln">26</span><span class="c1"></span>        <span class="n">memmove</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">length</span><span class="p">);</span>
+<span class="ln">27</span>
+<span class="ln">28</span>        <span class="c1">// Update all entry indices to account for shift
+</span><span class="ln">29</span><span class="c1"></span>        <span class="c1">// 很显然的是，data进行了移动，那么对应的entry中的offset字段也得更新。
+</span><span class="ln">30</span><span class="c1"></span>        <span class="c1">// 将每一个在要删除的entry后面的entry的data.offset前移data_bytes
+</span><span class="ln">31</span><span class="c1"></span>        <span class="c1">// 个字节（其data.value大于4字节的，小于4字节的不用处理的，因为不在
+</span><span class="ln">32</span><span class="c1"></span>        <span class="c1">// data区段存储value）
+</span><span class="ln">33</span><span class="c1"></span>        <span class="n">camera_metadata_buffer_entry_t</span> <span class="o">*</span><span class="n">e</span> <span class="o">=</span> <span class="n">get_entries</span><span class="p">(</span><span class="n">dst</span><span class="p">);</span>
+<span class="ln">34</span>        <span class="n">size_t</span> <span class="n">i</span><span class="p">;</span>
+<span class="ln">35</span>        <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">dst</span><span class="o">-&gt;</span><span class="n">entry_count</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">36</span>            <span class="k">if</span> <span class="p">(</span><span class="n">calculate_camera_metadata_entry_data_size</span><span class="p">(</span>
+<span class="ln">37</span>                    <span class="n">e</span><span class="o">-&gt;</span><span class="n">type</span><span class="p">,</span> <span class="n">e</span><span class="o">-&gt;</span><span class="n">count</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span>
+<span class="ln">38</span>                    <span class="n">e</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">offset</span> <span class="o">&gt;</span> <span class="n">entry</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">offset</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">39</span>                <span class="n">e</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">offset</span> <span class="o">-=</span> <span class="n">data_bytes</span><span class="p">;</span>
+<span class="ln">40</span>            <span class="p">}</span>
+<span class="ln">41</span>            <span class="o">++</span><span class="n">e</span><span class="p">;</span>
+<span class="ln">42</span>        <span class="p">}</span>
+<span class="ln">43</span>        <span class="c1">// 整个的data_count减去data_bytes
+</span><span class="ln">44</span><span class="c1"></span>        <span class="n">dst</span><span class="o">-&gt;</span><span class="n">data_count</span> <span class="o">-=</span> <span class="n">data_bytes</span><span class="p">;</span>
+<span class="ln">45</span>    <span class="p">}</span>
+<span class="ln">46</span>    <span class="c1">// Shift entry array
+</span><span class="ln">47</span><span class="c1"></span>    <span class="c1">// 将存储entry的区域，把要删除的entry的后面的entry前移。
+</span><span class="ln">48</span><span class="c1"></span>    <span class="c1">// 如果存储的数据小于等于4字节的话直接执行这里一段就OK了，
+</span><span class="ln">49</span><span class="c1"></span>    <span class="c1">// 那就是只移动entry,因为data区没有存储数据
+</span><span class="ln">50</span><span class="c1"></span>    <span class="n">memmove</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">entry</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+<span class="ln">51</span>            <span class="k">sizeof</span><span class="p">(</span><span class="n">camera_metadata_buffer_entry_t</span><span class="p">)</span> <span class="o">*</span>
+<span class="ln">52</span>            <span class="p">(</span><span class="n">dst</span><span class="o">-&gt;</span><span class="n">entry_count</span> <span class="o">-</span> <span class="n">index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="p">);</span>
+<span class="ln">53</span>    <span class="c1">// entry_cunt减1
+</span><span class="ln">54</span><span class="c1"></span>    <span class="n">dst</span><span class="o">-&gt;</span><span class="n">entry_count</span> <span class="o">-=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln">55</span>
+<span class="ln">56</span>    <span class="n">assert</span><span class="p">(</span><span class="n">validate_camera_metadata_structure</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">)</span> <span class="o">==</span> <span class="n">OK</span><span class="p">);</span>
+<span class="ln">57</span>    <span class="k">return</span> <span class="n">OK</span><span class="p">;</span>
+<span class="ln">58</span><span class="p">}</span>
+</code></pre></div><ul>
+<li>
+<p>得到要删除的entry地址</p>
+</li>
+<li>
+<p>拿到该entry中的value占用的字节数</p>
+<p>1）如果为0，用memmove后面的entry来覆盖要删除的entry</p>
+<p>2）如果不为0，那么value数据在data区中，找到这段数据并用memove后面的数据来覆盖要删除的数据，并更新data区的offset字段</p>
+</li>
+</ul>
+<p>删除的代码理解起来比较简单，就是memove其中的内存数据的移动比较消耗性能。</p>
+<h2 id="25修改update_camera_metadata_entry">2.5修改<strong>update_camera_metadata_entry</strong></h2>
+<p>如果data的大小不变，其算法复杂度为O(1),否则为O(N)</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">// system/media/camera/include/system/camera_metadata.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">ANDROID_API</span>
+<span class="ln"> 3</span><span class="kt">int</span> <span class="nf">update_camera_metadata_entry</span><span class="p">(</span><span class="n">camera_metadata_t</span> <span class="o">*</span><span class="n">dst</span><span class="p">,</span>
+<span class="ln"> 4</span>        <span class="n">size_t</span> <span class="n">index</span><span class="p">,</span>
+<span class="ln"> 5</span>        <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span>
+<span class="ln"> 6</span>        <span class="n">size_t</span> <span class="n">data_count</span><span class="p">,</span>
+<span class="ln"> 7</span>        <span class="n">camera_metadata_entry_t</span> <span class="o">*</span><span class="n">updated_entry</span><span class="p">);</span>
+<span class="ln"> 8</span><span class="c1">// system/media/camera/src/camera_metadata.c
+</span><span class="ln"> 9</span><span class="c1"></span><span class="kt">int</span> <span class="nf">update_camera_metadata_entry</span><span class="p">(</span><span class="n">camera_metadata_t</span> <span class="o">*</span><span class="n">dst</span><span class="p">,</span>
+<span class="ln">10</span>        <span class="n">size_t</span> <span class="n">index</span><span class="p">,</span>
+<span class="ln">11</span>        <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span>
+<span class="ln">12</span>        <span class="n">size_t</span> <span class="n">data_count</span><span class="p">,</span>
+<span class="ln">13</span>        <span class="n">camera_metadata_entry_t</span> <span class="o">*</span><span class="n">updated_entry</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">14</span>    <span class="c1">// 拿到要更新的entry的地址
+</span><span class="ln">15</span><span class="c1"></span>    <span class="n">camera_metadata_buffer_entry_t</span> <span class="o">*</span><span class="n">entry</span> <span class="o">=</span> <span class="n">get_entries</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span> <span class="o">+</span> <span class="n">index</span><span class="p">;</span>
+<span class="ln">16</span>
+<span class="ln">17</span>    <span class="c1">// 计算出要更新的data的大小，小于等于4返回0，否则内存对齐后返回
+</span><span class="ln">18</span><span class="c1"></span>    <span class="n">size_t</span> <span class="n">data_bytes</span> <span class="o">=</span>
+<span class="ln">19</span>            <span class="n">calculate_camera_metadata_entry_data_size</span><span class="p">(</span><span class="n">entry</span><span class="o">-&gt;</span><span class="n">type</span><span class="p">,</span>
+<span class="ln">20</span>                    <span class="n">data_count</span><span class="p">);</span>
+<span class="ln">21</span>    <span class="c1">// 要更新的data的大小的实际大小
+</span><span class="ln">22</span><span class="c1"></span>    <span class="n">size_t</span> <span class="n">data_payload_bytes</span> <span class="o">=</span>
+<span class="ln">23</span>            <span class="n">data_count</span> <span class="o">*</span> <span class="n">camera_metadata_type_size</span><span class="p">[</span><span class="n">entry</span><span class="o">-&gt;</span><span class="n">type</span><span class="p">];</span>
+<span class="ln">24</span>
+<span class="ln">25</span>    <span class="c1">// 目前entry的data占用的大小
+</span><span class="ln">26</span><span class="c1"></span>    <span class="n">size_t</span> <span class="n">entry_bytes</span> <span class="o">=</span>
+<span class="ln">27</span>            <span class="n">calculate_camera_metadata_entry_data_size</span><span class="p">(</span><span class="n">entry</span><span class="o">-&gt;</span><span class="n">type</span><span class="p">,</span>
+<span class="ln">28</span>                    <span class="n">entry</span><span class="o">-&gt;</span><span class="n">count</span><span class="p">);</span>
+<span class="ln">29</span>    <span class="c1">// 更新前后大小不一致
+</span><span class="ln">30</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">data_bytes</span> <span class="o">!=</span> <span class="n">entry_bytes</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">31</span>        <span class="c1">// May need to shift/add to data array
+</span><span class="ln">32</span><span class="c1"></span>        <span class="c1">// 大了，超出了capacity，返回错误
+</span><span class="ln">33</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="n">dst</span><span class="o">-&gt;</span><span class="n">data_capacity</span> <span class="o">&lt;</span> <span class="n">dst</span><span class="o">-&gt;</span><span class="n">data_count</span> <span class="o">+</span> <span class="n">data_bytes</span> <span class="o">-</span> <span class="n">entry_bytes</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">34</span>            <span class="c1">// No room
+</span><span class="ln">35</span><span class="c1"></span>            <span class="k">return</span> <span class="n">ERROR</span><span class="p">;</span>
+<span class="ln">36</span>        <span class="p">}</span>
+<span class="ln">37</span>        <span class="c1">// 大于4字节的情况【情况3，情况4-1】
+</span><span class="ln">38</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="n">entry_bytes</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">39</span>            <span class="c1">// Remove old data
+</span><span class="ln">40</span><span class="c1"></span>            <span class="c1">// 这个代码熟悉吗，跟删除操作了删除data的地方一样的
+</span><span class="ln">41</span><span class="c1"></span>            <span class="kt">uint8_t</span> <span class="o">*</span><span class="n">start</span> <span class="o">=</span> <span class="n">get_data</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span> <span class="o">+</span> <span class="n">entry</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">offset</span><span class="p">;</span>
+<span class="ln">42</span>            <span class="kt">uint8_t</span> <span class="o">*</span><span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">entry_bytes</span><span class="p">;</span>
+<span class="ln">43</span>            <span class="n">size_t</span> <span class="n">length</span> <span class="o">=</span> <span class="n">dst</span><span class="o">-&gt;</span><span class="n">data_count</span> <span class="o">-</span> <span class="n">entry</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">offset</span> <span class="o">-</span> <span class="n">entry_bytes</span><span class="p">;</span>
+<span class="ln">44</span>            <span class="n">memmove</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">length</span><span class="p">);</span>
+<span class="ln">45</span>            <span class="n">dst</span><span class="o">-&gt;</span><span class="n">data_count</span> <span class="o">-=</span> <span class="n">entry_bytes</span><span class="p">;</span>
+<span class="ln">46</span>
+<span class="ln">47</span>            <span class="c1">// Update all entry indices to account for shift
+</span><span class="ln">48</span><span class="c1"></span>            <span class="c1">// offset更新
+</span><span class="ln">49</span><span class="c1"></span>            <span class="n">camera_metadata_buffer_entry_t</span> <span class="o">*</span><span class="n">e</span> <span class="o">=</span> <span class="n">get_entries</span><span class="p">(</span><span class="n">dst</span><span class="p">);</span>
+<span class="ln">50</span>            <span class="n">size_t</span> <span class="n">i</span><span class="p">;</span>
+<span class="ln">51</span>            <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">dst</span><span class="o">-&gt;</span><span class="n">entry_count</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">52</span>                <span class="k">if</span> <span class="p">(</span><span class="n">calculate_camera_metadata_entry_data_size</span><span class="p">(</span>
+<span class="ln">53</span>                        <span class="n">e</span><span class="o">-&gt;</span><span class="n">type</span><span class="p">,</span> <span class="n">e</span><span class="o">-&gt;</span><span class="n">count</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span>
+<span class="ln">54</span>                        <span class="n">e</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">offset</span> <span class="o">&gt;</span> <span class="n">entry</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">offset</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">55</span>                    <span class="n">e</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">offset</span> <span class="o">-=</span> <span class="n">entry_bytes</span><span class="p">;</span>
+<span class="ln">56</span>                <span class="p">}</span>
+<span class="ln">57</span>                <span class="o">++</span><span class="n">e</span><span class="p">;</span>
+<span class="ln">58</span>            <span class="p">}</span>
+<span class="ln">59</span>        <span class="p">}</span>
+<span class="ln">60</span>		<span class="c1">//[情况4-1和情况2]
+</span><span class="ln">61</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="n">data_bytes</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">62</span>            <span class="c1">// Append new data
+</span><span class="ln">63</span><span class="c1"></span>            <span class="c1">// 更add entry里的代码又一样了
+</span><span class="ln">64</span><span class="c1"></span>            <span class="c1">// 所以就是进行了一次先删除，后插入的操作
+</span><span class="ln">65</span><span class="c1"></span>            <span class="n">entry</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">offset</span> <span class="o">=</span> <span class="n">dst</span><span class="o">-&gt;</span><span class="n">data_count</span><span class="p">;</span>
+<span class="ln">66</span>
+<span class="ln">67</span>            <span class="n">memcpy</span><span class="p">(</span><span class="n">get_data</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span> <span class="o">+</span> <span class="n">entry</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">offset</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">data_payload_bytes</span><span class="p">);</span>
+<span class="ln">68</span>            <span class="n">dst</span><span class="o">-&gt;</span><span class="n">data_count</span> <span class="o">+=</span> <span class="n">data_bytes</span><span class="p">;</span>
+<span class="ln">69</span>        <span class="p">}</span>
+<span class="ln">70</span>    <span class="c1">//[情况4-2]
+</span><span class="ln">71</span><span class="c1"></span>    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">data_bytes</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">72</span>        <span class="c1">// data size unchanged, reuse same data location
+</span><span class="ln">73</span><span class="c1"></span>        <span class="c1">// 如果data大小不变，只更新内存的数据既可以了
+</span><span class="ln">74</span><span class="c1"></span>        <span class="n">memcpy</span><span class="p">(</span><span class="n">get_data</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span> <span class="o">+</span> <span class="n">entry</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">offset</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">data_payload_bytes</span><span class="p">);</span>
+<span class="ln">75</span>    <span class="p">}</span>
+<span class="ln">76</span>    <span class="c1">//[情况1-1，情况1-2，情况3]
+</span><span class="ln">77</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">data_bytes</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">78</span>        <span class="c1">// Data fits into entry
+</span><span class="ln">79</span><span class="c1"></span>        <span class="c1">// 如果小于等于4字节，则更新data.value字段即可
+</span><span class="ln">80</span><span class="c1"></span>        <span class="n">memcpy</span><span class="p">(</span><span class="n">entry</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">value</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span>
+<span class="ln">81</span>                <span class="n">data_payload_bytes</span><span class="p">);</span>
+<span class="ln">82</span>    <span class="p">}</span>
+<span class="ln">83</span>
+<span class="ln">84</span>    <span class="c1">// 更新count
+</span><span class="ln">85</span><span class="c1"></span>    <span class="n">entry</span><span class="o">-&gt;</span><span class="n">count</span> <span class="o">=</span> <span class="n">data_count</span><span class="p">;</span>
+<span class="ln">86</span>
+<span class="ln">87</span>    <span class="c1">// 这里的updated_entry是一个出参
+</span><span class="ln">88</span><span class="c1"></span>    <span class="c1">// 不为空的话返回更新后的entry信息
+</span><span class="ln">89</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">updated_entry</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">90</span>        <span class="n">get_camera_metadata_entry</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span>
+<span class="ln">91</span>                <span class="n">index</span><span class="p">,</span>
+<span class="ln">92</span>                <span class="n">updated_entry</span><span class="p">);</span>
+<span class="ln">93</span>    <span class="p">}</span>
+<span class="ln">94</span>
+<span class="ln">95</span>    <span class="n">assert</span><span class="p">(</span><span class="n">validate_camera_metadata_structure</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">)</span> <span class="o">==</span> <span class="n">OK</span><span class="p">);</span>
+<span class="ln">96</span>    <span class="k">return</span> <span class="n">OK</span><span class="p">;</span>
+<span class="ln">97</span><span class="p">}</span>
+</code></pre></div><ol>
+<li>
+<p>拿到要更新的entry的地址</p>
+</li>
+<li>
+<p>计算出要更新的data的大小，小于等于4返回0，否则内存对齐后返回</p>
+</li>
+<li>
+<p>计算出需要替换的大小和当前需要更新entry的原数据大小</p>
+</li>
+<li>
+<p>分类讨论</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">data_bytes（可能为0，需要更新的数据）</th>
+<th style="text-align:center">entry_bytes（可能为0，原先的数据）</th>
+<th style="text-align:center">场景</th>
+<th>操作</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">0</td>
+<td style="text-align:center">0</td>
+<td style="text-align:center">情况1-1（不相等）<!-- raw HTML omitted -->情况1-2（相等）</td>
+<td>情况1-1/情况1-2<!-- raw HTML omitted -->用4方式更新</td>
+</tr>
+<tr>
+<td style="text-align:center">大于4</td>
+<td style="text-align:center">0</td>
+<td style="text-align:center">情况2</td>
+<td>用2方式更新</td>
+</tr>
+<tr>
+<td style="text-align:center">0</td>
+<td style="text-align:center">大于4</td>
+<td style="text-align:center">情况3</td>
+<td>先1方式后4方式</td>
+</tr>
+<tr>
+<td style="text-align:center">大于4</td>
+<td style="text-align:center">大于4</td>
+<td style="text-align:center">情况4-1（不相等）<!-- raw HTML omitted -->情况4-2（相等）</td>
+<td>情况4-1：先1方式后2方式<!-- raw HTML omitted -->情况4-2：用3方式</td>
+</tr>
+</tbody>
+</table>
+<p><strong>方式1</strong>：如果原先数据大于4字节，那么会删除原先数据，具体删除可以查看2.4中的第二种删除情况，都是一致的</p>
+<p><strong>方式2</strong>：如果需要更新的数据大于4字节，那么直接更新到data区中当前data数据的后面</p>
+<p><strong>方式3</strong>：如果原先数据和需要更新数据一致，那么直接覆盖更新即可</p>
+<p><strong>方式4</strong>：如果需要更新的数据小于4，直接在entry的data.value直接更新即可</p>
+</li>
+<li>
+<p>获取对应的entry，这个entry是camera_metadata_entry</p>
+</li>
+</ol>
+<h3 id="251get_camera_metadata_entry">2.5.1get_camera_metadata_entry</h3>
+<p>获取对应的entry，这里的entry不是camera_metadata_buffer_entry，而是camera_metadata_entry</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">// system/media/camera/src/camera_metadata.c
+</span><span class="ln"> 2</span><span class="c1"></span><span class="kt">int</span> <span class="nf">get_camera_metadata_entry</span><span class="p">(</span><span class="n">camera_metadata_t</span> <span class="o">*</span><span class="n">src</span><span class="p">,</span>
+<span class="ln"> 3</span>        <span class="n">size_t</span> <span class="n">index</span><span class="p">,</span>
+<span class="ln"> 4</span>        <span class="n">camera_metadata_entry_t</span> <span class="o">*</span><span class="n">entry</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 5</span>    <span class="k">if</span> <span class="p">(</span><span class="n">src</span> <span class="o">==</span> <span class="nb">NULL</span> <span class="o">||</span> <span class="n">entry</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="k">return</span> <span class="n">ERROR</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="k">if</span> <span class="p">(</span><span class="n">index</span> <span class="o">&gt;=</span> <span class="n">src</span><span class="o">-&gt;</span><span class="n">entry_count</span><span class="p">)</span> <span class="k">return</span> <span class="n">ERROR</span><span class="p">;</span>
+<span class="ln"> 7</span>
+<span class="ln"> 8</span>    <span class="n">camera_metadata_buffer_entry_t</span> <span class="o">*</span><span class="n">buffer_entry</span> <span class="o">=</span> <span class="n">get_entries</span><span class="p">(</span><span class="n">src</span><span class="p">)</span> <span class="o">+</span> <span class="n">index</span><span class="p">;</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span>    <span class="n">entry</span><span class="o">-&gt;</span><span class="n">index</span> <span class="o">=</span> <span class="n">index</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="n">entry</span><span class="o">-&gt;</span><span class="n">tag</span> <span class="o">=</span> <span class="n">buffer_entry</span><span class="o">-&gt;</span><span class="n">tag</span><span class="p">;</span>
+<span class="ln">12</span>    <span class="n">entry</span><span class="o">-&gt;</span><span class="n">type</span> <span class="o">=</span> <span class="n">buffer_entry</span><span class="o">-&gt;</span><span class="n">type</span><span class="p">;</span>
+<span class="ln">13</span>    <span class="n">entry</span><span class="o">-&gt;</span><span class="n">count</span> <span class="o">=</span> <span class="n">buffer_entry</span><span class="o">-&gt;</span><span class="n">count</span><span class="p">;</span>
+<span class="ln">14</span>    <span class="k">if</span> <span class="p">(</span><span class="n">buffer_entry</span><span class="o">-&gt;</span><span class="n">count</span> <span class="o">*</span>
+<span class="ln">15</span>            <span class="n">camera_metadata_type_size</span><span class="p">[</span><span class="n">buffer_entry</span><span class="o">-&gt;</span><span class="n">type</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">4</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">16</span>        <span class="n">entry</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">u8</span> <span class="o">=</span> <span class="n">get_data</span><span class="p">(</span><span class="n">src</span><span class="p">)</span> <span class="o">+</span> <span class="n">buffer_entry</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">offset</span><span class="p">;</span>
+<span class="ln">17</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">18</span>        <span class="n">entry</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">u8</span> <span class="o">=</span> <span class="n">buffer_entry</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">.</span><span class="n">value</span><span class="p">;</span>
+<span class="ln">19</span>    <span class="p">}</span>
+<span class="ln">20</span>    <span class="k">return</span> <span class="n">OK</span><span class="p">;</span>
+<span class="ln">21</span><span class="p">}</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/metadata/m11.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/metadata/m11.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>这个数据地址如果小于4，那么指向buffer_entry-&gt;data.value，如果大于4，那么指向data区，get_data(src) + buffer_entry-&gt;data.offset</p>
+<h2 id="26查找find_camera_metadata_entry">2.6查找<strong>find_camera_metadata_entry</strong></h2>
+<p>这里跟2.5.1一样，entry是camera_metadata_entry</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">// system/media/camera/include/system/camera_metadata.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">ANDROID_API</span>
+<span class="ln"> 3</span><span class="kt">int</span> <span class="nf">find_camera_metadata_entry</span><span class="p">(</span><span class="n">camera_metadata_t</span> <span class="o">*</span><span class="n">src</span><span class="p">,</span>
+<span class="ln"> 4</span>        <span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">,</span>
+<span class="ln"> 5</span>        <span class="n">camera_metadata_entry_t</span> <span class="o">*</span><span class="n">entry</span><span class="p">);</span>
+<span class="ln"> 6</span>
+<span class="ln"> 7</span><span class="c1">// system/media/camera/src/camera_metadata.c
+</span><span class="ln"> 8</span><span class="c1"></span><span class="kt">int</span> <span class="nf">find_camera_metadata_entry</span><span class="p">(</span><span class="n">camera_metadata_t</span> <span class="o">*</span><span class="n">src</span><span class="p">,</span>
+<span class="ln"> 9</span>        <span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">,</span>
+<span class="ln">10</span>        <span class="n">camera_metadata_entry_t</span> <span class="o">*</span><span class="n">entry</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">11</span>    <span class="k">if</span> <span class="p">(</span><span class="n">src</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="k">return</span> <span class="n">ERROR</span><span class="p">;</span>
+<span class="ln">12</span>
+<span class="ln">13</span>    <span class="kt">uint32_t</span> <span class="n">index</span><span class="p">;</span>
+<span class="ln">14</span>    <span class="c1">// 如果已经排序了，则做二分查找，
+</span><span class="ln">15</span><span class="c1"></span>    <span class="c1">// 有多个相同tag存在的话，返回哪一个就不确定了
+</span><span class="ln">16</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">src</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">FLAG_SORTED</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">17</span>        <span class="c1">// Sorted entries, do a binary search
+</span><span class="ln">18</span><span class="c1"></span>        <span class="n">camera_metadata_buffer_entry_t</span> <span class="o">*</span><span class="n">search_entry</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="ln">19</span>        <span class="n">camera_metadata_buffer_entry_t</span> <span class="n">key</span><span class="p">;</span>
+<span class="ln">20</span>        <span class="n">key</span><span class="p">.</span><span class="n">tag</span> <span class="o">=</span> <span class="n">tag</span><span class="p">;</span>
+<span class="ln">21</span>        <span class="n">search_entry</span> <span class="o">=</span> <span class="n">bsearch</span><span class="p">(</span><span class="o">&amp;</span><span class="n">key</span><span class="p">,</span>
+<span class="ln">22</span>                <span class="n">get_entries</span><span class="p">(</span><span class="n">src</span><span class="p">),</span>
+<span class="ln">23</span>                <span class="n">src</span><span class="o">-&gt;</span><span class="n">entry_count</span><span class="p">,</span>
+<span class="ln">24</span>                <span class="k">sizeof</span><span class="p">(</span><span class="n">camera_metadata_buffer_entry_t</span><span class="p">),</span>
+<span class="ln">25</span>                <span class="n">compare_entry_tags</span><span class="p">);</span>
+<span class="ln">26</span>        <span class="k">if</span> <span class="p">(</span><span class="n">search_entry</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="k">return</span> <span class="n">NOT_FOUND</span><span class="p">;</span>
+<span class="ln">27</span>        <span class="n">index</span> <span class="o">=</span> <span class="n">search_entry</span> <span class="o">-</span> <span class="n">get_entries</span><span class="p">(</span><span class="n">src</span><span class="p">);</span>
+<span class="ln">28</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="ln">29</span>        <span class="c1">// Not sorted, linear search
+</span><span class="ln">30</span><span class="c1"></span>        <span class="c1">// 没有排序，线性查找，这样返回的就是找到的第一个
+</span><span class="ln">31</span><span class="c1"></span>        <span class="n">camera_metadata_buffer_entry_t</span> <span class="o">*</span><span class="n">search_entry</span> <span class="o">=</span> <span class="n">get_entries</span><span class="p">(</span><span class="n">src</span><span class="p">);</span>
+<span class="ln">32</span>        <span class="k">for</span> <span class="p">(</span><span class="n">index</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="n">src</span><span class="o">-&gt;</span><span class="n">entry_count</span><span class="p">;</span> <span class="n">index</span><span class="o">++</span><span class="p">,</span> <span class="n">search_entry</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">33</span>            <span class="k">if</span> <span class="p">(</span><span class="n">search_entry</span><span class="o">-&gt;</span><span class="n">tag</span> <span class="o">==</span> <span class="n">tag</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">34</span>                <span class="k">break</span><span class="p">;</span>
+<span class="ln">35</span>            <span class="p">}</span>
+<span class="ln">36</span>        <span class="p">}</span>
+<span class="ln">37</span>        <span class="k">if</span> <span class="p">(</span><span class="n">index</span> <span class="o">==</span> <span class="n">src</span><span class="o">-&gt;</span><span class="n">entry_count</span><span class="p">)</span> <span class="k">return</span> <span class="n">NOT_FOUND</span><span class="p">;</span>
+<span class="ln">38</span>    <span class="p">}</span>
+<span class="ln">39</span>    <span class="c1">//这里的get_camera_metadata_entry，又回到2.5.1了
+</span><span class="ln">40</span><span class="c1"></span>    <span class="k">return</span> <span class="n">get_camera_metadata_entry</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span>
+<span class="ln">41</span>            <span class="n">entry</span><span class="p">);</span>
+<span class="ln">42</span><span class="p">}</span>
+</code></pre></div><p>这里的查找比较简单，用metadata的flag字段来判断是否排序</p>
+<ul>
+<li>如果存在排序，那么二分法查找，时间复杂度o(logn)</li>
+<li>如果不存在排序，线性查找，时间复杂度为o(n)</li>
+</ul>
+<h1 id="3实例">3实例</h1>
+<p>其实很多情况下，不会直接调用上述的分配内存或者是增删改查，外部通常会有一个外观者模式，把这些功能包裹起来。</p>
+<p>真实调用会调用到对应的CameraMetadata的api</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="c1">//frameworks/av/include/camera/CameraMetadata.h
+</span><span class="ln"> 2</span><span class="c1"></span><span class="n">class</span> <span class="nl">CameraMetadata</span><span class="p">:</span> <span class="n">public</span> <span class="n">Parcelable</span> <span class="p">{</span>
+<span class="ln"> 3</span>  <span class="nl">public</span><span class="p">:</span>
+<span class="ln"> 4</span>    <span class="cm">/** Creates an empty object; best used when expecting to acquire contents from elsewhere */</span>
+<span class="ln"> 5</span>    <span class="n">CameraMetadata</span><span class="p">();</span>
+<span class="ln"> 6</span>    <span class="cm">/** Creates an object with space for entryCapacity entries, with dataCapacity extra storage */</span>
+<span class="ln"> 7</span>    <span class="n">CameraMetadata</span><span class="p">(</span><span class="n">size_t</span> <span class="n">entryCapacity</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">dataCapacity</span> <span class="o">=</span> <span class="mi">10</span><span class="p">);</span>
+<span class="ln"> 8</span>    <span class="cm">/** Takes ownership of passed-in buffer */</span>
+<span class="ln"> 9</span>    <span class="n">CameraMetadata</span><span class="p">(</span><span class="n">camera_metadata_t</span> <span class="o">*</span><span class="n">buffer</span><span class="p">);</span>
+<span class="ln">10</span>    <span class="cm">/** Clones the metadata */</span>
+<span class="ln">11</span>    <span class="n">CameraMetadata</span><span class="p">(</span><span class="k">const</span> <span class="n">CameraMetadata</span> <span class="o">&amp;</span><span class="n">other</span><span class="p">);</span>
+<span class="ln">12</span>	
+<span class="ln">13</span>	<span class="cm">/* Update metadata entry. Will create entry if it doesn&#39;t exist already, and
+</span><span class="ln">14</span><span class="cm">     * will reallocate the buffer if insufficient space exists. Overloaded for
+</span><span class="ln">15</span><span class="cm">     * the various types of valid data. */</span>
+<span class="ln">16</span>  	<span class="n">status_t</span> <span class="nf">update</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">,</span> <span class="k">const</span> <span class="kt">uint8_t</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">data_count</span><span class="p">);</span>
+<span class="ln">17</span>    <span class="n">status_t</span> <span class="nf">update</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">,</span> <span class="k">const</span> <span class="kt">int32_t</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">data_count</span><span class="p">);</span>
+<span class="ln">18</span>    <span class="n">status_t</span> <span class="nf">update</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">,</span> <span class="k">const</span> <span class="kt">float</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">data_count</span><span class="p">);</span>
+<span class="ln">19</span>    <span class="n">status_t</span> <span class="nf">update</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">,</span> <span class="k">const</span> <span class="kt">int64_t</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">data_count</span><span class="p">);</span>
+<span class="ln">20</span>    <span class="n">status_t</span> <span class="nf">update</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">,</span> <span class="k">const</span> <span class="kt">double</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">data_count</span><span class="p">);</span>
+<span class="ln">21</span>    <span class="n">status_t</span> <span class="nf">update</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">,</span> <span class="k">const</span> <span class="n">camera_metadata_rational_t</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">data_count</span><span class="p">);</span>
+<span class="ln">22</span>    <span class="n">status_t</span> <span class="nf">update</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">,</span> <span class="k">const</span> <span class="n">String8</span> <span class="o">&amp;</span><span class="n">string</span><span class="p">);</span>
+<span class="ln">23</span>    <span class="n">status_t</span> <span class="nf">update</span><span class="p">(</span><span class="k">const</span> <span class="n">camera_metadata_ro_entry</span> <span class="o">&amp;</span><span class="n">entry</span><span class="p">);</span>
+<span class="ln">24</span>    <span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="ln">25</span>    <span class="n">status_t</span> <span class="n">update</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">,</span> <span class="n">Vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">data</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">26</span>        <span class="k">return</span> <span class="n">update</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">data</span><span class="p">.</span><span class="n">array</span><span class="p">(),</span> <span class="n">data</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+<span class="ln">27</span>    <span class="p">}</span>
+<span class="ln">28</span>    
+<span class="ln">29</span>	<span class="c1">// Metadata object is unchanged when reading from parcel fails.
+</span><span class="ln">30</span><span class="c1"></span>    <span class="n">virtual</span> <span class="n">status_t</span> <span class="n">readFromParcel</span><span class="p">(</span><span class="k">const</span> <span class="n">Parcel</span> <span class="o">*</span><span class="n">parcel</span><span class="p">)</span> <span class="n">override</span><span class="p">;</span>
+<span class="ln">31</span>    <span class="n">virtual</span> <span class="n">status_t</span> <span class="nf">writeToParcel</span><span class="p">(</span><span class="n">Parcel</span> <span class="o">*</span><span class="n">parcel</span><span class="p">)</span> <span class="k">const</span> <span class="n">override</span><span class="p">;</span>
+<span class="ln">32</span>
+<span class="ln">33</span>    <span class="cm">/* Caller becomes the owner of the new metadata
+</span><span class="ln">34</span><span class="cm">      * &#39;const Parcel&#39; doesnt prevent us from calling the read functions.
+</span><span class="ln">35</span><span class="cm">      *  which is interesting since it changes the internal state
+</span><span class="ln">36</span><span class="cm">      *
+</span><span class="ln">37</span><span class="cm">      * NULL can be returned when no metadata was sent, OR if there was an issue
+</span><span class="ln">38</span><span class="cm">      * unpacking the serialized data (i.e. bad parcel or invalid structure).*/</span>
+<span class="ln">39</span>    <span class="k">static</span> <span class="n">status_t</span> <span class="nf">readFromParcel</span><span class="p">(</span><span class="k">const</span> <span class="n">Parcel</span> <span class="o">&amp;</span><span class="n">parcel</span><span class="p">,</span> <span class="n">camera_metadata_t</span><span class="o">**</span> <span class="n">out</span><span class="p">);</span>
+<span class="ln">40</span>    <span class="cm">/* Caller retains ownership of metadata
+</span><span class="ln">41</span><span class="cm">      * - Write 2 (int32 + blob) args in the current position */</span>
+<span class="ln">42</span>    <span class="k">static</span> <span class="n">status_t</span> <span class="nf">writeToParcel</span><span class="p">(</span><span class="n">Parcel</span> <span class="o">&amp;</span><span class="n">parcel</span><span class="p">,</span> <span class="k">const</span> <span class="n">camera_metadata_t</span><span class="o">*</span> <span class="n">metadata</span><span class="p">);</span>
+<span class="ln">43</span><span class="nl">private</span><span class="p">:</span>
+<span class="ln">44</span>    <span class="n">camera_metadata_t</span> <span class="o">*</span><span class="n">mBuffer</span><span class="p">;</span>
+<span class="ln">45</span><span class="p">};</span>
+</code></pre></div><p>比如构造完成CameraMetadata之后，直接调用updateImpl方法</p>
+<div class="highlight"><pre class="chroma"><code class="language-c++" data-lang="c++"><span class="ln">1</span><span class="kt">uint8_t</span> <span class="n">transmitDefault</span> <span class="o">=</span> <span class="n">ANDROID_LED_TRANSMIT_ON</span><span class="p">;</span>
+<span class="ln">2</span><span class="n">metadata</span><span class="p">.</span><span class="n">update</span><span class="p">(</span><span class="n">ANDROID_LED_TRANSMIT</span><span class="p">,</span><span class="o">&amp;</span><span class="n">transmitDefault</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+</code></pre></div><p>update会调用到CameraMetadata::updateImpl方法</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="cp"># frameworks/av/camera/CameraMetadata.cpp
+</span><span class="ln"> 2</span><span class="cp"></span><span class="n">status_t</span> <span class="n">CameraMetadata</span><span class="o">::</span><span class="n">updateImpl</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">tag</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">data_count</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln"> 3</span>
+<span class="ln"> 4</span>    <span class="kt">int</span> <span class="n">type</span> <span class="o">=</span> <span class="n">get_camera_metadata_tag_type</span><span class="p">(</span><span class="n">tag</span><span class="p">);</span><span class="c1">//获取tag的Type，为后面计算内存做准备
+</span><span class="ln"> 5</span><span class="c1"></span>    
+<span class="ln"> 6</span>    <span class="c1">// Safety check - ensure that data isn&#39;t pointing to this metadata, since
+</span><span class="ln"> 7</span><span class="c1"></span>    <span class="c1">// that would get invalidated if a resize is needed
+</span><span class="ln"> 8</span><span class="c1"></span>    <span class="n">size_t</span> <span class="n">bufferSize</span> <span class="o">=</span> <span class="n">get_camera_metadata_size</span><span class="p">(</span><span class="n">mBuffer</span><span class="p">);</span>
+<span class="ln"> 9</span>    <span class="n">uintptr_t</span> <span class="n">bufAddr</span> <span class="o">=</span> <span class="n">reinterpret_cast</span><span class="o">&lt;</span><span class="n">uintptr_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">mBuffer</span><span class="p">);</span>
+<span class="ln">10</span>    <span class="n">uintptr_t</span> <span class="n">dataAddr</span> <span class="o">=</span> <span class="n">reinterpret_cast</span><span class="o">&lt;</span><span class="n">uintptr_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">data</span><span class="p">);</span>
+<span class="ln">11</span>
+<span class="ln">12</span>    <span class="n">size_t</span> <span class="n">data_size</span> <span class="o">=</span> <span class="n">calculate_camera_metadata_entry_data_size</span><span class="p">(</span><span class="n">type</span><span class="p">,</span> <span class="n">data_count</span><span class="p">);</span>
+<span class="ln">13</span>    <span class="c1">//如果第一次进来会分配camera_metadata空间
+</span><span class="ln">14</span><span class="c1"></span>    <span class="n">res</span> <span class="o">=</span> <span class="n">resizeIfNeeded</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">data_size</span><span class="p">);</span>
+<span class="ln">15</span>
+<span class="ln">16</span>    <span class="k">if</span> <span class="p">(</span><span class="n">res</span> <span class="o">==</span> <span class="n">OK</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">17</span>        <span class="n">camera_metadata_entry_t</span> <span class="n">entry</span><span class="p">;</span>
+<span class="ln">18</span>        <span class="c1">//尝试寻找对应的entry
+</span><span class="ln">19</span><span class="c1"></span>        <span class="n">res</span> <span class="o">=</span> <span class="n">find_camera_metadata_entry</span><span class="p">(</span><span class="n">mBuffer</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">entry</span><span class="p">);</span>
+<span class="ln">20</span>        <span class="k">if</span> <span class="p">(</span><span class="n">res</span> <span class="o">==</span> <span class="n">NAME_NOT_FOUND</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">21</span>            <span class="c1">//第一次调用的话，会增加一个新的entry
+</span><span class="ln">22</span><span class="c1"></span>            <span class="n">res</span> <span class="o">=</span> <span class="n">add_camera_metadata_entry</span><span class="p">(</span><span class="n">mBuffer</span><span class="p">,</span><span class="n">tag</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">data_count</span><span class="p">);</span>
+<span class="ln">23</span>        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">res</span> <span class="o">==</span> <span class="n">OK</span><span class="p">)</span> <span class="p">{</span>
+<span class="ln">24</span>            <span class="c1">//存在entry的话，直接更新entry对应的数据内容
+</span><span class="ln">25</span><span class="c1"></span>            <span class="n">res</span> <span class="o">=</span> <span class="n">update_camera_metadata_entry</span><span class="p">(</span><span class="n">mBuffer</span><span class="p">,</span> <span class="n">entry</span><span class="p">.</span><span class="n">index</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">data_count</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+<span class="ln">26</span>        <span class="p">}</span>
+<span class="ln">27</span>    <span class="p">}</span>
+<span class="ln">28</span>    <span class="k">return</span> <span class="n">res</span><span class="p">;</span>
+<span class="ln">29</span><span class="p">}</span>
+</code></pre></div><h1 id="参考">参考</h1>
+<p><a href="https://zhuanlan.zhihu.com/p/657031650">[1] 无限无羡. Android 13 CameraMetadata详解1 (内存分布以及增删改查), 2023.</a></p>
+<p><a href="https://www.xfqiao.com/api/android-zh/android/hardware/camera2/CameraMetadata.html">[2] Android开发手册. CameraMetadata, 2023.</a></p>
+<p><a href="https://www.jianshu.com/p/2ccfa8a0d4d6">[3] c枫_撸码的日子. [Camera专题]Qcom- 获取metadata数据, 2021.</a></p>
+<p><a href="https://blog.csdn.net/Ciellee/article/details/105807436">[4] &ldquo;小夜猫&amp;小懒虫&amp;小财迷&quot;的男人. 【高通SDM660平台】(8) &mdash; Camera MetaData介绍, 2023.</a></p>
+<p><a href="https://blog.csdn.net/weixin_36389889/article/details/125820456">[5] alibli. Camera MetaData介绍_独家原创, 2023.</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/metadata/">metadata</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/characteristic/">characteristic</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/request/">request</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/result/">result</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/header%E5%8C%BA/">Header区</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/entry%E5%8C%BA/">Entry区</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/data%E5%8C%BA/">Data区</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/tag/">tag</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/section/">section</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2024/01/%E5%86%99%E7%BB%99%E8%87%AA%E5%B7%B1%E7%9A%842023%E6%80%BB%E7%BB%93/" data-tooltip="写给自己的2023总结">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2024 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2024/01/%E5%86%99%E7%BB%99%E8%87%AA%E5%B7%B1%E7%9A%842023%E6%80%BB%E7%BB%93/" data-tooltip="写给自己的2023总结">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2024%2F01%2Fcamera-metadata%25E5%2586%2585%25E5%25AD%2598%25E6%25A8%25A1%25E5%259E%258B%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2024%2F01%2Fcamera-metadata%25E5%2586%2585%25E5%25AD%2598%25E6%25A8%25A1%25E5%259E%258B%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2024%2F01%2Fcamera-metadata%25E5%2586%2585%25E5%25AD%2598%25E6%25A8%25A1%25E5%259E%258B%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2024\/01\/camera-metadata%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B\/';
+          
+            this.page.identifier = '\/2024\/01\/camera-metadata%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
