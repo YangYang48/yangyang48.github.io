@@ -1,0 +1,3442 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="rk camera驱动调试学习学习。">
+
+
+<meta property="og:description" content="rk camera驱动调试学习学习。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="rk camera驱动调试学习">
+<meta name="twitter:title" content="rk camera驱动调试学习">
+<meta property="og:url" content="https://yangyang48.github.io/2024/01/rk-camera%E9%A9%B1%E5%8A%A8%E8%B0%83%E8%AF%95%E5%AD%A6%E4%B9%A0/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2024/01/rk-camera%E9%A9%B1%E5%8A%A8%E8%B0%83%E8%AF%95%E5%AD%A6%E4%B9%A0/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="rk camera驱动调试学习学习。">
+<meta name="twitter:description" content="rk camera驱动调试学习学习。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2024-01-28T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2024-01-28T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="2024">
+    
+      <meta property="article:section" content="January">
+    
+      <meta property="article:section" content="camera">
+    
+  
+  
+    
+      <meta property="article:tag" content="driver">
+    
+      <meta property="article:tag" content="v4l2">
+    
+      <meta property="article:tag" content="MIPI">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/driver_debug/dd_thumb.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/driver_debug/dd_thumb.png">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/driver_debug/dd_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/driver_debug/dd_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+
+
+    <title>rk camera驱动调试学习</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2024/01/rk-camera%E9%A9%B1%E5%8A%A8%E8%B0%83%E8%AF%95%E5%AD%A6%E4%B9%A0/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/camera/driver_debug/dd_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      rk camera驱动调试学习
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2024-01-28T00:00:00Z">
+        
+  一月 28, 2024
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2024">2024</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/january">January</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/camera">camera</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">700 Words|Read in about 4 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+      
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>rk camera驱动调试学习学习。</p>
+<div style="text-align: center;">
+<iframe 
+    frameborder="no" border="1"
+    marginwidth="0" marginheight="0"
+    width=400 height=100
+    src="//music.163.com/outchain/player?type=2&id=28949444&auto=1&height=66"></iframe>
+</div>
+<h1 id="1驱动调试准备工作">1驱动调试准备工作</h1>
+<p>需要对ISP2.0的数据流流程图有大致的了解。</p>
+<p>ISP从sensor端获取数据流之后，通过3A处理，最后由ISPP输出四路数据流给到用户。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>另外，调试驱动之前需要准备以下资料</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="2驱动数据结构类型简要介绍">2驱动数据结构类型简要介绍</h1>
+<h2 id="21cis设备注册dts">2.1CIS设备注册（DTS）</h2>
+<p>以rv1126 isp和os04a10举例说明，开始为ircut（红外滤光片切换器 ），如果没有这个可以不加</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="211ircut红外滤光片切换器-注册">2.1.1ircut（红外滤光片切换器 ）注册</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="212sensor注册">2.1.2sensor注册</h3>
+<p>sensor相关配置，主频配置电源配置</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>包括其中的3路电源，由datasheet配置</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>模组和lens名构成了后续isp的IQ名，sensor只有一个端口连接mipi dphy</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="213csi_phy注册">2.1.3csi_phy注册</h3>
+<p>这里由2个端口，端口0跟sensor端口保持一致，用来接收sensor数据；端口1跟isp端口保持一致，用来传数据给isp</p>
+<p>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd8.png" >
+  
+    </a>
+  
+  
+</div>
+
+端口1和isp相连</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd9.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd9.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="214isp注册">2.1.4isp注册</h3>
+<p>isp端口0接收的是mipi的端口1</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd10.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd10.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>端口1输出给ispp</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd11.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd11.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="215ispp注册">2.1.5ispp注册</h3>
+<p>ispp端口接收isp1端口数据</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd12.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd12.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="22cis驱动说明">2.2CIS驱动说明</h2>
+<p>Camera Sensor采用I2C与主控进行交互，目前sensor driver按照I2C设备驱动方式实现，sensor driver同时采用v4l2 subdev的方式实现与host driver之间的交互。</p>
+<h3 id="221数据类型简要说明-结构体i2c_driver">2.2.1数据类型简要说明-结构体i2c_driver</h3>
+<p>关于结构体i2c_driver</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="k">struct</span> <span class="n">i2c_driver</span> <span class="p">{</span>
+<span class="ln">2</span>    <span class="p">...</span>
+<span class="ln">3</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">probe</span><span class="p">)(</span><span class="k">struct</span> <span class="n">i2c_client</span> <span class="o">*</span><span class="p">,</span> <span class="k">const</span> <span class="k">struct</span> <span class="n">i2c_device_id</span> <span class="o">*</span><span class="p">);</span>
+<span class="ln">4</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">remove</span><span class="p">)(</span><span class="k">struct</span> <span class="n">i2c_client</span> <span class="o">*</span><span class="p">)</span>
+<span class="ln">5</span>    <span class="p">...</span>
+<span class="ln">6</span>    <span class="k">struct</span> <span class="n">device_driver</span> <span class="n">driver</span><span class="p">;</span>
+<span class="ln">7</span>    <span class="k">const</span> <span class="k">struct</span> <span class="n">i2c_device_id</span> <span class="o">*</span><span class="n">id_table</span><span class="p">;</span>
+<span class="ln">8</span>    <span class="p">...</span>
+<span class="ln">9</span><span class="p">};</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd13.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd13.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd14.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd14.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>举例说明</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd15.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd15.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd16.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd16.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="222数据类型简要说明-结构体struct-v4l2_subdev_ops">2.2.2数据类型简要说明-结构体struct v4l2_subdev_ops</h3>
+<p>结构体如下</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="k">struct</span> <span class="n">v4l2_subdev_ops</span> <span class="p">{</span>
+<span class="ln">2</span>    <span class="k">const</span> <span class="k">struct</span> <span class="n">v4l2_subdev_core_ops</span> <span class="o">*</span><span class="n">core</span><span class="p">;</span>
+<span class="ln">3</span>    <span class="p">...</span>
+<span class="ln">4</span>    <span class="k">const</span> <span class="k">struct</span> <span class="n">v4l2_subdev_video_ops</span> <span class="o">*</span><span class="n">video</span><span class="p">;</span>
+<span class="ln">5</span>    <span class="p">...</span>
+<span class="ln">6</span>    <span class="k">const</span> <span class="k">struct</span> <span class="n">v4l2_subdev_pad_ops</span> <span class="o">*</span><span class="n">pad</span><span class="p">;</span>
+<span class="ln">7</span><span class="p">};</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd17.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd17.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>具体说明</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd18.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd18.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="223数据类型简要说明-结构体struct-v4l2_subdev_core_ops">2.2.3数据类型简要说明-结构体struct v4l2_subdev_core_ops</h3>
+<p>结构体</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="k">struct</span> <span class="n">v4l2_subdev_core_ops</span> <span class="p">{</span>
+<span class="ln">2</span>    <span class="p">...</span>
+<span class="ln">3</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">s_power</span><span class="p">)(</span><span class="k">struct</span> <span class="n">v4l2_subdev</span> <span class="o">*</span><span class="n">sd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">on</span><span class="p">);</span>
+<span class="ln">4</span>    <span class="kt">long</span> <span class="p">(</span><span class="o">*</span><span class="n">ioctl</span><span class="p">)(</span><span class="k">struct</span> <span class="n">v4l2_subdev</span> <span class="o">*</span><span class="n">sd</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">cmd</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">);</span>
+<span class="ln">5</span><span class="cp">#ifdef CONFIG_COMPAT
+</span><span class="ln">6</span><span class="cp"></span>    <span class="kt">long</span> <span class="p">(</span><span class="o">*</span><span class="n">compat_ioctl32</span><span class="p">)(</span><span class="k">struct</span> <span class="n">v4l2_subdev</span> <span class="o">*</span><span class="n">sd</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">cmd</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">arg</span><span class="p">);</span>
+<span class="ln">7</span><span class="cp">#endif
+</span><span class="ln">8</span><span class="cp"></span>    <span class="p">...</span>
+<span class="ln">9</span><span class="p">};</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd19.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd19.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd20.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd20.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>示例说明</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd21.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd21.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>RK目前的ioctl号</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd22.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd22.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="224数据类型简要说明-结构体struct-v4l2_subdev_video_ops">2.2.4数据类型简要说明-结构体struct v4l2_subdev_video_ops</h3>
+<p>结构体说明</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="k">struct</span> <span class="n">v4l2_subdev_video_ops</span> <span class="p">{</span>
+<span class="ln">2</span>    <span class="p">...</span>
+<span class="ln">3</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">s_stream</span><span class="p">)(</span><span class="k">struct</span> <span class="n">v4l2_subdev</span> <span class="o">*</span><span class="n">sd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">enable</span><span class="p">);</span>
+<span class="ln">4</span>    <span class="p">...</span>
+<span class="ln">5</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">g_frame_interval</span><span class="p">)(</span><span class="k">struct</span> <span class="n">v4l2_subdev</span> <span class="o">*</span><span class="n">sd</span><span class="p">,</span> <span class="k">struct</span> <span class="n">v4l2_subdev_frame_interval</span> <span class="o">*</span><span class="n">interval</span><span class="p">);</span>
+<span class="ln">6</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">g_mbus_config</span><span class="p">)(</span><span class="k">struct</span> <span class="n">v4l2_subdev</span> <span class="o">*</span><span class="n">sd</span><span class="p">,</span> <span class="k">struct</span> <span class="n">v4l2_mbus_config</span> <span class="o">*</span><span class="n">cfg</span><span class="p">);</span>
+<span class="ln">7</span><span class="p">};</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd23.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd23.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd24.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd24.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>示例说明</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd25.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd25.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="225数据类型简要说明-结构体struct-v4l2_subdev_pad_ops">2.2.5数据类型简要说明-结构体struct v4l2_subdev_pad_ops</h3>
+<p>结构体说明</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="k">struct</span> <span class="n">v4l2_subdev_pad_ops</span> <span class="p">{</span>
+<span class="ln"> 2</span>    <span class="p">...</span>
+<span class="ln"> 3</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">enum_mbus_core</span><span class="p">)(</span><span class="k">struct</span> <span class="n">v4l2_subdev</span> <span class="o">*</span><span class="n">sd</span><span class="p">,</span> 
+<span class="ln"> 4</span>                          <span class="k">struct</span> <span class="n">v4l2_subdev_pad_config</span> <span class="o">*</span><span class="n">cfg</span><span class="p">,</span>
+<span class="ln"> 5</span>                          <span class="k">struct</span> <span class="n">v4l2_subdev_mbus_code_enum</span> <span class="o">*</span><span class="n">code</span><span class="p">);</span>
+<span class="ln"> 6</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">enum_frame_size</span><span class="p">)(</span><span class="k">struct</span> <span class="n">v4l2_subdev</span> <span class="o">*</span><span class="n">sd</span><span class="p">,</span> 
+<span class="ln"> 7</span>                          <span class="k">struct</span> <span class="n">v4l2_subdev_pad_config</span> <span class="o">*</span><span class="n">cfg</span><span class="p">,</span>
+<span class="ln"> 8</span>                          <span class="k">struct</span> <span class="n">v4l2_subdev_frame_size_enum</span> <span class="o">*</span><span class="n">fse</span><span class="p">);</span>
+<span class="ln"> 9</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">get_fmt</span><span class="p">)(</span><span class="k">struct</span> <span class="n">v4l2_subdev</span> <span class="o">*</span><span class="n">sd</span><span class="p">,</span>
+<span class="ln">10</span>                   <span class="k">struct</span> <span class="n">v4l2_subdev_pad_config</span> <span class="o">*</span><span class="n">cfg</span><span class="p">,</span>
+<span class="ln">11</span>                   <span class="k">struct</span> <span class="n">v4l2_subdev_format</span><span class="o">*</span> <span class="n">format</span><span class="p">);</span>
+<span class="ln">12</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">set_fmt</span><span class="p">)(</span><span class="k">struct</span> <span class="n">v4l2_subdev</span> <span class="o">*</span><span class="n">sd</span><span class="p">,</span>
+<span class="ln">13</span>                   <span class="k">struct</span> <span class="n">v4l2_subdev_pad_config</span> <span class="o">*</span><span class="n">cfg</span><span class="p">,</span>
+<span class="ln">14</span>                   <span class="k">struct</span> <span class="n">v4l2_subdev_format</span><span class="o">*</span> <span class="n">format</span><span class="p">);</span>
+<span class="ln">15</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">enum_frame_interval</span><span class="p">)(</span><span class="k">struct</span> <span class="n">v4l2_subdev</span> <span class="o">*</span><span class="n">sd</span><span class="p">,</span>
+<span class="ln">16</span>                               <span class="k">struct</span> <span class="n">v4l2_subdev_pad_config</span> <span class="o">*</span><span class="n">cfg</span><span class="p">,</span>
+<span class="ln">17</span>                               <span class="k">struct</span> <span class="n">v4l2_subdev_frame_interval_enum</span> <span class="o">*</span><span class="n">file</span><span class="p">);</span>
+<span class="ln">18</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">get_selection</span><span class="p">)(</span><span class="k">struct</span> <span class="n">v4l2_subdev</span> <span class="o">*</span><span class="n">sd</span><span class="p">,</span>
+<span class="ln">19</span>                         <span class="k">struct</span> <span class="n">v4l2_subdev_pad_config</span> <span class="o">*</span><span class="n">cfg</span><span class="p">,</span>
+<span class="ln">20</span>                         <span class="k">struct</span> <span class="n">v4l2_subdev_selection</span> <span class="o">*</span><span class="n">sel</span><span class="p">);</span>
+<span class="ln">21</span><span class="p">};</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd26.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd26.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd27.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd27.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd28.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd28.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>示例说明</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd29.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd29.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="225数据类型简要说明-结构体struct-v4l2_ctrl_ops">2.2.5数据类型简要说明-结构体struct v4l2_ctrl_ops</h3>
+<p>结构体说明</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="k">struct</span> <span class="n">v4l2_ctrl_ops</span> <span class="p">{</span>
+<span class="ln">2</span>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">s_ctrl</span><span class="p">)(</span><span class="k">struct</span> <span class="n">v4l2_ctrl</span> <span class="o">*</span><span class="n">ctrl</span><span class="p">);</span>
+<span class="ln">3</span><span class="p">};</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd30.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd30.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="226数据类型简要说明-结构体-struct-xxxx_mode">2.2.6数据类型简要说明-结构体-struct xxxx_mode</h3>
+<p>结构体说明，这个结构体在sensor驱动中常常可以见到，虽然它不是v4l2标准要求的</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="k">struct</span> <span class="n">xxxx_mode</span> <span class="p">{</span>
+<span class="ln"> 2</span>    <span class="n">u32</span> <span class="n">bus_fmt</span><span class="p">;</span>
+<span class="ln"> 3</span>    <span class="n">u32</span> <span class="n">width</span><span class="p">;</span>
+<span class="ln"> 4</span>    <span class="n">u32</span> <span class="n">height</span><span class="p">;</span>
+<span class="ln"> 5</span>    <span class="k">struct</span> <span class="n">v4l2_fract</span> <span class="n">max_fps</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="n">u32</span> <span class="n">hts_def</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="n">u32</span> <span class="n">vts_def</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="n">u32</span> <span class="n">exp_def</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="k">const</span> <span class="k">struct</span> <span class="n">regval</span> <span class="o">*</span><span class="n">reg_list</span><span class="p">;</span>
+<span class="ln">10</span>    <span class="n">u32</span> <span class="n">hdr_mode</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="n">u32</span> <span class="n">vc</span><span class="p">[</span><span class="n">PAD_MAX</span><span class="p">];</span>
+<span class="ln">12</span><span class="p">};</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd31.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd31.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd32.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd32.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>示例说明</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd33.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd33.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd34.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd34.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd35.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd35.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="227数据类型简要说明-结构体-struct-v4l2_mbus_framefmt">2.2.7数据类型简要说明-结构体-struct v4l2_mbus_framefmt</h3>
+<p>结构体说明</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="k">struct</span> <span class="n">v4l2_mbus_framefmt</span> <span class="p">{</span>
+<span class="ln"> 2</span>    <span class="n">__u32</span> <span class="n">width</span><span class="p">;</span>
+<span class="ln"> 3</span>    <span class="n">__u32</span> <span class="n">height</span><span class="p">;</span>
+<span class="ln"> 4</span>    <span class="n">__u32</span> <span class="n">code</span><span class="p">;</span>
+<span class="ln"> 5</span>    <span class="n">__u32</span> <span class="n">field</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="n">__u32</span> <span class="n">colorspace</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="n">__u16</span> <span class="n">ycbcr_enc</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="n">__u16</span> <span class="n">quantization</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="n">__u16</span> <span class="n">xfer_func</span><span class="p">;</span>
+<span class="ln">10</span>    <span class="n">__u16</span> <span class="n">reserved</span><span class="p">[</span><span class="mi">11</span><span class="p">];</span>
+<span class="ln">11</span><span class="p">};</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd36.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd36.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd37.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd37.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="228数据类型简要说明-结构体-struct-rkmodule_base_inf">2.2.8数据类型简要说明-结构体-struct rkmodule_base_inf</h3>
+<p>结构体说明</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="k">struct</span> <span class="n">rkmodule_base_inf</span><span class="p">{</span>
+<span class="ln">2</span>    <span class="kt">char</span> <span class="n">sensor</span><span class="p">[</span><span class="n">RKMODULE_NAME_LEN</span><span class="p">];</span>
+<span class="ln">3</span>    <span class="kt">char</span> <span class="n">module</span><span class="p">[</span><span class="n">RKMODULE_NAME_LEN</span><span class="p">];</span>
+<span class="ln">4</span>    <span class="kt">char</span> <span class="n">lens</span><span class="p">[</span><span class="n">RKMODULE_NAME_LEN</span><span class="p">];</span>
+<span class="ln">5</span><span class="p">}</span> <span class="n">__attribute__</span> <span class="p">((</span><span class="n">packed</span><span class="p">));</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd38.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd38.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd39.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd39.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="229数据类型简要说明-结构体-struct-rkmodule_fac_inf">2.2.9数据类型简要说明-结构体-struct rkmodule_fac_inf</h3>
+<p>结构体说明</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="k">struct</span> <span class="n">rkmodule_fac_inf</span> <span class="p">{</span>
+<span class="ln">2</span>    <span class="n">__32</span> <span class="n">flag</span><span class="p">;</span>
+<span class="ln">3</span>    <span class="kt">char</span> <span class="n">module</span><span class="p">[</span><span class="n">RKMODULE_NAME_LEN</span><span class="p">];</span>
+<span class="ln">4</span>    <span class="kt">char</span> <span class="n">lens</span><span class="p">[</span><span class="n">RKMODULE_NAME_LEN</span><span class="p">];</span>
+<span class="ln">5</span>    <span class="n">__u32</span> <span class="n">year</span><span class="p">;</span>
+<span class="ln">6</span>    <span class="n">__u32</span> <span class="n">month</span><span class="p">;</span>
+<span class="ln">7</span>    <span class="n">__u32</span> <span class="n">day</span><span class="p">;</span>
+<span class="ln">8</span><span class="p">}</span> <span class="n">__attribute__</span> <span class="p">((</span><span class="n">packed</span><span class="p">));</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd40.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd40.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>考虑到不是所有sensor都会用到OTP功能，这里不具体展开</p>
+<h3 id="2210数据类型简要说明-结构体-struct-preisp_hdrae_exp_s">2.2.10数据类型简要说明-结构体-struct preisp_hdrae_exp_s</h3>
+<p>结构体说明，HDR曝光参数</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln"> 1</span><span class="k">struct</span> <span class="n">preisp_hdrae_exp_s</span> <span class="p">{</span>
+<span class="ln"> 2</span>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">long_exp_reg</span><span class="p">;</span>
+<span class="ln"> 3</span>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">long_gain_reg</span><span class="p">;</span>
+<span class="ln"> 4</span>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">middle_exp_reg</span><span class="p">;</span>
+<span class="ln"> 5</span>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">middle_gain_reg</span><span class="p">;</span>
+<span class="ln"> 6</span>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">short_exp_reg</span><span class="p">;</span>
+<span class="ln"> 7</span>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">short_gain_reg</span><span class="p">;</span>
+<span class="ln"> 8</span>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">long_exp_val</span><span class="p">;</span>
+<span class="ln"> 9</span>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">long_gain_reg</span><span class="p">;</span>
+<span class="ln">10</span>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">middle_exp_val</span><span class="p">;</span>
+<span class="ln">11</span>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">middle_gain_val</span><span class="p">;</span>
+<span class="ln">12</span>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">short_exp_val</span><span class="p">;</span>
+<span class="ln">13</span>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">short_gain_val</span><span class="p">;</span>
+<span class="ln">14</span>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">long_cg_mode</span><span class="p">;</span>
+<span class="ln">15</span>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">middle_cg_mode</span><span class="p">;</span>
+<span class="ln">16</span>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">short_cg_mode</span><span class="p">;</span>
+<span class="ln">17</span><span class="p">};</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd41.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd41.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd42.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd42.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="3api简要介绍">3API简要介绍</h1>
+<h2 id="31xxx_set_fmt">3.1xxx_set_fmt</h2>
+<p>设置sensor输出格式</p>
+<p>语法说明</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="k">static</span> <span class="kt">int</span> <span class="nf">xxx_set_fmt</span><span class="p">(</span><span class="k">struct</span> <span class="n">v4l2_subdev</span> <span class="o">*</span><span class="n">sd</span><span class="p">,</span>
+<span class="ln">2</span>                       <span class="k">struct</span> <span class="n">v4l2_subdev_pad_config</span> <span class="o">*</span><span class="n">cfg</span><span class="p">,</span>
+<span class="ln">3</span>                       <span class="k">struct</span> <span class="n">v4l2_subdev_format</span> <span class="o">*</span><span class="n">fmt</span><span class="p">);</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd43.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd43.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd44.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd44.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="32xxx_get_fmt">3.2xxx_get_fmt</h2>
+<p>获取sensor输出格式</p>
+<p>语法说明</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="k">static</span> <span class="kt">int</span> <span class="nf">xxx_get_fmt</span><span class="p">(</span><span class="k">struct</span> <span class="n">v4l2_subdev</span> <span class="o">*</span><span class="n">sd</span><span class="p">,</span>
+<span class="ln">2</span>                       <span class="k">struct</span> <span class="n">v4l2_subdev_pad_config</span> <span class="o">*</span><span class="n">cfg</span><span class="p">,</span>
+<span class="ln">3</span>                       <span class="k">struct</span> <span class="n">v4l2_subdev_format</span> <span class="o">*</span><span class="n">fmt</span><span class="p">);</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd45.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd45.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd46.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd46.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="33xxx_enum_mbus_code">3.3xxx_enum_mbus_code</h2>
+<p>枚举sensor输出bus format</p>
+<p>语法说明</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="k">static</span> <span class="kt">int</span> <span class="nf">xxx_enum_mbus_code</span><span class="p">(</span><span class="k">struct</span> <span class="n">v4l2_subdev</span> <span class="o">*</span><span class="n">sd</span><span class="p">,</span>
+<span class="ln">2</span>                              <span class="k">struct</span> <span class="n">v4l2_subdev_pad_config</span> <span class="o">*</span><span class="n">cfg</span><span class="p">,</span>
+<span class="ln">3</span>                              <span class="k">struct</span> <span class="n">v4l2_subdev_mbus_code_enum</span> <span class="o">*</span><span class="n">code</span><span class="p">);</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd47.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd47.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd48.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd48.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="34xxx_enum_frame_size">3.4xxx_enum_frame_size</h2>
+<p>枚举sensor输出大小</p>
+<p>语法</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="k">static</span> <span class="kt">int</span> <span class="nf">xxx_enum_frame_size</span><span class="p">(</span><span class="k">struct</span> <span class="n">v4l2_subdev</span> <span class="o">*</span><span class="n">sd</span><span class="p">,</span>
+<span class="ln">2</span>                               <span class="k">struct</span> <span class="n">v4l2_subdev_pad_config</span> <span class="o">*</span><span class="n">cfg</span><span class="p">,</span>
+<span class="ln">3</span>                               <span class="k">struct</span> <span class="n">v4l2_subdev_frame_size_enum</span> <span class="o">*</span><span class="n">fse</span><span class="p">);</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd49.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd49.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd50.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd50.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="35xxx_g_frame_interval">3.5xxx_g_frame_interval</h2>
+<p>获取sensor输出fps</p>
+<p>语法</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="k">static</span> <span class="kt">int</span> <span class="nf">xxx_g_frame_interval</span><span class="p">(</span><span class="k">struct</span> <span class="n">v4l2_subdev</span> <span class="o">*</span><span class="n">sd</span><span class="p">,</span>
+<span class="ln">2</span>                                <span class="k">struct</span> <span class="n">v4l2_subdev_frame_interval</span> <span class="o">*</span><span class="n">fi</span><span class="p">);</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd51.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd51.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd52.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd52.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="36xxx_s_stream">3.6xxx_s_stream</h2>
+<p>设置stream输入输出</p>
+<p>语法</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="k">static</span> <span class="kt">int</span> <span class="nf">xxx_s_stream</span><span class="p">(</span><span class="k">struct</span> <span class="n">v4l2_subdev</span> <span class="o">*</span><span class="n">sd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">on</span><span class="p">);</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd53.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd53.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="37xxx_runtime_resume">3.7xxx_runtime_resume</h2>
+<p>sensor商店时的回调函数</p>
+<p>语法</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="k">static</span> <span class="kt">int</span> <span class="nf">xxx_runtime_resume</span><span class="p">(</span><span class="k">struct</span> <span class="n">device</span> <span class="o">*</span><span class="n">dev</span><span class="p">);</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd54.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd54.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="38xxx_runtime_suspend">3.8xxx_runtime_suspend</h2>
+<p>sensor下电是的回调函数</p>
+<p>语法</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="k">static</span> <span class="kt">int</span> <span class="nf">xxx_runtime_suspend</span><span class="p">(</span><span class="k">struct</span> <span class="n">device</span> <span class="o">*</span><span class="n">dev</span><span class="p">);</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd55.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd55.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="39xxx_set_ctrl">3.9xxx_set_ctrl</h2>
+<p>设置各个control的值</p>
+<p>语法</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="k">static</span> <span class="kt">int</span> <span class="nf">xxx_set_ctrl</span><span class="p">(</span><span class="k">struct</span> <span class="n">v4l2_ctrl</span> <span class="o">*</span><span class="n">ctrl</span><span class="p">);</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd56.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd56.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="310xxx_enum_frame_interval">3.10xxx_enum_frame_interval</h2>
+<p>枚举sensor支持的帧间间隔参数</p>
+<p>语法</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="k">static</span> <span class="kt">int</span> <span class="nf">xxx_enum_frame_interval</span><span class="p">(</span><span class="k">struct</span> <span class="n">v4l2_subdev</span> <span class="o">*</span><span class="n">sd</span><span class="p">,</span>
+<span class="ln">2</span>                                   <span class="k">struct</span> <span class="n">v4l2_subdev_pad_config</span> <span class="o">*</span><span class="n">cfg</span><span class="p">,</span>
+<span class="ln">3</span>                                   <span class="k">struct</span> <span class="n">v4l2_subdev_frame_interval_enum</span> <span class="o">*</span><span class="n">fie</span><span class="p">);</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd57.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd57.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="311xxx_g_mbus_config">3.11xxx_g_mbus_config</h2>
+<p>获取支持的总线配置，比如使用mipi时，当sensor支持多种MIPI传输模式时，可以根据Sensor当前使用的MIPI模式上传参数</p>
+<p>语法</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="k">static</span> <span class="kt">int</span> <span class="nf">xxx_g_mbus_config</span><span class="p">(</span><span class="k">struct</span> <span class="n">v4l2_subdev</span> <span class="o">*</span><span class="n">sd</span><span class="p">,</span>
+<span class="ln">2</span>                             <span class="k">struct</span> <span class="n">v4l2_mbus_config</span> <span class="o">*</span><span class="n">cfg</span><span class="p">);</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd58.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd58.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="312xxx_get_selection">3.12xxx_get_selection</h2>
+<p>配置剪裁参数，isp输入的宽度要求16对其，高度8对齐，对于sensor输出的分辨率不符合对齐或Sensor输出分辨率不足标准分辨率，可实现这个函数对输入isp的分辨率做剪裁。</p>
+<p>语法</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="ln">1</span><span class="k">static</span> <span class="kt">int</span> <span class="nf">xxx_get_selection</span><span class="p">(</span><span class="k">struct</span> <span class="n">v4l2_subdev</span> <span class="o">*</span><span class="n">sd</span><span class="p">,</span>
+<span class="ln">2</span>                             <span class="k">struct</span> <span class="n">v4l2_subdev_pad_config</span> <span class="o">*</span><span class="n">cfg</span><span class="p">,</span>
+<span class="ln">3</span>                             <span class="k">struct</span> <span class="n">v4l2_subdev_selection</span> <span class="o">*</span><span class="n">sel</span><span class="p">);</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd59.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd59.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="4以imx415-sensor驱动为例详解">4以imx415 sensor驱动为例详解</h1>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd60.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd60.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>对应如下</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd61.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd61.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="41probe函数细节">4.1probe函数细节</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd62.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd62.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="411获取模组和sensor名字">4.1.1获取模组和sensor名字</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd63.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd63.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="412获取mclk">4.1.2获取MCLK</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd65.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd65.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="413gpio和pinctrl初始化">4.1.3GPIO和PINCTRL初始化</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd66.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd66.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="414控制上电和控制v4l2设备初始化">4.1.4控制上电和控制V4L2设备初始化</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd67.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd67.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="415media实体初始化">4.1.5media实体初始化</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd68.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd68.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="42实现3个回调函数">4.2实现3个回调函数</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd69.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd69.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="421结构体v4l2_subdev_core_ops">4.2.1结构体<strong>v4l2_subdev_core_ops</strong></h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd73.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd73.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd70.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd70.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd71.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd71.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd72.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd72.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="422结构体struct-v4l2_subdev_video_ops">4.2.2结构体struct v4l2_subdev_video_ops</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd74.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd74.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd75.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd75.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd76.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd76.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd77.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd77.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="423结构体struct-v4l2_subdev_pad_ops">4.2.3结构体struct v4l2_subdev_pad_ops</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd78.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd78.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd79.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd79.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd80.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd80.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd81.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd81.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd82.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd82.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd83.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd83.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd84.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd84.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="424结构体struct-v4l2_ctrl_ops">4.2.4结构体struct v4l2_ctrl_ops</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd85.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd85.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd86.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd86.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd87.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd87.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd88.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd88.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd89.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd89.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd90.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd90.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>关于这里设计的公式计算</p>
+<p>曝光相应计算公式
+$$
+line_time = HTS/PIXEL_PATE\<br>
+PIXEL_PATE=HTS<em>VTS</em>FPS\<br>
+HTS=sensor_width_out+HBLANK\<br>
+VTS=sensor_g=height_out+VBLANK\<br>
+$$</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/driver_debug/dd91.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/driver_debug/dd91.png" >
+  
+    </a>
+  
+  
+</div>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/driver/">driver</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/v4l2/">v4l2</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/mipi/">MIPI</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2024/01/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-demosaicking/" data-tooltip="isp算法学习-demosaicking">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2024 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2024/01/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-demosaicking/" data-tooltip="isp算法学习-demosaicking">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2024%2F01%2Frk-camera%25E9%25A9%25B1%25E5%258A%25A8%25E8%25B0%2583%25E8%25AF%2595%25E5%25AD%25A6%25E4%25B9%25A0%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2024%2F01%2Frk-camera%25E9%25A9%25B1%25E5%258A%25A8%25E8%25B0%2583%25E8%25AF%2595%25E5%25AD%25A6%25E4%25B9%25A0%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2024%2F01%2Frk-camera%25E9%25A9%25B1%25E5%258A%25A8%25E8%25B0%2583%25E8%25AF%2595%25E5%25AD%25A6%25E4%25B9%25A0%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2024\/01\/rk-camera%E9%A9%B1%E5%8A%A8%E8%B0%83%E8%AF%95%E5%AD%A6%E4%B9%A0\/';
+          
+            this.page.identifier = '\/2024\/01\/rk-camera%E9%A9%B1%E5%8A%A8%E8%B0%83%E8%AF%95%E5%AD%A6%E4%B9%A0\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+  <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_CHTML-full" integrity="sha256-GhM+5JHb6QUzOQPXSJLEWP7R73CbkisjzK5Eyij4U9w=" crossorigin="anonymous"></script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      CommonHTML: { linebreaks: { automatic: true } },
+      tex2jax: { inlineMath: [ ['$', '$'], ['\\(','\\)'] ], displayMath: [ ['$$','$$'], ['\\[', '\\]'] ], processEscapes: false },
+      messageStyle: 'none'
+    });
+  </script>
+
+
+
+    
+  </body>
+</html>
+

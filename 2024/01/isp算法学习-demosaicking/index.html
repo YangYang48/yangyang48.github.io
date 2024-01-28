@@ -1,0 +1,1973 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="本文是isp算法学习的第十一篇章，主要是讲述去马赛克。">
+
+
+<meta property="og:description" content="本文是isp算法学习的第十一篇章，主要是讲述去马赛克。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="isp算法学习-demosaicking">
+<meta name="twitter:title" content="isp算法学习-demosaicking">
+<meta property="og:url" content="https://yangyang48.github.io/2024/01/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-demosaicking/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2024/01/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-demosaicking/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="本文是isp算法学习的第十一篇章，主要是讲述去马赛克。">
+<meta name="twitter:description" content="本文是isp算法学习的第十一篇章，主要是讲述去马赛克。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2024-01-27T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2024-01-27T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="2024">
+    
+      <meta property="article:section" content="January">
+    
+      <meta property="article:section" content="camera">
+    
+  
+  
+    
+      <meta property="article:tag" content="demosaicking">
+    
+      <meta property="article:tag" content="raw">
+    
+      <meta property="article:tag" content="线性插值">
+    
+      <meta property="article:tag" content="色差色比">
+    
+      <meta property="article:tag" content="方向加权">
+    
+      <meta property="article:tag" content="边缘检测">
+    
+      <meta property="article:tag" content="机器学习">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk_thumb.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk_thumb.png">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+
+
+    <title>isp算法学习-demosaicking</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2024/01/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-demosaicking/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/camera/algorithmlearning/demosaick/dmsk_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      isp算法学习-demosaicking
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2024-01-27T00:00:00Z">
+        
+  一月 27, 2024
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2024">2024</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/january">January</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/camera">camera</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">1800 Words|Read in about 9 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+      
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>本文是isp算法学习的第十一篇章，主要是讲述去马赛克。</p>
+<div style="text-align: center;">
+<iframe 
+    frameborder="no" border="1"
+    marginwidth="0" marginheight="0"
+    width=400 height=100
+    src="//music.163.com/outchain/player?type=2&id=1947336011&auto=1&height=66"></iframe>
+</div>
+<h1 id="01cmos成像基础">01CMOS成像基础</h1>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<blockquote>
+<p>Q：RAW图颜色相关问题，有人说RAW图是没有颜色灰度图，有人说RAW图是绿色的</p>
+<p>A：其实上面说法不完全对。</p>
+<p>A：RGB图像实际上是3种颜色的叠加，但是RAW图每个像素只有一个颜色，RAW图是一维的，当只有一个通道的时候，那就是灰度图，灰度图没有颜色可言。</p>
+<p>A：因为CFA（<strong>Color Filter Array，色彩滤波阵列/滤色阵列</strong>）的存在，加了一个颜色滤镜，所以看起来是有颜色，因为绿色占比多所以看起来就是绿色的。</p>
+<p>A：光经过CMOS变成电信号，电信号加了增益之后，通过AD转换，变成数字信号，反应到<strong>RAW图上的数据本质也是电压的大小</strong>。因此，讨论RAW图的颜色没有意义，只能看到的是当前点对应通道分量的大小。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>关于RAW补充几点</p>
+<p>1）<strong>raw数据</strong></p>
+<p>raw 数据是 sensor 输出的原始数据，常用的一般有raw8, raw10, raw12等，分别表示一个像素点有 8bit、10bit、12bit 数据。</p>
+<p>sensor 将光信号转化为电信号时的电平高低的原始记录，单纯地没有进行任何处理的图像数据，即表现的是 sensor 和镜头本征特性的数据。raw 数据在输出的时候是有一定顺序的，主要有四种: GRBG、RGGB、BGGR、GBRG。</p>
+<p>2）raw 分哪几种格式</p>
+<p>raw 一般分为 plain raw 和 mipi raw，主要是存储方式上的区别。</p>
+<p><strong>Plain raw</strong></p>
+<p>如下图所示是 Plain raw10 的示意图。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk10.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk10.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>10bit的raw，单个像素也就是10bit，需要两个字节（16bit）来存储，那就会空出 6位用不到。</p>
+<p>因为有空余，这里就涉及到一个高位/低位对齐的问题，也就是存储数据时，右移6位低位对齐（如上图1所示），左移6位高位对齐（如上图2所示）。关于高低位对齐，这个主要看平台厂商对数据处理有什么要求。</p>
+<p><strong>mipi raw</strong></p>
+<p>如下图所示是 mipi raw10 的示意图，以大端存储方式为例，它是把4个像素放到5个字节（40bit）中，组成一个包去存储。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk11.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk11.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>前4字节依次存放 raw10 图像的前 4个像素的后 8位，4个像素的前 2位依次存放在包的第 5个字节中。</p>
+<p>所以从存储方式来看，mipi raw 的存储方式是要比 plain raw 更节省内存。</p>
+</blockquote>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>上面是CMOS大概的示意图。分为<strong>前照式CMOS</strong>和<strong>背照式CMOS</strong>。</p>
+<p>前背照式主要区别是工艺问题，把金属排线放到前面就是前照式，放到和后面就是背照式。前照式缺点会挡住一部分从Lens过来的光，感光能力没有背照式强。背照式感光能力强，但是工艺较复杂。</p>
+<p>CMOS上光直接照射在微透镜上，能够尽可能的把光打在光电器件上，目的使光电转换效率最高。透镜下面是CFA，是一个色彩滤波阵列，分理处波长为红蓝绿三通道的颜色。在下面就是光电转换，因为光有波粒二象性，可以简单认为在某一个像素点上的光粒子数量，在电荷检测电路中会被检测到更多的电荷，经过一个放大器A<!-- raw HTML omitted -->V<!-- raw HTML omitted -->之后，那么表现为输出电压，电荷越大电压就越大。</p>
+<p>人眼之所以有能感受到自然界的颜色，是因为人眼的感光细胞中有三种锥体细胞对红绿蓝三种颜色敏感，所以我们就可以通过RGB三种颜色来表示一个颜色空间，通过这个颜色空间中的点就能表示自然界中所有的颜色。那么数码相机只要能类似人一样获取自然界中的这三个分量，那么就能复现人眼看到的颜色。相机系统用的感光器件只是一个光电转换器件，所以感光器件只对亮度分量敏感，无法感知颜色，所以需要通过滤光片将光线分解成RGB三个分量然后再用感光期间去接受。那么最直接的方式就是用三个滤光片分别过滤出RGB三个通道的分量，然后用三个感光器件去分别接受三个通道的强度，然后再将这三个通道的值叠加到一起就能复现出正常的颜色。这种涉及称为3CCD，这种方式大概可以用如下简图表示。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>但是这种方式工艺复杂且成本较高，所以到目前位置在消费领域基本没有这种操作。</p>
+<h1 id="02算法原理精讲">02算法原理精讲</h1>
+<h2 id="21线性插值算法">2.1线性插值算法</h2>
+<p>如图是Bayer格式的raw图，RGB三种颜色交替覆盖，且绿色分量是RB分量的两倍。由于这种特殊的分布方式，所以可以通过最贱的线性插值的方式通过附近的已知的颜色插值出同一通道缺失的分量。例如途中G13点为绿色，缺失了R和B，但是G13左右的R是已知的，那么就可以通过左右红色分量插值出该点缺失的红色，同理可以通过上下的蓝色分量插值出该点缺失的蓝色分量。对于R14缺失的G和B，但是周围相邻的有4个G是已知的，就可以通过这四个点插值出该点缺失的G，同理可以通过周围四个B插值出该点的B。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>简化成下图所示</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="22色差法和色比法">2.2<strong>色差法和色比法</strong></h2>
+<p>色比法和色差法其实是基于两个假设实现插值的。</p>
+<h3 id="221色比法">2.2.1色比法</h3>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>假设再一个邻域范围内不同颜色通道的值的比值是固定的，简单来说就说相邻像素的R/G的值和B/G的值是一样的，那么设计算法时就可以利用这一点。一般情况下都会先插值出G的缺失值，然后通过与G的比值恒定插值出其他的缺失值。</p>
+<p>如上展示的RAW图，可以通过G9，G13， G15，G19做简单的线性插值恢复G14，然后通过R14/G14 = R13/G13的假设恢复出R13。同理可以恢复出其他缺失的颜色。</p>
+<p>举例说明，先通过线性插值法求出所有的G通道的值，然后求G7的R7和B7，最终求得B7和R7
+$$
+\frac{B7}{G7}=\frac{\frac{B6}{G6}+\frac{B8}{G8}}{2}\<br>
+\frac{R7}{G7}=\frac{\frac{R6}{G6}+\frac{R8}{G8}}{2}
+$$
+求R14对应的B14
+$$
+\frac{B14}{G14}=mean(\sum_4{\Delta})
+=\frac{\frac{B8}{G8}+\frac{B10}{G10}+\frac{B18}{G18}+\frac{B20}{G20}}{4}
+$$</p>
+<h3 id="222色差法">2.2.2色差法</h3>
+<p>色差法和色比法类似，假设在一个邻域内不同通道的颜色插值时恒定的。只是将色比法的比值转换为差值即可。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk8.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>1）通过R通道插值出G通道的值
+$$
+G_{m,n}=\frac{G_{m,n+1}+G_{m,n-1}}{2}+
+\frac{-R_{m,n-2}+2R_{m,n}-R_{m,n+2}}{8}
+$$
+同理也可以通过B插值出G通道的值
+$$
+G_{m,n}=\frac{G_{m,n+1}+G_{m,n-1}}{2}+\frac{-B_{m,n-2}+2B_{m,n}-B_{m,n+2}}{8}					
+$$
+2）求出R通道对应的B通道的值，举例求R43通道的B43
+$$
+B43-G43=
+\frac{(B32-G32)+(B34-G34)+(B52-G52)+(B54-G54)}{4}
+$$
+3）求出G通道的的B或者R通道，举例求G33通道的B33
+$$
+B33-G33=\frac{(B32-G32)+(B34-G34)}{2}
+$$
+同理可得知R33
+$$
+R33-G33=\frac{(R23-G23)+(R43-G43)}{2}
+$$</p>
+<h2 id="23基于方向加权的方法">2.3<strong>基于方向加权的方法</strong></h2>
+<p>上述简单的插值算法存在诸多缺陷，比如高频伪像和伪彩，其主要原因就是没有针对边缘做处理。所以更好的算法就对边缘做了识别，针对边缘做特殊的处理，然后同时利用色差或色比的方法融合到一起得到更好的效果</p>
+<blockquote>
+<p><strong>伪像</strong></p>
+<p>是指在图像处理的过程中,由于一些误差、干扰或技术问题造成的视觉失真或虚假的图像。</p>
+<p><strong>伪彩</strong></p>
+<p>为了增加图像的可视化效果,人们便使用了一种技术,即通过给黑白图像上色,使其在视觉上呈现出彩色的效果。这种通过对黑白图像进行着色的技术被称为伪彩。</p>
+</blockquote>
+<h3 id="231rb通道求g通道">2.3.1R/B通道求G通道</h3>
+<p>同上述算法类似，第一步求出所有像素点的G通道，这里需要9*9的bayer矩阵，以B为例，求G通道</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk12.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk12.png" >
+  
+    </a>
+  
+  
+</div>
+
+<ol>
+<li>
+<p>计算12个梯度</p>
+<p>梯度计算，总共有12个方向，除了上下左右之外，还有其他8个方向，需要求出所有的梯度。
+$$
+I_n(i,j)=k_n{abs[P(i+v_n,j+h_n)-P(i-v_n,j-h_n)]+abs[P(i+2v_n,j+2h_n)-P(i,j)]}
+$$
+以以B(4,4)为例
+$$
+I_1(4,4)=k_1{|P(4,3)-P(4,5)|+|P(4,2)-P(4,4)|}\<br>
+I_5(4,4)=k_5{|P(3,2)-P(5,6)|+|P(2,0)-P(4,4)|}<br>
+$$</p>
+<p>其中梯度中涉及到了K<!-- raw HTML omitted -->n<!-- raw HTML omitted -->的计算，上下左右的K<!-- raw HTML omitted -->n<!-- raw HTML omitted -->通常为1，其他边缘的值8个方向的K<!-- raw HTML omitted -->n<!-- raw HTML omitted -->通常0.5，也可以设为其他值。</p>
+</li>
+<li>
+<p>求出12个方向的权重</p>
+<p>梯度越大，说明变化的范围越大。可能正好是一个边界，说明梯度大的方向插值贡献要更小一点，那么权重就会较小。
+$$
+W_n(i,j)=\frac{\frac{1}{1+I_n(i,j)}}{\sum_{n=1}^{12}\frac{1}{1+I_n(i,j)}}
+$$</p>
+</li>
+<li>
+<p>求出色差法计算对应的G通道
+$$
+G(i,j)-B(i,j)=\sum_{n=1}^{12}W_n(i,j)*K_{bn}(i+v_n,j+h_n)
+$$
+其中公式为
+$$
+K_{bn}(i+v_n,j+h_n)=G(i+v_n,j+h_n)-B(i+v_n,j+h_n)
+$$
+因为B还没被求出来，这里的B还是按照最简单的插值来计算，举例说明B(3,2)
+$$
+B(3,2)=(B(2,2)+B(4,2))/2
+$$</p>
+</li>
+</ol>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk13.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk13.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>以B为例，求G通道按照上面步骤可以求得，同理也可以用R通道求G通道。</p>
+<h3 id="232b通道求r通道r通道求b通道">2.3.2B通道求R通道/R通道求B通道</h3>
+<p>上面步骤已经求出所有的G通道了，那么现在可以求另外R和B通道了，这里以B通道求R通道为例，这里的矩阵为5*5</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk14.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk14.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>公式同上面分别求梯度和权重</p>
+<p>梯度
+$$
+I_n(i,j)={abs[P(i+v_n,j+h_n)-P(i-v_n,j-h_n)]+abs[P(i+2v_n,j+2h_n)-P(i,j)]}
+$$
+权重
+$$
+W_n(i,j)=\frac{\frac{1}{1+I_n(i,j)}}{\sum_{n=1}^{4}\frac{1}{1+I_n(i,j)}}
+$$
+那么色差法计算R通道为
+$$
+R(i,j)=G(i,j)-\sum_{n=1}^{4}W_n(i,j)*K_{rn}(i+v_n,j+h_n)
+$$
+其中公式为
+$$
+K_{rn}(i+v_n,j+h_n)=G(i+v_n,j+h_n)-R(i+v_n,j+h_n)
+$$
+以B通道求R通道就是上述方式，同理也可以R通道求B通道</p>
+<h3 id="233g通道求rb通道">2.3.3G通道求R/B通道</h3>
+<p>上面已经对应B通道求R通道和R通道求B通道，现在还需要求G通道求R/B通道，这里以G通道求R通道为例，这里的矩阵为9*9</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk15.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk15.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>梯度
+$$
+I_n(i,j)={abs[P(i+v_n,j+h_n)-P(i-v_n,j-h_n)]+abs[P(i+2v_n,j+2h_n)-P(i,j)]}
+$$
+权重
+$$
+W_n(i,j)=\frac{\frac{1}{1+I_n(i,j)}}{\sum_{n=1}^{12}\frac{1}{1+I_n(i,j)}}
+$$
+色差
+$$
+R(i,j)=G(i,j)-\sum_{n=1}^{12}W_n(i,j)*K_{rn}(i+v_n,j+h_n)
+$$
+以G通道求R通道就是上述方式，同理也可以G通道求B通道</p>
+<h2 id="24基于边缘检测的方法">2.4基于边缘检测的方法</h2>
+<p>相比较2.3的算法，这个算法稍微简单点</p>
+<h3 id="241求所有的g通道">2.4.1求所有的G通道</h3>
+<ol>
+<li>先求出对应梯度</li>
+<li>求出对应的权重</li>
+<li>先求出所有的G，然后用R求B或者B求R，最后用G求出B和R</li>
+</ol>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk16.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk16.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>1.梯度求解，这里以B为例求G
+$$
+e_h=\frac{1}{4}(|C(i-1,j-1)-C(i-1,j+1)|
++2|C(i,j-1)-C(i,j+1)|+|C(i+1,j-1)-C(i+1,j+1)|)\<br>
+e_v=\frac{1}{4}(|C(i-1,j-1)-C(i+1,j-1)|
++2|C(i-1,j)-C(i+1,j)|+|C(i-1,j+1)-C(i+1,j+1)|)
+$$
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk17.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk17.png" >
+  
+    </a>
+  
+  
+</div>
+</p>
+<p>2.计算权重，以R(3,3)为例，求G通道
+$$
+W_h=\frac{\frac{1}{e_h}}{\frac{1}{e_h}+\frac{1}{e_v}}\<br>
+W_v=\frac{\frac{1}{e_v}}{\frac{1}{e_h}+\frac{1}{e_v}}\<br>
+$$
+3.求取对应的G通道</p>
+<p>计算出R和G的平均色差，这里的C就是<strong>R通道</strong>
+$$
+\hat{G}_h(i,j)=\overline{G}_h(i,j)+\Delta{C_h(i,j)}\<br>
+\hat{G}_v(i,j)=\overline{G}_v(i,j)+\Delta{C_v(i,j)}
+$$
+其中
+$$
+\overline{G}_h(i,j)=\frac{1}{2}(G(i,j-1)+G(i,j+1))\<br>
+\overline{G}_v(i,j)=\frac{1}{2}(G(i-1,j)+G(i+1,j))
+$$</p>
+<p>$$
+\Delta{C_h(i,j)}=\frac{1}{2}(\frac{1}{2}(C(i,j)-C(i,j-2))+\frac{1}{2}(C(i,j)-C(i,j+2)))\<br>
+\Delta{C_v(i,j)}=\frac{1}{2}(\frac{1}{2}(C(i,j)-C(i-2,j))+\frac{1}{2}(C(i,j)-C(i+2,j)))\<br>
+$$</p>
+<p>最终
+$$
+G'(i,j)=W_h(i,j)<em>\hat{G}_h(i,j)+W_v(i,j)</em>\hat{G}_v(i,j)
+$$</p>
+<h3 id="242r通道求b通道或b通道求r通道">2.4.2R通道求B通道或B通道求R通道</h3>
+<p>这里以B通道求R通道</p>
+<p>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk18.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk18.png" >
+  
+    </a>
+  
+  
+</div>
+
+$$
+dG_c=\frac{1}{4}\sum(G'(i+k,j+r)-R(i+k,j+r))\<br>
+R'(i,j)=G'(i,j)+dG_c
+$$
+同理可以R通道求B通道</p>
+<h3 id="243g通道求r通道和b通道">2.4.3G通道求R通道和B通道</h3>
+<p>跟上面B通道求R通道类似，以G(2,1)通道求R(2,1)通道为例
+$$
+dG_c=\frac{1}{4}\sum(G'(i+k,j+r)-R(i+k,j+r))\<br>
+R'(i,j)=G'(i,j)+dG_c
+$$</p>
+<h2 id="25自适应边缘增强法">2.5自适应边缘增强法</h2>
+<h3 id="251求所有的g通道">2.5.1求所有的G通道</h3>
+<p>1）做边缘检测</p>
+<p>2）分类讨论判断</p>
+<p>如果是边缘检测不为边缘，那么主要还是以水平权重为主；</p>
+<p>如果边缘检测为边缘且以竖直方向变化更大，直接求水平均值即可；</p>
+<p>如果边缘检测为边缘且以水平方向变化更大，那么主要还是以竖直权重为主</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk19.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk19.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>这里以R33求G33为例说明
+$$
+DV(i,j)=|B(i-1,j-1)-B(i+1,j-1)|+|G(i-1,j)-G(i+1,j)|+|B(i-1,j+1)-B(i+1,j+1)|\<br>
+DH(i,j)=|B(i-1,j-1)-B(i-1,j+1)|+|G(i,j-1)-G(i,j+1)|+|B(i+1,j-1)-B(i+1,j+1)|\<br>
+$$
+然后求出总的
+$$
+TD(i,j)=DV(i,j)+DH(i,j)
+$$</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk20.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk20.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>分类讨论</p>
+<ul>
+<li>
+<p>TD&lt;Th，说明未检测到边缘
+$$
+G(i,j)=\frac{3}{8}(G(i,j-1)+G(i,j+1))+\frac{1}{8}(G(i-1,j)+G(i+1,j))\<br>
++R(i,j)-\frac{1}{2}(\frac{1}{2}(R(i,j)+R(i,j-2))+\frac{1}{2}(R(i,j)+R(i,j+2)))
+$$</p>
+</li>
+<li>
+<p>TD&gt;Th，说明检测到边缘</p>
+<p>当DH&lt;DV
+$$
+G(i,j)=\frac{1}{2}(G(i,j-1)+G(i,j+1))\<br>
+++R(i,j)-\frac{1}{2}(\frac{1}{2}(R(i,j)+R(i,j-2))+\frac{1}{2}(R(i,j)+R(i,j+2)))
+$$
+当DH&gt;DV
+$$
+G(i,j)=\frac{3}{8}(G(i,j-1)+G(i,j+1))+\frac{1}{8}(G(i-1,j)+G(i+1,j))\<br>
++\frac{1}{2}(R(i,j)-\frac{1}{2}(\frac{1}{2}(R(i,j)+R(i,j-2))+\frac{1}{2}(R(i,j)+R(i,j+2))))
+$$</p>
+</li>
+</ul>
+<p>同理，B通道可以求得G通道</p>
+<h3 id="252r通道求出b通道或b通道求r通道">2.5.2R通道求出B通道或B通道求R通道</h3>
+<p>这里以R33为例，还是按照2.5.1的三种情况分类讨论</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk21.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk21.png" >
+  
+    </a>
+  
+  
+</div>
+
+<ul>
+<li>
+<p>TD&lt;Th，说明未检测到边缘
+$$
+B(3,3)=\frac{1}{4}(B(2,2)+B(2,4)+B(4,2)+B(4,4))\<br>
++G(3,3)-\frac{1}{4}(G(2,3)+G(4,3)+G(3,2)+G(3,4))
+$$</p>
+</li>
+<li>
+<p>TD&gt;Th，说明检测到边缘</p>
+<p>当DH&lt;DV
+$$
+B(3,3)=\frac{1}{4}(B(2,2)+B(2,4)+B(4,2)+B(4,4))\<br>
++G(3,3)-\frac{1}{8}(3G(2,3)+3G(4,3)+G(3,2)+G(3,4))
+$$
+当DH&gt;DV
+$$
+B(3,3)=\frac{1}{4}(B(2,2)+B(2,4)+B(4,2)+B(4,4))\<br>
++G(3,3)-\frac{1}{8}(G(2,3)+G(4,3)+3G(3,2)+3G(3,4))
+$$</p>
+</li>
+</ul>
+<p>同理，B通道可以求得R通道</p>
+<h3 id="253g通道求r通道和b通道">2.5.3G通道求R通道和B通道</h3>
+<p>与上述类似，不过这里以G(2,3)为例，求R(2,3)</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk22.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk22.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>因为G(2,3)周边的R正好为上下分布，因为竖直方向的信息量会更多
+$$
+R(i,j)=\frac{1}{2}(R(i-1,j)+R(i+1,j))+\frac{1}{2}G(i,j)\<br>
+-\frac{1}{8}(G(i-1,j-1)+G(i-1,j+1)+G(i+1,j-1)+G(i+1,j+1))
+$$
+如果是G(3,2)，那么周边的R正好为左右分布
+$$
+R(i,j)=\frac{1}{2}(R(i,j+1)+R(i,j-1))+G(i,j)-\frac{1}{2}(G(i,j+1)+G(i,j-1))
+$$</p>
+<h2 id="26bayesian估计方法">2.6Bayesian估计方法</h2>
+<p>具体不做展开，可以直接查找论文原文Bayesian method application for color demosaicking_Wang et al._2018，具体文章也可以点击<a href="https://github.com/YangYang48/ISPAlgorithm/tree/master/ISParticle/demosaicking">这里查看</a></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk24.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk24.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk25.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk25.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="27深度学习-马赛克与降噪结合方法">2.7深度学习-马赛克与降噪结合方法</h2>
+<p>具体论文是这篇文章Deep joint demosaicking and denoising_Gharbi et al._2016，具体文章也可以点击<a href="https://github.com/YangYang48/ISPAlgorithm/tree/master/ISParticle/demosaicking">这里查看</a></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk26.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk26.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="28深度学习-残次网络模型">2.8深度学习-残次网络模型</h2>
+<p>具体论文是这篇文章A study of two CNN demosaicking algorithms_Ehret, Facciolo_2019，具体文章也可以点击<a href="https://github.com/YangYang48/ISPAlgorithm/tree/master/ISParticle/demosaicking">这里查看</a></p>
+<p>作者的源码下载，<a href="https://www.ipol.im/pub/art/2019/274/?utm_source=doi">点击这里</a></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk27.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk27.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="03算法代码实现">03算法代码实现</h1>
+<h2 id="31线性插值法">3.1线性插值法</h2>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="c">%% --------------------------------</span>
+<span class="ln"> 2</span><span class="n">clc</span><span class="p">;</span><span class="n">clear</span><span class="p">;</span><span class="n">close</span> <span class="n">all</span><span class="p">;</span>
+<span class="ln"> 3</span>
+<span class="ln"> 4</span><span class="c">%% ------------Raw Format----------------</span>
+<span class="ln"> 5</span><span class="n">filePath</span> <span class="p">=</span> <span class="s">&#39;images/kodim19_8bits_RGGB.raw&#39;</span><span class="p">;</span>
+<span class="ln"> 6</span><span class="n">bayerFormat</span> <span class="p">=</span> <span class="s">&#39;RGGB&#39;</span><span class="p">;</span>
+<span class="ln"> 7</span><span class="n">width</span> <span class="p">=</span> <span class="mi">512</span><span class="p">;</span>
+<span class="ln"> 8</span><span class="n">height</span><span class="p">=</span> <span class="mi">768</span><span class="p">;</span>
+<span class="ln"> 9</span><span class="n">bits</span> <span class="p">=</span> <span class="mi">8</span><span class="p">;</span>
+<span class="ln">10</span><span class="c">%% --------------------------------------</span>
+<span class="ln">11</span><span class="n">bayerData</span> <span class="p">=</span> <span class="n">readRaw</span><span class="p">(</span><span class="n">filePath</span><span class="p">,</span> <span class="n">bits</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">);</span>
+<span class="ln">12</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln">13</span><span class="n">imshow</span><span class="p">(</span><span class="n">bayerData</span><span class="p">);</span>
+<span class="ln">14</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;raw image&#39;</span><span class="p">);</span>
+<span class="ln">15</span>
+<span class="ln">16</span><span class="c">%% expand image inorder to make it easy to calculate edge pixels(扩展边界)</span>
+<span class="ln">17</span><span class="n">bayerPadding</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="n">height</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span><span class="n">width</span><span class="o">+</span><span class="mi">2</span><span class="p">);</span>
+<span class="ln">18</span><span class="n">bayerPadding</span><span class="p">(</span><span class="mi">2</span><span class="p">:</span><span class="n">height</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">:</span><span class="n">width</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="p">=</span> <span class="n">uint32</span><span class="p">(</span><span class="n">bayerData</span><span class="p">);</span>
+<span class="ln">19</span><span class="n">bayerPadding</span><span class="p">(</span><span class="mi">1</span><span class="p">,:)</span> <span class="p">=</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="mi">3</span><span class="p">,:);</span>
+<span class="ln">20</span><span class="n">bayerPadding</span><span class="p">(</span><span class="n">height</span><span class="o">+</span><span class="mi">2</span><span class="p">,:)</span> <span class="p">=</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">height</span><span class="p">,:);</span>
+<span class="ln">21</span><span class="n">bayerPadding</span><span class="p">(:,</span><span class="mi">1</span><span class="p">)</span> <span class="p">=</span> <span class="n">bayerPadding</span><span class="p">(:,</span><span class="mi">3</span><span class="p">);</span>
+<span class="ln">22</span><span class="n">bayerPadding</span><span class="p">(:,</span><span class="n">width</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span> <span class="p">=</span> <span class="n">bayerPadding</span><span class="p">(:,</span><span class="n">width</span><span class="p">);</span>
+<span class="ln">23</span>
+<span class="ln">24</span><span class="c">%% main code of imterpolation</span>
+<span class="ln">25</span><span class="n">imDst</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="n">height</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="n">width</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">);</span>
+<span class="ln">26</span><span class="k">for</span> <span class="n">ver</span> <span class="p">=</span> <span class="mi">2</span><span class="p">:</span><span class="n">height</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="ln">27</span>    <span class="k">for</span> <span class="n">hor</span> <span class="p">=</span> <span class="mi">2</span><span class="p">:</span><span class="n">width</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="ln">28</span>        <span class="k">switch</span> <span class="n">bayerFormat</span>
+<span class="ln">29</span>            <span class="k">case</span> <span class="s">&#39;RGGB&#39;</span>
+<span class="ln">30</span>                <span class="c">% G B -&gt; R（把G和B插值到R上去）</span>
+<span class="ln">31</span>                <span class="k">if</span><span class="p">(</span><span class="mi">0</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="mi">0</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="ln">32</span>                    <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="p">=</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">);</span>
+<span class="ln">33</span>                    <span class="c">% G -&gt; R</span>
+<span class="ln">34</span>                    <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="p">=</span> <span class="p">(</span><span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">hor</span><span class="p">)</span> <span class="o">+</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">hor</span><span class="p">)</span> <span class="o">+</span><span class="c">...</span>
+<span class="ln">35</span>                                         <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span><span class="o">/</span><span class="mi">4</span><span class="p">;</span>
+<span class="ln">36</span>                    <span class="c">% B -&gt; R</span>
+<span class="ln">37</span>                    <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="p">=</span> <span class="p">(</span><span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">hor</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">hor</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="c">...</span>
+<span class="ln">38</span>                                         <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">hor</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">hor</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span><span class="o">/</span><span class="mi">4</span><span class="p">;</span> 
+<span class="ln">39</span>                <span class="c">% G R -&gt; B</span>
+<span class="ln">40</span>                <span class="k">elseif</span> <span class="p">(</span><span class="mi">1</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="mi">1</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>    
+<span class="ln">41</span>                    <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="p">=</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">);</span>
+<span class="ln">42</span>                    <span class="c">% G -&gt; B</span>
+<span class="ln">43</span>                    <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="p">=</span> <span class="p">(</span><span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">hor</span><span class="p">)</span> <span class="o">+</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">hor</span><span class="p">)</span> <span class="o">+</span><span class="c">...</span>
+<span class="ln">44</span>                                         <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span><span class="o">/</span><span class="mi">4</span><span class="p">;</span>
+<span class="ln">45</span>                    <span class="c">% R -&gt; B</span>
+<span class="ln">46</span>                    <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="p">=</span> <span class="p">(</span><span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">hor</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">hor</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="c">...</span>
+<span class="ln">47</span>                                         <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">hor</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">hor</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span><span class="o">/</span><span class="mi">4</span><span class="p">;</span> 
+<span class="ln">48</span>                <span class="k">elseif</span><span class="p">(</span><span class="mi">0</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="mi">1</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="ln">49</span>                    <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="p">=</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">);</span>
+<span class="ln">50</span>                    <span class="c">% R -&gt; Gr</span>
+<span class="ln">51</span>                    <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="p">=</span> <span class="p">(</span><span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span><span class="o">/</span><span class="mi">2</span><span class="p">;</span>
+<span class="ln">52</span>                    <span class="c">% B -&gt; Gr</span>
+<span class="ln">53</span>                    <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="p">=</span> <span class="p">(</span><span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">hor</span><span class="p">)</span> <span class="o">+</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">hor</span><span class="p">))</span><span class="o">/</span><span class="mi">2</span><span class="p">;</span>
+<span class="ln">54</span>                <span class="k">elseif</span><span class="p">(</span><span class="mi">1</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="mi">0</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="ln">55</span>                    <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="p">=</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">);</span>
+<span class="ln">56</span>                    <span class="c">% B -&gt; Gb</span>
+<span class="ln">57</span>                    <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="p">=</span> <span class="p">(</span><span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span><span class="o">/</span><span class="mi">2</span><span class="p">;</span>
+<span class="ln">58</span>                    <span class="c">% R -&gt; Gb</span>
+<span class="ln">59</span>                    <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="p">=</span> <span class="p">(</span><span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">hor</span><span class="p">)</span> <span class="o">+</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">hor</span><span class="p">))</span><span class="o">/</span><span class="mi">2</span><span class="p">;</span>
+<span class="ln">60</span>                <span class="k">end</span>
+<span class="ln">61</span>            <span class="k">case</span> <span class="s">&#39;GRBG&#39;</span>
+<span class="ln">62</span>                <span class="k">continue</span><span class="p">;</span>
+<span class="ln">63</span>            <span class="k">case</span> <span class="s">&#39;GBGR&#39;</span>
+<span class="ln">64</span>                <span class="k">continue</span><span class="p">;</span>
+<span class="ln">65</span>            <span class="k">case</span> <span class="s">&#39;BGGR&#39;</span>
+<span class="ln">66</span>                <span class="k">continue</span><span class="p">;</span>
+<span class="ln">67</span>        <span class="k">end</span>
+<span class="ln">68</span>    <span class="k">end</span>
+<span class="ln">69</span><span class="k">end</span>
+<span class="ln">70</span><span class="n">imDst</span> <span class="p">=</span> <span class="n">uint8</span><span class="p">(</span><span class="n">imDst</span><span class="p">(</span><span class="mi">2</span><span class="p">:</span><span class="n">height</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">:</span><span class="n">width</span><span class="o">+</span><span class="mi">1</span><span class="p">,:));</span>
+<span class="ln">71</span><span class="n">figure</span><span class="p">,</span><span class="n">imshow</span><span class="p">(</span><span class="n">imDst</span><span class="p">);</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;demosaic image&#39;</span><span class="p">);</span>
+<span class="ln">72</span>
+<span class="ln">73</span><span class="n">orgImage</span> <span class="p">=</span> <span class="n">imread</span><span class="p">(</span><span class="s">&#39;images/kodim19.png&#39;</span><span class="p">);</span>
+<span class="ln">74</span><span class="n">figure</span><span class="p">,</span> <span class="n">imshow</span><span class="p">(</span><span class="n">orgImage</span><span class="p">);</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;org image&#39;</span><span class="p">);</span>
+</code></pre></div><p>左侧是实验原图，右侧是通过上述的简单的线性插值出来的效果，从图中可以看出简单的线性插值出来得到效果一般。存在画面整体清晰度变差，高频存在伪彩，边缘又伪像。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk9.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk9.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="32基于方向加权的算法">3.2基于方向加权的算法</h2>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln">  1</span><span class="n">clc</span><span class="p">;</span><span class="n">clear</span><span class="p">;</span><span class="n">close</span> <span class="n">all</span><span class="p">;</span>
+<span class="ln">  2</span>
+<span class="ln">  3</span><span class="c">%% ------------Raw Format----------------</span>
+<span class="ln">  4</span><span class="n">filePath</span> <span class="p">=</span> <span class="s">&#39;images/kodim19_8bits_RGGB.raw&#39;</span><span class="p">;</span>
+<span class="ln">  5</span><span class="n">bayerFormat</span> <span class="p">=</span> <span class="s">&#39;RGGB&#39;</span><span class="p">;</span>
+<span class="ln">  6</span><span class="n">width</span> <span class="p">=</span> <span class="mi">512</span><span class="p">;</span>
+<span class="ln">  7</span><span class="n">height</span><span class="p">=</span> <span class="mi">768</span><span class="p">;</span>
+<span class="ln">  8</span><span class="n">bits</span> <span class="p">=</span> <span class="mi">8</span><span class="p">;</span>
+<span class="ln">  9</span>
+<span class="ln"> 10</span><span class="c">%% ------------Global Value--------------</span>
+<span class="ln"> 11</span><span class="n">RC</span> <span class="p">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="ln"> 12</span><span class="n">GC</span> <span class="p">=</span> <span class="mi">2</span><span class="p">;</span>
+<span class="ln"> 13</span><span class="n">BC</span> <span class="p">=</span> <span class="mi">3</span><span class="p">;</span>
+<span class="ln"> 14</span>
+<span class="ln"> 15</span><span class="c">%% --------------------------------------</span>
+<span class="ln"> 16</span><span class="n">orgImg</span> <span class="p">=</span> <span class="n">imread</span><span class="p">(</span><span class="s">&#39;images/kodim19.png&#39;</span><span class="p">);</span>
+<span class="ln"> 17</span><span class="n">figure</span><span class="p">();</span><span class="n">imshow</span><span class="p">(</span><span class="n">orgImg</span><span class="p">);</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;org image&#39;</span><span class="p">);</span>
+<span class="ln"> 18</span>
+<span class="ln"> 19</span><span class="n">bayerData</span> <span class="p">=</span> <span class="n">readRaw</span><span class="p">(</span><span class="n">filePath</span><span class="p">,</span> <span class="n">bits</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">);</span>
+<span class="ln"> 20</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln"> 21</span><span class="n">imshow</span><span class="p">(</span><span class="n">bayerData</span><span class="p">);</span>
+<span class="ln"> 22</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;raw image&#39;</span><span class="p">);</span>
+<span class="ln"> 23</span>
+<span class="ln"> 24</span><span class="c">%% expand image inorder to make it easy to calculate edge pixels</span>
+<span class="ln"> 25</span><span class="n">addpath</span><span class="p">(</span><span class="s">&#39;../publicFunction&#39;</span><span class="p">);</span>
+<span class="ln"> 26</span><span class="n">bayerPadding</span> <span class="p">=</span> <span class="n">expandRaw</span><span class="p">(</span><span class="n">bayerData</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+<span class="ln"> 27</span>
+<span class="ln"> 28</span><span class="n">imDst</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="n">height</span><span class="o">+</span><span class="mi">8</span><span class="p">,</span> <span class="n">width</span><span class="o">+</span><span class="mi">8</span><span class="p">,</span> <span class="mi">3</span><span class="p">);</span>
+<span class="ln"> 29</span>
+<span class="ln"> 30</span><span class="c">%% Interpolate the missing green value of blue/red samples</span>
+<span class="ln"> 31</span><span class="k">for</span> <span class="n">ver</span> <span class="p">=</span> <span class="mi">5</span><span class="p">:</span> <span class="n">height</span> <span class="o">+</span> <span class="mi">4</span>
+<span class="ln"> 32</span>    <span class="k">for</span> <span class="n">hor</span> <span class="p">=</span> <span class="mi">5</span><span class="p">:</span> <span class="n">width</span> <span class="o">+</span><span class="mi">4</span>
+<span class="ln"> 33</span>        <span class="c">% R channal</span>
+<span class="ln"> 34</span>        <span class="k">if</span><span class="p">(</span><span class="mi">1</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="mi">1</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="ln"> 35</span>            <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="p">=</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">);</span>
+<span class="ln"> 36</span>            <span class="n">neighborhoodData</span> <span class="p">=</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="o">-</span><span class="mi">4</span><span class="p">:</span> <span class="n">ver</span><span class="o">+</span><span class="mi">4</span><span class="p">,</span> <span class="n">hor</span><span class="o">-</span><span class="mi">4</span><span class="p">:</span> <span class="n">hor</span><span class="o">+</span><span class="mi">4</span><span class="p">);</span>
+<span class="ln"> 37</span>            <span class="n">Wn</span> <span class="p">=</span> <span class="n">DW_Wn</span><span class="p">(</span><span class="n">neighborhoodData</span><span class="p">,</span> <span class="mi">12</span><span class="p">);</span>
+<span class="ln"> 38</span>            <span class="n">Kn</span> <span class="p">=</span> <span class="n">DW_Kn</span><span class="p">(</span><span class="n">neighborhoodData</span><span class="p">,</span> <span class="mi">12</span><span class="p">);</span>
+<span class="ln"> 39</span>            <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="p">=</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">)</span> <span class="o">+</span> <span class="n">sum</span><span class="p">(</span><span class="n">Wn</span> <span class="o">.*</span> <span class="n">Kn</span><span class="p">);</span>
+<span class="ln"> 40</span>        <span class="c">% B channal</span>
+<span class="ln"> 41</span>        <span class="k">elseif</span> <span class="p">(</span><span class="mi">0</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="mi">0</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="ln"> 42</span>            <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="p">=</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">);</span>
+<span class="ln"> 43</span>            <span class="n">neighborhoodData</span> <span class="p">=</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="o">-</span><span class="mi">4</span><span class="p">:</span> <span class="n">ver</span><span class="o">+</span><span class="mi">4</span><span class="p">,</span> <span class="n">hor</span><span class="o">-</span><span class="mi">4</span><span class="p">:</span> <span class="n">hor</span><span class="o">+</span><span class="mi">4</span><span class="p">);</span>
+<span class="ln"> 44</span>            <span class="n">Wn</span> <span class="p">=</span> <span class="n">DW_Wn</span><span class="p">(</span><span class="n">neighborhoodData</span><span class="p">,</span> <span class="mi">12</span><span class="p">);</span>
+<span class="ln"> 45</span>            <span class="n">Kn</span> <span class="p">=</span> <span class="n">DW_Kn</span><span class="p">(</span><span class="n">neighborhoodData</span><span class="p">,</span> <span class="mi">12</span><span class="p">);</span>
+<span class="ln"> 46</span>            <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="p">=</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">)</span> <span class="o">+</span> <span class="n">sum</span><span class="p">(</span><span class="n">Wn</span> <span class="o">.*</span> <span class="n">Kn</span><span class="p">);</span>
+<span class="ln"> 47</span>        <span class="c">% Gr</span>
+<span class="ln"> 48</span>        <span class="k">elseif</span> <span class="p">(</span><span class="mi">1</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="mi">0</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="ln"> 49</span>            <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="p">=</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">);</span>
+<span class="ln"> 50</span>        <span class="c">% Gb</span>
+<span class="ln"> 51</span>        <span class="k">elseif</span> <span class="p">(</span><span class="mi">0</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="mi">1</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="ln"> 52</span>            <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="p">=</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">);</span>
+<span class="ln"> 53</span>        <span class="k">end</span>
+<span class="ln"> 54</span>    <span class="k">end</span>
+<span class="ln"> 55</span><span class="k">end</span>
+<span class="ln"> 56</span>
+<span class="ln"> 57</span><span class="c">% expand the imDst</span>
+<span class="ln"> 58</span><span class="n">imDst</span><span class="p">(:,</span> <span class="mi">1</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="p">:)</span> <span class="p">=</span> <span class="n">imDst</span><span class="p">(:,</span> <span class="mi">5</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="p">:);</span>
+<span class="ln"> 59</span><span class="n">imDst</span><span class="p">(:,</span> <span class="n">width</span><span class="o">+</span><span class="mi">5</span><span class="p">:</span> <span class="n">width</span><span class="o">+</span><span class="mi">8</span><span class="p">,</span> <span class="p">:)</span> <span class="p">=</span> <span class="n">imDst</span><span class="p">(:,</span> <span class="n">width</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span> <span class="n">width</span><span class="o">+</span><span class="mi">4</span><span class="p">,</span> <span class="p">:);</span>
+<span class="ln"> 60</span><span class="n">imDst</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span> <span class="p">:</span> <span class="p">,</span> <span class="p">:)</span> <span class="p">=</span> <span class="n">imDst</span><span class="p">(</span><span class="mi">5</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:);</span>
+<span class="ln"> 61</span><span class="n">imDst</span><span class="p">(</span><span class="n">height</span><span class="o">+</span><span class="mi">5</span><span class="p">:</span> <span class="n">height</span><span class="o">+</span><span class="mi">8</span><span class="p">,</span> <span class="p">:</span> <span class="p">,</span> <span class="p">:)</span> <span class="p">=</span> <span class="n">imDst</span><span class="p">(</span><span class="n">height</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span> <span class="n">height</span><span class="o">+</span><span class="mi">4</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:);</span>
+<span class="ln"> 62</span>
+<span class="ln"> 63</span><span class="c">%% Interpolate the missing red/blue values of blue/red samples.</span>
+<span class="ln"> 64</span><span class="k">for</span> <span class="n">ver</span> <span class="p">=</span> <span class="mi">5</span><span class="p">:</span> <span class="n">height</span> <span class="o">+</span> <span class="mi">4</span>
+<span class="ln"> 65</span>    <span class="k">for</span> <span class="n">hor</span> <span class="p">=</span> <span class="mi">5</span><span class="p">:</span> <span class="n">width</span> <span class="o">+</span><span class="mi">4</span>
+<span class="ln"> 66</span>        <span class="c">% R channal</span>
+<span class="ln"> 67</span>        <span class="k">if</span><span class="p">(</span><span class="mi">1</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="mi">1</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="ln"> 68</span>            <span class="n">neighborRaw</span> <span class="p">=</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="o">-</span><span class="mi">4</span><span class="p">:</span> <span class="n">ver</span><span class="o">+</span><span class="mi">4</span><span class="p">,</span> <span class="n">hor</span><span class="o">-</span><span class="mi">4</span><span class="p">:</span> <span class="n">hor</span><span class="o">+</span><span class="mi">4</span><span class="p">);</span>
+<span class="ln"> 69</span>            <span class="n">Wn</span> <span class="p">=</span> <span class="n">DW_Wn</span><span class="p">(</span><span class="n">neighborRaw</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+<span class="ln"> 70</span>            <span class="n">neighborhoodData</span> <span class="p">=</span> <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="o">-</span><span class="mi">4</span><span class="p">:</span> <span class="n">ver</span><span class="o">+</span><span class="mi">4</span><span class="p">,</span> <span class="n">hor</span><span class="o">-</span><span class="mi">4</span><span class="p">:</span> <span class="n">hor</span><span class="o">+</span><span class="mi">4</span><span class="p">,</span> <span class="p">:);</span>
+<span class="ln"> 71</span>            <span class="n">Kn</span> <span class="p">=</span> <span class="n">DW_Kn</span><span class="p">(</span><span class="n">neighborhoodData</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">BC</span><span class="p">);</span>
+<span class="ln"> 72</span>            <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="p">=</span> <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">sum</span><span class="p">(</span><span class="n">Wn</span> <span class="o">.*</span> <span class="n">Kn</span><span class="p">);</span>
+<span class="ln"> 73</span>        <span class="c">% B channal</span>
+<span class="ln"> 74</span>        <span class="k">elseif</span> <span class="p">(</span><span class="mi">0</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="mi">0</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="ln"> 75</span>            <span class="n">neighborRaw</span> <span class="p">=</span> <span class="n">bayerPadding</span><span class="p">(</span><span class="n">ver</span><span class="o">-</span><span class="mi">4</span><span class="p">:</span> <span class="n">ver</span><span class="o">+</span><span class="mi">4</span><span class="p">,</span> <span class="n">hor</span><span class="o">-</span><span class="mi">4</span><span class="p">:</span> <span class="n">hor</span><span class="o">+</span><span class="mi">4</span><span class="p">);</span>
+<span class="ln"> 76</span>            <span class="n">Wn</span> <span class="p">=</span> <span class="n">DW_Wn</span><span class="p">(</span><span class="n">neighborRaw</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+<span class="ln"> 77</span>            <span class="n">neighborhoodData</span> <span class="p">=</span> <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="o">-</span><span class="mi">4</span><span class="p">:</span> <span class="n">ver</span><span class="o">+</span><span class="mi">4</span><span class="p">,</span> <span class="n">hor</span><span class="o">-</span><span class="mi">4</span><span class="p">:</span> <span class="n">hor</span><span class="o">+</span><span class="mi">4</span><span class="p">,</span> <span class="p">:);</span>
+<span class="ln"> 78</span>            <span class="n">Kn</span> <span class="p">=</span> <span class="n">DW_Kn</span><span class="p">(</span><span class="n">neighborhoodData</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">RC</span><span class="p">);</span>
+<span class="ln"> 79</span>            <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="p">=</span> <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">sum</span><span class="p">(</span><span class="n">Wn</span> <span class="o">.*</span> <span class="n">Kn</span><span class="p">);</span>
+<span class="ln"> 80</span>        <span class="k">else</span>
+<span class="ln"> 81</span>            <span class="k">continue</span>
+<span class="ln"> 82</span>        <span class="k">end</span>
+<span class="ln"> 83</span>    <span class="k">end</span>
+<span class="ln"> 84</span><span class="k">end</span>
+<span class="ln"> 85</span><span class="c">% expand the imDst</span>
+<span class="ln"> 86</span><span class="n">imDst</span><span class="p">(:,</span> <span class="mi">1</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="p">:)</span> <span class="p">=</span> <span class="n">imDst</span><span class="p">(:,</span> <span class="mi">5</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="p">:);</span>
+<span class="ln"> 87</span><span class="n">imDst</span><span class="p">(:,</span> <span class="n">width</span><span class="o">+</span><span class="mi">5</span><span class="p">:</span> <span class="n">width</span><span class="o">+</span><span class="mi">8</span><span class="p">,</span> <span class="p">:)</span> <span class="p">=</span> <span class="n">imDst</span><span class="p">(:,</span> <span class="n">width</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span> <span class="n">width</span><span class="o">+</span><span class="mi">4</span><span class="p">,</span> <span class="p">:);</span>
+<span class="ln"> 88</span><span class="n">imDst</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span> <span class="p">:</span> <span class="p">,</span> <span class="p">:)</span> <span class="p">=</span> <span class="n">imDst</span><span class="p">(</span><span class="mi">5</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:);</span>
+<span class="ln"> 89</span><span class="n">imDst</span><span class="p">(</span><span class="n">height</span><span class="o">+</span><span class="mi">5</span><span class="p">:</span> <span class="n">height</span><span class="o">+</span><span class="mi">8</span><span class="p">,</span> <span class="p">:</span> <span class="p">,</span> <span class="p">:)</span> <span class="p">=</span> <span class="n">imDst</span><span class="p">(</span><span class="n">height</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span> <span class="n">height</span><span class="o">+</span><span class="mi">4</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:);</span>
+<span class="ln"> 90</span>
+<span class="ln"> 91</span><span class="c">%% Interpolate missing red/blue values of green samples.</span>
+<span class="ln"> 92</span><span class="k">for</span> <span class="n">ver</span> <span class="p">=</span> <span class="mi">5</span><span class="p">:</span> <span class="n">height</span> <span class="o">+</span> <span class="mi">4</span>
+<span class="ln"> 93</span>    <span class="k">for</span> <span class="n">hor</span> <span class="p">=</span> <span class="mi">5</span><span class="p">:</span> <span class="n">width</span> <span class="o">+</span><span class="mi">4</span>
+<span class="ln"> 94</span>        <span class="n">neighborhoodData</span> <span class="p">=</span> <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="o">-</span><span class="mi">4</span><span class="p">:</span> <span class="n">ver</span><span class="o">+</span><span class="mi">4</span><span class="p">,</span> <span class="n">hor</span><span class="o">-</span><span class="mi">4</span><span class="p">:</span> <span class="n">hor</span><span class="o">+</span><span class="mi">4</span><span class="p">,</span> <span class="p">:);</span>
+<span class="ln"> 95</span>        <span class="c">% R channal</span>
+<span class="ln"> 96</span>        <span class="k">if</span><span class="p">(</span><span class="mi">1</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="mi">1</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="ln"> 97</span>            <span class="k">continue</span>
+<span class="ln"> 98</span>        <span class="c">% B channal</span>
+<span class="ln"> 99</span>        <span class="k">elseif</span> <span class="p">(</span><span class="mi">0</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="mi">0</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="ln">100</span>            <span class="k">continue</span>
+<span class="ln">101</span>        <span class="c">% G</span>
+<span class="ln">102</span>        <span class="k">else</span>
+<span class="ln">103</span>            <span class="n">Wrn</span> <span class="p">=</span> <span class="n">DW_Wn</span><span class="p">(</span><span class="n">neighborhoodData</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="n">GC</span><span class="p">,</span> <span class="n">RC</span><span class="p">);</span>
+<span class="ln">104</span>            <span class="n">Wbn</span> <span class="p">=</span> <span class="n">DW_Wn</span><span class="p">(</span><span class="n">neighborhoodData</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="n">GC</span><span class="p">,</span> <span class="n">BC</span><span class="p">);</span>
+<span class="ln">105</span>            <span class="n">Krn</span> <span class="p">=</span> <span class="n">DW_Kn</span><span class="p">(</span><span class="n">neighborhoodData</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="n">RC</span><span class="p">);</span>
+<span class="ln">106</span>            <span class="n">Kbn</span> <span class="p">=</span> <span class="n">DW_Kn</span><span class="p">(</span><span class="n">neighborhoodData</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="n">BC</span><span class="p">);</span>
+<span class="ln">107</span>            <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="p">=</span> <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">sum</span><span class="p">(</span><span class="n">Wrn</span> <span class="o">.*</span> <span class="n">Krn</span><span class="p">);</span>
+<span class="ln">108</span>            <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="p">=</span> <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">sum</span><span class="p">(</span><span class="n">Wbn</span> <span class="o">.*</span> <span class="n">Kbn</span><span class="p">);</span>
+<span class="ln">109</span>        <span class="k">end</span>
+<span class="ln">110</span>    <span class="k">end</span>
+<span class="ln">111</span><span class="k">end</span>
+<span class="ln">112</span><span class="c">% expand the imDst</span>
+<span class="ln">113</span><span class="n">imDst</span><span class="p">(:,</span> <span class="mi">1</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="p">:)</span> <span class="p">=</span> <span class="n">imDst</span><span class="p">(:,</span> <span class="mi">5</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="p">:);</span>
+<span class="ln">114</span><span class="n">imDst</span><span class="p">(:,</span> <span class="n">width</span><span class="o">+</span><span class="mi">5</span><span class="p">:</span> <span class="n">width</span><span class="o">+</span><span class="mi">8</span><span class="p">,</span> <span class="p">:)</span> <span class="p">=</span> <span class="n">imDst</span><span class="p">(:,</span> <span class="n">width</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span> <span class="n">width</span><span class="o">+</span><span class="mi">4</span><span class="p">,</span> <span class="p">:);</span>
+<span class="ln">115</span><span class="n">imDst</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span> <span class="p">:</span> <span class="p">,</span> <span class="p">:)</span> <span class="p">=</span> <span class="n">imDst</span><span class="p">(</span><span class="mi">5</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:);</span>
+<span class="ln">116</span><span class="n">imDst</span><span class="p">(</span><span class="n">height</span><span class="o">+</span><span class="mi">5</span><span class="p">:</span> <span class="n">height</span><span class="o">+</span><span class="mi">8</span><span class="p">,</span> <span class="p">:</span> <span class="p">,</span> <span class="p">:)</span> <span class="p">=</span> <span class="n">imDst</span><span class="p">(</span><span class="n">height</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span> <span class="n">height</span><span class="o">+</span><span class="mi">4</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:);</span>
+<span class="ln">117</span><span class="n">figure</span><span class="p">();</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">imDst</span><span class="p">));</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;now&#39;</span><span class="p">);</span>
+<span class="ln">118</span>
+<span class="ln">119</span><span class="c">%% Adjust the estimated green values of red/blue samples</span>
+<span class="ln">120</span><span class="k">for</span> <span class="n">ver</span> <span class="p">=</span> <span class="mi">5</span><span class="p">:</span> <span class="n">height</span> <span class="o">+</span> <span class="mi">4</span>
+<span class="ln">121</span>    <span class="k">for</span> <span class="n">hor</span> <span class="p">=</span> <span class="mi">5</span><span class="p">:</span> <span class="n">width</span> <span class="o">+</span><span class="mi">4</span>
+<span class="ln">122</span>        <span class="n">neighborhoodData</span> <span class="p">=</span> <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="o">-</span><span class="mi">4</span><span class="p">:</span> <span class="n">ver</span><span class="o">+</span><span class="mi">4</span><span class="p">,</span> <span class="n">hor</span><span class="o">-</span><span class="mi">4</span><span class="p">:</span> <span class="n">hor</span><span class="o">+</span><span class="mi">4</span><span class="p">,</span> <span class="p">:);</span>
+<span class="ln">123</span>        <span class="c">% R channal</span>
+<span class="ln">124</span>        <span class="k">if</span><span class="p">(</span><span class="mi">1</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="mi">1</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="ln">125</span>            <span class="n">Wrn</span> <span class="p">=</span> <span class="n">DW_Wn</span><span class="p">(</span><span class="n">neighborhoodData</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="n">RC</span><span class="p">,</span> <span class="n">GC</span><span class="p">);</span>           
+<span class="ln">126</span>            <span class="n">Krn</span> <span class="p">=</span> <span class="n">DW_Kn</span><span class="p">(</span><span class="n">neighborhoodData</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="n">RC</span><span class="p">);</span>
+<span class="ln">127</span>            <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="p">=</span> <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">sum</span><span class="p">(</span><span class="n">Wrn</span> <span class="o">.*</span> <span class="n">Krn</span><span class="p">);</span>
+<span class="ln">128</span>        <span class="c">% B channal</span>
+<span class="ln">129</span>        <span class="k">elseif</span> <span class="p">(</span><span class="mi">0</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="mi">0</span> <span class="o">==</span> <span class="nb">mod</span><span class="p">(</span><span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="ln">130</span>            <span class="n">Wbn</span> <span class="p">=</span> <span class="n">DW_Wn</span><span class="p">(</span><span class="n">neighborhoodData</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="n">BC</span><span class="p">,</span> <span class="n">GC</span><span class="p">);</span>
+<span class="ln">131</span>            <span class="n">Kbn</span> <span class="p">=</span> <span class="n">DW_Kn</span><span class="p">(</span><span class="n">neighborhoodData</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="n">BC</span><span class="p">);</span>
+<span class="ln">132</span>            <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="p">=</span> <span class="n">imDst</span><span class="p">(</span><span class="n">ver</span><span class="p">,</span> <span class="n">hor</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="o">+</span> <span class="n">sum</span><span class="p">(</span><span class="n">Wbn</span> <span class="o">.*</span> <span class="n">Kbn</span><span class="p">);</span>
+<span class="ln">133</span>        <span class="c">% G</span>
+<span class="ln">134</span>        <span class="k">else</span>
+<span class="ln">135</span>            <span class="k">continue</span>
+<span class="ln">136</span>        <span class="k">end</span>
+<span class="ln">137</span>    <span class="k">end</span>
+<span class="ln">138</span><span class="k">end</span>
+<span class="ln">139</span><span class="n">demosaicImg</span> <span class="p">=</span> <span class="n">imDst</span><span class="p">(</span><span class="mi">5</span><span class="p">:</span> <span class="n">height</span> <span class="o">+</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">:</span> <span class="n">width</span> <span class="o">+</span><span class="mi">4</span><span class="p">,</span> <span class="p">:);</span>
+<span class="ln">140</span><span class="n">figure</span><span class="p">();</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">demosaicImg</span><span class="p">));</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;demosaicking image&#39;</span><span class="p">);</span>
+</code></pre></div><p>虽然还是会存在高频伪彩，但是相比较3.1的线性插值，这个效果更接近原图的效果</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk23.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/demosaick/dmsk23.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="33深度学习法">3.3深度学习法</h2>
+<p>通过机器学习或者深度学习的方法来处理ISP的流程也是一个新的探索，所以在这个环节也引进了相关的算法</p>
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python"><span class="ln"> 1</span><span class="kn">import</span> <span class="nn">torchvision</span>
+<span class="ln"> 2</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="ln"> 3</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="ln"> 4</span><span class="kn">import</span> <span class="nn">cv2</span> <span class="k">as</span> <span class="nn">cv</span>
+<span class="ln"> 5</span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="ln"> 6</span><span class="kn">from</span> <span class="nn">DeepJointDemosaickingAndDenoising</span> <span class="kn">import</span> <span class="n">DJDDNetwork</span>
+<span class="ln"> 7</span><span class="kn">import</span> <span class="nn">argparse</span>
+<span class="ln"> 8</span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="ln"> 9</span>
+<span class="ln">10</span>
+<span class="ln">11</span><span class="c1"># todo rgb2raw</span>
+<span class="ln">12</span><span class="k">def</span> <span class="nf">rgb2raw</span><span class="p">(</span><span class="n">org_img</span><span class="p">):</span>
+<span class="ln">13</span>    <span class="s2">&#34;&#34;&#34;
+</span><span class="ln">14</span><span class="s2">    G B
+</span><span class="ln">15</span><span class="s2">    R G
+</span><span class="ln">16</span><span class="s2">    &#34;&#34;&#34;</span>
+<span class="ln">17</span>    <span class="n">mos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">org_img</span><span class="p">)</span>
+<span class="ln">18</span>    <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">org_img</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="ln">19</span>    <span class="c1"># red</span>
+<span class="ln">20</span>    <span class="n">mask</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="ln">21</span>
+<span class="ln">22</span>    <span class="c1"># green</span>
+<span class="ln">23</span>    <span class="n">mask</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="ln">24</span>    <span class="n">mask</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="ln">25</span>
+<span class="ln">26</span>    <span class="c1"># blue</span>
+<span class="ln">27</span>    <span class="n">mask</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="ln">28</span>
+<span class="ln">29</span>    <span class="n">masic_image</span> <span class="o">=</span> <span class="n">mos</span> <span class="o">*</span> <span class="n">mask</span>
+<span class="ln">30</span>
+<span class="ln">31</span>    <span class="n">raw</span> <span class="o">=</span> <span class="n">masic_image</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+<span class="ln">32</span>    <span class="k">return</span> <span class="n">raw</span>
+<span class="ln">33</span>
+<span class="ln">34</span>
+<span class="ln">35</span><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+<span class="ln">36</span>    <span class="c1"># todo org-&gt; cfa</span>
+<span class="ln">37</span>
+<span class="ln">38</span>    <span class="n">model</span> <span class="o">=</span> <span class="n">DJDDNetwork</span><span class="p">()</span>
+<span class="ln">39</span>    <span class="c1"># model.load_state_dict(torch.load(&#34;model_GPU_2000.pth&#34;))</span>
+<span class="ln">40</span>    <span class="n">model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&#34;model_cpu_100.pth&#34;</span><span class="p">)</span>
+<span class="ln">41</span>    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+<span class="ln">42</span>    <span class="c1"># raw = cv.imread(&#34;../../images/00025_raw.png&#34;)</span>
+<span class="ln">43</span>    <span class="n">org_img</span> <span class="o">=</span> <span class="n">cv</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">input</span><span class="p">)</span>
+<span class="ln">44</span>    <span class="n">org_rgb_img</span> <span class="o">=</span> <span class="n">cv</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">org_img</span><span class="p">,</span> <span class="n">cv</span><span class="o">.</span><span class="n">COLOR_BGR2RGB</span><span class="p">)</span>
+<span class="ln">45</span>    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="ln">46</span>    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">org_rgb_img</span><span class="p">)</span>
+<span class="ln">47</span>    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&#34;org&#34;</span><span class="p">)</span>
+<span class="ln">48</span>
+<span class="ln">49</span>    <span class="n">raw</span> <span class="o">=</span> <span class="n">rgb2raw</span><span class="p">(</span><span class="n">org_img</span><span class="p">)</span>
+<span class="ln">50</span>    <span class="n">cv</span><span class="o">.</span><span class="n">imwrite</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">output_mosaicked</span><span class="p">,</span> <span class="n">raw</span><span class="p">,</span> <span class="p">[</span><span class="n">cv</span><span class="o">.</span><span class="n">IMWRITE_PNG_COMPRESSION</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+<span class="ln">51</span>    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="ln">52</span>    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+<span class="ln">53</span>    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&#34;raw&#34;</span><span class="p">)</span>
+<span class="ln">54</span>
+<span class="ln">55</span>    <span class="c1"># ndarray to tensor</span>
+<span class="ln">56</span>    <span class="n">transform</span> <span class="o">=</span> <span class="n">torchvision</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">ToTensor</span><span class="p">()</span>
+<span class="ln">57</span>    <span class="n">tensor_raw</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+<span class="ln">58</span>    <span class="c1"># Turn 3 dimensions into 4 dimensions that model need</span>
+<span class="ln">59</span>    <span class="n">tensor_raw</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">tensor_raw</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="ln">60</span>    <span class="c1"># 4 dimensions tensor to 3 dimensions np.array</span>
+<span class="ln">61</span>    <span class="n">output</span> <span class="o">=</span> <span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">tensor_raw</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;uint8&#39;</span><span class="p">)</span>
+<span class="ln">62</span>    <span class="n">img</span> <span class="o">=</span> <span class="n">cv</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">cv</span><span class="o">.</span><span class="n">COLOR_BGR2RGB</span><span class="p">)</span>
+<span class="ln">63</span>    <span class="n">cv</span><span class="o">.</span><span class="n">imwrite</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="p">[</span><span class="n">cv</span><span class="o">.</span><span class="n">IMWRITE_PNG_COMPRESSION</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>  <span class="c1"># , [int(cv.IMWRITE_JPEG_QUALITY), 100]</span>
+<span class="ln">64</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&#34;output shape: </span><span class="si">{}</span><span class="s2">&#34;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+<span class="ln">65</span>    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="ln">66</span>    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+<span class="ln">67</span>    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&#34;output&#34;</span><span class="p">)</span>
+<span class="ln">68</span>    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="ln">69</span>
+<span class="ln">70</span>
+<span class="ln">71</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="ln">72</span>    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">()</span>
+<span class="ln">73</span>    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&#34;--input&#34;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&#34;kodim19.png&#34;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&#34;path to input image.&#34;</span><span class="p">)</span>
+<span class="ln">74</span>    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&#34;--output&#34;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&#34;output.png&#34;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&#34;path to output image.&#34;</span><span class="p">)</span>
+<span class="ln">75</span>    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&#34;--output_mosaicked&#34;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&#34;cfa.png&#34;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&#34;path to ouput cfa image&#34;</span><span class="p">)</span>
+<span class="ln">76</span>    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+<span class="ln">77</span>    <span class="n">main</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+</code></pre></div><p>这里需要提一点的就是，该算法默认的raw输入为3通道，这个图可以通过一通道的raw生成，就是只保留该点原本的颜色值，其他两个通道为0即可。大体模型就是输入的RAW先通过降采样生成4通道的长宽均缩小一半的数据，这里降采样有两种方式，一种是直接将图像拆分为R，B，Gr，和Gb四个通道，然后再进网络，另一种方式就是如图代码中的方式，通过一个2X2，步长为2的卷积核进行一个卷积运算输出一个4通道。在经过降采样后再经过14次3X3的卷积并用ReLu作为激活函数，同时整个过程维持64通道。然后在15层通过3X3卷积输出一个12通道的数据，紧接着通过一个上采样卷积生成一个3通道的数据，然后将这个3通道的数据和原始的raw数据做一个叠加生成一个6通道的数据，紧接着再经过一个3X3卷积生成64通道数据，最后再通过一个3X3的卷积生成最终的图像。基于这个模型通过大量的数据来学习最终生成一个效果OK的模型。由于手头算力有限，所以我这边训练的模型效果一般，但是作者通过230万张图片经过2-3周的训练，可以得到一个很OK的模型。关于这个模型在我的仓库中提供了pytorch和paddle两个版本，具体可以<a href="https://github.com/YangYang48/ISPAlgorithm/tree/master/Demosaic/src/CDM">点击这里</a></p>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/demosaicking/">demosaicking</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/raw/">raw</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E7%BA%BF%E6%80%A7%E6%8F%92%E5%80%BC/">线性插值</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E8%89%B2%E5%B7%AE%E8%89%B2%E6%AF%94/">色差色比</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%96%B9%E5%90%91%E5%8A%A0%E6%9D%83/">方向加权</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E8%BE%B9%E7%BC%98%E6%A3%80%E6%B5%8B/">边缘检测</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2024/01/rk-camera%E9%A9%B1%E5%8A%A8%E8%B0%83%E8%AF%95%E5%AD%A6%E4%B9%A0/" data-tooltip="rk camera驱动调试学习">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2024/01/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-bnrbayer-noise-reduce/" data-tooltip="isp算法学习-BNR（Bayer Noise Reduce）">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2024 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2024/01/rk-camera%E9%A9%B1%E5%8A%A8%E8%B0%83%E8%AF%95%E5%AD%A6%E4%B9%A0/" data-tooltip="rk camera驱动调试学习">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2024/01/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-bnrbayer-noise-reduce/" data-tooltip="isp算法学习-BNR（Bayer Noise Reduce）">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2024%2F01%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-demosaicking%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2024%2F01%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-demosaicking%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2024%2F01%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-demosaicking%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2024\/01\/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-demosaicking\/';
+          
+            this.page.identifier = '\/2024\/01\/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-demosaicking\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+  <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_CHTML-full" integrity="sha256-GhM+5JHb6QUzOQPXSJLEWP7R73CbkisjzK5Eyij4U9w=" crossorigin="anonymous"></script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      CommonHTML: { linebreaks: { automatic: true } },
+      tex2jax: { inlineMath: [ ['$', '$'], ['\\(','\\)'] ], displayMath: [ ['$$','$$'], ['\\[', '\\]'] ], processEscapes: false },
+      messageStyle: 'none'
+    });
+  </script>
+
+
+
+    
+  </body>
+</html>
+
