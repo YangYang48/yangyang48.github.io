@@ -1,0 +1,1643 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="本文是isp算法学习的第十二篇章，主要是讲述CCM。">
+
+
+<meta property="og:description" content="本文是isp算法学习的第十二篇章，主要是讲述CCM。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="isp算法学习CCM（Color Correction Matrix）">
+<meta name="twitter:title" content="isp算法学习CCM（Color Correction Matrix）">
+<meta property="og:url" content="https://yangyang48.github.io/2024/02/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0ccmcolor-correction-matrix/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2024/02/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0ccmcolor-correction-matrix/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="本文是isp算法学习的第十二篇章，主要是讲述CCM。">
+<meta name="twitter:description" content="本文是isp算法学习的第十二篇章，主要是讲述CCM。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2024-02-07T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2024-02-07T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="2024">
+    
+      <meta property="article:section" content="February">
+    
+      <meta property="article:section" content="camera">
+    
+  
+  
+    
+      <meta property="article:tag" content="CCM">
+    
+      <meta property="article:tag" content="CIE RGB颜色模型">
+    
+      <meta property="article:tag" content="CIE XYZ颜色空间">
+    
+      <meta property="article:tag" content="CIE xy色度图">
+    
+      <meta property="article:tag" content="sRGB色域">
+    
+      <meta property="article:tag" content="CIE Lab颜色空间">
+    
+      <meta property="article:tag" content="CIE Luv颜色空间">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm_cover.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm_cover.jpg">
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+
+
+    <title>isp算法学习CCM（Color Correction Matrix）</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2024/02/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0ccmcolor-correction-matrix/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/camera/algorithmlearning/ccm/ccm_cover.jpg')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      isp算法学习CCM（Color Correction Matrix）
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2024-02-07T00:00:00Z">
+        
+  二月 7, 2024
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2024">2024</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/february">February</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/camera">camera</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">400 Words|Read in about 2 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+      
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>本文是isp算法学习的第十二篇章，主要是讲述CCM。</p>
+<div style="text-align: center;">
+<iframe 
+    frameborder="no" border="1"
+    marginwidth="0" marginheight="0"
+    width=400 height=100
+    src="//music.163.com/outchain/player?type=2&id=1313107594&auto=1&height=66"></iframe>
+</div>
+<h1 id="0开篇介绍">0开篇介绍</h1>
+<h2 id="01人眼波长反应曲线">0.1人眼波长反应曲线</h2>
+<p>人眼之所以能感受到自然界的颜色是因为人眼的<strong>视锥细胞</strong>在起作用。人眼主要通过三种视锥细胞感受三种不同波长的光从而感受颜色。如图所示是<strong>人眼感受不同波长的反应曲线</strong>，分别对应三种不同的波长，所以通常用RGB三原色来表示颜色。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm10.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm10.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="02sensor波长响应曲线">0.2sensor波长响应曲线</h2>
+<p>如图是IMX415C和ICX262AQ两种sensor的感光特性，可以看出来和人眼的感光曲线有很大的不同，而且同样SONY生产的sensor各自的感光曲线的特性也有很大差异，所以如果直接用sensor感光的特性来表示颜色回合人眼有很大的差异，且同一种颜色通过不同sensor感光后得到的数据是不一样的，而对于显示器而言就会表现出不同的颜色，这是我们不希望看到的，我们希望同一种颜色即使使用不同的sensor也能得到相同的RGB数据且和人眼感受的颜色一致或者接近。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm11.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm11.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>IMX415C的sensor的感光特性图</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm12.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm12.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>ICX262AQsensor的感光特性图</p>
+<p>为了达到上述的要求，我们可以理解为人眼对物体感受的颜色是我们的目标，那么就需要将sensor感光数据经过某种变换达到我们的目标。假设人眼能感受到的颜色种类有m种，那么自然界的颜色就可以表示为一个3Xm的矩阵，同理sensor对自然界的感光也可以得到一个3Xm的矩阵。</p>
+<p>那么我们需要做的就是将右侧sensor感光的数据转换到左侧人眼感光的数据上来。（左侧为人眼感光数据矩阵，右侧为sensor感光数据矩阵），其中M的9个元素为3X3的CCM矩阵。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm13.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm13.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="03ccm">0.3CCM</h2>
+<p>CCM(Color Correction Matrix)的作用就是通过一个3X3的矩阵使得颜色更接近人眼所感受的颜色。</p>
+<h1 id="1颜色学基础">1颜色学基础</h1>
+<h3 id="11cie-rgb">1.1CIE RGB</h3>
+<p>这里就不得不提到<strong>颜色匹配实验</strong>了。</p>
+<p>在20世纪初，大卫·赖特和约翰·吉尔德独立地与人类观察者进行了实验，在实验中，测试对象试图将红、绿、蓝光源的光谱颜色以10纳米的增量相匹配。这个实验非常类似于我们用滑块来匹配目标颜色，作为其他三种颜色的组合。</p>
+<p>该实验原理如下图所示，右侧有两个屏幕，一侧有一个可以改变波长的光源，一侧是固定三种波长（红绿蓝）的光源，然后人眼通过一个角度去看这两个屏幕。f光源改变不同的波长呈现出不同的颜色，然后通过P1，P2，P3三个波长的光源不同的强度的混合，使得人眼感受到两个屏幕的颜色一致，然后记录下此时的三色值，那么该三色值就表示f测波长对应的颜色值。</p>
+<p>国际照明委员会（CIE）于1931年提出了一个RGB颜色模型</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm14.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm14.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>从下图中可以看到CIE RGB有数据是负数，这个是因为某个波长r(λ)颜色的光通过P1，P2，P3在一侧混合无法得到，那么就需要将某个光源放到f测去才能到达这种效果，那么此时就相当于对改颜色做了减法，那么就出现了负数。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm15.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm15.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>CIE将实验的参考光源CIE R标准化为波长为700.0 nm的单色光，参考光源CIE G标准化为546.1 nm，参考光源CIE B标准化为435.8 nm，并给出了它们之间的相对强度比。这是我们讨论颜色的关键一步——我们最终基于一些物理上可测量的属性。</p>
+<p>让我们看看黄色波长570nm。从颜色匹配图中我们可以看出，颜色匹配需要0.16768个单位的CIE R, 0.17087个单位的CIE G和- 0.00135个单位的CIE B。一组三个RGB坐标只是为了三维的呈现。如果我们读取每个波长的颜色匹配值，我们得到下面的图:</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm16.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm16.png" >
+  
+    </a>
+  
+  
+</div>
+
+<blockquote>
+<p>Q:为什么光谱曲线没有经过CIE RGB立方体的纯红、绿或蓝端点，</p>
+<p>A:它只是委员会对颜色匹配函数进行规范化和缩放的结果。在合理的范围内，光源可以根据需要被构造成强大的，所以什么构成“1.0”总是被任意地定义。</p>
+</blockquote>
+<h2 id="12cie-xyz">1.2CIE XYZ</h2>
+<p>因为发现这个上述RGB模型存在缺陷，其中红色响应在435.1~546.1波段出现了负值，给配色造成了极大不便。CIE RGB色彩空间植根于单色光的具体物理特性，我们可以用它来定义任何颜色感觉。然而，委员会努力创造一个衍生空间，将有一些有用的属性，其中两个值得注意:</p>
+<ul>
+<li>没有光谱颜色的负坐标</li>
+<li>色度(色调和色彩)与亮度(亮度的视觉感知)的分离</li>
+</ul>
+<p>经过一番考虑，我们得到了下面的一组方程:
+$$
+X = 2.769×R_{CIE} + 1.752×G_{CIE} + 1.130×B_{CIE}\<br>
+Y = 1.000×R_{CIE} + 4.591×G_{CIE} + 0.061×B_{CIE}\<br>
+Z = 0.000×R_{CIE} + 0.057×G_{CIE} + 5.594×B_{CIE}<br>
+$$
+这些因素可能看起来是任意的，在某种意义上它们是，但这只是另一个从一个空间到另一个空间的值映射，类似于我们用RGB到R&rsquo;G&rsquo;B&rsquo;变换所做的。选择Y分量作为亮度分量，而X和Z定义色度。</p>
+<p>国际照明委员会（CIE）于1931年首次用纯数学的方法定义了一种颜色空间模型，即CIE 1931 XYZ 颜色空间，它覆盖了人眼所能感知的全部颜色，而且不依赖于任何特定的物理实现。当一个颜色以XYZ 形式表示时，在任何支持XYZ标准的显示器上都会渲染出一致的颜色，与显示器的具体物理特性无关。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm17.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm17.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>你可以看到XYZ空间是如何围绕光谱曲线设计的，以确保它符合正八分区。它的小尺寸并不是一个真正的问题，通过确保感知到的最亮波长555nm的Y值为1，缩放使事情更方便使用。作为最后一步，我们可以单独显示XYZ空间和光谱颜色:</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm18.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm18.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>由于CIE XYZ空间源自CIE RGB，它也基于可测量的物理量。XYZ色彩空间是用于<strong>所有基于矩阵的RGB显示色彩空间转换的基本色彩空间</strong>。任何两个色彩空间之间的映射都是通过一个通用的CIE XYZ中间体完成的。这简化了颜色变换，因为我们不需要知道如何在任意两个颜色空间之间转换颜色，我们只需要能够将它们都转换到XYZ空间。</p>
+<h2 id="13cie-xy色度图">1.3CIE xy色度图</h2>
+<p>三维图表玩起来很有趣，但它们通常不是特别实用——2D图表通常更容易处理和推理。由于XYZ空间的Y分量没有任何色彩和色调，所以我们只剩下两个影响颜色色度的分量。我们可以执行三种旨在降低空间维数的操作（这里归一化处理）:
+$$
+x = X / (X + Y + Z)\<br>
+y = Y / (X + Y + Z)\<br>
+z = Z / (X + Y + Z)<br>
+$$
+小写和大写的区别在这里很重要——x和X不一样。这些看似任意的方程有一个简单的视觉解释——它是在XYZ坐标<code>[1.0,0.0,0.0]</code>和<code>[0.0,1.0,0.0]</code>和<code>[0.0,0.0,1.0]</code>之间的三角形上的投影。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm19.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm19.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>注意到x, y, z加起来等于1，所以我们可以去掉最后一个分量，因为它是冗余的——我们总是可以通过从1中减去x和y来重新生成它。拒绝z等于在xy平面上的平面投影:</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm20.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm20.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>如果我们对光谱颜色的每个组合重复这一步骤，我们最终可以呈现出被称为CIE xy<strong>色度图</strong>的2D图。你以前可能见过这个马蹄形:</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm21.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm21.png" >
+  
+    </a>
+  
+  
+</div>
+
+<blockquote>
+<p>补充说明</p>
+<p>1.色觉异常的色度学表现</p>
+<p>大部分色觉异常者仅有一种锥细胞无法正常工作，而剩余的锥细胞依然能提供“彩色”的视觉信息。因此，<strong>色觉异常者眼中的世界并非只有黑白两色，只不过他们的辨色能力比普通人更弱，他们所“看见”的世界也和普通人的不同。</strong></p>
+<p>由于辨色能力的缺陷，很多普通人看来明显不同的颜色，色觉异常者却认为几乎一致，这种现象称为颜色混同（color confusion）**。**研究者在CIE1931色品图上绘制出了混同线，来标识色觉异常者难以辨别的颜色。从图中可以看出，红、绿色盲都难以分辨红色和绿色，红色盲还无法分辨蓝色和紫色，可能将青色视为灰色，而绿色盲容易混淆青色和紫色。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm34.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm34.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>2.等色温线</p>
+<p>色温是由英国物理学家洛德·开尔文于19世纪末提出的，其通过对比光源的颜色和理想黑体来确定。当某光源所呈现的颜色与黑体在某一温度下的颜色相同时，则此时黑体的温度就称为该光源的颜色温度，简称色温。由于某些光源的光谱分布与黑体相差较远，它们在某一温度时的相对光谱功率分布所决定的色品坐标不一定准确地落在色品图的黑体温度轨迹上，这时不能用色温来描述其颜色，而采用相关色温来表征这类光源的光色特性。<strong>相关色温定义为当光源的颜色与黑体在某一温度下的颜色最接近时的黑体温度</strong>。一般，日常生活中所提到的色温是指相关色温。（不同色温下的黑体轨迹和等色温线）</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm33.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm33.png" >
+  
+    </a>
+  
+  
+</div>
+
+</blockquote>
+<h2 id="14srgb色域">1.4sRGB色域</h2>
+<p>sRGB代表了标准的红、绿、蓝，即CRT显示器、LCD面板、投影机、打印机以及其他设备中色彩再现所使用的三个基本色素。sRGB的色彩空间基于独立的色彩坐标，可以使色彩在不同的设备使用传输中对应于同一的色彩坐标体系，而不受这些设备各自具有的不同色彩坐标的影响。 投影显示系统的sRGB是微软公司与精工爱普生公司、三菱公司合作开发的，目的是建立一个可以<strong>满足计算机和投影显示需求的色彩管理标准</strong>，使得显示设备无须经过特别的色彩信息分析，就可以正确地表现出图象文件。<strong>sRGB消除了不同显示系统在色彩还原上的原有差异</strong>。不同显示设备间的RGB色彩，自然会发生一些变化，因而经过不同的显示设备后就无法正确地再现色彩。</p>
+<p>因为现实器也不可能现实自然界所有的颜色，所以就在xy坐标系中选取一个三角形范围作为现实器的显示色域。同时通过定义不同的区域还有Adobe RGB色域空间和其他。</p>
+<p>常用的设备无关颜色空间是CIE XYZ颜色空间。而生活中常用的设备无关颜色空间还有sRGB、AdobeRGB和ProPhoto RGB颜色空间。通常浏览网页时，我们看到的图像使用的就是sRGB颜色空间。目前ISP中CCM的目标通常是以sRGB为常用的<strong>设备无关颜色空间</strong>。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm22.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm22.png" >
+  
+    </a>
+  
+  
+</div>
+
+<blockquote>
+<p><strong>颜色管理流程示例</strong></p>
+<p>之所以图像在跨设备进行传输时产生了变化，主要的原因是两台设备采用设备相关的RGB传输，而输入相同的RGB值在不同设备中却对应不同的实际颜色所致。</p>
+<p>在设备相关颜色空间与设备无关颜色空间之间尽可能准确地建立数学映射关系就是颜色特征化。简单来说，颜色特征化能通过设备的数字驱动值RGB精确预测出设备显现的实际颜色。因此，设备的颜色特征化是颜色管理的基础步骤和关键环节，它可以精确控制颜色信息在图像设备之间的复制与传递。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm27.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm27.png" >
+  
+    </a>
+  
+  
+</div>
+
+</blockquote>
+<h2 id="15lab和luv">1.5<code>L*A*B</code>和LUV</h2>
+<p>生活中我们经常使用设备相关的RGB颜色空间进行颜色的处理和表征。但是，发现RGB间距相同的颜色组合所产生的颜色<strong>感知差异是不同的</strong>，这是因为在该颜色空间中，各色区的颜色感知差异容限大小不等。虽然在驱动值RGB间距相等的颜色对，但是人眼感知还是有差异，左边会觉得差异更大。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm28.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm28.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="151颜色空间的非均匀性">1.5.1颜色空间的非均匀性</h3>
+<p>上述问题同样存在于国际照明委员会（CIE）推荐的CIE1931和CIE1964标准色度系统中，这也使得在工业生产中难以使用标准色度系统对颜色进行精确的比较和评价。</p>
+<p>1942年麦克亚当对CIE-xy色品图的非均匀性进行了详细的实验研究，他选定了25个颜色中心，在5~9个方向上用加混色进行多次颜色匹配测试。在实验中，他采用2°观察视场并保持颜色亮度不变。实验表明，即使对某一确定的方向，每次实验的结果也是不同的，并在视觉可识别的界限内变动。麦克亚当将不同方向上该变动的标准偏差在色品图上描点，得到下图的麦克亚当椭圆 (<strong>图中椭圆放大了10 倍</strong>)。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm29.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm29.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>通过麦克亚当椭圆在CIE-xy色品图上的分布，我们可以看出CIE-xy色品图是非常不均匀的。在色品图左下方的蓝紫色区，色品坐标稍有变化就能识别，而对于上方的绿色区，色品坐标约变化前者的10倍才能分辨。理想的均匀色品图应满足图上任何位置的麦克亚当椭圆都是半径相等的圆。</p>
+<h3 id="152均匀颜色空间">1.5.2均匀颜色空间</h3>
+<p>国际照明委员会根据麦克亚当的工作对CIE-xy色品图进行适当的变换，对色品图的非均匀性进行了一定程度的改善。同时，在结合明度与亮度的非线性关系，对亮度因数进行修正后，于1976年推荐了<code>CIE1976 L*u*v</code>颜色空间（也称CIELUV颜色空间）和<code>CIE1976 L*a*b</code>颜色空间（也称CIELAB颜色空间），分别用于电视工业等加混色和表面色料工业等减混色的表示和评价。</p>
+<h4 id="1521cie1976-luv颜色空间">1.5.2.1<code>CIE1976 L*u*v</code>*颜色空间</h4>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm36.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm36.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>在<code>CIE1976 L*u*v</code><em>颜色空间中，<code>L*</code>为明度，<code>u*</code>、<code>v*</code>表示色品坐标，其计算公式为
+$$
+\begin{cases}
+L^</em>=116(Y/Y_n)^{1/3}-16,&amp;&amp;Y/Y_n&gt;(24/116)^3\<br>
+u^<em>=13L</em>(u'-u'_n)\<br>
+v^<em>=13L</em>(v'-v'_n)<br>
+\end{cases}
+$$
+式中，u'、v&rsquo;和u'<!-- raw HTML omitted -->n<!-- raw HTML omitted -->、v'<!-- raw HTML omitted -->n<!-- raw HTML omitted -->分别是颜色样品和CIE标准照明体的CIE1976 UCS色品坐标；X、Y、Z为颜色样品的三刺激值，X<!-- raw HTML omitted -->n<!-- raw HTML omitted -->、Y<!-- raw HTML omitted -->n<!-- raw HTML omitted -->、Z<!-- raw HTML omitted -->n<!-- raw HTML omitted -->为CIE标准照明体照射在完全漫反射体上，然后反射到观察者眼中的三刺激值，其中Y<!-- raw HTML omitted -->n<!-- raw HTML omitted -->=100。</p>
+<p>如果 u* 和 v* 都是正值，则 h<!-- raw HTML omitted -->uv<!-- raw HTML omitted --> 在 0° 和 90° 之间；</p>
+<p>如果 v* 是正值，而 u* 是负值，则 h<!-- raw HTML omitted -->uv<!-- raw HTML omitted --> 在 90° 和 180° 之间；</p>
+<p>如果 v<em>和 u</em> 都是负值，则 h<!-- raw HTML omitted -->uv<!-- raw HTML omitted -->在 180° 和 270° 之间；</p>
+<p>如果 v* 是负值，而 u* 是正值，则 h<!-- raw HTML omitted -->uv<!-- raw HTML omitted --> 在 270° 和 360° 之间。</p>
+<h4 id="1522cie1976-lab颜色空间">1.5.2.2<code>CIE1976 L*a*b</code>*颜色空间</h4>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm35.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm35.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>CIE L<em>a</em>b*又称<strong>CIELAB</strong>颜色空间，是目前应用最广的颜色空间之一，它的主要优点是颜色之间的距离与人的知觉更好地符合线性关系，尤其是描述较暗的颜色准确度更高。轻微的不足是描述黄色区域时线性关系会有一定变化，即颜色宽容量的圆圈在黄色附近直径会有变化。</p>
+<p><strong>CIELAB</strong> 颜色空间在知觉均匀性方面与CIE 1976 UCS类似，两种标准都不是十全十美的，但都取得了广泛的应用。关于这两个颜色空间哪一个会更均匀一些，学术界还没有形成明确的结论。目前似乎是CIELAB的应用会更多一些。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm37.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm37.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>在<code>CIE1976 L*a*b</code><em>颜色空间中，<code>L*</code>为明度，<code>a*</code>、<code>b*</code>表示色品坐标，其计算公式为
+$$
+\begin{cases}
+L^</em>=116(Y/Y_n)^{1/3}-16,&amp;&amp;Y/Y_n&gt;(24/116)^3\<br>
+a^<em>=500[f(X/X_n)-f(Y/Y_n)]\<br>
+b^</em>=200[f(Y/Y_n)-f(Z/Z_n)]<br>
+\end{cases}
+$$
+式中，X、Y、Z和X<!-- raw HTML omitted -->n<!-- raw HTML omitted -->、Y<!-- raw HTML omitted -->n<!-- raw HTML omitted -->、Z<!-- raw HTML omitted -->n<!-- raw HTML omitted -->的含义与CIELUV颜色空间的对应参数相同。</p>
+<p>如果 a* 和 b* 均为正值，h<!-- raw HTML omitted -->ab<!-- raw HTML omitted --> 位于 0° 和 90° 之间；</p>
+<p>如果 b* 为正值，a* 为负值，h<!-- raw HTML omitted -->ab<!-- raw HTML omitted --> 位于 90° 和 180° 之间；</p>
+<p>如果 b* 和 a* 均为负值，h<!-- raw HTML omitted -->ab<!-- raw HTML omitted --> 位于 180° 和 270° 之间；</p>
+<p>如果 b* 为负值，a* 为正值，h<!-- raw HTML omitted -->ab<!-- raw HTML omitted --> 位于 270° 和 360° 之间。</p>
+<p>此外，在CIELUV和CIELAB颜色空间中还各有一组与心理量近似对应的感知属性，即明度（L*，如上）以及彩度和色调角，以下是具体计算公式，并以下标“uv”和“ab”来区分。</p>
+<h4 id="1523彩度">1.5.2.3彩度</h4>
+<p>$$
+\begin{cases}
+C_{uv}^*=(u^{*2}+v^{*2})^{1/2}\<br>
+C_{ab}^*=(a^{*2}+b^{*2})^{1/2}<br>
+\end{cases}
+$$</p>
+<h4 id="1524色调角">1.5.2.4色调角</h4>
+<p>$$
+\begin{cases}
+h_{uv}^*=arctan(v^*/u^*)\<br>
+h_{ab}^*=arctan(b^*/a^*)<br>
+\end{cases}
+$$</p>
+<h4 id="1525饱和度">1.5.2.5饱和度</h4>
+<p>另外，在CIELUV颜色空间中还有一个心理相关量即饱和度，其计算公式为
+$$
+S_{uv}=13[(u'-u'_n)^2+(v'-v'_n)^2]^{1/2}=C_{uv}^*/L^*
+$$
+CIELUV和CIELAB颜色空间由CIE XYZ系统的非线性变换推导而来，以其转换公式简单、颜色空间相对均匀等优点，在色彩行业得到了广泛的应用</p>
+<h3 id="153计算色差">1.5.3计算色差</h3>
+<p>色差公式旨在提供成对颜色样品之间感知色差的定量表示，理想的色差公式应基于真正视觉感知均匀的颜色空间，其预测的色差应与目视判断具有良好的一致性。颜色科学工作者对色差评价进行了大量研究，并提出了多种色差公式，其中应用广泛的典型色差评价模型包括CIELAB、CMC(<em>l</em>:<em>c</em>)、CIE94以及CIEDE2000色差公式。</p>
+<h4 id="1531cieluv和cielab色差公式">1.5.3.1CIELUV和CIELAB色差公式</h4>
+<p>CIELUV和CIELAB色差公式以被比较颜色点在对应颜色空间中的欧氏距离表示色差，即
+$$
+\begin{cases}
+\Delta{E_{uv}^*}=(\Delta{L^*}^2+\Delta{u^*}^2+\Delta{v^*}^2)^{1/2}\<br>
+\Delta{E_{ab}^*}=(\Delta{L^*}^2+\Delta{a^*}^2+\Delta{b^*}^2)^{1/2}<br>
+\end{cases}
+$$
+然而，随着更多心理物理学实验的开展，人们逐渐发现上述两个色差方程并不能准确量化中小幅度的色差，并且在<code>u*v*</code>、<code>a*b*</code>平面中麦克亚当椭圆的形状和分布也不均匀规整。(色差相同的颜色对呈现出不一致的感知差异，很明显左边的色差更大)</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm32.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm32.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h4 id="1532cmclc色差公式">1.5.3.2CMC(l:c)色差公式</h4>
+<p>CMC(<em>l</em>:<em>c</em>)色差公式克服了当时其它色差公式在深色及中性色范围计算结果与视觉感知偏差较大的现象，具有比CIELAB公式更好的视觉一致性，并于1995年成为纺织行业的国际标准。CMC(<em>l</em>:<em>c</em>)色差模型的具体计算公式如下：
+$$
+\Delta{E_{CMC(l:c)}}={[\Delta{L_{ab}^*}/(lS_L)]^2+[\Delta{C_{ab}^*}/(cS_C)]^2+[\Delta{H_{ab}^*}/S_H]^2}^{1/2}
+$$
+式中，<code>△L*ab</code>、<code>△C*ab</code>和<code>△H*ab</code>分别对应于CIELAB颜色空间的明度差、彩度差和色调差；、和定义容差椭球体的半轴长度，分别对应明度、彩度和色调方向；明度权重因子*l*和彩度权重因子*c*分别用来调整明度和彩度对总色差的影响程度，所以在不同的应用场合应取其不同的比值。大量实验表明，对色差的可接受性评价时，推荐采用<code>l:c=2:1</code>，如在纺织业界对产品的质量控制大多采用CMC(2:1)公式；而对色差的可察觉性评价时，推荐采用<code>l:c=1:1</code>，如对数字系统的色度校正以及涂料或塑料等行业一般采用CMC(1:1)公式。</p>
+<h4 id="1533cie94色差公式">1.5.3.3CIE94色差公式</h4>
+<p>国际照明委员会于1994年推荐了CIE94色差公式。它具有与 CMC(<code>l:c</code>)色差公式相似的结构，但具有更简单的加权函数。该公式探讨了色差距离的均匀性和参量对知觉色差的影响，并对参照条件进行了严格的说明。然而，在实际观察条件与其不符时，需要调整明度、彩度和色调分色差在总色差中的相对权重。CIE94色差模型的具体计算公式如下：
+$$
+\Delta{E_{94}^*}={[\Delta{L^*}/(K_LS_L)]^2+[\Delta{C_{ab}^*/(K_CS_C)}]^2+[\Delta{H_{ab}^*/(K_HS_H)}]^2}^{1/2}
+$$
+式中，参数因子K<!-- raw HTML omitted -->L<!-- raw HTML omitted -->、K<!-- raw HTML omitted -->C<!-- raw HTML omitted -->和K<!-- raw HTML omitted -->H<!-- raw HTML omitted -->用以调整明度、彩度和色调分色差的相对权重，S<!-- raw HTML omitted -->L<!-- raw HTML omitted -->、S<!-- raw HTML omitted -->C<!-- raw HTML omitted -->和S<!-- raw HTML omitted -->H<!-- raw HTML omitted -->的意义与CMC(*l*:*c*)色差公式相似。对于除纺织业以外的一般应用，建议所有参数因子的比值均为1；对于纺织行业，建议采用2:1:1的比值。</p>
+<h4 id="1534ciede2000色差公式">1.5.3.4CIEDE2000色差公式</h4>
+<p>为进一步改善工业色差评价的视觉一致性，国际照明委员会成立了TC1-47技术委员会，对已有色差模型和视觉评价数据进行大量分析，并于2000年推荐了新的色差评价公式，即
+$$
+\Delta{E_{00}}={[\Delta{L'}/(k_LS_L)]^2+[\Delta{C'_{ab}}/(k_CS_C)]^2+[\Delta{H'_{ab}}/(k_HS_H)]^2\<br>
++R_T[\Delta{C'_{ab}}/(k_CS_C)]}^{1/2}
+$$
+式中，为R<!-- raw HTML omitted -->T<!-- raw HTML omitted -->为旋转项，其余因子意义与上述公式相似。CIEDE2000色差公式不仅包括明度、彩度和色调加权函数，还包括彩度差和色调差的交互项，提高了蓝色区域的色差预测性能，也是**CIE目前推荐的最新色差评价公式**。</p>
+<h4 id="1534不同色差公式的计算结果">1.5.3.4不同色差公式的计算结果</h4>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm31.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm31.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="16-24色卡">1.6 24色卡</h2>
+<p>ColorChecker Classic色卡由4行6列共计24种不同的色块组成，这些色块涵盖了经科学配制的自然色、原色以及中性色，可在不同光源下与其代表的物体色相匹配，以实现颜色的准确再现。其中，第一行代表了常见的物体色（natural colors），例如深肤色、浅肤色、树叶、天空等；第二行则包含了自然界除上述典型物体色之外的其它颜色（miscellaneous colors）；第三行的色块为饱和度较高的三基色或其组合色（primary and secondary colors），通常用于测试、校准设备的色域边界；最后一行均为中性色块（grayscale colors），是白平衡校正、灰阶校正的重要参考依据，如下图所示。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm23.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm23.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>下表列出了ColorChecker Classic各色块的色名以及所对应的sRGB颜色外貌与参考数值，其中序号20至23中性色块色名中的数字表示其孟塞尔明度值。以第22号色块（neutral 5）为例，其孟塞尔标号为N5，表面反射率约为18.4%。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm24.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm24.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>24个色块在CIE1931 xy色品图上的分布情况，可见其色域基本覆盖了sRGB，适用于绝大多数颜色管理场景。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm25.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm25.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>另外，航空航天中视频画面传输也会被用到，红色区域所示即为24色卡</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm26.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm26.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="2算法与案例精选">2算法与案例精选</h1>
+<h2 id="213d-lut">2.13D-LUT</h2>
+<p>这种方式用的比较少</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="22多项式拟合">2.2多项式拟合</h2>
+<p>实际中大多数厂商用得都是这种，求的是CCM矩阵</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm7.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm8.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="33神经网络拟合">3.3神经网络拟合</h2>
+<h1 id="3算法代码实现">3算法代码实现</h1>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/ccm/">CCM</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/cie-rgb%E9%A2%9C%E8%89%B2%E6%A8%A1%E5%9E%8B/">CIE RGB颜色模型</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/cie-xyz%E9%A2%9C%E8%89%B2%E7%A9%BA%E9%97%B4/">CIE XYZ颜色空间</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/cie-xy%E8%89%B2%E5%BA%A6%E5%9B%BE/">CIE xy色度图</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/srgb%E8%89%B2%E5%9F%9F/">sRGB色域</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/cie-lab%E9%A2%9C%E8%89%B2%E7%A9%BA%E9%97%B4/">CIE Lab颜色空间</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/cie-luv%E9%A2%9C%E8%89%B2%E7%A9%BA%E9%97%B4/">CIE Luv颜色空间</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2024/01/rk-camera%E9%A9%B1%E5%8A%A8%E8%B0%83%E8%AF%95%E5%AD%A6%E4%B9%A0/" data-tooltip="rk camera驱动调试学习">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2024 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2021/07/leetcode-hot100/" data-tooltip="LeetCode hot100">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2024/01/rk-camera%E9%A9%B1%E5%8A%A8%E8%B0%83%E8%AF%95%E5%AD%A6%E4%B9%A0/" data-tooltip="rk camera驱动调试学习">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2024%2F02%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0ccmcolor-correction-matrix%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2024%2F02%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0ccmcolor-correction-matrix%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2024%2F02%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0ccmcolor-correction-matrix%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2024\/02\/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0ccmcolor-correction-matrix\/';
+          
+            this.page.identifier = '\/2024\/02\/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0ccmcolor-correction-matrix\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+  <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_CHTML-full" integrity="sha256-GhM+5JHb6QUzOQPXSJLEWP7R73CbkisjzK5Eyij4U9w=" crossorigin="anonymous"></script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      CommonHTML: { linebreaks: { automatic: true } },
+      tex2jax: { inlineMath: [ ['$', '$'], ['\\(','\\)'] ], displayMath: [ ['$$','$$'], ['\\[', '\\]'] ], processEscapes: false },
+      messageStyle: 'none'
+    });
+  </script>
+
+
+
+    
+  </body>
+</html>
+
