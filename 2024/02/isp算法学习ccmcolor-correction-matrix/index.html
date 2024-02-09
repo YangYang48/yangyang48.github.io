@@ -280,7 +280,7 @@
 </div>
           
 		  
-		  <h5 id="wc" style="font-size: 1rem;text-align: center;">400 Words|Read in about 2 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">1700 Words|Read in about 8 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
       
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
@@ -455,6 +455,11 @@
 </div>
 
 <p>从下图中可以看到CIE RGB有数据是负数，这个是因为某个波长r(λ)颜色的光通过P1，P2，P3在一侧混合无法得到，那么就需要将某个光源放到f测去才能到达这种效果，那么此时就相当于对改颜色做了减法，那么就出现了负数。</p>
+<p><strong>光谱三刺激值</strong></p>
+<p>如果待测色光是辐射能量都相同的单色光（光谱色，光波段为380-760nm），我们把得到的<strong>三原色光强度值称之为：光谱三刺激值</strong>，用 r(λ),g(λ),r(λ)表示。颜色匹配过程可用公式表示如下：
+$$
+C_\lambda=\overline{r}(R)+\overline{g}(G)+\overline{b}(B)
+$$</p>
 
 
  
@@ -475,12 +480,14 @@
 
 <div class="figure center fig-100" >
   
-    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm15.png" data-fancybox-group="">
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm15.png" title="光谱三刺激值曲线图" data-fancybox-group="">
   
-    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm15.png" >
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm15.png"  alt="光谱三刺激值曲线图">
   
     </a>
   
+   
+    <span class="caption">光谱三刺激值曲线图</span>
   
 </div>
 
@@ -593,6 +600,37 @@ $$
 </div>
 
 <p>由于CIE XYZ空间源自CIE RGB，它也基于可测量的物理量。XYZ色彩空间是用于<strong>所有基于矩阵的RGB显示色彩空间转换的基本色彩空间</strong>。任何两个色彩空间之间的映射都是通过一个通用的CIE XYZ中间体完成的。这简化了颜色变换，因为我们不需要知道如何在任意两个颜色空间之间转换颜色，我们只需要能够将它们都转换到XYZ空间。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm38.png" title="CIE 1931 XYZ系统光谱三刺激值曲线图" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm38.png"  alt="CIE 1931 XYZ系统光谱三刺激值曲线图">
+  
+    </a>
+  
+   
+    <span class="caption">CIE 1931 XYZ系统光谱三刺激值曲线图</span>
+  
+</div>
+
 <h2 id="13cie-xy色度图">1.3CIE xy色度图</h2>
 <p>三维图表玩起来很有趣，但它们通常不是特别实用——2D图表通常更容易处理和推理。由于XYZ空间的Y分量没有任何色彩和色调，所以我们只剩下两个影响颜色色度的分量。我们可以执行三种旨在降低空间维数的操作（这里归一化处理）:
 $$
@@ -962,7 +1000,7 @@ $$
   
 </div>
 
-<p>CIE L<em>a</em>b*又称<strong>CIELAB</strong>颜色空间，是目前应用最广的颜色空间之一，它的主要优点是颜色之间的距离与人的知觉更好地符合线性关系，尤其是描述较暗的颜色准确度更高。轻微的不足是描述黄色区域时线性关系会有一定变化，即颜色宽容量的圆圈在黄色附近直径会有变化。</p>
+<p><code>CIE L*a*b*</code>又称<strong>CIELAB</strong>颜色空间，是目前应用最广的颜色空间之一，它的主要优点是颜色之间的距离与人的知觉更好地符合线性关系，尤其是描述较暗的颜色准确度更高。轻微的不足是描述黄色区域时线性关系会有一定变化，即颜色宽容量的圆圈在黄色附近直径会有变化。</p>
 <p><strong>CIELAB</strong> 颜色空间在知觉均匀性方面与CIE 1976 UCS类似，两种标准都不是十全十美的，但都取得了广泛的应用。关于这两个颜色空间哪一个会更均匀一些，学术界还没有形成明确的结论。目前似乎是CIELAB的应用会更多一些。</p>
 
 
@@ -1238,8 +1276,348 @@ $$
 </div>
 
 <h1 id="2算法与案例精选">2算法与案例精选</h1>
-<h2 id="213d-lut">2.13D-LUT</h2>
-<p>这种方式用的比较少</p>
+<h2 id="21关于ccm">2.1关于CCM</h2>
+<h3 id="211卢瑟条件">2.1.1<strong>卢瑟条件</strong></h3>
+<p>卢瑟条件（Luther condition）大意是说三个线性无关的原色，经过混合能够表示任意一种颜色。</p>
+<h3 id="212what-is-ccm--why-ccm">2.1.2<strong>What is CCM &amp; Why CCM</strong></h3>
+<p>由于相机的颜色匹配特性通常不满足卢瑟条件（也就是说sensor的RGB响应通常不是线性无关的），即相机的颜色匹配特性与CIE标准观察者之间并不存在线性关系。因此，我们需要某种方法来校正相机的特性，使其接近标准观察者。在实际的ISP处理中，这种方法通常以3x3矩阵的形式出现，称为色彩校正矩阵（colour correction matrix）</p>
+<p>CCM的作用主要有两个：</p>
+<ol>
+<li>完成了sensor_RGB色彩空间到设备无关的<strong>颜色空间sRGB色彩空间的转换</strong></li>
+<li>使得相机的颜色匹配特性满足卢瑟条件，具体效果如下图所示</li>
+</ol>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm39.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm39.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="213ccm公式的物理意义">2.1.3CCM公式的物理意义</h3>
+<p>CCM公式的物理意义是从<strong>一种颜色种减除另外两种颜色的成分，以增加该颜色的饱和度</strong>，使变换的结果接近人的视觉感受，或者更符合人的主观审美。由于输入颜色可以有上千万种组合，而CCM参数却只有9个，所以CCM实际上只能优先保证几个最重要的颜色在人看来是“正确”的，而不可能面面俱到地保证所有颜色在所有条件下都是最优的。</p>
+<h3 id="214ccm基本约束">2.1.4CCM基本约束</h3>
+<p>CCM公式的一个基本约束就是不能破坏白平衡，即对于任何R=G=B的输入，必须保证输出满足R'=G'=B'。正式由于这个原因，颜色校正操作只能放在白平衡调整之后执行。通常归一化之后，每一行都会是固定值，比如每一行和为1。</p>
+<p>实践中通常使用X-Rite 24色卡上的18个彩色色块为标准计算校正系数，基本原理是用摄像机拍摄色卡，提取18个色块的平均颜色（Rn, Gn, Bn），n=1..18 构成输入矩阵
+$$
+S=
+\begin{bmatrix}
+R_1 &amp; R_2 &amp; R_3 &amp;&hellip;&amp;R_n\<br>
+G_1 &amp; G_2 &amp; G_3 &amp;&hellip;&amp;G_n\<br>
+B_1 &amp; B_2 &amp; B_3 &amp;&hellip;&amp;B_n<br>
+\end{bmatrix}
+$$
+用24色卡上的18个彩色色块的标准sRGB值构成目标矩阵
+$$
+S'=
+\begin{bmatrix}
+R_1' &amp; R_2' &amp; R_3' &amp;&hellip;&amp;R_n'\<br>
+G_1' &amp; G_2' &amp; G_3' &amp;&hellip;&amp;G_n'\<br>
+B_1' &amp; B_2' &amp; B_3' &amp;&hellip;&amp;B_n'<br>
+\end{bmatrix}
+$$
+则有关于CCM的矩阵方程
+$$
+S'=M·S\<br>
+\begin{bmatrix}
+R_1' &amp; R_2' &amp; R_3' &amp;&hellip;&amp;R_n'\<br>
+G_1' &amp; G_2' &amp; G_3' &amp;&hellip;&amp;G_n'\<br>
+B_1' &amp; B_2' &amp; B_3' &amp;&hellip;&amp;B_n'<br>
+\end{bmatrix}=
+\begin{bmatrix}
+a_{11} &amp; a_{12} &amp; a_{13}\<br>
+a_{21} &amp; a_{22} &amp; a_{23}\<br>
+a_{31} &amp; a_{32} &amp; a_{33}<br>
+\end{bmatrix}
+\begin{bmatrix}
+R_1 &amp; R_2 &amp; R_3 &amp;&hellip;&amp;R_n\<br>
+G_1 &amp; G_2 &amp; G_3 &amp;&hellip;&amp;G_n\<br>
+B_1 &amp; B_2 &amp; B_3 &amp;&hellip;&amp;B_n<br>
+\end{bmatrix}\<br>
+其中\begin{bmatrix}
+a_{11} &amp; a_{12} &amp; a_{13}\<br>
+a_{21} &amp; a_{22} &amp; a_{23}\<br>
+a_{31} &amp; a_{32} &amp; a_{33}<br>
+\end{bmatrix}=<br>
+\begin{bmatrix}
+r_1 &amp; r_2 &amp; r_3\<br>
+g_1 &amp; g_2 &amp; g_3\<br>
+b_1 &amp; b_2 &amp; b_3<br>
+\end{bmatrix}=<br>
+\begin{bmatrix}
+RR &amp; GR &amp; BR\<br>
+RG &amp; GG &amp; BG\<br>
+RB &amp; GB &amp; BB<br>
+\end{bmatrix}
+$$
+求解M的过程为
+$$
+S'·S^T=M·S·S^T\<br>
+M=S'·S^T(S·S^T)^{-1}
+$$
+上述过程需要使用某种色卡，因此称为patch-based方法。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm40.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm40.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="215ccm常见的调试方法">2.1.5CCM常见的调试方法</h3>
+<p>1）将参数在<code>L*a*b*</code> 色域中标注出来:</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm41.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm41.png" >
+  
+    </a>
+  
+  
+</div>
+
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm42.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm42.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>2）重点关注RGB三原色的色相，往哪边偏就把对应的数值减小，把相邻的数值加大</p>
+<p>例如，R向M方向偏，就需要把①对应的数值减小，把②对应的数值加大。</p>
+<p>3）用主色分量上的值补偿之前的修改，使每行之和恒等于1</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm43.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm43.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>4）饱和度</p>
+<p>单一颜色的饱和度可以将<strong>主色分量所在列</strong>的另外两个分量减小或加大相同的比例。</p>
+<p>例如，要加大R的饱和度，需要将g1，b1减小相同的比例；</p>
+<p>要减小R的饱和度，需要将g1，b1加大相同的比例。</p>
+<p>5）调试小技巧</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm44.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm44.png" >
+  
+    </a>
+  
+  
+</div>
+
+<table>
+<thead>
+<tr>
+<th>问题现象</th>
+<th>调试方向</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>红色偏深</td>
+<td>减rg和减rb</td>
+<td>红色比例增多，相应的要增加gg，bb，则绿色和蓝色饱和度会提高</td>
+</tr>
+<tr>
+<td>绿色更嫩</td>
+<td>减gb和减gr</td>
+<td>gb越小，绿色越黄；gr越小，绿色越青</td>
+</tr>
+<tr>
+<td>肤色偏黄</td>
+<td>加gb</td>
+<td>蓝和黄相对时，蓝色会变淡</td>
+</tr>
+<tr>
+<td>肤色变红</td>
+<td>减br或加bg</td>
+<td>br越小，蓝色越青</td>
+</tr>
+<tr>
+<td>肤色偏红</td>
+<td>加br</td>
+<td>br越大，蓝色越紫</td>
+</tr>
+<tr>
+<td>红色偏桔</td>
+<td>减gr或加rb</td>
+<td>rg越小，红色越粉</td>
+</tr>
+<tr>
+<td>红色偏粉</td>
+<td>加rg或减rb</td>
+<td>rg越大，红色越桔，红色系饱和度回收</td>
+</tr>
+<tr>
+<td>黄色偏红</td>
+<td>加br或减bg</td>
+<td>br越大，黄色越绿</td>
+</tr>
+<tr>
+<td>黄色偏绿</td>
+<td>减br或加bg</td>
+<td>br越小，黄色越红</td>
+</tr>
+<tr>
+<td>绿色偏青</td>
+<td>加gr</td>
+<td></td>
+</tr>
+<tr>
+<td>绿色偏黄</td>
+<td>加gb</td>
+<td>蓝黄相对，蓝色变淡</td>
+</tr>
+<tr>
+<td>蓝色变淡</td>
+<td>减gb</td>
+<td>gb越小，绿色越黄，且绿色饱和度下降，反之增加</td>
+</tr>
+<tr>
+<td>蓝色偏青</td>
+<td>加br或减bg</td>
+<td>br越大，蓝色越紫</td>
+</tr>
+<tr>
+<td>蓝色偏紫</td>
+<td>减br或加bg</td>
+<td>br越小，蓝色越青；加bg，蓝色和绿色饱和度都下降，但整体饱和度增加</td>
+</tr>
+</tbody>
+</table>
+<h2 id="22关于ccm算法">2.2关于CCM算法</h2>
+<p>这里叫颜色校正算法其实主要是针对转换过程而言，因为CCM只是转换算法的一种。上面我们已经知道我们整个过程其实就是将一个矩阵转换为另外一个矩阵，那么我们首先能想到的就是LUT，就是将两个矩阵表示的颜色都通过一张表来表示对应的关系，那么进来一个颜色就可以通过查表快速得到想要的颜色。</p>
+<h3 id="221-3d-lut">2.2.1 3D-LUT</h3>
+<p>之前使用过2D的LUT（Look up table），现在用到的是三维空间的查找法。左边与设备无关，RGB通常是三维的空间，三个值都是0-255；和sensor相关的就是右边的颜色空间，通过3D-LUT来获取对应的颜值值。如果新空间到老的空间有对应的点就直接复制，没有的话通过插值的方式来获取。这里会使用3D插值，四个点组成一个四棱锥，获取四棱锥里面四个点距离通过比例进行三维插值。</p>
+<p>这种方式用的比较少。</p>
 
 
  
@@ -1270,7 +1648,7 @@ $$
 </div>
 
 <h2 id="22多项式拟合">2.2多项式拟合</h2>
-<p>实际中大多数厂商用得都是这种，求的是CCM矩阵</p>
+<p>实际中大多数厂商用得都是这种，求的是CCM矩阵。多项式拟合有分成好多种，这里只介绍典型的。</p>
 
 
  
@@ -1329,8 +1707,420 @@ $$
   
 </div>
 
+<h3 id="221算法">2.2.1算法</h3>
+<p>imatest官网有对应的算法，具体网址可以<a href="https://www.imatest.com/support/docs/24-1/color-correction-matrix-ccm/">点击这里</a></p>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="k">function</span> <span class="nf">ccm_test</span>
+<span class="ln"> 2</span><span class="c">% Test program for applying Color Correction matrix.</span>
+<span class="ln"> 3</span><span class="c">% Output for display gamma = 2.2 -- sRGB and Adobe RGB color spaces.</span>
+<span class="ln"> 4</span>
+<span class="ln"> 5</span><span class="c">% Read image file </span>
+<span class="ln"> 6</span><span class="nb">disp</span><span class="p">(</span><span class="s">&#39;Enter the file for the Color Correction Matrix (CCM)&#39;</span><span class="p">);</span>
+<span class="ln"> 7</span><span class="n">imagefile</span> <span class="p">=</span> <span class="n">input</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span><span class="s">&#39;s&#39;</span><span class="p">);</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span><span class="nb">gamma</span>     <span class="p">=</span> <span class="n">input</span><span class="p">(</span><span class="s">&#39;Enter encoding gamma (typically 0.5 to 1)  &#39;</span><span class="p">);</span>
+<span class="ln">10</span>
+<span class="ln">11</span><span class="n">imageRGB</span>  <span class="p">=</span> <span class="n">imread</span><span class="p">(</span><span class="n">imagefile</span><span class="p">);</span>
+<span class="ln">12</span><span class="n">imtype</span> <span class="p">=</span> <span class="n">class</span><span class="p">(</span><span class="n">imageRGB</span><span class="p">);</span>  <span class="c">% Image type: typically uint8 or uint16.</span>
+<span class="ln">13</span><span class="n">imageRGB</span>  <span class="p">=</span> <span class="n">double</span><span class="p">(</span><span class="n">imageRGB</span><span class="p">)</span><span class="o">/</span><span class="n">double</span><span class="p">(</span><span class="n">intmax</span><span class="p">(</span><span class="n">imtype</span><span class="p">));</span>  <span class="c">% Normalize to maximum for image type.</span>
+<span class="ln">14</span><span class="n">figure</span><span class="p">;</span>  <span class="n">image</span><span class="p">(</span><span class="n">imageRGB</span><span class="p">);</span>
+<span class="ln">15</span><span class="n">title</span><span class="p">([</span><span class="s">&#39;Original image:  gamma = &#39;</span> <span class="n">num2str</span><span class="p">(</span><span class="nb">gamma</span><span class="p">)]);</span>  <span class="c">% Works without Image Processing Toolbox.</span>
+<span class="ln">16</span>
+<span class="ln">17</span><span class="n">linearRGB</span> <span class="p">=</span> <span class="n">imageRGB</span><span class="o">.^</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="nb">gamma</span><span class="p">);</span>  <span class="c">% Linearize the image (apply inverse of encoding gamma).</span>
+<span class="ln">18</span>
+<span class="ln">19</span><span class="c">% The CCM has 3 lines, which makes it tricky to enter.</span>
+<span class="ln">20</span><span class="nb">disp</span><span class="p">(</span><span class="s">&#39;(Calculate a 3x3 CCM in Color/Tone Interactive, then press File, &#39;&#39;Copy Color Matrix to Clipboard&#39;&#39;).&#39;</span><span class="p">);</span>
+<span class="ln">21</span><span class="nb">disp</span><span class="p">(</span><span class="s">&#39;Press &#39;&#39;enter&#39;&#39; when the the CCM is in the clipboard&#39;</span><span class="p">);</span>
+<span class="ln">22</span><span class="n">inp</span> <span class="p">=</span> <span class="n">input</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span><span class="s">&#39;s&#39;</span><span class="p">);</span>  <span class="c">% pause fails after copy to clipboard. inp is not used.</span>
+<span class="ln">23</span>
+<span class="ln">24</span><span class="n">ccm</span> <span class="p">=</span> <span class="n">clipboard</span><span class="p">(</span><span class="s">&#39;paste&#39;</span><span class="p">);</span>
+<span class="ln">25</span><span class="n">ccm</span>     <span class="p">=</span> <span class="n">strrep</span><span class="p">(</span><span class="n">ccm</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="s">&#39;;&#39;</span><span class="p">);</span>  <span class="c">% Bring back semicolons.</span>
+<span class="ln">26</span><span class="n">ccmnum</span>  <span class="p">=</span> <span class="n">str2num</span><span class="p">(</span><span class="n">ccm</span><span class="p">),</span>  <span class="c">% str2double doesn&#39;t work.</span>
+<span class="ln">27</span><span class="c">% Change to 2D to apply matrix; then change back.</span>
+<span class="ln">28</span><span class="p">[</span><span class="n">my</span><span class="p">,</span> <span class="n">mx</span><span class="p">,</span> <span class="n">mc</span><span class="p">]</span> <span class="p">=</span> <span class="nb">size</span><span class="p">(</span><span class="n">linearRGB</span><span class="p">);</span>  <span class="c">% rows, columns, colors (3)</span>
+<span class="ln">29</span><span class="n">linearRGB</span> <span class="p">=</span> <span class="nb">reshape</span><span class="p">(</span><span class="n">linearRGB</span><span class="p">,</span><span class="n">my</span><span class="o">*</span><span class="n">mx</span><span class="p">,</span><span class="n">mc</span><span class="p">);</span> 
+<span class="ln">30</span><span class="n">correctedRGB</span> <span class="p">=</span> <span class="n">linearRGB</span><span class="o">*</span><span class="n">ccmnum</span><span class="p">;</span>  
+<span class="ln">31</span><span class="n">correctedRGB</span> <span class="p">=</span> <span class="n">min</span><span class="p">(</span><span class="n">correctedRGB</span><span class="p">,</span><span class="mi">1</span><span class="p">);</span>  <span class="n">correctedRGB</span> <span class="p">=</span> <span class="n">max</span><span class="p">(</span><span class="n">correctedRGB</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span>  <span class="c">% Place limits on output.</span>
+<span class="ln">32</span><span class="n">correctedRGB</span> <span class="p">=</span> <span class="n">correctedRGB</span><span class="o">.^</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="mf">2.2</span><span class="p">);</span>  <span class="c">% Apply gamma for sRGB, Adobe RGB color space.</span>
+<span class="ln">33</span><span class="c">% Deal with saturated pixels. Not perfect, but this is what cameras do. Related to &#34;purple fringing&#34;.</span>
+<span class="ln">34</span><span class="n">correctedRGB</span><span class="p">(</span><span class="n">linearRGB</span><span class="o">==</span><span class="mi">1</span><span class="p">)</span> <span class="p">=</span> <span class="mi">1</span><span class="p">;</span> <span class="c">% Don&#39;t change saturated pixels. (We don&#39;t know HOW saturated.)</span>
+<span class="ln">35</span><span class="n">correctedRGB</span> <span class="p">=</span> <span class="nb">reshape</span><span class="p">(</span><span class="n">correctedRGB</span><span class="p">,</span> <span class="n">my</span><span class="p">,</span> <span class="n">mx</span><span class="p">,</span> <span class="n">mc</span><span class="p">);</span> 
+<span class="ln">36</span>
+<span class="ln">37</span><span class="n">figure</span><span class="p">;</span>  <span class="n">image</span><span class="p">(</span><span class="n">correctedRGB</span><span class="p">);</span>  <span class="n">title</span><span class="p">(</span><span class="s">&#39;Corrected image&#39;</span><span class="p">);</span>
+</code></pre></div><h3 id="222其他形式">2.2.2其他形式</h3>
+<p>多项式拟合还存在一种根多项式和多次项式</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm46.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm46.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="223多项式拟合原理">2.2.3多项式拟合原理</h3>
+<p>其中我们sensorRGB与sRGB之间有下面的关系</p>
+<ul>
+<li>sensorRGB到sensor XYZ颜色空间，需要矩阵M1</li>
+<li>sensor XYZ颜色空间到sensor <code>L*a*b*</code>颜色空间，需要矩阵M2</li>
+<li>sensor <code>L*a*b*</code>颜色空间到目标的 <code>L*a*b*</code>颜色空间，需要矩阵M3</li>
+<li>目标的 <code>L*a*b*</code>颜色空间到目标的XYZ颜色空间，需要矩阵M4</li>
+<li>目标的XYZ颜色空间到sRGB颜色空间，需要矩阵M5</li>
+</ul>
+<p>上述M2，M4，M5都是已知的，通过sensor <code>L*a*b*</code>颜色空间到目标的 <code>L*a*b*</code>颜色空间，可以求出M3，再通过sensorRGB到sensor XYZ颜色空间，需要矩阵M1，最终<code>M1*M2*M3*M4*M5</code>的综合为所需的CCM矩阵。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm47.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm47.png" >
+  
+    </a>
+  
+  
+</div>
+
 <h2 id="33神经网络拟合">3.3神经网络拟合</h2>
+<p>当然实际中没法把所有的颜色的数据都得到，那么就通过采样的到部分坐标的数据形成一个三维表，其他不在采样点位置的数据就可以通过插值的方式求出来。</p>
+<p>除了上述的LUT的方式还有神经网络的方式，因为其实输入就是一个矩阵，输出也是一个矩阵，那么中间通过网络连接，然后通过数据训练也能得到一个转换的网络参数。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm45.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm45.png" >
+  
+    </a>
+  
+  
+</div>
+
 <h1 id="3算法代码实现">3算法代码实现</h1>
+<p>这里参考QiuJueqin的CCM实现，添加CCM算法，可框选24色卡,，具体<a href="https://github.com/YangYang48/ISPAlgorithm/tree/master/CCM/color-correction-toolbox">点击这里</a></p>
+<h2 id="31demo1">3.1demo1</h2>
+<p>这个demo1主要是140个色块的CCM校正</p>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln">  1</span><span class="n">clear</span><span class="p">;</span> <span class="n">close</span> <span class="n">all</span><span class="p">;</span> <span class="n">clc</span><span class="p">;</span>
+<span class="ln">  2</span>
+<span class="ln">  3</span><span class="c">%% data preparation</span>
+<span class="ln">  4</span>
+<span class="ln">  5</span><span class="c">% load DSG color checker&#39;s spectral reflectance data</span>
+<span class="ln">  6</span><span class="c">% 加载光谱反射数据</span>
+<span class="ln">  7</span><span class="n">load</span><span class="p">(</span><span class="s">&#39;spectral_reflectance_data.mat&#39;</span><span class="p">);</span>
+<span class="ln">  8</span><span class="n">spectra</span> <span class="p">=</span> <span class="n">spectral_reflectance_data</span><span class="p">.</span><span class="n">XRite_DSG</span><span class="p">;</span>
+<span class="ln">  9</span>
+<span class="ln"> 10</span><span class="c">% calculate the XYZ values for the color checker under D65</span>
+<span class="ln"> 11</span><span class="c">%这里计算出来的是目标的XYZ颜色空间</span>
+<span class="ln"> 12</span><span class="n">XYZ</span> <span class="p">=</span> <span class="n">spectra2colors</span><span class="p">(</span><span class="n">spectra</span><span class="p">,</span> <span class="mi">400</span><span class="p">:</span><span class="mi">5</span><span class="p">:</span><span class="mi">700</span><span class="p">,</span><span class="c">...</span>
+<span class="ln"> 13</span>                     <span class="s">&#39;spd&#39;</span><span class="p">,</span> <span class="s">&#39;D65&#39;</span><span class="p">);</span>
+<span class="ln"> 14</span>
+<span class="ln"> 15</span><span class="c">% split the left half as training samples and the right half as validation</span>
+<span class="ln"> 16</span><span class="c">%将左半部分作为训练样本，右半部分作为验证样本</span>
+<span class="ln"> 17</span><span class="n">XYZ</span> <span class="p">=</span> <span class="nb">reshape</span><span class="p">(</span><span class="n">XYZ</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">3</span><span class="p">);</span>
+<span class="ln"> 18</span><span class="n">XYZ_train</span> <span class="p">=</span> <span class="nb">reshape</span><span class="p">(</span><span class="n">XYZ</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">7</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:),</span> <span class="p">[],</span> <span class="mi">3</span><span class="p">);</span>
+<span class="ln"> 19</span><span class="n">XYZ_val</span> <span class="p">=</span> <span class="nb">reshape</span><span class="p">(</span><span class="n">XYZ</span><span class="p">(</span><span class="mi">8</span><span class="p">:</span><span class="mi">14</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:),</span> <span class="p">[],</span> <span class="mi">3</span><span class="p">);</span>
+<span class="ln"> 20</span>
+<span class="ln"> 21</span><span class="c">% visualize the target colors</span>
+<span class="ln"> 22</span><span class="n">figureFullScreen</span><span class="p">(</span><span class="s">&#39;color&#39;</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">);</span>
+<span class="ln"> 23</span><span class="n">ax1</span> <span class="p">=</span> <span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln"> 24</span><span class="c">%把点变成像色卡一样的块状填充到画面上，形成拟合出来的色卡</span>
+<span class="ln"> 25</span><span class="n">colors2checker</span><span class="p">(</span><span class="n">xyz2rgb</span><span class="p">(</span><span class="n">XYZ_train</span><span class="p">),</span><span class="c">...</span>
+<span class="ln"> 26</span>               <span class="s">&#39;layout&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span><span class="c">...</span>
+<span class="ln"> 27</span>               <span class="s">&#39;squaresize&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span><span class="c">...</span>
+<span class="ln"> 28</span>               <span class="s">&#39;parent&#39;</span><span class="p">,</span> <span class="n">ax1</span><span class="p">);</span>
+<span class="ln"> 29</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;Training samples (target sRGB)&#39;</span><span class="p">);</span>
+<span class="ln"> 30</span>           
+<span class="ln"> 31</span><span class="n">ax2</span> <span class="p">=</span> <span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">);</span>
+<span class="ln"> 32</span><span class="n">colors2checker</span><span class="p">(</span><span class="n">xyz2rgb</span><span class="p">(</span><span class="n">XYZ_val</span><span class="p">),</span><span class="c">...</span>
+<span class="ln"> 33</span>               <span class="s">&#39;layout&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span><span class="c">...</span>
+<span class="ln"> 34</span>               <span class="s">&#39;squaresize&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span><span class="c">...</span>
+<span class="ln"> 35</span>               <span class="s">&#39;parent&#39;</span><span class="p">,</span> <span class="n">ax2</span><span class="p">);</span>
+<span class="ln"> 36</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;Validation samples (target sRGB)&#39;</span><span class="p">);</span>
+<span class="ln"> 37</span>
+<span class="ln"> 38</span><span class="c">% read color checker image and extract color responses</span>
+<span class="ln"> 39</span><span class="c">% the darkness level and the spatial non-uniformity has been corrected for</span>
+<span class="ln"> 40</span><span class="c">% this image</span>
+<span class="ln"> 41</span><span class="c">%真实sensor显示的RGB</span>
+<span class="ln"> 42</span><span class="n">dsg_img</span> <span class="p">=</span> <span class="n">imread</span><span class="p">(</span><span class="s">&#39;dsg_Nikon_D3x.tiff&#39;</span><span class="p">);</span>
+<span class="ln"> 43</span>
+<span class="ln"> 44</span><span class="c">% you can also manually select roi for the color checker</span>
+<span class="ln"> 45</span><span class="c">%选择的区域，也可以手动选择ROI区域</span>
+<span class="ln"> 46</span><span class="n">roi</span> <span class="p">=</span> <span class="p">[</span><span class="mi">519</span><span class="p">,</span><span class="mi">310</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">669</span><span class="p">,</span><span class="mi">309</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">819</span><span class="p">,</span><span class="mi">308</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">969</span><span class="p">,</span><span class="mi">307</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1120</span><span class="p">,</span><span class="mi">306</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1270</span><span class="p">,</span><span class="mi">306</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1421</span><span class="p">,</span><span class="mi">305</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1572</span><span class="p">,</span><span class="mi">304</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1722</span><span class="p">,</span><span class="mi">303</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1873</span><span class="p">,</span><span class="mi">302</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2025</span><span class="p">,</span><span class="mi">301</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2176</span><span class="p">,</span><span class="mi">300</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2327</span><span class="p">,</span><span class="mi">299</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2479</span><span class="p">,</span><span class="mi">299</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">519</span><span class="p">,</span><span class="mi">460</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">669</span><span class="p">,</span><span class="mi">459</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">819</span><span class="p">,</span><span class="mi">458</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">970</span><span class="p">,</span><span class="mi">457</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1120</span><span class="p">,</span><span class="mi">456</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1271</span><span class="p">,</span><span class="mi">456</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1421</span><span class="p">,</span><span class="mi">455</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1572</span><span class="p">,</span><span class="mi">454</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1723</span><span class="p">,</span><span class="mi">453</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1874</span><span class="p">,</span><span class="mi">452</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2025</span><span class="p">,</span><span class="mi">452</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2176</span><span class="p">,</span><span class="mi">451</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2328</span><span class="p">,</span><span class="mi">450</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2479</span><span class="p">,</span><span class="mi">449</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">519</span><span class="p">,</span><span class="mi">650</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">669</span><span class="p">,</span><span class="mi">609</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">820</span><span class="p">,</span><span class="mi">608</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">970</span><span class="p">,</span><span class="mi">607</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1120</span><span class="p">,</span><span class="mi">607</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1271</span><span class="p">,</span><span class="mi">606</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1422</span><span class="p">,</span><span class="mi">605</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1572</span><span class="p">,</span><span class="mi">604</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1723</span><span class="p">,</span><span class="mi">604</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1874</span><span class="p">,</span><span class="mi">603</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2026</span><span class="p">,</span><span class="mi">602</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2177</span><span class="p">,</span><span class="mi">601</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2328</span><span class="p">,</span><span class="mi">601</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2480</span><span class="p">,</span><span class="mi">600</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">520</span><span class="p">,</span><span class="mi">760</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">670</span><span class="p">,</span><span class="mi">759</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">820</span><span class="p">,</span><span class="mi">758</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">970</span><span class="p">,</span><span class="mi">758</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1121</span><span class="p">,</span><span class="mi">757</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1271</span><span class="p">,</span><span class="mi">756</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1422</span><span class="p">,</span><span class="mi">755</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1573</span><span class="p">,</span><span class="mi">755</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1724</span><span class="p">,</span><span class="mi">754</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1875</span><span class="p">,</span><span class="mi">753</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2026</span><span class="p">,</span><span class="mi">753</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2177</span><span class="p">,</span><span class="mi">752</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2329</span><span class="p">,</span><span class="mi">751</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2480</span><span class="p">,</span><span class="mi">751</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">520</span><span class="p">,</span><span class="mi">910</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">670</span><span class="p">,</span><span class="mi">909</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">820</span><span class="p">,</span><span class="mi">908</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">971</span><span class="p">,</span><span class="mi">908</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1121</span><span class="p">,</span><span class="mi">907</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1272</span><span class="p">,</span><span class="mi">907</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1422</span><span class="p">,</span><span class="mi">906</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1573</span><span class="p">,</span><span class="mi">905</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1724</span><span class="p">,</span><span class="mi">905</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1875</span><span class="p">,</span><span class="mi">904</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2027</span><span class="p">,</span><span class="mi">903</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2178</span><span class="p">,</span><span class="mi">903</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2329</span><span class="p">,</span><span class="mi">902</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2481</span><span class="p">,</span><span class="mi">901</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">520</span><span class="p">,</span><span class="mi">1060</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">670</span><span class="p">,</span><span class="mi">1059</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">820</span><span class="p">,</span><span class="mi">1059</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">971</span><span class="p">,</span><span class="mi">1058</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1121</span><span class="p">,</span><span class="mi">1057</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1272</span><span class="p">,</span><span class="mi">1057</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1423</span><span class="p">,</span><span class="mi">1056</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1574</span><span class="p">,</span><span class="mi">1056</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1725</span><span class="p">,</span><span class="mi">1055</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1876</span><span class="p">,</span><span class="mi">1055</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2027</span><span class="p">,</span><span class="mi">1054</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2179</span><span class="p">,</span><span class="mi">1053</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2330</span><span class="p">,</span><span class="mi">1053</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2482</span><span class="p">,</span><span class="mi">1052</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">520</span><span class="p">,</span><span class="mi">1210</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">670</span><span class="p">,</span><span class="mi">1209</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">821</span><span class="p">,</span><span class="mi">1209</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">971</span><span class="p">,</span><span class="mi">1208</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1122</span><span class="p">,</span><span class="mi">1208</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1272</span><span class="p">,</span><span class="mi">1207</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1423</span><span class="p">,</span><span class="mi">1207</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1574</span><span class="p">,</span><span class="mi">1206</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1725</span><span class="p">,</span><span class="mi">1206</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1876</span><span class="p">,</span><span class="mi">1205</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2028</span><span class="p">,</span><span class="mi">1205</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2179</span><span class="p">,</span><span class="mi">1204</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2331</span><span class="p">,</span><span class="mi">1204</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2482</span><span class="p">,</span><span class="mi">1203</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">520</span><span class="p">,</span><span class="mi">1360</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">671</span><span class="p">,</span><span class="mi">1360</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">821</span><span class="p">,</span><span class="mi">1359</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">972</span><span class="p">,</span><span class="mi">1359</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1122</span><span class="p">,</span><span class="mi">1358</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1273</span><span class="p">,</span><span class="mi">1358</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1424</span><span class="p">,</span><span class="mi">1357</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1575</span><span class="p">,</span><span class="mi">1357</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1726</span><span class="p">,</span><span class="mi">1357</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1877</span><span class="p">,</span><span class="mi">1356</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2028</span><span class="p">,</span><span class="mi">1356</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2180</span><span class="p">,</span><span class="mi">1355</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2331</span><span class="p">,</span><span class="mi">1355</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2483</span><span class="p">,</span><span class="mi">1354</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">521</span><span class="p">,</span><span class="mi">1510</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">671</span><span class="p">,</span><span class="mi">1510</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">821</span><span class="p">,</span><span class="mi">1510</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">972</span><span class="p">,</span><span class="mi">1509</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1122</span><span class="p">,</span><span class="mi">1509</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1273</span><span class="p">,</span><span class="mi">1508</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1424</span><span class="p">,</span><span class="mi">1508</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1575</span><span class="p">,</span><span class="mi">1508</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1726</span><span class="p">,</span><span class="mi">1507</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1877</span><span class="p">,</span><span class="mi">1507</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2029</span><span class="p">,</span><span class="mi">1507</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2180</span><span class="p">,</span><span class="mi">1506</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2332</span><span class="p">,</span><span class="mi">1506</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2484</span><span class="p">,</span><span class="mi">1505</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">521</span><span class="p">,</span><span class="mi">1661</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">671</span><span class="p">,</span><span class="mi">1660</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">822</span><span class="p">,</span><span class="mi">1660</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">972</span><span class="p">,</span><span class="mi">1660</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1123</span><span class="p">,</span><span class="mi">1659</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1274</span><span class="p">,</span><span class="mi">1659</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1424</span><span class="p">,</span><span class="mi">1659</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1576</span><span class="p">,</span><span class="mi">1658</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1727</span><span class="p">,</span><span class="mi">1658</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1878</span><span class="p">,</span><span class="mi">1658</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2029</span><span class="p">,</span><span class="mi">1657</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2181</span><span class="p">,</span><span class="mi">1657</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2332</span><span class="p">,</span><span class="mi">1657</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2484</span><span class="p">,</span><span class="mi">1656</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">];</span>
+<span class="ln"> 47</span><span class="c">%计算选择的140个色块区域平均的RGB值</span>
+<span class="ln"> 48</span><span class="n">RGB</span> <span class="p">=</span> <span class="n">checker2colors</span><span class="p">(</span><span class="n">dsg_img</span><span class="p">,</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">14</span><span class="p">],</span><span class="c">...</span>
+<span class="ln"> 49</span>                     <span class="s">&#39;roi&#39;</span><span class="p">,</span> <span class="n">roi</span><span class="p">,</span><span class="c">...</span>
+<span class="ln"> 50</span>                     <span class="s">&#39;scale&#39;</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span> <span class="c">% scaling only for better visualization</span>
+<span class="ln"> 51</span>
+<span class="ln"> 52</span><span class="c">% split the left half as training samples and the right half as validation</span>
+<span class="ln"> 53</span><span class="c">%跟上述类似，一半训练，一半验证</span>
+<span class="ln"> 54</span><span class="n">RGB</span> <span class="p">=</span> <span class="nb">reshape</span><span class="p">(</span><span class="n">RGB</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">3</span><span class="p">);</span>
+<span class="ln"> 55</span><span class="n">RGB_train</span> <span class="p">=</span> <span class="nb">reshape</span><span class="p">(</span><span class="n">RGB</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">7</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:),</span> <span class="p">[],</span> <span class="mi">3</span><span class="p">);</span>
+<span class="ln"> 56</span><span class="n">RGB_val</span> <span class="p">=</span> <span class="nb">reshape</span><span class="p">(</span><span class="n">RGB</span><span class="p">(</span><span class="mi">8</span><span class="p">:</span><span class="mi">14</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:),</span> <span class="p">[],</span> <span class="mi">3</span><span class="p">);</span>
+<span class="ln"> 57</span>
+<span class="ln"> 58</span><span class="c">% visualize the camera colors</span>
+<span class="ln"> 59</span><span class="n">figureFullScreen</span><span class="p">(</span><span class="s">&#39;color&#39;</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">);</span>
+<span class="ln"> 60</span><span class="n">ax1</span> <span class="p">=</span> <span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln"> 61</span>
+<span class="ln"> 62</span><span class="n">colors2checker</span><span class="p">(</span><span class="n">RGB_train</span><span class="p">,</span><span class="c">...</span>
+<span class="ln"> 63</span>               <span class="s">&#39;layout&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span><span class="c">...</span>
+<span class="ln"> 64</span>               <span class="s">&#39;squaresize&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span><span class="c">...</span>
+<span class="ln"> 65</span>               <span class="s">&#39;parent&#39;</span><span class="p">,</span> <span class="n">ax1</span><span class="p">);</span>
+<span class="ln"> 66</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;Training samples (camera RGB, w/o gamma)&#39;</span><span class="p">);</span>
+<span class="ln"> 67</span>
+<span class="ln"> 68</span><span class="n">ax2</span> <span class="p">=</span> <span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">);</span>
+<span class="ln"> 69</span><span class="n">colors2checker</span><span class="p">(</span><span class="n">RGB_val</span><span class="p">,</span><span class="c">...</span>
+<span class="ln"> 70</span>               <span class="s">&#39;layout&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span><span class="c">...</span>
+<span class="ln"> 71</span>               <span class="s">&#39;squaresize&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span><span class="c">...</span>
+<span class="ln"> 72</span>               <span class="s">&#39;parent&#39;</span><span class="p">,</span> <span class="n">ax2</span><span class="p">);</span>
+<span class="ln"> 73</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;Validation samples (camera RGB, w/o gamma)&#39;</span><span class="p">);</span>
+<span class="ln"> 74</span>
+<span class="ln"> 75</span><span class="n">clearvars</span> <span class="o">-</span><span class="n">except</span> <span class="n">XYZ_train</span> <span class="n">XYZ_val</span> <span class="n">RGB_train</span> <span class="n">RGB_val</span>
+<span class="ln"> 76</span>
+<span class="ln"> 77</span><span class="c">%% color correction</span>
+<span class="ln"> 78</span>
+<span class="ln"> 79</span><span class="c">% training</span>
+<span class="ln"> 80</span><span class="c">%可以定义3x3模型，也可以定义其他模型，这里是6x3模型</span>
+<span class="ln"> 81</span><span class="n">model</span> <span class="p">=</span> <span class="s">&#39;root6x3&#39;</span><span class="p">;</span> <span class="c">% color correction model</span>
+<span class="ln"> 82</span><span class="c">%根据光谱特性，sRGB转换到了XYZ颜色空间</span>
+<span class="ln"> 83</span><span class="n">targetcolorspace</span> <span class="p">=</span> <span class="s">&#39;XYZ&#39;</span><span class="p">;</span>
+<span class="ln"> 84</span><span class="c">%这里用到的计算方式是CIE △E2000的方式求解</span>
+<span class="ln"> 85</span><span class="c">% OPTIONAL PARAMETERS:</span>
+<span class="ln"> 86</span><span class="c">% loss:              loss function to be minimized.</span>
+<span class="ln"> 87</span><span class="c">%                    &#39;mse&#39; | &#39;ciede00&#39; (default) | &#39;ciede94&#39; |</span>
+<span class="ln"> 88</span><span class="c">%                    &#39;ciedelab&#39; | &#39;cmcde&#39;</span>
+<span class="ln"> 89</span><span class="c">% model:             color correction model, based on which the camera</span>
+<span class="ln"> 90</span><span class="c">%                    responses will be expanded.</span>
+<span class="ln"> 91</span><span class="c">%                    &#39;linear3x3&#39; (default) | &#39;root6x3&#39; | &#39;root13x3&#39; |</span>
+<span class="ln"> 92</span><span class="c">%                    &#39;poly4x3&#39; | &#39;poly6x3&#39; | &#39;poly7x3&#39; | &#39;poly9x3&#39;</span>
+<span class="ln"> 93</span><span class="n">metrics</span> <span class="p">=</span> <span class="p">{</span><span class="s">&#39;mse&#39;</span><span class="p">,</span> <span class="s">&#39;ciede00&#39;</span><span class="p">,</span> <span class="s">&#39;ciedelab&#39;</span><span class="p">};</span> <span class="c">% only for evaluation</span>
+<span class="ln"> 94</span>
+<span class="ln"> 95</span><span class="c">% default loss function: ciede00</span>
+<span class="ln"> 96</span><span class="c">% if RGB_train has been white-balanced, consider using &#39;preservewhite&#39; and</span>
+<span class="ln"> 97</span><span class="c">% &#39;whitepoint&#39; parameters.</span>
+<span class="ln"> 98</span><span class="p">[</span><span class="n">matrix</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">XYZ_train_pred</span><span class="p">,</span> <span class="n">errs_train</span><span class="p">]</span> <span class="p">=</span> <span class="n">ccmtrain</span><span class="p">(</span><span class="n">RGB_train</span><span class="p">,</span><span class="c">...</span>
+<span class="ln"> 99</span>                                                       <span class="n">XYZ_train</span><span class="p">,</span><span class="c">...</span>
+<span class="ln">100</span>                                                       <span class="s">&#39;model&#39;</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span><span class="c">...</span>
+<span class="ln">101</span>                                                       <span class="s">&#39;bias&#39;</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span><span class="c">...</span>
+<span class="ln">102</span>                                                       <span class="s">&#39;targetcolorspace&#39;</span><span class="p">,</span> <span class="n">targetcolorspace</span><span class="p">,</span><span class="c">...</span>
+<span class="ln">103</span>                                                       <span class="s">&#39;metric&#39;</span><span class="p">,</span> <span class="n">metrics</span><span class="p">);</span>
+<span class="ln">104</span><span class="c">% validation</span>
+<span class="ln">105</span><span class="p">[</span><span class="n">XYZ_val_pred</span><span class="p">,</span> <span class="n">errs_val</span><span class="p">]</span> <span class="p">=</span> <span class="n">ccmvalidate</span><span class="p">(</span><span class="n">RGB_val</span><span class="p">,</span><span class="c">...</span>
+<span class="ln">106</span>                                       <span class="n">XYZ_val</span><span class="p">,</span><span class="c">...</span>
+<span class="ln">107</span>                                       <span class="n">model</span><span class="p">,</span><span class="c">...</span>
+<span class="ln">108</span>                                       <span class="n">matrix</span><span class="p">,</span><span class="c">...</span>
+<span class="ln">109</span>                                       <span class="n">scale</span><span class="p">,</span><span class="c">...</span>
+<span class="ln">110</span>                                       <span class="s">&#39;targetcolorspace&#39;</span><span class="p">,</span> <span class="n">targetcolorspace</span><span class="p">,</span><span class="c">...</span>
+<span class="ln">111</span>                                       <span class="s">&#39;metric&#39;</span><span class="p">,</span> <span class="n">metrics</span><span class="p">);</span>
+<span class="ln">112</span><span class="c">% visualize final results</span>
+<span class="ln">113</span><span class="n">figureFullScreen</span><span class="p">(</span><span class="s">&#39;color&#39;</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">);</span>
+<span class="ln">114</span><span class="n">ax1</span> <span class="p">=</span> <span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln">115</span><span class="n">colors2checker</span><span class="p">({</span><span class="n">xyz2rgb</span><span class="p">(</span><span class="n">XYZ_train</span><span class="p">),</span> <span class="n">xyz2rgb</span><span class="p">(</span><span class="n">XYZ_train_pred</span><span class="p">)},</span><span class="c">...</span>
+<span class="ln">116</span>               <span class="s">&#39;layout&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span><span class="c">...</span>
+<span class="ln">117</span>               <span class="s">&#39;squaresize&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span><span class="c">...</span>
+<span class="ln">118</span>               <span class="s">&#39;legend&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;Ground-truth&#39;</span><span class="p">,</span> <span class="s">&#39;Predicted&#39;</span><span class="p">},</span><span class="c">...</span>
+<span class="ln">119</span>               <span class="s">&#39;parent&#39;</span><span class="p">,</span> <span class="n">ax1</span><span class="p">);</span>
+<span class="ln">120</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;Training samples comparison&#39;</span><span class="p">);</span>
+<span class="ln">121</span>
+<span class="ln">122</span><span class="n">ax2</span> <span class="p">=</span> <span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">);</span>
+<span class="ln">123</span><span class="n">colors2checker</span><span class="p">({</span><span class="n">xyz2rgb</span><span class="p">(</span><span class="n">XYZ_val</span><span class="p">),</span> <span class="n">xyz2rgb</span><span class="p">(</span><span class="n">XYZ_val_pred</span><span class="p">)},</span><span class="c">...</span>
+<span class="ln">124</span>               <span class="s">&#39;layout&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span><span class="c">...</span>
+<span class="ln">125</span>               <span class="s">&#39;squaresize&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span><span class="c">...</span>
+<span class="ln">126</span>               <span class="s">&#39;legend&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;Ground-truth&#39;</span><span class="p">,</span> <span class="s">&#39;Predicted&#39;</span><span class="p">},</span><span class="c">...</span>
+<span class="ln">127</span>               <span class="s">&#39;parent&#39;</span><span class="p">,</span> <span class="n">ax2</span><span class="p">);</span>
+<span class="ln">128</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;Validation samples comparison&#39;</span><span class="p">);</span>
+</code></pre></div><p>框选的区域是DIGITAL SG的卡，有140个色块</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm48.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm48.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>140分成两部分，其中70为训练集，另外70个为实际结果的验证</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm49.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/ccm/ccm49.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="32demo2">3.2demo2</h2>
+<p>跟demo1区别，加了白点的保持</p>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="n">clear</span><span class="p">;</span> <span class="n">close</span> <span class="n">all</span><span class="p">;</span> <span class="n">clc</span><span class="p">;</span>
+<span class="ln"> 2</span>
+<span class="ln"> 3</span><span class="c">%% data preparation</span>
+<span class="ln"> 4</span>
+<span class="ln"> 5</span><span class="c">% load DSG color checker&#39;s spectral reflectance data</span>
+<span class="ln"> 6</span><span class="n">load</span><span class="p">(</span><span class="s">&#39;spectral_reflectance_data.mat&#39;</span><span class="p">);</span>
+<span class="ln"> 7</span><span class="n">spectra</span> <span class="p">=</span> <span class="n">spectral_reflectance_data</span><span class="p">.</span><span class="n">XRite_DSG</span><span class="p">;</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span><span class="c">% calculate the XYZ values for the color checker under D65</span>
+<span class="ln">10</span><span class="n">XYZ</span> <span class="p">=</span> <span class="n">spectra2colors</span><span class="p">(</span><span class="n">spectra</span><span class="p">,</span> <span class="mi">400</span><span class="p">:</span><span class="mi">5</span><span class="p">:</span><span class="mi">700</span><span class="p">,</span><span class="c">...</span>
+<span class="ln">11</span>                     <span class="s">&#39;spd&#39;</span><span class="p">,</span> <span class="s">&#39;D65&#39;</span><span class="p">);</span>
+<span class="ln">12</span>
+<span class="ln">13</span><span class="c">% read color checker image and extract color responses</span>
+<span class="ln">14</span><span class="c">% the darkness level and the spatial non-uniformity has been corrected for</span>
+<span class="ln">15</span><span class="c">% this image</span>
+<span class="ln">16</span><span class="n">dsg_img</span> <span class="p">=</span> <span class="n">imread</span><span class="p">(</span><span class="s">&#39;dsg_Nikon_D3x.tiff&#39;</span><span class="p">);</span>
+<span class="ln">17</span>
+<span class="ln">18</span><span class="c">% you can also manually select roi for the color checker</span>
+<span class="ln">19</span><span class="n">roi</span> <span class="p">=</span> <span class="p">[</span><span class="mi">519</span><span class="p">,</span><span class="mi">310</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">669</span><span class="p">,</span><span class="mi">309</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">819</span><span class="p">,</span><span class="mi">308</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">969</span><span class="p">,</span><span class="mi">307</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1120</span><span class="p">,</span><span class="mi">306</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1270</span><span class="p">,</span><span class="mi">306</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1421</span><span class="p">,</span><span class="mi">305</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1572</span><span class="p">,</span><span class="mi">304</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1722</span><span class="p">,</span><span class="mi">303</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1873</span><span class="p">,</span><span class="mi">302</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2025</span><span class="p">,</span><span class="mi">301</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2176</span><span class="p">,</span><span class="mi">300</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2327</span><span class="p">,</span><span class="mi">299</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2479</span><span class="p">,</span><span class="mi">299</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">519</span><span class="p">,</span><span class="mi">460</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">669</span><span class="p">,</span><span class="mi">459</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">819</span><span class="p">,</span><span class="mi">458</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">970</span><span class="p">,</span><span class="mi">457</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1120</span><span class="p">,</span><span class="mi">456</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1271</span><span class="p">,</span><span class="mi">456</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1421</span><span class="p">,</span><span class="mi">455</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1572</span><span class="p">,</span><span class="mi">454</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1723</span><span class="p">,</span><span class="mi">453</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1874</span><span class="p">,</span><span class="mi">452</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2025</span><span class="p">,</span><span class="mi">452</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2176</span><span class="p">,</span><span class="mi">451</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2328</span><span class="p">,</span><span class="mi">450</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2479</span><span class="p">,</span><span class="mi">449</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">519</span><span class="p">,</span><span class="mi">650</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">669</span><span class="p">,</span><span class="mi">609</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">820</span><span class="p">,</span><span class="mi">608</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">970</span><span class="p">,</span><span class="mi">607</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1120</span><span class="p">,</span><span class="mi">607</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1271</span><span class="p">,</span><span class="mi">606</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1422</span><span class="p">,</span><span class="mi">605</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1572</span><span class="p">,</span><span class="mi">604</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1723</span><span class="p">,</span><span class="mi">604</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1874</span><span class="p">,</span><span class="mi">603</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2026</span><span class="p">,</span><span class="mi">602</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2177</span><span class="p">,</span><span class="mi">601</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2328</span><span class="p">,</span><span class="mi">601</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2480</span><span class="p">,</span><span class="mi">600</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">520</span><span class="p">,</span><span class="mi">760</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">670</span><span class="p">,</span><span class="mi">759</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">820</span><span class="p">,</span><span class="mi">758</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">970</span><span class="p">,</span><span class="mi">758</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1121</span><span class="p">,</span><span class="mi">757</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1271</span><span class="p">,</span><span class="mi">756</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1422</span><span class="p">,</span><span class="mi">755</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1573</span><span class="p">,</span><span class="mi">755</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1724</span><span class="p">,</span><span class="mi">754</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1875</span><span class="p">,</span><span class="mi">753</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2026</span><span class="p">,</span><span class="mi">753</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2177</span><span class="p">,</span><span class="mi">752</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2329</span><span class="p">,</span><span class="mi">751</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2480</span><span class="p">,</span><span class="mi">751</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">520</span><span class="p">,</span><span class="mi">910</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">670</span><span class="p">,</span><span class="mi">909</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">820</span><span class="p">,</span><span class="mi">908</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">971</span><span class="p">,</span><span class="mi">908</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1121</span><span class="p">,</span><span class="mi">907</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1272</span><span class="p">,</span><span class="mi">907</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1422</span><span class="p">,</span><span class="mi">906</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1573</span><span class="p">,</span><span class="mi">905</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1724</span><span class="p">,</span><span class="mi">905</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1875</span><span class="p">,</span><span class="mi">904</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2027</span><span class="p">,</span><span class="mi">903</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2178</span><span class="p">,</span><span class="mi">903</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2329</span><span class="p">,</span><span class="mi">902</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2481</span><span class="p">,</span><span class="mi">901</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">520</span><span class="p">,</span><span class="mi">1060</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">670</span><span class="p">,</span><span class="mi">1059</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">820</span><span class="p">,</span><span class="mi">1059</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">971</span><span class="p">,</span><span class="mi">1058</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1121</span><span class="p">,</span><span class="mi">1057</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1272</span><span class="p">,</span><span class="mi">1057</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1423</span><span class="p">,</span><span class="mi">1056</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1574</span><span class="p">,</span><span class="mi">1056</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1725</span><span class="p">,</span><span class="mi">1055</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1876</span><span class="p">,</span><span class="mi">1055</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2027</span><span class="p">,</span><span class="mi">1054</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2179</span><span class="p">,</span><span class="mi">1053</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2330</span><span class="p">,</span><span class="mi">1053</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2482</span><span class="p">,</span><span class="mi">1052</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">520</span><span class="p">,</span><span class="mi">1210</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">670</span><span class="p">,</span><span class="mi">1209</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">821</span><span class="p">,</span><span class="mi">1209</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">971</span><span class="p">,</span><span class="mi">1208</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1122</span><span class="p">,</span><span class="mi">1208</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1272</span><span class="p">,</span><span class="mi">1207</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1423</span><span class="p">,</span><span class="mi">1207</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1574</span><span class="p">,</span><span class="mi">1206</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1725</span><span class="p">,</span><span class="mi">1206</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1876</span><span class="p">,</span><span class="mi">1205</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2028</span><span class="p">,</span><span class="mi">1205</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2179</span><span class="p">,</span><span class="mi">1204</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2331</span><span class="p">,</span><span class="mi">1204</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2482</span><span class="p">,</span><span class="mi">1203</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">520</span><span class="p">,</span><span class="mi">1360</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">671</span><span class="p">,</span><span class="mi">1360</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">821</span><span class="p">,</span><span class="mi">1359</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">972</span><span class="p">,</span><span class="mi">1359</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1122</span><span class="p">,</span><span class="mi">1358</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1273</span><span class="p">,</span><span class="mi">1358</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1424</span><span class="p">,</span><span class="mi">1357</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1575</span><span class="p">,</span><span class="mi">1357</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1726</span><span class="p">,</span><span class="mi">1357</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1877</span><span class="p">,</span><span class="mi">1356</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2028</span><span class="p">,</span><span class="mi">1356</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2180</span><span class="p">,</span><span class="mi">1355</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2331</span><span class="p">,</span><span class="mi">1355</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2483</span><span class="p">,</span><span class="mi">1354</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">521</span><span class="p">,</span><span class="mi">1510</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">671</span><span class="p">,</span><span class="mi">1510</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">821</span><span class="p">,</span><span class="mi">1510</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">972</span><span class="p">,</span><span class="mi">1509</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1122</span><span class="p">,</span><span class="mi">1509</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1273</span><span class="p">,</span><span class="mi">1508</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1424</span><span class="p">,</span><span class="mi">1508</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1575</span><span class="p">,</span><span class="mi">1508</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1726</span><span class="p">,</span><span class="mi">1507</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1877</span><span class="p">,</span><span class="mi">1507</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2029</span><span class="p">,</span><span class="mi">1507</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2180</span><span class="p">,</span><span class="mi">1506</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2332</span><span class="p">,</span><span class="mi">1506</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2484</span><span class="p">,</span><span class="mi">1505</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">521</span><span class="p">,</span><span class="mi">1661</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">671</span><span class="p">,</span><span class="mi">1660</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">822</span><span class="p">,</span><span class="mi">1660</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">972</span><span class="p">,</span><span class="mi">1660</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1123</span><span class="p">,</span><span class="mi">1659</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1274</span><span class="p">,</span><span class="mi">1659</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1424</span><span class="p">,</span><span class="mi">1659</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1576</span><span class="p">,</span><span class="mi">1658</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1727</span><span class="p">,</span><span class="mi">1658</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">1878</span><span class="p">,</span><span class="mi">1658</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2029</span><span class="p">,</span><span class="mi">1657</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2181</span><span class="p">,</span><span class="mi">1657</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2332</span><span class="p">,</span><span class="mi">1657</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">;</span><span class="mi">2484</span><span class="p">,</span><span class="mi">1656</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">65</span><span class="p">];</span>
+<span class="ln">20</span><span class="n">RGB</span> <span class="p">=</span> <span class="n">checker2colors</span><span class="p">(</span><span class="n">dsg_img</span><span class="p">,</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">14</span><span class="p">],</span><span class="c">...</span>
+<span class="ln">21</span>                     <span class="s">&#39;roi&#39;</span><span class="p">,</span> <span class="n">roi</span><span class="p">,</span><span class="c">...</span>
+<span class="ln">22</span>                     <span class="s">&#39;show&#39;</span><span class="p">,</span> <span class="n">false</span><span class="p">,</span><span class="c">...</span>
+<span class="ln">23</span>                     <span class="s">&#39;scale&#39;</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span> <span class="c">% scaling only for better visualization</span>
+<span class="ln">24</span>
+<span class="ln">25</span><span class="n">clearvars</span> <span class="o">-</span><span class="n">except</span> <span class="n">XYZ</span> <span class="n">RGB</span>
+<span class="ln">26</span>
+<span class="ln">27</span>
+<span class="ln">28</span><span class="c">%% color correction with white point preserved</span>
+<span class="ln">29</span>
+<span class="ln">30</span><span class="c">% white balancing RGB values</span>
+<span class="ln">31</span><span class="c">%增加了白平衡RGB值</span>
+<span class="ln">32</span><span class="n">neutral_patches_idx</span> <span class="p">=</span> <span class="p">[</span><span class="mi">61</span><span class="p">,</span> <span class="mi">62</span><span class="p">,</span> <span class="mi">63</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">65</span><span class="p">];</span>
+<span class="ln">33</span><span class="n">gains</span> <span class="p">=</span> <span class="p">[</span><span class="n">RGB</span><span class="p">(</span><span class="n">neutral_patches_idx</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">\</span> <span class="n">RGB</span><span class="p">(</span><span class="n">neutral_patches_idx</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span><span class="c">...</span>
+<span class="ln">34</span>         <span class="mi">1</span><span class="p">,</span><span class="c">...</span>
+<span class="ln">35</span>         <span class="n">RGB</span><span class="p">(</span><span class="n">neutral_patches_idx</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="o">\</span> <span class="n">RGB</span><span class="p">(</span><span class="n">neutral_patches_idx</span><span class="p">,</span> <span class="mi">2</span><span class="p">)];</span>
+<span class="ln">36</span>     
+<span class="ln">37</span><span class="n">RGB_wb</span> <span class="p">=</span> <span class="n">RGB</span> <span class="o">.*</span> <span class="n">gains</span><span class="p">;</span>
+<span class="ln">38</span>
+<span class="ln">39</span><span class="c">% use D65&#39;s XYZ value as white point to be preserved after color correction</span>
+<span class="ln">40</span><span class="n">white_point</span> <span class="p">=</span> <span class="n">whitepoint</span><span class="p">(</span><span class="s">&#39;d65&#39;</span><span class="p">);</span>
+<span class="ln">41</span>
+<span class="ln">42</span><span class="c">% training</span>
+<span class="ln">43</span><span class="n">model</span> <span class="p">=</span> <span class="s">&#39;root6x3&#39;</span><span class="p">;</span>
+<span class="ln">44</span><span class="p">[</span><span class="n">matrix</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">XYZ_pred</span><span class="p">,</span> <span class="n">errs_train</span><span class="p">]</span> <span class="p">=</span> <span class="n">ccmtrain</span><span class="p">(</span><span class="n">RGB_wb</span><span class="p">,</span><span class="c">...</span>
+<span class="ln">45</span>                                                 <span class="n">XYZ</span><span class="p">,</span><span class="c">...</span>
+<span class="ln">46</span>                                                 <span class="s">&#39;model&#39;</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span><span class="c">...</span>
+<span class="ln">47</span>                                                 <span class="s">&#39;targetcolorspace&#39;</span><span class="p">,</span> <span class="s">&#39;xyz&#39;</span><span class="p">,</span><span class="c">...</span>
+<span class="ln">48</span>                                                 <span class="s">&#39;whitepoint&#39;</span><span class="p">,</span> <span class="n">white_point</span><span class="p">);</span>
+<span class="ln">49</span>
+<span class="ln">50</span><span class="c">% check if [1, 1, 1] has been preserved as [0.9505, 1.0000, 1.0888]</span>
+<span class="ln">51</span><span class="n">predicted_white_point</span> <span class="p">=</span> <span class="n">ccmapply</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span><span class="c">...</span>
+<span class="ln">52</span>                                 <span class="n">model</span><span class="p">,</span><span class="c">...</span>
+<span class="ln">53</span>                                 <span class="n">matrix</span><span class="p">);</span>
+<span class="ln">54</span>                        
+<span class="ln">55</span><span class="n">white_point_err</span> <span class="p">=</span> <span class="nb">sqrt</span><span class="p">(</span><span class="n">sum</span><span class="p">((</span><span class="n">predicted_white_point</span> <span class="o">-</span> <span class="n">white_point</span><span class="p">)</span><span class="o">.^</span><span class="mi">2</span><span class="p">));</span>
+<span class="ln">56</span><span class="n">fprintf</span><span class="p">(</span><span class="s">&#39;residual error between user-specified and predicted white points: %.3e\n&#39;</span><span class="p">,</span> <span class="n">white_point_err</span><span class="p">);</span>
+<span class="ln">57</span>
+<span class="ln">58</span><span class="c">% visualization</span>
+<span class="ln">59</span><span class="n">figureFullScreen</span><span class="p">(</span><span class="s">&#39;color&#39;</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">);</span>
+<span class="ln">60</span><span class="n">ax1</span> <span class="p">=</span> <span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">);</span>
+<span class="ln">61</span><span class="n">colors2checker</span><span class="p">(</span><span class="n">RGB_wb</span> <span class="o">.^</span> <span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="mf">2.2</span><span class="p">),</span><span class="c">...</span>
+<span class="ln">62</span>               <span class="s">&#39;layout&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">14</span><span class="p">],</span><span class="c">...</span>
+<span class="ln">63</span>               <span class="s">&#39;squaresize&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span><span class="c">...</span>
+<span class="ln">64</span>               <span class="s">&#39;parent&#39;</span><span class="p">,</span> <span class="n">ax1</span><span class="p">);</span>
+<span class="ln">65</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;White balaned camera responses before color correction (gamma = 1/2.2)&#39;</span><span class="p">);</span>
+<span class="ln">66</span>
+<span class="ln">67</span><span class="n">ax2</span> <span class="p">=</span> <span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">);</span>
+<span class="ln">68</span><span class="n">colors2checker</span><span class="p">(</span><span class="n">xyz2rgb</span><span class="p">(</span><span class="n">XYZ_pred</span><span class="p">),</span><span class="c">...</span>
+<span class="ln">69</span>               <span class="s">&#39;layout&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">14</span><span class="p">],</span><span class="c">...</span>
+<span class="ln">70</span>               <span class="s">&#39;squaresize&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span><span class="c">...</span>
+<span class="ln">71</span>               <span class="s">&#39;parent&#39;</span><span class="p">,</span> <span class="n">ax2</span><span class="p">);</span>
+<span class="ln">72</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;Camera responses (sRGB) after color correction&#39;</span><span class="p">);</span>
+</code></pre></div><h1 id="参考">参考</h1>
+<p><a href="https://blog.csdn.net/VinagerJoe/article/details/129736452?app_version=6.2.4&amp;code=app_1562916241&amp;csdn_share_tail=%7B%22type%22%3A%22blog%22%2C%22rType%22%3A%22article%22%2C%22rId%22%3A%22129736452%22%2C%22source%22%3A%22yangju147532896%22%7D&amp;uLinkId=usr1mkqgl919blen&amp;utm_source=app">[1] Vinegar. CCM调试的理论依据, 2023.</a></p>
+<p><a href="https://blog.csdn.net/weixin_52005944/article/details/120820278?app_version=6.2.4&amp;code=app_1562916241&amp;csdn_share_tail=%7B%22type%22%3A%22blog%22%2C%22rType%22%3A%22article%22%2C%22rId%22%3A%22120820278%22%2C%22source%22%3A%22yangju147532896%22%7D&amp;uLinkId=usr1mkqgl919blen&amp;utm_source=app">[2] piliweant. CCM 调节笔记, 2021.</a></p>
+<p><a href="https://zhuanlan.zhihu.com/p/413851281?utm_psn=1721847184872562688">[3] 碉堡了的少年. CCM-色彩校正矩阵, 2022.</a></p>
+<p><a href="https://zhuanlan.zhihu.com/p/31911875?utm_psn=1735434256514576384">[4] 烫手的洋芋. Color Correction Tuning Guide, 2018.</a></p>
+<p><a href="https://ciechanow.ski/color-spaces/">[5] Bartosz Ciechanowski. Color Spaces, 2019.</a></p>
+<p><a href="https://zhuanlan.zhihu.com/p/98831426">[6] 刘斯宁. Understanding ISP Pipeline - CCM, 2021.</a></p>
               
             </div>
           </div>
