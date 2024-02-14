@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="本文是isp算法学习的第十三篇章，主要是讲述CSC（color space convert）。">
+
+
+<meta property="og:description" content="本文是isp算法学习的第十三篇章，主要是讲述CSC（color space convert）。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="isp算法学习-CSC（color space convert）">
+<meta name="twitter:title" content="isp算法学习-CSC（color space convert）">
+<meta property="og:url" content="https://yangyang48.github.io/2024/02/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-csccolor-space-convert/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2024/02/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-csccolor-space-convert/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="本文是isp算法学习的第十三篇章，主要是讲述CSC（color space convert）。">
+<meta name="twitter:description" content="本文是isp算法学习的第十三篇章，主要是讲述CSC（color space convert）。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2024-02-10T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2024-02-10T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="2024">
+    
+      <meta property="article:section" content="February">
+    
+      <meta property="article:section" content="camera">
+    
+  
+  
+    
+      <meta property="article:tag" content="CSC">
+    
+      <meta property="article:tag" content="YUV">
+    
+      <meta property="article:tag" content="YUV444">
+    
+      <meta property="article:tag" content="YUV422">
+    
+      <meta property="article:tag" content="YUV420">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc_thumb.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc_thumb.png">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+
+
+    <title>isp算法学习-CSC（color space convert）</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2024/02/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-csccolor-space-convert/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/camera/algorithmlearning/CSC/csc_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      isp算法学习-CSC（color space convert）
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2024-02-10T00:00:00Z">
+        
+  二月 10, 2024
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2024">2024</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/february">February</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/camera">camera</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">1100 Words|Read in about 5 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+      
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>本文是isp算法学习的第十三篇章，主要是讲述CSC（color space convert）。</p>
+<div style="text-align: center;">
+<iframe 
+    frameborder="no" border="1"
+    marginwidth="0" marginheight="0"
+    width=400 height=100
+    src="//music.163.com/outchain/player?type=2&id=488249475&auto=1&height=66"></iframe>
+</div>
+<h1 id="0csc简介">0CSC简介</h1>
+<p>CSC-coloer space convert，也有的地方叫CSM（color space matrix），通过一些线性变化，将原本图像的颜色空间转换到其他的颜色空间， 常见的有RGB2YUV，RGB2SV等等，<a href="https://ww2.mathworks.cn/help/releases/R2021a/vision/ref/colorspaceconversion.html">MATLAB文档中对CSC的定义，可以点击这里</a></p>
+<blockquote>
+<p>matlab定义</p>
+<p>Color Space Conversion（在颜色空间之间转换颜色信息）</p>
+<p>颜色空间转换块在颜色空间之间转换颜色信息。使用“转换”参数指定要在两者之间进行转换的颜色空间。</p>
+<ul>
+<li><code>R'G'B' to Y'CbCr</code></li>
+<li><code>Y'CbCr to R'G'B'</code></li>
+<li><code>R'G'B' to intensity</code></li>
+<li><code>R'G'B' to HSV</code></li>
+<li><code>HSV to R'G'B'</code></li>
+<li><code>sR'G'B' to XYZ</code></li>
+<li><code>XYZ to sR'G'B'</code></li>
+<li><code>sR'G'B' to L*a*b*</code></li>
+<li><code>L*a*b* to sR'G'B'</code></li>
+</ul>
+</blockquote>
+<h1 id="1yuv简介">1YUV简介</h1>
+<p>YUV中Y表示亮度信号，UV表示色度信号也就是色差信息，通常查资料还会出现YCrCb这种信号，其实YCrCb是数字信号时代定义的一种色差信号，是通过YUV加上一定程度的offset得到的，使得色差数据都大于0，大多数情况下已经不对二者进行区分了，现在提到的<strong>YUV其实都是指的YCrCb格式</strong>，只是习惯原因通常还是会直接说是YUV。</p>
+<p>YUV格式有很多种类，如下图是微软WindowsAPI文档中对YUV的一些宏定义</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>图中的那些数据格式都是YUV格式，而它们各自的区别主要就是采样比和信号的排列循序。</p>
+<h2 id="11存储格式">1.1存储格式</h2>
+<ul>
+<li><strong>planar</strong>：先存储 <code>Y</code>，然后 <code>U</code>，然后 <code>V</code>。</li>
+<li><strong>packed：</strong><code>yuv</code> 交叉存储。</li>
+</ul>
+<p><strong>常见格式</strong></p>
+<p>yuv444： packet 采样（<code>yuv yuv yuv</code>）和 planar 采样（<code>yyyy uuuu vvvv</code>）</p>
+<p>yuv422：packet 采样</p>
+<ul>
+<li><strong>yuvy：</strong><code>YUYV YUYV</code></li>
+<li><strong>uyvy：</strong><code>UYVY UYVY</code></li>
+</ul>
+<p>yuv422p：planar采样：<code>YYYY UU VV</code></p>
+<p>yuv420：packet采样： <code>YUV Y YUV Y</code></p>
+<p>yuv420p：planar采样</p>
+<h2 id="12采样格式">1.2采样格式</h2>
+<p>最常见的采样格式如下所示</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc18.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc18.png" >
+  
+    </a>
+  
+  
+</div>
+
+<ul>
+<li>YUV444：完全采样，即每一个Y信号对应的UV信号都采样，没有损失任何信号；</li>
+<li>YUV422：两个Y信号公用一个UV分量，及4个有分量对应2个U和2个V分量，色度信号损失一部分从而减小数据量；</li>
+<li>YUV420：四个Y分量公用一个UV分量，在422的基础上进一步降低数据量。</li>
+</ul>
+<p>为节省带宽起见，大多数 YUV 格式平均使用的每像素位数都少于 24 位。主要的采样（subsample）格式有 YCbCr4:2:0、YCbCr4:2:2、YCbCr4:1:1 和 YCbCr4:4:4。YUV 的表示法称为 A:B:C 表示法。</p>
+<ul>
+<li><strong>A</strong>：一块A*2个像素的概念区域，一般都是4</li>
+<li><strong>B</strong>：第1行的色度采样数目</li>
+<li><strong>C</strong>：第2行的色度采样数目。C的值一般要么等于B，要么等于0</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc19.png" title="色度二次采样" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc19.png"  alt="色度二次采样">
+  
+    </a>
+  
+   
+    <span class="caption">色度二次采样</span>
+  
+</div>
+
+<h3 id="121原图">1.2.1原图</h3>
+<p>下面我们以表格来说明，表格中，每一格代表一个像素</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">行列</th>
+<th style="text-align:center">1</th>
+<th style="text-align:center">2</th>
+<th style="text-align:center">3</th>
+<th style="text-align:center">4</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">1</td>
+<td style="text-align:center">Y0 U0 V0</td>
+<td style="text-align:center">Y1 U1 V1</td>
+<td style="text-align:center">Y2 U2 V2</td>
+<td style="text-align:center">Y3 U3 V3</td>
+</tr>
+<tr>
+<td style="text-align:center">2</td>
+<td style="text-align:center">Y4 U4 V4</td>
+<td style="text-align:center">Y5 U5 V5</td>
+<td style="text-align:center">Y6 U6 V6</td>
+<td style="text-align:center">Y7 U7 V7</td>
+</tr>
+<tr>
+<td style="text-align:center">3</td>
+<td style="text-align:center">Y8 U8 V8</td>
+<td style="text-align:center">Y9 U9 V9</td>
+<td style="text-align:center">Y10 U10 V10</td>
+<td style="text-align:center">Y11 U11 V11</td>
+</tr>
+<tr>
+<td style="text-align:center">4</td>
+<td style="text-align:center">Y12 U12 V12</td>
+<td style="text-align:center">Y13 U13 V13</td>
+<td style="text-align:center">Y14 U14 V14</td>
+<td style="text-align:center">Y15 U15 V15</td>
+</tr>
+</tbody>
+</table>
+<h3 id="122-444采样yuv444i444yv24">1.2.2 4:4:4采样(YUV444（I444、YV24）)</h3>
+<ul>
+<li>每1个像素都有自己独立的1组CbCr分量</li>
+<li>1个像素占用24bit（3字节），跟RGB24的体积一样</li>
+<li>这种格式是没有进行色度二次采样的</li>
+</ul>
+<p><strong>采样后</strong>（<strong>上面的采样是无损采样，和原图一模一样。全是YUV</strong>）</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">行列</th>
+<th style="text-align:center">1</th>
+<th style="text-align:center">2</th>
+<th style="text-align:center">3</th>
+<th style="text-align:center">4</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">1</td>
+<td style="text-align:center">Y0 U0 V0</td>
+<td style="text-align:center">Y1 U1 V1</td>
+<td style="text-align:center">Y2 U2 V2</td>
+<td style="text-align:center">Y3 U3 V3</td>
+</tr>
+<tr>
+<td style="text-align:center">2</td>
+<td style="text-align:center">Y4 U4 V4</td>
+<td style="text-align:center">Y5 U5 V5</td>
+<td style="text-align:center">Y6 U6 V6</td>
+<td style="text-align:center">Y7 U7 V7</td>
+</tr>
+<tr>
+<td style="text-align:center">3</td>
+<td style="text-align:center">Y8 U8 V8</td>
+<td style="text-align:center">Y9 U9 V9</td>
+<td style="text-align:center">Y10 U10 V10</td>
+<td style="text-align:center">Y11 U11 V11</td>
+</tr>
+<tr>
+<td style="text-align:center">4</td>
+<td style="text-align:center">Y12 U12 V12</td>
+<td style="text-align:center">Y13 U13 V13</td>
+<td style="text-align:center">Y14 U14 V14</td>
+<td style="text-align:center">Y15 U15 V15</td>
+</tr>
+</tbody>
+</table>
+<h4 id="1221按存储格式分类">1.2.2.1按存储格式分类</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">4：4：4</th>
+<th style="text-align:center">Planar</th>
+<th style="text-align:center">I444（yuv444p）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">4：4：4</td>
+<td style="text-align:center">Planar</td>
+<td style="text-align:center">YV24</td>
+</tr>
+<tr>
+<td style="text-align:center">4：4：4</td>
+<td style="text-align:center">Semi-Planar</td>
+<td style="text-align:center">NV24</td>
+</tr>
+<tr>
+<td style="text-align:center">4：4：4</td>
+<td style="text-align:center">Semi-Planar</td>
+<td style="text-align:center">NV42</td>
+</tr>
+</tbody>
+</table>
+<h4 id="1222-i444yv24">1.2.2.2 I444、YV24</h4>
+<p>I444、YV24三个分量均为平面格式，共三个平面，即：先连续存储 Y，然后连续存储 U，最后连续存储 V</p>
+<p>不同点在于 U V 的排列顺序，P 为 Planar 的缩写</p>
+<ul>
+<li>
+<p>I444：先是 w * h 长度的 Y，后面跟 w * h 长度的 U， 最后是 w * h 长度的 V，总长度为 w * h * 3</p>
+<p>I444: YYYYYYYY UUUUUUUU VVVVVVVV    =&gt;  YUV420P</p>
+</li>
+<li>
+<p>YV24：先是 w * h 长度的 Y，后面跟 w * h 长度的 V， 最后是 w * h 长度的 U，总长度为 w * h * 3</p>
+<p>YV24: YYYYYYYY VVVVVVVV UUUUUUUU    =&gt;  YUV420P</p>
+</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc22.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc22.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="123-422采样yuv422nv16nv61i422yv16yuvyvyuyuyvy">1.2.3 4:2:2采样(YUV422（NV16、NV61、I422、YV16、YUVY、VYUY、UYVY）)</h3>
+<ul>
+<li>
+<p>每采样过一个像素点，都会采样其 Y 分量，而 U、V 分量就会间隔一个采集一个。</p>
+</li>
+<li>
+<p>1个像素平均占用16bit（2字节）</p>
+</li>
+<li>
+<p>因为2个像素共占用32bit（4字节 = 2个Y分量 + 1个Cb分量 + 1个Cr分量）</p>
+</li>
+<li>
+<p>还原时，水平方向相邻的2个像素（1行2列）共用1组CbCr分量</p>
+</li>
+</ul>
+<p><strong>采样后</strong>（<strong>评：上面的</strong>4:2:2采样**，水平方向Y:U:V 是4：2：2，**垂直方向4：4：0**。所以我选择水平比例是科学的！**）</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">行列</th>
+<th style="text-align:center">1</th>
+<th style="text-align:center">2</th>
+<th style="text-align:center">3</th>
+<th style="text-align:center">4</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">1</td>
+<td style="text-align:center">Y0 U0 -</td>
+<td style="text-align:center">Y1 - V1</td>
+<td style="text-align:center">Y2 U2 -</td>
+<td style="text-align:center">Y3 - V3</td>
+</tr>
+<tr>
+<td style="text-align:center">2</td>
+<td style="text-align:center">Y4 U4 -</td>
+<td style="text-align:center">Y5 - V5</td>
+<td style="text-align:center">Y6 U6 -</td>
+<td style="text-align:center">Y7 - V7</td>
+</tr>
+<tr>
+<td style="text-align:center">3</td>
+<td style="text-align:center">Y8 U8 -</td>
+<td style="text-align:center">Y9 - V9</td>
+<td style="text-align:center">Y10 U10 -</td>
+<td style="text-align:center">Y11 - V11</td>
+</tr>
+<tr>
+<td style="text-align:center">4</td>
+<td style="text-align:center">Y12 U12 -</td>
+<td style="text-align:center">Y13 - V13</td>
+<td style="text-align:center">Y14 U14 -</td>
+<td style="text-align:center">Y15 - V15</td>
+</tr>
+</tbody>
+</table>
+<h4 id="1231按存储格式分类">1.2.3.1按存储格式分类</h4>
+<table>
+<thead>
+<tr>
+<th>4：2：2</th>
+<th style="text-align:center">Planar</th>
+<th>I422（yuv422sp）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4：2：2</td>
+<td style="text-align:center">Planar</td>
+<td>YV16</td>
+</tr>
+<tr>
+<td>4：2：2</td>
+<td style="text-align:center">Semi-Planar</td>
+<td>NV16</td>
+</tr>
+<tr>
+<td>4：2：2</td>
+<td style="text-align:center">Semi-Planar</td>
+<td>NV61</td>
+</tr>
+<tr>
+<td>4：2：2</td>
+<td style="text-align:center">Packed</td>
+<td>UYVY（Y422，UYNV）</td>
+</tr>
+<tr>
+<td>4：2：2</td>
+<td style="text-align:center">Packed</td>
+<td>YUYV（YUY2，V422，YUNV）</td>
+</tr>
+<tr>
+<td>4：2：2</td>
+<td style="text-align:center">Packed</td>
+<td>YVYU</td>
+</tr>
+</tbody>
+</table>
+<h4 id="1232-nv16nv61">1.2.3.2 NV16、NV61</h4>
+<p>NV16、NV61 的存储格式为 Y 平面，UV 打包一个平面，共两个平面，即：先连续存储 Y，然后连续交叉存储 UV</p>
+<p>不同点在于 UV 的排列顺序，SP 为 Semi-Planar 的缩写</p>
+<ul>
+<li>
+<p>NV16：先是 w * h 长度的 Y，后面跟 w * h 长度的 UV（交叉存储），总长度为 w * h * 2</p>
+<p>NV16: YYYYYYYY UVUVUVUV     =&gt;  YUV422SP</p>
+</li>
+<li>
+<p>NV61：先是 w * h 长度的 Y，后面跟 w * h 长度的 VU（交叉存储），总长度为 w * h * 2</p>
+<p>NV61: YYYYYYYY VUVUVUVU     =&gt;  YUV422SP</p>
+</li>
+</ul>
+<h4 id="1233-i422yv16">1.2.3.3 I422、YV16</h4>
+<p>I422、YV16 三个分量均为平面格式，共三个平面，即：先连续存储 Y，然后连续存储 U，最后连续存储 V</p>
+<p>不同点在于 U V 的排列顺序，P 为 Planar 的缩写</p>
+<ul>
+<li>
+<p>I420：先是 w * h 长度的 Y，后面跟 w * h * 0.5 长度的 U， 最后是 w * h * 0.5 长度的 V，总长度为 w * h * 2</p>
+<p>I422: YYYYYYYY UUUU VVVV    =&gt;  YUV422P</p>
+</li>
+<li>
+<p>YV12：先是 w * h 长度的 Y，后面跟 w * h * 0.5 长度的 V， 最后是 w * h * 0.5 长度的 U，总长度为 w * h * 2</p>
+<p>YV16: YYYYYYYY VVVV UUUU    =&gt;  YUV422P</p>
+</li>
+</ul>
+<h4 id="1234-yuvyvyuyuyvy">1.2.3.4 YUVY、VYUY、UYVY</h4>
+<p>YUVY、VYUY、UYVY 为打包格式：每个像素点的 Y,U,V 是连续交叉存储</p>
+<ul>
+<li>
+<p>YUVY：在 Packed 内部，YUV 的排列顺序是 YUVY，两个 Y 共用一组 UV</p>
+<p>YUVY: YUVY YUVY YUVY YUVY  =&gt;  YUV422</p>
+</li>
+<li>
+<p>VYUY：在 Packed 内部，YUV 的排列顺序是 VYUY，两个 Y 共用一组 UV</p>
+<p>VYUY: VYUY VYUY VYUY VYUY  =&gt;  YUV422</p>
+</li>
+<li>
+<p>UYVY：在 Packed 内部，YUV 的排列顺序是 UYVY，两个 Y 共用一组 UV</p>
+<p>UYVY: UYVY UYVY UYVY UYVY  =&gt;  YUV422</p>
+</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc21.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc21.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>一个1920*1080的yuv422文件用YUVViewer打开之后，局部放大图：</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc17.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc17.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="124-420采样yuv420nv12nv21i420yv12">1.2.4 4:2:0采样(YUV420（NV12、NV21、I420、YV12）)</h3>
+<ul>
+<li>
+<p>每采样过一个像素点，都会采样其 Y 分量，而 U、V 分量就会间隔一行按照 2 : 1 进行采样。</p>
+</li>
+<li>
+<p>1个像素平均占用12bit（1.5字节）</p>
+</li>
+<li>
+<p>因为4个像素共占用48bit（6字节 = 4个Y分量 + 1个Cb分量 + 1个Cr分量）</p>
+</li>
+<li>
+<p>还原时，相邻的4个像素（2行2列）共用1组CbCr分量</p>
+</li>
+</ul>
+<p><strong>采样后</strong>（<strong>上面的</strong>4:2:0采样**，水平方向第二行里面四个像素的Y:U:V比例 是4：2：0，**垂直方向Y:U:V是4：2：2**。所以我选择水平比例是科学的！**）</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">行列</th>
+<th style="text-align:center">1</th>
+<th style="text-align:center">2</th>
+<th style="text-align:center">3</th>
+<th style="text-align:center">4</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">1</td>
+<td style="text-align:center">Y0 U0 -</td>
+<td style="text-align:center">Y1 - -</td>
+<td style="text-align:center">Y2 U2 -</td>
+<td style="text-align:center">Y3 - -</td>
+</tr>
+<tr>
+<td style="text-align:center">2</td>
+<td style="text-align:center">Y4 - V4</td>
+<td style="text-align:center">Y5 - -</td>
+<td style="text-align:center">Y6 - V6</td>
+<td style="text-align:center">Y7 - -</td>
+</tr>
+<tr>
+<td style="text-align:center">3</td>
+<td style="text-align:center">Y8 U8 -</td>
+<td style="text-align:center">Y9 - -</td>
+<td style="text-align:center">Y10 U10 -</td>
+<td style="text-align:center">Y11 - -</td>
+</tr>
+<tr>
+<td style="text-align:center">4</td>
+<td style="text-align:center">Y12 - V12</td>
+<td style="text-align:center">Y13 - -</td>
+<td style="text-align:center">Y14 - V14</td>
+<td style="text-align:center">Y15 - -</td>
+</tr>
+</tbody>
+</table>
+<h4 id="1241按存储格式分类">1.2.4.1按存储格式分类</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">4：2：0</th>
+<th style="text-align:center">Planar</th>
+<th style="text-align:center">I420（yuv420p）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">4：2：0</td>
+<td style="text-align:center">Planar</td>
+<td style="text-align:center">YU12</td>
+</tr>
+<tr>
+<td style="text-align:center">4：2：0</td>
+<td style="text-align:center">Semi-Planar</td>
+<td style="text-align:center">NV12</td>
+</tr>
+<tr>
+<td style="text-align:center">4：2：0</td>
+<td style="text-align:center">Semi-Planar</td>
+<td style="text-align:center">NV21</td>
+</tr>
+</tbody>
+</table>
+<h4 id="1242-nv12nv21">1.2.4.2 NV12、NV21</h4>
+<p>NV12、NV21 的存储格式为 Y 平面，UV 打包一个平面，共两个平面，即：先连续存储 Y，然后连续交叉存储 UV</p>
+<p>不同点在于 UV 的排列顺序，SP 为 Semi-Planar 的缩写</p>
+<ul>
+<li>
+<p>NV12：先是 w * h 长度的 Y，后面跟 w * h * 0.5 长度的 UV（交叉存储），总长度为 w * h * 1.5</p>
+<p>NV12: YYYYYYYY UVUV     =&gt;  YUV420SP  # <strong>iOS</strong> 平台常用 NV12</p>
+</li>
+<li>
+<p>NV21：先是 w * h 长度的 Y，后面跟 w * h * 0.5 长度的 VU（交叉存储），总长度为 w * h * 1.5</p>
+<p>NV21: YYYYYYYY VUVU     =&gt;  YUV420SP  # <strong>Android</strong> 平台常用 NV21</p>
+</li>
+</ul>
+<h4 id="1243-i420yv12">1.2.4.3 I420、YV12</h4>
+<p>I420、YV12 三个分量均为平面格式，共三个平面，即：先连续存储 Y，然后连续存储 U，最后连续存储 V</p>
+<p>不同点在于 U V 的排列顺序，P 为 Planar 的缩写</p>
+<ul>
+<li>
+<p>I420：先是 w * h 长度的 Y，后面跟 w * h * 0.25 长度的 U， 最后是 w * h * 0.25 长度的 V，总长度为 w * h * 1.5</p>
+<p>I420: YYYYYYYY UU VV    =&gt;  YUV420P  # Android 平台常用 I420</p>
+</li>
+<li>
+<p>YV12：先是 w * h 长度的 Y，后面跟 w * h * 0.25 长度的 V， 最后是 w * h * 0.25 长度的 U，总长度为 w * h * 1.5</p>
+<p>YV12: YYYYYYYY VV UU    =&gt;  YUV420P</p>
+</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc20.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc20.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h2 id="12信号排列分类">1.2<strong>信号排列分类</strong></h2>
+<p>从微软文档中可以看到有一个YUY2的格式，其实这种格式又叫YUYV格式是一种422的采样格式，然后还有一种YVYU的格式也是422采样，两者又有什么不同呢，其实就是信号排列不同，比如在内存中YUYV格式存储为<code>Y1U1Y2V1Y3U2Y4V2</code>而YVYU则存储为<code>Y1V1Y2U1Y3V2Y3U2</code>这种方式都是Y和UV交替存储，还有一种常见的存储方式就是先将所有的Y分量存储好，然后再去存储UV分量，当时后续的UV分量的排列又会有不同的变化。这种排列组合方式很多也就带来的不同的格式的出现，这里就不在进一步做介绍了，有兴趣的同学可以自行上网了解。</p>
+<h1 id="2转换过程">2转换过程</h1>
+<h2 id="20-计算公式">2.0 计算公式</h2>
+<h3 id="211常规转换标准">2.1.1常规转换标准</h3>
+<p>$$
+\begin{cases}
+Y=0.29882×R+0.58681×G+0.114363×B\\<br>
+U=C_b=-0.172485×R-0.338718×G+0.511207×B\\<br>
+V=C_r=0.51155×R-0.42811×G-0.08343×B\<br>
+\end{cases}
+$$</p>
+<h3 id="212bt601标准标清数字电视sdtv">2.1.2BT601标准(标清数字电视SDTV)</h3>
+<p>$$
+\begin{cases}
+Y=0.299×R+0.587×G+0.114×B\\<br>
+U=C_b=0.564×(B-Y)\\<br>
+V=C_r=0.713×(R-Y)\<br>
+\end{cases}
+$$</p>
+<h3 id="213bt709标准高清数字电视hdtv">2.1.3BT709标准(高清数字电视HDTV)</h3>
+<p>$$
+\begin{cases}
+Y=0.2126×R+0.7152×G+0.0722×B\\<br>
+U=C_b=0.539×(B-Y)\\<br>
+V=C_r=0.635×(R-Y)\<br>
+\end{cases}
+$$</p>
+<h3 id="214bt2020超高清数字电视uhdtv">2.1.4BT2020(超高清数字电视UHDTV)</h3>
+<p>$$
+\begin{cases}
+Y=0.2627×R+0.6780×G+0.2593×B\\<br>
+U=C_b=0.5315×(B-Y)\\<br>
+V=C_r=0.678×(R-Y)\<br>
+\end{cases}
+$$</p>
+<p>但是通常在ISP的Pipeline中用到的<strong>CSC转换只有RGB2YUV</strong>，然后有一些主控（很多没有这个）设计的时候在CCM之后会有一个RGB2HSV的转换，以便进一步通过色度和饱和度两个层面对颜色做进一步的处理。</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>那么ISP要实现RGB2YUV转换就必定会有一个转换公式，通常在网上查这个公式，可能会查到不同的转换公式，这是因为各个转换公式的的标准不同，通常我们采用BT的标准，也就是国际电信联盟指定的标准，如下图分别罗列了<strong>BT601</strong>，<strong>BT709</strong>和<strong>BT2020</strong>三个标准，具体在选用的时候根据需要选择一个就行了。</p>
+<h2 id="21bt601标清数字电视sdtv">2.1BT601(标清数字电视SDTV)</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>求出亮度信号
+$$
+E_Y=0.299E_R+0.587E_G+0.114E_B
+$$
+那么
+$$
+(E_R-E_Y)=E_R-0.299E_R-0.587E_G-0.114E_B=0.701E_R-0.587E_G-0.114E_B\\<br>
+(E_B-E_Y)=E_B-0.299E_R-0.587E_G-0.114E_B=-0.299E_R-0.587E_G+0.886E_B\<br>
+$$
+则
+$$
+E_{CR}=\frac{E_R-E_Y}{1.402}=\frac{0.701E_R-0.587E_G-0.114E_B}{1.402}\\<br>
+E_{CB}=\frac{E_B-E_Y}{1.772}=\frac{-0.299E_R-0.587E_G+0.886E_B}{1.772}\\<br>
+$$
+假设亮度信号只占用了220（8位）或877（10位）级，以提供工作范围，并假设黑色位于16.00级，那么量化的亮度信号的十进制Y为
+$$
+Y=int[(219E_Y+16)×D]/D
+$$
+其中，D在1或4中任选一个值，分别与8位和10位的量化相对应。操作符int()为0到0.4999范围中的小数部分返回值0&hellip;，并为0.5到0.999范围中的小数部分返回值+1&hellip;，即它近似大于0.5的小数</p>
+<p>同样，假设色差信号只占用255（8位）或879（10位）级，并假设零级位128.00级，那么量化的色差信号的十进制C<!-- raw HTML omitted -->R<!-- raw HTML omitted -->和C<!-- raw HTML omitted -->B<!-- raw HTML omitted -->为
+$$
+C_R=int[(224E_{C_R}+128)×D]/D\\<br>
+C_B=int[(224E_{C_B}+128)×D]/D\\<br>
+$$</p>
+<h2 id="22bt709高清数字电视hdtv">2.2BT709(高清数字电视HDTV)</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc4.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h3 id="221基本信号概念性非线性预纠错">2.2.1基本信号概念性非线性预纠错</h3>
+<p>$$
+\gamma=0.45
+$$</p>
+<h3 id="222亮度信号推导">2.2.2亮度信号推导</h3>
+<p>$$
+E_Y=0.2126E_R+0.7152E_G+0.0722E_B
+$$</p>
+<h3 id="223色差信号的推导模拟编码">2.2.3色差信号的推导（模拟编码）</h3>
+<p>$$
+E_{CB}=\frac{E_B-E_Y}{1.8556}=\frac{-0.2126E_R-0.7152E_G+0.9278E_B}{1.8556}\\<br>
+E_{CR}=\frac{E_R-E_Y}{1.5748}=\frac{0.7874E_R-0.7152E_G-0.0722E_B}{1.5748}\<br>
+$$</p>
+<h3 id="224rgb亮度和色差信号的量化">2.2.4RGB、亮度和色差信号的量化</h3>
+<p>$$
+D_R=INT[(219E_R+16)·2^{n-8}]\\<br>
+D_R=INT[(219E_G+16)·2^{n-8}]\\<br>
+D_R=INT[(219E_B+16)·2^{n-8}]\\</p>
+<p>D_R=INT[(219E_Y+16)·2^{n-8}]\\<br>
+D_R=INT[(219E_{CB}+128)·2^{n-8}]\\<br>
+D_R=INT[(219E_{CR}+128)·2^{n-8}]\\<br>
+$$</p>
+<h3 id="225通过rgb信号的量化推导亮度和色差信号">2.2.5通过RGB信号的量化推导亮度和色差信号</h3>
+<p>$$
+D_Y=INT[0.2126D_R+0.7152D_G+0.0722D_B]\\<br>
+D_{CB}=INT[(-\frac{0.2126}{1.8556}D_R-\frac{0.7152}{1.8556}D_G+\frac{0.9278}{1.8556})·\frac{224}{219}+2^{n-1}]\\<br>
+D_{CR}=INT[(\frac{0.7874}{1.5748}D_R-\frac{0.7152}{1.5748}D_G-\frac{0.0722}{1.5748})·\frac{224}{219}+2^{n-1}]\\<br>
+$$</p>
+<h2 id="23bt2020超高清数字电视uhdtv">2.3BT2020(超高清数字电视UHDTV)</h2>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>其中亮度信号为
+$$
+Y_C=(0.2627R+0.6780G+0.0593B)
+$$
+色差信号的衍生物
+$$
+C_B=
+\begin{cases}
+\frac{B-Y_C}{-2N_B},&amp;&amp;&amp;N_B\le{B-Y_C}\le0\\<br>
+\frac{B-Y_C}{2P_B},&amp;&amp;&amp;0\lt{B-Y_C}\lt{P_B}\<br>
+\end{cases}
+\<br>
+C_R=
+\begin{cases}
+\frac{R-Y_C}{-2N_R},&amp;&amp;&amp;N_R\le{R-Y_C}\le0\\<br>
+\frac{R-Y_C}{2P_R},&amp;&amp;&amp;0\lt{R-Y_C}\lt{P_R}\<br>
+\end{cases}
+$$
+其中
+$$
+P_B=\alpha(1-0.0593^{0.45})=0.7909854&hellip;\\<br>
+N_B=\alpha(1-0.9407^{0.45})-1=-0.9701716&hellip;\\<br>
+P_R=\alpha(1-0.2627^{0.45})=0.4969147&hellip;\\<br>
+N_R=\alpha(1-0.7373^{0.45})-1=-0.8591209&hellip;\<br>
+$$
+在实际中，可采取以下数值
+$$
+P_B=0.7910,N_B=-0.9702\\<br>
+P_R=0.4969,N_R=-0.8591
+$$
+求得色差信号的衍生物
+$$
+C_B=
+\begin{cases}
+\frac{B-Y_C}{1.9404},&amp;&amp;&amp;-0.9702\le{B-Y_C}\le0\\<br>
+\frac{B-Y_C}{1.5820},&amp;&amp;&amp;0\lt{B-Y_C}\lt{0.7910}\<br>
+\end{cases}
+\<br>
+C_R=
+\begin{cases}
+\frac{R-Y_C}{1.7182},&amp;&amp;&amp;-0.8591\le{R-Y_C}\le0\\<br>
+\frac{R-Y_C}{0.9938},&amp;&amp;&amp;0\lt{R-Y_C}\lt{0.4969}\<br>
+\end{cases}
+$$</p>
+<h1 id="3转换作用">3转换作用</h1>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc2.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>针对为什么pipeline中需要这么一个转换将RGB转为YUV，个人总结为三点：</p>
+<ol>
+<li>YUV是早期欧洲定义的一种信号格式，主要是为了解决黑白电视和彩色电视过渡时期的信号兼容问题，黑白电视只需要亮度值，不需要彩色信号，而彩色电视既需要亮度信号也需要色彩信号，所以如果直接使用RGB就会带来兼容问题，而采用YUV信号，黑白电视不处理彩色信号即可；</li>
+<li>可以将Y和UV分开处理，即将<strong>亮度信号</strong>和<strong>色度信号</strong>分开处理，这样更符合HVS，因为本专题前面的博文也提到过HVS中人眼对亮度信号更明高，对色度信号相对不明感，那么在去噪等一些处理的时候就可以针对不同层面的信号做不同强度的处理，从而最大程度的保护图像效果；</li>
+<li><strong>为后续的数据压缩做准备</strong>，因为通常现在用的多的MJPG和网络传输用的H264和H265等信号都是基于YUV信号的基础上做进一步的数据压缩得来的。</li>
+</ol>
+<h1 id="4算法">4算法</h1>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="n">clc</span><span class="p">;</span><span class="n">close</span> <span class="n">all</span><span class="p">;</span><span class="n">clear</span><span class="p">;</span>
+<span class="ln"> 2</span><span class="n">addpath</span><span class="p">(</span><span class="s">&#39;../publicFunction/&#39;</span><span class="p">)</span>
+<span class="ln"> 3</span><span class="n">width</span> <span class="p">=</span> <span class="mi">3840</span><span class="p">;</span>
+<span class="ln"> 4</span><span class="n">height</span> <span class="p">=</span> <span class="mi">2160</span><span class="p">;</span>
+<span class="ln"> 5</span>
+<span class="ln"> 6</span><span class="c">% read raw</span>
+<span class="ln"> 7</span><span class="n">rawFile</span> <span class="p">=</span> <span class="s">&#39;images/SSC_raw_long_3840x2160_16_GB_0815103405_[US=16666,AG=1193,DG=1024,R=2231,G=1024,B=2465].raw&#39;</span><span class="p">;</span>
+<span class="ln"> 8</span><span class="c">%16位的raw图，两个字节存储，会空出6位</span>
+<span class="ln"> 9</span><span class="n">raw</span> <span class="p">=</span> <span class="n">readRaw</span><span class="p">(</span><span class="n">rawFile</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">);</span>
+<span class="ln">10</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln">11</span><span class="c">%缩小到8位</span>
+<span class="ln">12</span><span class="n">imshow</span><span class="p">(</span><span class="n">uint8</span><span class="p">(</span><span class="n">raw</span><span class="o">/</span><span class="mi">256</span><span class="p">));</span>
+<span class="ln">13</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;raw&#39;</span><span class="p">);</span>
+<span class="ln">14</span>
+<span class="ln">15</span><span class="c">% read YUV</span>
+<span class="ln">16</span><span class="n">YUVFileName</span> <span class="p">=</span> <span class="s">&#39;images/SSC_ispout_long_3840x2160_16_GB_0815103416_[US=16666,AG=1193,DG=1024,R=2231,G=1024,B=2465].yuv&#39;</span><span class="p">;</span>
+<span class="ln">17</span><span class="n">fin</span> <span class="p">=</span> <span class="n">fopen</span><span class="p">(</span><span class="n">YUVFileName</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">);</span>
+<span class="ln">18</span><span class="c">%YUV输出也是8位的</span>
+<span class="ln">19</span><span class="n">YUV</span> <span class="p">=</span> <span class="n">fread</span><span class="p">(</span><span class="n">fin</span><span class="p">,</span> <span class="n">width</span><span class="o">*</span><span class="n">height</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="s">&#39;uint8=&gt;uint8&#39;</span><span class="p">);</span>
+<span class="ln">20</span><span class="n">Y</span> <span class="p">=</span> <span class="n">YUV</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">21</span><span class="n">U</span> <span class="p">=</span> <span class="n">YUV</span><span class="p">(</span><span class="mi">2</span><span class="p">:</span><span class="mi">4</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">22</span><span class="n">V</span> <span class="p">=</span> <span class="n">YUV</span><span class="p">(</span><span class="mi">4</span><span class="p">:</span><span class="mi">4</span><span class="p">:</span><span class="k">end</span><span class="p">);</span>
+<span class="ln">23</span><span class="n">z</span> <span class="p">=</span> <span class="nb">reshape</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">);</span>
+<span class="ln">24</span><span class="n">z</span> <span class="p">=</span> <span class="n">z</span><span class="o">&#39;</span><span class="p">;</span>
+<span class="ln">25</span><span class="n">rawData</span> <span class="p">=</span> <span class="n">z</span><span class="p">;</span>
+<span class="ln">26</span><span class="n">figure</span><span class="p">();</span>
+<span class="ln">27</span><span class="n">imshow</span><span class="p">(</span><span class="n">z</span><span class="p">);</span>
+<span class="ln">28</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;Y of YUV&#39;</span><span class="p">);</span>
+</code></pre></div><p>对比图如下所示，一般YUV可以用YUVplayer打开，或者7YUV都可以</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/CSC/csc8.png" >
+  
+    </a>
+  
+  
+</div>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/csc/">CSC</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/yuv/">YUV</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/yuv444/">YUV444</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/yuv422/">YUV422</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/yuv420/">YUV420</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2024/02/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-uvnruv-color-space-noise-reduce/" data-tooltip="isp算法学习-UVNR（UV color space Noise Reduce）">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2024/02/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0ccmcolor-correction-matrix/" data-tooltip="isp算法学习CCM（Color Correction Matrix）">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2024 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2024/02/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-uvnruv-color-space-noise-reduce/" data-tooltip="isp算法学习-UVNR（UV color space Noise Reduce）">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2024/02/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0ccmcolor-correction-matrix/" data-tooltip="isp算法学习CCM（Color Correction Matrix）">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2024%2F02%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-csccolor-space-convert%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2024%2F02%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-csccolor-space-convert%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2024%2F02%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-csccolor-space-convert%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2024\/02\/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-csccolor-space-convert\/';
+          
+            this.page.identifier = '\/2024\/02\/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-csccolor-space-convert\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+  <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_CHTML-full" integrity="sha256-GhM+5JHb6QUzOQPXSJLEWP7R73CbkisjzK5Eyij4U9w=" crossorigin="anonymous"></script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      CommonHTML: { linebreaks: { automatic: true } },
+      tex2jax: { inlineMath: [ ['$', '$'], ['\\(','\\)'] ], displayMath: [ ['$$','$$'], ['\\[', '\\]'] ], processEscapes: false },
+      messageStyle: 'none'
+    });
+  </script>
+
+
+
+    
+  </body>
+</html>
+

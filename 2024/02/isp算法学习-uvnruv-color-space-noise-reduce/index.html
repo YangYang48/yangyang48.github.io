@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.85.0 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Yang Ju">
+<meta name="keywords" content="">
+<meta name="description" content="本文是isp算法学习的第十四篇章，主要是讲述UVNR（UV color space Noise Reduce）。">
+
+
+<meta property="og:description" content="本文是isp算法学习的第十四篇章，主要是讲述UVNR（UV color space Noise Reduce）。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="isp算法学习-UVNR（UV color space Noise Reduce）">
+<meta name="twitter:title" content="isp算法学习-UVNR（UV color space Noise Reduce）">
+<meta property="og:url" content="https://yangyang48.github.io/2024/02/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-uvnruv-color-space-noise-reduce/">
+<meta property="twitter:url" content="https://yangyang48.github.io/2024/02/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-uvnruv-color-space-noise-reduce/">
+<meta property="og:site_name" content="欢迎来到我的博客~">
+<meta property="og:description" content="本文是isp算法学习的第十四篇章，主要是讲述UVNR（UV color space Noise Reduce）。">
+<meta name="twitter:description" content="本文是isp算法学习的第十四篇章，主要是讲述UVNR（UV color space Noise Reduce）。">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2024-02-13T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2024-02-13T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="2024">
+    
+      <meta property="article:section" content="February">
+    
+      <meta property="article:section" content="camera">
+    
+  
+  
+    
+      <meta property="article:tag" content="YUV">
+    
+      <meta property="article:tag" content="UVNR">
+    
+      <meta property="article:tag" content="均值滤波">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/algorithmlearning/uvnr/uvnr_thumb.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/algorithmlearning/uvnr/uvnr_thumb.jpg">
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/camera/algorithmlearning/uvnr/uvnr_cover.png">
+  <meta property="twitter:image" content="https://yangyang48.github.io/camera/algorithmlearning/uvnr/uvnr_cover.png">
+
+
+
+
+  <meta property="og:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+  <meta property="twitter:image" content="https://yangyang48.github.io/thumb/20210711204627625.jpg">
+
+
+    <title>isp算法学习-UVNR（UV color space Noise Reduce）</title>
+
+    <link rel="icon" href="https://yangyang48.github.io/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://yangyang48.github.io/2024/02/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-uvnruv-color-space-noise-reduce/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://yangyang48.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+      
+        <link rel="stylesheet"  href="https://yangyang48.github.io/css/copy-to-clipboard.css">
+      
+    
+
+    
+      
+    
+    
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://yangyang48.github.io/">欢迎来到我的博客~</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://yangyang48.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://yangyang48.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">Yang Ju</h4>
+        
+          <h5 class="sidebar-profile-bio">Nanjing University of Science and Technology</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://yangyang48.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/YangYang48" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://blog.csdn.net/yangju147532896" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-chain"></i>
+      
+      <span class="sidebar-button-desc">CSDN</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-center
+              "
+       style="background-image:url('/camera/algorithmlearning/uvnr/uvnr_cover.png')"
+       data-behavior="4">
+    
+  </div>
+
+
+      <div id="main" data-behavior="4"
+        class="hasCover
+               hasCoverMetaOut
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-center">
+  
+    <h1 class="post-title" itemprop="headline">
+      isp算法学习-UVNR（UV color space Noise Reduce）
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2024-02-13T00:00:00Z">
+        
+  二月 13, 2024
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/2024">2024</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/february">February</a>, 
+    
+      <a class="category-link" href="https://yangyang48.github.io/categories/camera">camera</a>
+    
+  
+
+  </div>
+
+</div>
+          
+		  
+		  <h5 id="wc" style="font-size: 1rem;text-align: center;">500 Words|Read in about 3 Min|本文总阅读量<span id="busuanzi_value_page_pv"></span>次</h5>
+      
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p>本文是isp算法学习的第十四篇章，主要是讲述UVNR（UV color space Noise Reduce）。</p>
+<div style="text-align: center;">
+<iframe 
+    frameborder="no" border="1"
+    marginwidth="0" marginheight="0"
+    width=400 height=100
+    src="//music.163.com/outchain/player?type=2&id=2097201436&auto=1&height=66"></iframe>
+</div>
+<h1 id="1简介">1简介</h1>
+<p>UVNR也就是经过CSC只有在YUV域对UV两个色域进行降噪，在有些方案里也叫CNR（chroma noise reduction）。主要就是在YUV域针对彩燥进行特殊处理的一系列算法。</p>
+<p>关于噪声产生的原因在前面关于降噪的文章和视频中已经做了描述和讲解，这里就不做更多的解释，关于彩噪产生的原因，可以通过一个简单的方式来理解，就是如果一个灰色的画面，原本R，G，B三个通道的值应该是一样的（理论白平衡之后），但是由于前面提到过的<strong>噪声因素</strong>会导致三个通道的pixel value发生变化，且三个通道变化是随机的，那么三个通道各自偏差就不确定，那么经过插值处理后原本应该一样的三个通道就会<strong>出现偏差</strong>，也就出现了各种颜色，也就导致的彩燥的出现，然后经过pipeline各个阶段的<strong>gain的加持</strong>就会更显著。</p>
+<blockquote>
+<p>Assuming a sensor with a color filter array (CFA) in a typical color imaging processing pipeline, the sensor gains and possibly other digital gains must be adjusted as a result of color correction, white balance and other steps which may account for unequal sensor sensitivity on the different channels. According to the propagation of error formula, signal variance increases with the square root of the applied gain, thus regardless of the analog or digital domain where such a gain adjustment is performed, the net effect is a different signal standard deviation on the various channels. <strong>After color interpolation, when sensor channels are correlated, the described mechanism gives rise to what it is referred to as chrominance noise.</strong> This is further amplified when a non-spatially adaptive color correction is applied, as noted by others in [1-4], to become large, perceptually periodic groupings of 15 to 25 pixels across. For completion and an in depth, low level discussion on the various physical sources of noise in an imaging system, the reader is referred to Janesik [5].</p>
+<p>假设在一个典型的彩色成像处理管道中有一个带有彩色滤波器阵列(CFA)的传感器，由于色彩校正、白平衡和其他步骤，传感器增益和可能的其他数字增益必须进行调整，这可能导致不同通道上传感器灵敏度的不相等。根据误差传播公式，信号方差随施加的增益的平方根而增加，因此无论在模拟域还是数字域进行增益调整，其净效应是在各个通道上产生不同的信号标准差。**在颜色插值之后，当传感器通道相关时，所描述的机制会产生所谓的色度噪声。**当应用非空间自适应色彩校正时，这将进一步放大，正如其他人在[1-4]中所指出的那样，成为15到25像素的大型、感知周期性分组。为了完成对成像系统中各种物理噪声源的深入、低级讨论，请参考Janesik[5]。</p>
+</blockquote>
+<h1 id="2算法讲解">2<strong>算法讲解</strong></h1>
+<p>降噪算是图像处理一个很大的方向，所以这一块的算法很多，没法一一介绍，针对彩噪其实也就是将基本的降噪或者灰度图像降噪的方法进行调整后适配这个应用。这里就直接通过几个专利介绍几个相关算法。</p>
+<h2 id="21专利chroma-noise-reduction-for-cameras">2.1专利<strong>CHROMA NOISE REDUCTION FOR CAMERAS</strong></h2>
+<p>这是苹果公司2009的一份专利，可以<a href="https://github.com/YangYang48/ISPAlgorithm/tree/master/ISParticle/UVNR">点击这里</a></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/uvnr/uvnr1.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/uvnr/uvnr1.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>算法主要思路如下，就是再YUV域对Cr和Cb通道分别进行处理。</p>
+<p>比如针对Cb，在一个滤波窗口中，中心点的像素值就通过周围点的值的加权平均值来计算得到。权重的计算也很简单，就是判断该点和窗口中心的Cr,Cb插值的和是否大于阈值，<strong>如果大于阈值就认为是边缘，那么就不参与平均，权重设置为0</strong>，如果小于阈值就参与计算，权重就设置为1。</p>
+<p>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/uvnr/uvnr2.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/uvnr/uvnr2.png" >
+  
+    </a>
+  
+  
+</div>
+
+$$
+C'<em>{b_0}=\frac{\sum</em>{n=-N_1}^{N_2}(C_{b_n}T_n)}{\sum_{n=-N_1}^{N_2}(T_n)}\\<br>
+C'_{r_0}=\frac{\sum_{n=-N_1}^{N_2}(C_{r_n}T_n)}{\sum_{n=-N_1}^{N_2}(T_n)}\<br>
+$$</p>
+<h2 id="22专利image-chroma-noise-reduction">2.2专利<strong>IMAGE CHROMA NOISE REDUCTION</strong></h2>
+<p>该专利是ST公司2012年的一份专利，，可以<a href="https://github.com/YangYang48/ISPAlgorithm/tree/master/ISParticle/UVNR">点击这里</a></p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/uvnr/uvnr3.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/uvnr/uvnr3.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>首先计算出窗口中各个通道的分布范围：
+$$
+D_{Cr}=max(Cr)-min(Cr)\\<br>
+D_{Cb}=max(Cb)-min(Cb)\\<br>
+D_Y=max(Y)-min(Y)
+$$
+根据分布范围求出一个滤波强度系数：
+$$
+C_f=
+\begin{cases}
+D_Y,&amp;&amp;&amp;if \ D_Y=min(D_Y,D_{Cr},D_{Cb})\\<br>
+max(D_Y,D_{Cr},D_{Cb})&amp;&amp;&amp;otherwise
+\end{cases}
+$$
+针对Cr和Cb**进行加权平均降噪**：
+$$
+denoisedCr=\sum\limits_{k = 1}^{M×M}\frac{WCr_k}{sumweightCr}·Cr[k]\\<br>
+denoisedCb=\sum\limits_{k = 1}^{M×M}\frac{WCb_k}{sumweightCb}·Cb[k]\\<br>
+$$
+权重计算方式是通过亮度知道色度，然后通过高斯分布的方式计算，差别越大越不相似，权重就越小。
+$$
+WCr_k=e^{-\frac{1}{2}(\frac{|Y(k)-Y(c)|}{sigmaY})}·
+e^{-\frac{1}{2}(\frac{|Cr(k)-Cr(c)|}{sigmaCr})}\\<br>
+sumweightCr=\sum\limits_{k = 1}^{M×M}WCr_k\\<br>
+WCb_k=e^{-\frac{1}{2}(\frac{|Y(k)-Y(c)|}{sigmaY})}·
+e^{-\frac{1}{2}(\frac{|Cb(k)-Cb(c)|}{sigmaCb})}\\<br>
+sumweightCb=\sum\limits_{k = 1}^{M×M}WCb_k\\<br>
+$$
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/uvnr/uvnr4.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/uvnr/uvnr4.png" >
+  
+    </a>
+  
+  
+</div>
+</p>
+<p>最后通过将原始图像和去噪后的图像进行blending得到最终的图像，系数由局部动态范围决定。</p>
+<p>$$
+Cr_k=originalCr_k+f(Cf)·(denoisedCr-originalCr_k)\\<br>
+Cb_k=originalCb_k+f(Cf)·(denoisedCb-originalCb_k)\\<br>
+f(x)=e^{\frac{1}{2}(\frac{x}{sigma})^2},\ x∈[0,max_value]
+$$</p>
+<h2 id="23专利removing-chroma-noise-from-digital-images-by-usiing-variable-shape-pixel-neighborhood-regions">2.3专利<strong>REMOVING CHROMA NOISE FROM DIGITAL IMAGES BY USIING VARIABLE SHAPE PIXEL NEIGHBORHOOD REGIONS</strong></h2>
+<p>该专利是柯达公司1999年的一份专利</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/uvnr/uvnr5.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/uvnr/uvnr5.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>对应的算法</p>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/uvnr/uvnr6.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/uvnr/uvnr6.png" >
+  
+    </a>
+  
+  
+</div>
+
+<p>其实是一个均值滤波的变式，这个算法是作用到<code>L*a*b*</code>的颜色空间的，跟YUV还是有所区别的，但是万变不离其宗，分别对水平、竖直，两个斜45度进行运算。
+$$
+h=\frac{1}{13}
+\begin{Bmatrix}
+1&amp;2&amp;0&amp;-2&amp;-1\\<br>
+1&amp;2&amp;0&amp;-2&amp;-1\\<br>
+1&amp;2&amp;0&amp;-2&amp;-1\\<br>
+1&amp;2&amp;0&amp;-2&amp;-1\\<br>
+1&amp;2&amp;0&amp;-2&amp;-1
+\end{Bmatrix}\\<br>
+v=\frac{1}{13}
+\begin{Bmatrix}
+-1&amp;-1&amp;-1&amp;-1&amp;-1\\<br>
+1&amp;-2&amp;-2&amp;-2&amp;-1\\<br>
+0&amp;0&amp;0&amp;0&amp;0\\<br>
+1&amp;2&amp;2&amp;2&amp;1\\<br>
+1&amp;1&amp;1&amp;1&amp;1
+\end{Bmatrix}\\<br>
+s=\frac{1}{13}
+\begin{Bmatrix}
+-1&amp;-1&amp;-1&amp;-1&amp;0\\<br>
+1&amp;-2&amp;-2&amp;0&amp;1\\<br>
+-1&amp;-2&amp;0&amp;2&amp;1\\<br>
+-1&amp;0&amp;2&amp;2&amp;1\\<br>
+0&amp;1&amp;1&amp;1&amp;1
+\end{Bmatrix}\\<br>
+b=\frac{1}{13}
+\begin{Bmatrix}
+0&amp;-1&amp;-1&amp;-1&amp;-1\\<br>
+1&amp;0&amp;-2&amp;-2&amp;1\\<br>
+1&amp;2&amp;0&amp;-2&amp;-1\\<br>
+1&amp;2&amp;2&amp;0&amp;-1\\<br>
+1&amp;1&amp;1&amp;1&amp;0
+\end{Bmatrix}\\<br>
+$$
+对应的公式为
+$$
+g(x)=|h<strong>f(x)|+|v</strong>f(x)|+|s<strong>f(x)|+|b</strong>f(x)|
+$$
+其中<code>**</code>指的是是二维卷积运算的绝对值</p>
+<ul>
+<li>
+<p>通过5*5的边缘滤波处理，区分通道</p>
+</li>
+<li>
+<p>把各个通道的滤波结果相加求得edge map</p>
+</li>
+<li>
+<p>得到整个图的Edge map后，开始遍历整个edge map</p>
+</li>
+<li>
+<p>针对如图的具体的某个点A的处理方式</p>
+<p>1）以A点为中心，沿着N，NE，SE，S，SW，W，NM八个方向进行检索</p>
+<p>2）以A点在edge map中的value作为reference value</p>
+<p>3）以检索点在edge map中的value与A的插值△作为判别依据</p>
+<p>4）如果△&lt;Th，那么就是平摊去，加入到待处理区域</p>
+<p>如果△&gt;Th，那么可能是边缘，就修正该方向的检索</p>
+<p>5）当检索完成后就用该ROI中的值作为降噪后的值</p>
+</li>
+</ul>
+
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/uvnr/uvnr7.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/uvnr/uvnr7.png" >
+  
+    </a>
+  
+  
+</div>
+
+<h1 id="3算法">3算法</h1>
+<div class="highlight"><pre class="chroma"><code class="language-matlab" data-lang="matlab"><span class="ln"> 1</span><span class="n">clc</span><span class="p">;</span> <span class="n">close</span> <span class="n">all</span><span class="p">;</span> <span class="n">clear</span><span class="p">;</span>
+<span class="ln"> 2</span>
+<span class="ln"> 3</span><span class="c">%% ------- global value -----------</span>
+<span class="ln"> 4</span><span class="n">TH</span> <span class="p">=</span> <span class="n">struct</span><span class="p">(</span><span class="s">&#39;ThL1&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;ThL2&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;ThL3&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;ThL4&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;ThL5&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;ThL6&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;ThL7&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span>
+<span class="ln"> 5</span>            <span class="s">&#39;ThH1&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;ThH2&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;ThH3&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;ThH4&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;ThH5&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;ThH6&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;ThH7&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="ln"> 6</span><span class="n">KSharp</span> <span class="p">=</span> <span class="mi">128</span><span class="p">;</span>
+<span class="ln"> 7</span><span class="n">kernelHSize</span> <span class="p">=</span> <span class="mi">3</span><span class="p">;</span>
+<span class="ln"> 8</span><span class="n">kernelVSize</span> <span class="p">=</span> <span class="mi">3</span><span class="p">;</span>
+<span class="ln"> 9</span><span class="n">GaussSigma</span> <span class="p">=</span> <span class="mf">0.5</span><span class="p">;</span>
+<span class="ln">10</span>
+<span class="ln">11</span><span class="c">%% ------- Data preparation -------</span>
+<span class="ln">12</span><span class="n">imgRGB</span> <span class="p">=</span> <span class="n">imread</span><span class="p">(</span><span class="s">&#39;./images/kodim19.png&#39;</span><span class="p">);</span>
+<span class="ln">13</span><span class="p">[</span><span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="p">=</span> <span class="nb">size</span><span class="p">(</span><span class="n">imgRGB</span><span class="p">);</span>
+<span class="ln">14</span><span class="n">imgHSV</span> <span class="p">=</span> <span class="nb">rgb2hsv</span><span class="p">(</span><span class="n">imgRGB</span><span class="p">);</span>
+<span class="ln">15</span><span class="n">padHSize</span> <span class="p">=</span> <span class="nb">floor</span><span class="p">(</span><span class="n">kernelHSize</span> <span class="o">/</span> <span class="mi">2</span><span class="p">);</span>
+<span class="ln">16</span><span class="n">padVSize</span> <span class="p">=</span> <span class="nb">floor</span><span class="p">(</span><span class="n">kernelVSize</span> <span class="o">/</span> <span class="mi">2</span><span class="p">);</span>
+<span class="ln">17</span><span class="n">imgHSVPad</span> <span class="p">=</span> <span class="n">padarray</span><span class="p">(</span><span class="n">imgHSV</span><span class="p">,</span> <span class="p">[</span><span class="n">padHSize</span><span class="p">,</span> <span class="n">padVSize</span><span class="p">],</span> <span class="s">&#39;replicate&#39;</span><span class="p">);</span>
+<span class="ln">18</span><span class="n">dstHSV</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">c</span><span class="p">);</span>
+<span class="ln">19</span><span class="n">guassKernel</span> <span class="p">=</span> <span class="n">fspecial</span><span class="p">(</span><span class="s">&#39;gaussian&#39;</span><span class="p">,[</span><span class="n">kernelVSize</span> <span class="n">kernelHSize</span><span class="p">],</span> <span class="n">GaussSigma</span><span class="p">);</span> 
+<span class="ln">20</span>
+<span class="ln">21</span><span class="n">Eedge</span> <span class="p">=</span> <span class="nb">zeros</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">);</span>
+<span class="ln">22</span><span class="c">%% ----------- main loop ----------</span>
+<span class="ln">23</span><span class="k">for</span> <span class="n">y</span> <span class="p">=</span> <span class="mi">1</span><span class="o">+</span><span class="n">padHSize</span><span class="p">:</span> <span class="n">w</span><span class="o">+</span><span class="n">padHSize</span>
+<span class="ln">24</span>    <span class="k">for</span> <span class="n">x</span> <span class="p">=</span> <span class="mi">1</span><span class="o">+</span><span class="n">padVSize</span><span class="p">:</span> <span class="n">h</span><span class="o">+</span><span class="n">padVSize</span>
+<span class="ln">25</span>        <span class="n">calWin</span> <span class="p">=</span> <span class="n">imgHSVPad</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">padVSize</span><span class="p">:</span> <span class="n">x</span><span class="o">+</span><span class="n">padVSize</span><span class="p">,</span> <span class="n">y</span><span class="o">-</span><span class="n">padHSize</span><span class="p">:</span> <span class="n">y</span><span class="o">+</span><span class="n">padHSize</span><span class="p">,</span> <span class="p">:);</span>
+<span class="ln">26</span>        <span class="n">lp</span> <span class="p">=</span> <span class="n">calLp</span><span class="p">(</span><span class="n">calWin</span><span class="p">,</span> <span class="n">TH</span><span class="p">);</span>
+<span class="ln">27</span>        <span class="n">hp</span> <span class="p">=</span> <span class="n">calHp</span><span class="p">(</span><span class="n">calWin</span><span class="p">,</span> <span class="n">TH</span><span class="p">);</span>
+<span class="ln">28</span>        <span class="n">dstHSV</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">padHSize</span><span class="p">,</span> <span class="n">y</span><span class="o">-</span><span class="n">padVSize</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="p">=</span> <span class="n">sum</span><span class="p">(</span><span class="n">sum</span><span class="p">(</span><span class="n">lp</span> <span class="o">.*</span> <span class="n">calWin</span><span class="p">(:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">)))</span> <span class="o">/</span> <span class="n">sum</span><span class="p">(</span><span class="n">sum</span><span class="p">(</span><span class="n">lp</span><span class="p">));</span>
+<span class="ln">29</span>        <span class="n">dstHSV</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">padHSize</span><span class="p">,</span> <span class="n">y</span><span class="o">-</span><span class="n">padVSize</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="p">=</span> <span class="n">sum</span><span class="p">(</span><span class="n">sum</span><span class="p">(</span><span class="n">lp</span> <span class="o">.*</span> <span class="n">calWin</span><span class="p">(:,</span> <span class="p">:,</span> <span class="mi">2</span><span class="p">)))</span> <span class="o">/</span> <span class="n">sum</span><span class="p">(</span><span class="n">sum</span><span class="p">(</span><span class="n">lp</span><span class="p">));</span>
+<span class="ln">30</span>        <span class="n">Eedge</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">padHSize</span><span class="p">,</span> <span class="n">y</span><span class="o">-</span><span class="n">padVSize</span><span class="p">)</span> <span class="p">=</span> <span class="n">sum</span><span class="p">(</span><span class="n">sum</span><span class="p">(</span><span class="n">hp</span> <span class="o">.*</span> <span class="n">calWin</span><span class="p">(:,</span> <span class="p">:,</span> <span class="mi">2</span><span class="p">)))</span> <span class="o">*</span> <span class="n">KSharp</span><span class="o">/</span> <span class="n">sum</span><span class="p">(</span><span class="n">sum</span><span class="p">(</span><span class="n">hp</span><span class="p">));</span>
+<span class="ln">31</span>    <span class="k">end</span>
+<span class="ln">32</span><span class="k">end</span>
+</code></pre></div>
+
+ 
+  
+  
+  
+  
+    
+  
+    
+      
+    
+  
+    
+      
+    
+  
+
+<div class="figure center fig-100" >
+  
+    <a class="fancybox" href="https://yangyang48.github.io/camera/algorithmlearning/uvnr/uvnr8.png" data-fancybox-group="">
+  
+    <img class="fig-img" src="https://yangyang48.github.io/camera/algorithmlearning/uvnr/uvnr8.png" >
+  
+    </a>
+  
+  
+</div>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/yuv/">YUV</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/uvnr/">UVNR</a>
+
+  <a class="tag tag--primary tag--small" href="https://yangyang48.github.io/tags/%E5%9D%87%E5%80%BC%E6%BB%A4%E6%B3%A2/">均值滤波</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2024/02/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-eeedge-enhance/" data-tooltip="isp算法学习-EE（Edge Enhance）">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2024/02/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-csccolor-space-convert/" data-tooltip="isp算法学习-CSC（color space convert）">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+		
+		<div class="post-comment main-content-wrap">
+		
+  
+  <div id="vcomments"></div>
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <script type="text/javascript">
+    new Valine({
+        el: '#vcomments' ,
+        appId: 'mwl8M1aQzLnRE6JIpIY3sgE5-9Nh9j0Va',
+        appKey: 'mPGr6GMC0BuzAKkxinnd0IAr',
+        notify:  true , 
+        verify:  false , 
+        avatar:'retro', 
+        placeholder: '欢迎各位宝宝留言~',
+        visitor:  true 
+    });
+  </script>
+
+		</div>
+        <footer id="footer" class="main-content-wrap">
+  
+  
+  
+  <span class="copyrights">
+    &copy; 2024 Yang Ju. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2024/02/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-eeedge-enhance/" data-tooltip="isp算法学习-EE（Edge Enhance）">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://yangyang48.github.io/2024/02/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-csccolor-space-convert/" data-tooltip="isp算法学习-CSC（color space convert）">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fyangyang48.github.io%2F2024%2F02%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-uvnruv-color-space-noise-reduce%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fyangyang48.github.io%2F2024%2F02%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-uvnruv-color-space-noise-reduce%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fyangyang48.github.io%2F2024%2F02%2Fisp%25E7%25AE%2597%25E6%25B3%2595%25E5%25AD%25A6%25E4%25B9%25A0-uvnruv-color-space-noise-reduce%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://yangyang48.github.io/thumb/20210711204627625.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">Yang Ju</h4>
+    
+      <div id="about-card-bio">Nanjing University of Science and Technology</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Software Development Engineer
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        NanJing,China
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://yangyang48.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://yangyang48.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+  
+    <script src="https://yangyang48.github.io/js/copy-to-clipboard.js"></script>
+  
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = 'https:\/\/yangyang48.github.io\/2024\/02\/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-uvnruv-color-space-noise-reduce\/';
+          
+            this.page.identifier = '\/2024\/02\/isp%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0-uvnruv-color-space-noise-reduce\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'hugo-tranquilpeak-theme';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+  <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_CHTML-full" integrity="sha256-GhM+5JHb6QUzOQPXSJLEWP7R73CbkisjzK5Eyij4U9w=" crossorigin="anonymous"></script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      CommonHTML: { linebreaks: { automatic: true } },
+      tex2jax: { inlineMath: [ ['$', '$'], ['\\(','\\)'] ], displayMath: [ ['$$','$$'], ['\\[', '\\]'] ], processEscapes: false },
+      messageStyle: 'none'
+    });
+  </script>
+
+
+
+    
+  </body>
+</html>
+
